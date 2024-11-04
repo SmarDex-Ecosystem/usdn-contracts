@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { USER_1 } from "../../../utils/Constants.sol";
+import { DelegationSignatureUtils } from "../../../utils/DelegationSignatureUtils.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -10,7 +11,10 @@ import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUs
  * @custom:feature Test the {_verifyTransferPositionOwnershipDelegation} internal function
  * @custom:given A initiated protocol
  */
-contract TestUsdnProtocolVerifyTransferPositionOwnershipDelegation is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolVerifyTransferPositionOwnershipDelegation is
+    UsdnProtocolBaseFixture,
+    DelegationSignatureUtils
+{
     uint256 internal constant POSITION_OWNER_PK = 1;
     uint256 internal constant ATTACKER_PK = 2;
     address internal _positionOwner = vm.addr(POSITION_OWNER_PK);
@@ -54,7 +58,7 @@ contract TestUsdnProtocolVerifyTransferPositionOwnershipDelegation is UsdnProtoc
      * @custom:when The function {_verifyTransferPositionOwnershipDelegation} is called with a compromised value
      * @custom:then The transaction should revert with {UsdnProtocolInvalidDelegationSignature}
      */
-    function test_verifyTransferPositionOwnershipDelegationChangeParam() public {
+    function test_RevertWhen_verifyTransferPositionOwnershipDelegationChangeParam() public {
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegationSignature.selector);
         protocol.i_verifyTransferPositionOwnershipDelegation(
             _posId, _delegationSignature, _domainSeparatorV4, _positionOwner, address(this)
@@ -67,7 +71,7 @@ contract TestUsdnProtocolVerifyTransferPositionOwnershipDelegation is UsdnProtoc
      * @custom:when The function {_verifyTransferPositionOwnershipDelegation} is called with correct values
      * @custom:then The transaction should revert with {UsdnProtocolInvalidDelegationSignature}
      */
-    function test_verifyTransferPositionOwnershipDelegationAttackerSignature() public {
+    function test_RevertWhen_verifyTransferPositionOwnershipDelegationAttackerSignature() public {
         _delegationSignature = _getTransferPositionDelegationSignature(ATTACKER_PK, _domainSeparatorV4, _delegation);
 
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegationSignature.selector);

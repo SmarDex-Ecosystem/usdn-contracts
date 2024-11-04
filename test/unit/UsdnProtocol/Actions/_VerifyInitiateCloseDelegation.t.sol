@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { USER_1 } from "../../../utils/Constants.sol";
-import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
-
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { USER_1 } from "../../../utils/Constants.sol";
+import { DelegationSignatureUtils } from "../../../utils/DelegationSignatureUtils.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /**
  * @custom:feature Test the {_verifyInitiateCloseDelegation} internal function
  * @custom:given A initiated protocol
  */
-contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixture, DelegationSignatureUtils {
     uint256 internal constant POSITION_OWNER_PK = 1;
     uint256 internal constant ATTACKER_PK = 2;
     address internal positionOwner = vm.addr(POSITION_OWNER_PK);

@@ -2,11 +2,12 @@
 pragma solidity 0.8.26;
 
 import { USER_1 } from "../../../utils/Constants.sol";
+import { DelegationSignatureUtils } from "../../../utils/DelegationSignatureUtils.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { OwnershipCallbackHandler } from "../utils/OwnershipCallbackHandler.sol";
 
 /// @custom:feature The `transferPositionOwnership` function of the USDN protocol
-contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture, DelegationSignatureUtils {
     OwnershipCallbackHandler callbackHandler;
 
     function setUp() public {
@@ -267,5 +268,6 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
 
         (pos,) = protocol.getLongPosition(posId);
         assertEq(pos.user, USER_1, "the new position user should be `USER_1`");
+        assertEq(protocol.getNonce(user), initialNonce + 1, "the user nonce should be incremented");
     }
 }

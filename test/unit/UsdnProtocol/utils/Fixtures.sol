@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import {
@@ -97,25 +96,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint128 positionSize;
         uint128 desiredLiqPrice;
         uint256 price;
-    }
-
-    struct InitiateClosePositionDelegation {
-        bytes32 posIdHash;
-        uint128 amountToClose;
-        uint256 userMinPrice;
-        address to;
-        uint256 deadline;
-        address positionOwner;
-        address positionCloser;
-        uint256 nonce;
-    }
-
-    struct TransferPositionOwnershipDelegation {
-        bytes32 posIdHash;
-        address positionOwner;
-        address newPositionOwner;
-        address delegatedAddress;
-        uint256 nonce;
     }
 
     Usdn public usdn;
@@ -532,70 +512,5 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     /// @dev Wait for the required delay to allow mock middleware price update
     function _waitMockMiddlewarePriceDelay() internal {
         skip(30 minutes - oracleMiddleware.getValidationDelay());
-    }
-
-    /**
-     * @notice Get the signed delegation data
-     * @param privateKey The signer private key
-     * @param domainSeparator The domain separator v4
-     * @param delegationToSign The delegation struct to sign
-     * @return delegationSignature_ The initiateClosePosition eip712 delegation signature
-     */
-    function _getDelegationSignature(
-        uint256 privateKey,
-        bytes32 domainSeparator,
-        InitiateClosePositionDelegation memory delegationToSign
-    ) internal pure returns (bytes memory delegationSignature_) {
-        bytes32 digest = MessageHashUtils.toTypedDataHash(
-            domainSeparator,
-            keccak256(
-                abi.encode(
-                    Constants.INITIATE_CLOSE_TYPEHASH,
-                    delegationToSign.posIdHash,
-                    delegationToSign.amountToClose,
-                    delegationToSign.userMinPrice,
-                    delegationToSign.to,
-                    delegationToSign.deadline,
-                    delegationToSign.positionOwner,
-                    delegationToSign.positionCloser,
-                    delegationToSign.nonce
-                )
-            )
-        );
-
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
-
-        delegationSignature_ = abi.encodePacked(r, s, v);
-    }
-
-    /**
-     * @notice Get the signed delegation signature for {transferPositionOwnership}
-     * @param privateKey The signer private key
-     * @param domainSeparator The domain separator v4
-     * @param delegationToSign The delegation struct to sign
-     * @return delegationSignature_ The initiateClosePosition eip712 delegation signature
-     */
-    function _getTransferPositionDelegationSignature(
-        uint256 privateKey,
-        bytes32 domainSeparator,
-        TransferPositionOwnershipDelegation memory delegationToSign
-    ) internal pure returns (bytes memory delegationSignature_) {
-        bytes32 digest = MessageHashUtils.toTypedDataHash(
-            domainSeparator,
-            keccak256(
-                abi.encode(
-                    Constants.TRANSFER_POSITION_OWNERSHIP_TYPEHASH,
-                    delegationToSign.posIdHash,
-                    delegationToSign.positionOwner,
-                    delegationToSign.newPositionOwner,
-                    delegationToSign.delegatedAddress,
-                    delegationToSign.nonce
-                )
-            )
-        );
-
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
-
-        delegationSignature_ = abi.encodePacked(r, s, v);
     }
 }

@@ -5,6 +5,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { ADMIN, DEPLOYER, USER_1, USER_2 } from "../../../utils/Constants.sol";
+import { DelegationSignatureUtils } from "../../../utils/DelegationSignatureUtils.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -16,7 +17,7 @@ import { InitializableReentrancyGuard } from "../../../../src/utils/Initializabl
  * leverage of ~2x
  * @custom:and a validated long position of 1 ether with 10x leverage
  */
-contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture, DelegationSignatureUtils {
     using SafeCast for uint256;
 
     uint128 private constant POSITION_AMOUNT = 1 ether;
