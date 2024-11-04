@@ -6,6 +6,8 @@ import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import { ERC165, IERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -23,7 +25,7 @@ import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnPro
  * It will manage only one position with enough trading expo to re-balance the protocol after liquidations
  * and close/open again with new and existing funds when the imbalance reaches a certain threshold
  */
-contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback, IRebalancer {
+contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback, IRebalancer, EIP712 {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 
@@ -36,6 +38,15 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
      * @param amountToCloseWithoutBonus The user amount to close without bonus
      * @param amountToClose The user amount to close including bonus
      * @param protocolPosition The protocol rebalancer position
+     * @param user The address of the user that deposited the funds in the rebalancer
+     * @param balanceOfAssetBefore The balance of asset before the protocol initiateClosePosition
+     * @param balanceOfAssetAfter The balance of asset after the protocol initiateClosePosition
+     * @param protocolRemainingAmount The remaining amount of the usdn protocol position after the close
+     * @param amount The amount to close relative to the amount deposited
+     * @param to The address that will receive the assets
+     * @param validator The address that should validate the open position
+     * @param userMinPrice The minimum price at which the position can be closed
+     * @param deadline The deadline of the close position to be initiated
      */
     struct InitiateCloseData {
         UserDeposit userDepositData;
@@ -45,6 +56,15 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         uint256 amountToCloseWithoutBonus;
         uint256 amountToClose;
         Types.Position protocolPosition;
+        address user;
+        uint256 balanceOfAssetBefore;
+        uint256 balanceOfAssetAfter;
+        uint256 protocolRemainingAmount;
+        uint88 amount;
+        address to;
+        address payable validator;
+        uint256 userMinPrice;
+        uint256 deadline;
     }
 
     /// @notice Modifier to check if the caller is the USDN protocol or the owner
@@ -72,6 +92,11 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
     /// @inheritdoc IRebalancer
     uint256 public constant MAX_ACTION_COOLDOWN = 48 hours;
+
+    /// @inheritdoc IRebalancer
+    bytes32 public constant INITIATE_CLOSE_TYPEHASH = keccak256(
+        "InitiateClosePositionDelegation(uint88 amount,address to,uint256 userMinPrice,uint256 deadline,address depositOwner,address depositCloser,uint256 nonce)"
+    );
 
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables                                 */
@@ -126,8 +151,14 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /// @notice The data for the specific version of the position
     mapping(uint256 => PositionData) internal _positionData;
 
+    /**
+     * @notice The user EIP712 nonce
+     * @dev Check {getNonce} in {IRebalancer} for the documentation
+     */
+    mapping(address => uint256) internal _nonce;
+
     /// @param usdnProtocol The address of the USDN protocol
-    constructor(IUsdnProtocol usdnProtocol) Ownable(msg.sender) {
+    constructor(IUsdnProtocol usdnProtocol) Ownable(msg.sender) EIP712("Rebalancer", "1") {
         _usdnProtocol = usdnProtocol;
         IERC20Metadata asset = usdnProtocol.getAsset();
         _asset = asset;
@@ -214,6 +245,16 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /// @inheritdoc IBaseRebalancer
     function getUserDepositData(address user) external view returns (UserDeposit memory) {
         return _userDeposit[user];
+    }
+
+    /// @inheritdoc IRebalancer
+    function getNonce(address user) external view returns (uint256) {
+        return _nonce[user];
+    }
+
+    /// @inheritdoc IRebalancer
+    function domainSeparatorV4() external view returns (bytes32) {
+        return _domainSeparatorV4();
     }
 
     /// @inheritdoc IRebalancer
@@ -413,110 +454,21 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     function initiateClosePosition(
         uint88 amount,
         address to,
+        address payable validator,
         uint256 userMinPrice,
         uint256 deadline,
         bytes calldata currentPriceData,
-        Types.PreviousActionsData calldata previousActionsData
+        Types.PreviousActionsData calldata previousActionsData,
+        bytes calldata delegationData
     ) external payable nonReentrant returns (bool success_) {
-        if (amount == 0) {
-            revert RebalancerInvalidAmount();
-        }
-
         InitiateCloseData memory data;
-        data.userDepositData = _userDeposit[msg.sender];
+        data.amount = amount;
+        data.to = to;
+        data.validator = validator;
+        data.userMinPrice = userMinPrice;
+        data.deadline = deadline;
 
-        if (amount > data.userDepositData.amount) {
-            revert RebalancerInvalidAmount();
-        }
-
-        data.remainingAssets = data.userDepositData.amount - amount;
-        if (data.remainingAssets > 0 && data.remainingAssets < _minAssetDeposit) {
-            revert RebalancerInvalidAmount();
-        }
-
-        if (data.userDepositData.entryPositionVersion == 0) {
-            revert RebalancerUserPending();
-        }
-
-        if (data.userDepositData.entryPositionVersion <= _lastLiquidatedVersion) {
-            revert RebalancerUserLiquidated();
-        }
-
-        data.positionVersion = _positionVersion;
-
-        if (data.userDepositData.entryPositionVersion > data.positionVersion) {
-            revert RebalancerUserPending();
-        }
-
-        data.currentPositionData = _positionData[data.positionVersion];
-
-        data.amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
-            amount,
-            data.currentPositionData.entryAccMultiplier,
-            _positionData[data.userDepositData.entryPositionVersion].entryAccMultiplier
-        );
-
-        (data.protocolPosition,) = _usdnProtocol.getLongPosition(
-            Types.PositionId({
-                tick: data.currentPositionData.tick,
-                tickVersion: data.currentPositionData.tickVersion,
-                index: data.currentPositionData.index
-            })
-        );
-
-        // include bonus
-        data.amountToClose = data.amountToCloseWithoutBonus
-            + data.amountToCloseWithoutBonus * (data.protocolPosition.amount - data.currentPositionData.amount)
-                / data.currentPositionData.amount;
-
-        uint256 balanceOfAssetBefore = _asset.balanceOf(address(this));
-        // slither-disable-next-line reentrancy-eth
-        success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
-            Types.PositionId({
-                tick: data.currentPositionData.tick,
-                tickVersion: data.currentPositionData.tickVersion,
-                index: data.currentPositionData.index
-            }),
-            data.amountToClose.toUint128(),
-            userMinPrice,
-            to,
-            payable(msg.sender),
-            deadline,
-            currentPriceData,
-            previousActionsData,
-            ""
-        );
-        uint256 balanceOfAssetAfter = _asset.balanceOf(address(this));
-
-        if (success_) {
-            if (data.remainingAssets == 0) {
-                delete _userDeposit[msg.sender];
-            } else {
-                _userDeposit[msg.sender].amount = data.remainingAssets;
-            }
-
-            // safe cast is already made on amountToClose
-            data.currentPositionData.amount -= uint128(data.amountToCloseWithoutBonus);
-
-            if (data.currentPositionData.amount == 0) {
-                PositionData memory newPositionData;
-                newPositionData.tick = Constants.NO_POSITION_TICK;
-                _positionData[data.positionVersion] = newPositionData;
-            } else {
-                _positionData[data.positionVersion].amount = data.currentPositionData.amount;
-            }
-
-            emit ClosePositionInitiated(msg.sender, amount, data.amountToClose, data.remainingAssets);
-        }
-
-        // If the rebalancer received assets, it means it was rewarded for liquidating positions
-        // So we need to forward those rewards to the msg.sender
-        if (balanceOfAssetAfter > balanceOfAssetBefore) {
-            _asset.safeTransfer(msg.sender, balanceOfAssetAfter - balanceOfAssetBefore);
-        }
-
-        // sent back any ether left in the contract
-        _refundEther();
+        return _initiateClosePosition(data, currentPriceData, previousActionsData, delegationData);
     }
 
     /**
@@ -676,5 +628,173 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             // user must wait until the cooldown has elapsed, then call `resetDepositAssets` to withdraw the funds
             revert RebalancerActionCooldown();
         }
+    }
+
+    /**
+     * @notice Performs the {initiateClosePosition} EIP712 delegation signature verification
+     * @dev Reverts if the function arguments don't match those included in the signature
+     * and if the signer isn't the owner of the deposit
+     * @param delegationData The delegation data that should include the depositOwner and the delegation signature
+     * @param amount The amount to close relative to the amount deposited
+     * @param to The address that will receive the assets
+     * @param userMinPrice The minimum price at which the position can be closed
+     * @param deadline The deadline of the close position to be initiated
+     * @return depositOwner_ The owner of the rebalancer deposit position
+     */
+    function _verifyInitiateCloseDelegation(
+        uint88 amount,
+        address to,
+        uint256 userMinPrice,
+        uint256 deadline,
+        bytes calldata delegationData
+    ) internal returns (address depositOwner_) {
+        bytes memory signature;
+        (depositOwner_, signature) = abi.decode(delegationData, (address, bytes));
+
+        uint256 nonce = _nonce[depositOwner_];
+
+        bytes32 digest = _hashTypedDataV4(
+            keccak256(
+                abi.encode(
+                    INITIATE_CLOSE_TYPEHASH, amount, to, userMinPrice, deadline, depositOwner_, msg.sender, nonce
+                )
+            )
+        );
+
+        if (ECDSA.recover(digest, signature) != depositOwner_) {
+            revert RebalancerInvalidDelegationSignature();
+        }
+
+        _nonce[depositOwner_] = nonce + 1;
+    }
+
+    /**
+     * @notice Closes a user deposited amount of the current UsdnProtocol rebalancer position
+     * @param data The structure to hold the transient data during {initiateClosePosition}
+     * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
+     * pending validation)
+     * @param previousActionsData The data needed to validate actionable pending actions
+     * @param delegationData An optional delegation data that include the depositOwner and an EIP712 signature to
+     * provide when closing a position on the owner's behalf
+     * @return success_ If the UsdnProtocol's `initiateClosePosition` was successful
+     */
+    function _initiateClosePosition(
+        InitiateCloseData memory data,
+        bytes calldata currentPriceData,
+        Types.PreviousActionsData calldata previousActionsData,
+        bytes calldata delegationData
+    ) internal returns (bool success_) {
+        if (data.amount == 0) {
+            revert RebalancerInvalidAmount();
+        }
+        if (delegationData.length == 0) {
+            data.user = msg.sender;
+        } else {
+            data.user =
+                _verifyInitiateCloseDelegation(data.amount, data.to, data.userMinPrice, data.deadline, delegationData);
+        }
+
+        data.userDepositData = _userDeposit[data.user];
+
+        if (data.amount > data.userDepositData.amount) {
+            revert RebalancerInvalidAmount();
+        }
+
+        data.remainingAssets = data.userDepositData.amount - data.amount;
+        if (data.remainingAssets > 0 && data.remainingAssets < _minAssetDeposit) {
+            revert RebalancerInvalidAmount();
+        }
+
+        if (data.userDepositData.entryPositionVersion == 0) {
+            revert RebalancerUserPending();
+        }
+
+        if (data.userDepositData.entryPositionVersion <= _lastLiquidatedVersion) {
+            revert RebalancerUserLiquidated();
+        }
+
+        data.positionVersion = _positionVersion;
+
+        if (data.userDepositData.entryPositionVersion > data.positionVersion) {
+            revert RebalancerUserPending();
+        }
+
+        data.currentPositionData = _positionData[data.positionVersion];
+
+        data.amountToCloseWithoutBonus = FixedPointMathLib.fullMulDiv(
+            data.amount,
+            data.currentPositionData.entryAccMultiplier,
+            _positionData[data.userDepositData.entryPositionVersion].entryAccMultiplier
+        );
+
+        (data.protocolPosition,) = _usdnProtocol.getLongPosition(
+            Types.PositionId({
+                tick: data.currentPositionData.tick,
+                tickVersion: data.currentPositionData.tickVersion,
+                index: data.currentPositionData.index
+            })
+        );
+
+        // include bonus
+        data.amountToClose = data.amountToCloseWithoutBonus
+            + data.amountToCloseWithoutBonus * (data.protocolPosition.amount - data.currentPositionData.amount)
+                / data.currentPositionData.amount;
+
+        if (data.remainingAssets > 0) {
+            data.protocolRemainingAmount = data.protocolPosition.amount - data.amountToClose;
+            if (data.protocolRemainingAmount > 0 && data.protocolRemainingAmount < _usdnProtocol.getMinLongPosition()) {
+                revert RebalancerInvalidAmount();
+            }
+        }
+
+        data.balanceOfAssetBefore = _asset.balanceOf(address(this));
+
+        // slither-disable-next-line reentrancy-eth
+        success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
+            Types.PositionId({
+                tick: data.currentPositionData.tick,
+                tickVersion: data.currentPositionData.tickVersion,
+                index: data.currentPositionData.index
+            }),
+            data.amountToClose.toUint128(),
+            data.userMinPrice,
+            data.to,
+            data.validator,
+            data.deadline,
+            currentPriceData,
+            previousActionsData,
+            ""
+        );
+        data.balanceOfAssetAfter = _asset.balanceOf(address(this));
+
+        if (success_) {
+            if (data.remainingAssets == 0) {
+                delete _userDeposit[data.user];
+            } else {
+                _userDeposit[data.user].amount = data.remainingAssets;
+            }
+
+            // safe cast is already made on amountToClose
+            data.currentPositionData.amount -= uint128(data.amountToCloseWithoutBonus);
+
+            if (data.currentPositionData.amount == 0) {
+                PositionData memory newPositionData;
+                newPositionData.tick = Constants.NO_POSITION_TICK;
+                _positionData[data.positionVersion] = newPositionData;
+            } else {
+                _positionData[data.positionVersion].amount = data.currentPositionData.amount;
+            }
+
+            emit ClosePositionInitiated(data.user, data.amount, data.amountToClose, data.remainingAssets);
+        }
+
+        // If the rebalancer received assets, it means it was rewarded for liquidating positions
+        // So we need to forward those rewards to the msg.sender
+        if (data.balanceOfAssetAfter > data.balanceOfAssetBefore) {
+            _asset.safeTransfer(msg.sender, data.balanceOfAssetAfter - data.balanceOfAssetBefore);
+        }
+
+        // sent back any ether left in the contract
+        _refundEther();
     }
 }
