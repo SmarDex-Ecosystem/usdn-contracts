@@ -5,17 +5,30 @@ green='\033[0;32m'
 blue='\033[0;34m'
 nc='\033[0m'
 
-read -p $'\n'"Entrez l'adresse du contrat : " contractAddress
-if [[ -z "$contractAddress" ]]; then
-    printf "\n$red L'adresse du contrat est requise.$nc\n"
-    exit 1
-fi
+# Loop to get and validate the protocol address
+while true; do
+    read -p $'\n'"Enter the USDN Protocol's address: " usdnProtocolAddress
+    usdnProtocolAddress=$(echo "$usdnProtocolAddress" | xargs)
+    if [[ -z "$usdnProtocolAddress" ]]; then
+        printf "\n${red}The contract address is required.${nc}\n"
+    else
+        printf "\n${blue}Address :${nc} $usdnProtocolAddress\n"
+        break
+    fi
+done
 
-read -p $'\n'"Entrez l'URL RPC : " rpcUrl
-if [[ -z "$rpcUrl" ]]; then
-    printf "\n$red L'URL RPC est requise.$nc\n"
-    exit 1
-fi
+# Loop to get and validate the RPC URL
+while true; do
+    read -p $'\n'"Enter the RPC URL: " rpcUrl
+    rpcUrl=$(echo "$rpcUrl" | xargs)
+    if [[ -z "$rpcUrl" ]]; then
+        printf "\n${red}The RPC URL is required.${nc}\n"
+    else
+        printf "\n${blue}RPC URL :${nc} $rpcUrl\n"
+        break
+    fi
+done
+
 
 # Events in IAccessControl.sol from OpenZeppelin
 declare -a events=(
@@ -27,14 +40,6 @@ declare -a events=(
 # Map of bytes32 to associated role
 declare -A topic_map=(
     ["0x0000000000000000000000000000000000000000000000000000000000000000"]="DEFAULT_ADMIN_ROLE"
-    ["0x112a81abbbc0a642a71c01ee707237745fdf9150a36cd6c341a77a82b042fcfe"]="SET_EXTERNAL_ROLE"
-    ["0x02f5b57e73f7374270c293a6c0f8f21b963fcb794517ca371178f1ebf3e0ea7d"]="CRITICAL_FUNCTIONS_ROLE"
-    ["0xa33d215b27d5ec861579769ea5343a0a14da1a34a49b09fa343facf13bf852ba"]="SET_PROTOCOL_PARAMS_ROLE"
-    ["0x2332b7708e4d211430c3d07e50a5483bc31f86f1a3c7c79e159a5bab63060e82"]="SET_USDN_PARAMS_ROLE"
-    ["0x5fdbe07c81484705bc90cbf005feb2ecc66822288a5ac5d3cf89e384fa6fdd47"]="SET_OPTIONS_ROLE"
-    ["0x233d5d22cfc2df30a1764cac21e2207537a3711647f2c29fe3702201f65c1444"]="PROXY_UPGRADE_ROLE"
-    ["0x65d7a28e3265b37a6474929f336521b332c1681b933f6cb9f3376673440d862a"]="PAUSER_ROLE"
-    ["0x427da25fe773164f88948d3e215c94b6554e2ed5e5f203a821c9f2f6131cf75a"]="UNPAUSER_ROLE"
     ["0xe066b764dbc472e706cbc2f8733ab0fcee541dd01136dc6512dca8f6dc61b692"]="ADMIN_SET_EXTERNAL_ROLE"
     ["0xe7b4cf829186f8c4eae56184e8b39efd89f053da9890202c466f766239b5c06d"]="ADMIN_CRITICAL_FUNCTIONS_ROLE"
     ["0x668144e07fd661d09cc13a56f823a5cecc9ddd81fac15e0f66a794e2048f7eeb"]="ADMIN_SET_PROTOCOL_PARAMS_ROLE"
@@ -43,11 +48,15 @@ declare -A topic_map=(
     ["0x5afc0553d94a015add162f99e64d9f1e7954cb5168d8eb6c93ee26a783968d8a"]="ADMIN_PROXY_UPGRADE_ROLE"
     ["0x365fccb66c62533ad1447fec73f7b764cf03ac69d512070f7c0aa889025cec19"]="ADMIN_PAUSER_ROLE"
     ["0xe7747964bba14b1d51bb4f84f826a6ba3ef37d424902280c5a01c99b837c970d"]="ADMIN_UNPAUSER_ROLE"
+    ["0x112a81abbbc0a642a71c01ee707237745fdf9150a36cd6c341a77a82b042fcfe"]="SET_EXTERNAL_ROLE"
+    ["0x02f5b57e73f7374270c293a6c0f8f21b963fcb794517ca371178f1ebf3e0ea7d"]="CRITICAL_FUNCTIONS_ROLE"
+    ["0xa33d215b27d5ec861579769ea5343a0a14da1a34a49b09fa343facf13bf852ba"]="SET_PROTOCOL_PARAMS_ROLE"
+    ["0x2332b7708e4d211430c3d07e50a5483bc31f86f1a3c7c79e159a5bab63060e82"]="SET_USDN_PARAMS_ROLE"
+    ["0x5fdbe07c81484705bc90cbf005feb2ecc66822288a5ac5d3cf89e384fa6fdd47"]="SET_OPTIONS_ROLE"
+    ["0x233d5d22cfc2df30a1764cac21e2207537a3711647f2c29fe3702201f65c1444"]="PROXY_UPGRADE_ROLE"
+    ["0x65d7a28e3265b37a6474929f336521b332c1681b933f6cb9f3376673440d862a"]="PAUSER_ROLE"
+    ["0x427da25fe773164f88948d3e215c94b6554e2ed5e5f203a821c9f2f6131cf75a"]="UNPAUSER_ROLE"
 )
-
-
-contractAddress="0x59891a8f6a60fA55053Aff265b95B1264Cd0fc69"
-rpcUrl="127.0.0.1:8545"
 
 # Extract and sort logs for each event
 
@@ -57,7 +66,7 @@ for event in "${events[@]}"; do
     printf "\n$blue Fetching logs for event:$nc $event\n"
 
     # Run cast to get logs for each event and capture output in log_output variable
-    log_output=$(cast logs --rpc-url "$rpcUrl" --from-block 0 --to-block latest "$event" --address "$contractAddress" -j)
+    log_output=$(cast logs --rpc-url "$rpcUrl" --from-block 0 --to-block latest "$event" --address "$usdnProtocolAddress" -j)
     status=$?
 
     # Check if the command executed successfully
@@ -138,6 +147,13 @@ for event in "${events[@]}"; do
     fi
 done
 
+# Exit if no logs were found
+if [[ -z "$sorted_logs" || "$sorted_logs" == "[]" ]]; then
+    printf "\n${red}No logs were found. Exiting the script. Verify the RPC URL and contract address.${nc}\n"
+    exit 1
+fi
+
+# Sort the logs by block number and log index
 sorted_logs=$(printf "%s\n" "${logs[@]}" | jq -s 'sort_by(.blockNumber, .logIndex)')
 printf "\n$green Sorted logs by block number:$nc\n"
 printf "$sorted_logs" | jq -c '.[]'
@@ -194,13 +210,20 @@ for role in "${!topic_map[@]}"; do
     fi
 done
 
+# Reorder JSON
+json_output="${json_output%,}]"
+json_output=$(printf "%s" "$json_output" | jq 'sort_by(
+    if .Role == "DEFAULT_ADMIN_ROLE" then 0 
+    elif .Role | startswith("ADMIN_") then 1 
+    else 2 
+    end
+)')
+
 # JSON output
 
 # Ask the user if they want to save to a file or display on screen
-printf "Do you want to save the JSON to a file (y) or display the result (d) or do nothing (n)?"
+printf "Do you want to save the JSON to a file (y), display it on the screen (d), or do nothing (n)? "
 read -r choice
-
-json_output="${json_output%,}]"
 if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
     # Save the JSON to a file
     output_file="roles.json"
@@ -215,10 +238,9 @@ fi
 # CSV output
 
 # Ask the user if they want to save to a file or display on screen
-csv_output+=$(printf "$json_output" | jq -r '.[] | [.Role, .Role_admin, (.Addresses | join(","))] | @csv')
-printf "Do you want to save the CSV to a file (y) or display the result (d) or do nothing (n)?"
+printf "Do you want to save the CSV to a file (y), display it on the screen (d), or do nothing (n)? "
 read -r csv_choice
-
+csv_output+=$(printf "$json_output" | jq -r '.[] | [.Role, .Role_admin, (.Addresses | join(","))] | @csv')
 if [[ "$csv_choice" == "y" || "$csv_choice" == "Y" ]]; then
     # Save the CSV to a file
     output_file="roles.csv"
