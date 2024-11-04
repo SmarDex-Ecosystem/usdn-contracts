@@ -77,31 +77,26 @@ for event in "${events[@]}"; do
         # Process each filtered output
         for log in $logs_filtered; do
             # Extract the topics array
-            topics=$(printf "$log" | jq -r '.topics')
+            second_topic=$(printf "$log" | jq -r '.topics[1]')
+            third_topic=$(printf "$log" | jq -r '.topics[2]')
+            fourth_topic=$(printf "$log" | jq -r '.topics[3]')
             
             # Add first topic to the log
             log=$(printf "$log" | jq --arg new_topic "$event" '.topics[0] = $new_topic')
-
-            # Other topics
-            first_topic=$(printf "$log" | jq -r '.topics[0]')
-            second_topic=$(printf "$topics" | jq -r '.[1]')
-            third_topic=$(printf "$topics" | jq -r '.[2]')
-            fourth_topic=$(printf "$topics" | jq -r '.[3]')
-
-
+            
             # Replace the second topic with the associated string and add it to the log
             new_second_topic=${abi_roles_map[$second_topic]}
             log=$(printf "$log" | jq --arg new_topic "$new_second_topic" '.topics[1] = $new_topic')
 
             # Replace the third and fourth topics instead of the hash with the associated role or address and add it to the log
-            if [[ "$first_topic" == "RoleAdminChanged(bytes32,bytes32,bytes32)" ]]; then
+            if [[ "$event" == "RoleAdminChanged(bytes32,bytes32,bytes32)" ]]; then
                 role=${abi_roles_map[$third_topic]}
                 log=$(printf "$log" | jq --arg new_topic "$role" '.topics[2] = $new_topic')
 
                 role=${abi_roles_map[$fourth_topic]}
                 log=$(printf "$log" | jq --arg new_topic "$role" '.topics[3] = $new_topic')
                 
-            elif [ "$first_topic" == "RoleGranted(bytes32,address,address)" ] || [ "$first_topic" == "RoleRevoked(bytes32,address,address)" ]; then
+            elif [ "$event" == "RoleGranted(bytes32,address,address)" ] || [ "$event" == "RoleRevoked(bytes32,address,address)" ]; then
                 address=$(cast parse-bytes32-address "$third_topic")
                 log=$(printf "$log" | jq --arg new_topic "$address" '.topics[2] = $new_topic')
 
