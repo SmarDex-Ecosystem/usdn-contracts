@@ -5,30 +5,25 @@ green='\033[0;32m'
 blue='\033[0;34m'
 nc='\033[0m'
 
-# Loop to get and validate the protocol address
-while true; do
-    read -p $'\n'"Enter the USDN Protocol's address: " usdnProtocolAddress
-    usdnProtocolAddress=$(echo "$usdnProtocolAddress" | xargs)
-    if [[ -z "$usdnProtocolAddress" ]]; then
-        printf "\n${red}The contract address is required.${nc}\n"
-    else
-        printf "\n${blue}Address :${nc} $usdnProtocolAddress\n"
-        break
-    fi
-done
+get_input() {
+    local prompt="$1"
+    local input_variable_name="$2"
 
-# Loop to get and validate the RPC URL
-while true; do
-    read -p $'\n'"Enter the RPC URL: " rpcUrl
-    rpcUrl=$(echo "$rpcUrl" | xargs)
-    if [[ -z "$rpcUrl" ]]; then
-        printf "\n${red}The RPC URL is required.${nc}\n"
-    else
-        printf "\n${blue}RPC URL :${nc} $rpcUrl\n"
-        break
-    fi
-done
+    while true; do
+        read -p $'\n'"$prompt: " user_input
+        user_input=$(echo "$user_input" | xargs)
+        if [[ -z "$user_input" ]]; then
+            printf "\n${red}This input is required.${nc}\n"
+        else
+            printf "\n${blue}$prompt: ${nc}$user_input\n"
+            eval "$input_variable_name=\"$user_input\""
+            break
+        fi
+    done
+}
 
+get_input "Enter the USDN Protocol's address" usdnProtocolAddress
+get_input "Enter the RPC URL" rpcUrl
 
 # Events in IAccessControl.sol from OpenZeppelin
 declare -a events=(
