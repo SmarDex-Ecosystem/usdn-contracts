@@ -281,6 +281,9 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
         uint24 liquidationPenalty = protocol.getLiquidationPenalty();
         uint256 positionTotalExpo =
             protocol.i_calcPositionTotalExpo(POSITION_AMOUNT, params.initialPrice, liqPriceWithoutPenalty);
+        uint128 liqPriceWithoutPenaltyNorFunding = protocol.i_getEffectivePriceForTick(
+            protocol.i_calcTickWithoutPenalty(data.action.tick, data.liquidationPenalty), data.action.liqMultiplier
+        );
 
         // asserts that should be done independently from the `isEarlyReturn` param
         assertEq(
@@ -319,7 +322,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
             );
             assertEq(
                 data.leverage,
-                protocol.i_getLeverage(params.initialPrice, liqPriceWithoutPenalty),
+                protocol.i_getLeverage(params.initialPrice, liqPriceWithoutPenaltyNorFunding),
                 "The leverage should match the expected value"
             );
         }
