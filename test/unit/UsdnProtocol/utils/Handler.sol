@@ -40,8 +40,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     using SafeCast for uint256;
     using SignedMath for int256;
 
-    Storage _tempStorage;
-
     function initializeStorageHandler(
         IUsdn usdn,
         IERC20Metadata sdex,
