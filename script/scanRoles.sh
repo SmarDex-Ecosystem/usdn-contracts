@@ -194,35 +194,56 @@ json_output=$(printf "%s" "$json_output" | jq 'sort_by(
 )')
 
 # JSON output
+while true; do
+    read -p $'\n'"Do you want to save the JSON to a file (y), display it on the screen (d), or do nothing (n)? " ydn
+    case $ydn in
+    [Yy]*)
+        # Save the JSON to a file
+        output_file="roles.json"
+        printf "%s" "$json_output" | jq . > "$output_file"
+        printf "JSON saved to file: %s\n" "$output_file"
 
-# Ask the user if they want to save to a file or display on screen
-printf "Do you want to save the JSON to a file (y), display it on the screen (d), or do nothing (n)? "
-read -r choice
-if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
-    # Save the JSON to a file
-    output_file="roles.json"
-    printf "%s" "$json_output" | jq . > "$output_file"
-    printf "JSON saved to file: %s\n" "$output_file"
-elif [[ "$choice" == "d" || "$choice" == "D" ]]; then 
-    # Display the JSON on the screen
-    printf "%s" "$json_output" | jq .
-fi
+        break
+        ;;
+    [Dd]*)
+        # Display the JSON on the screen
+        printf "%s" "$json_output" | jq .
 
+        break
+        ;;
+    [Nn]*)
+
+        break
+        ;;
+    *) printf "\n$red Please answer yes (Y/y), display (D/d) or nothing (N/n).$nc\n" ;;
+    esac
+done
 
 # CSV output
-
-# Ask the user if they want to save to a file or display on screen
-printf "Do you want to save the CSV to a file (y), display it on the screen (d), or do nothing (n)? "
-read -r csv_choice
 csv_output+=$(printf "$json_output" | jq -r '.[] | [.Role, .Role_admin, (.Addresses | join(","))] | @csv')
-if [[ "$csv_choice" == "y" || "$csv_choice" == "Y" ]]; then
-    # Save the CSV to a file
-    output_file="roles.csv"
-    printf "Role,Role_admin,Addresses\n" > "$output_file"
-    printf "%s" "$csv_output" >> "$output_file"
-    printf "CSV saved to file: %s\n" "$output_file"
-elif [[ "$choice" == "d" || "$choice" == "D" ]]; then 
-    # Display the CSV on the screen
-    printf "%s\n" "Role,Role_admin,Addresses"
-    printf "%s\n" "$csv_output"
-fi
+while true; do
+    read -p $'\n'"Do you want to save the CSV to a file (y), display it on the screen (d), or do nothing (n)? " ydn
+    case $ydn in
+    [Yy]*)
+        # Save the CSV to a file
+        output_file="roles.csv"
+        printf "Role,Role_admin,Addresses\n" > "$output_file"
+        printf "%s" "$csv_output" >> "$output_file"
+        printf "CSV saved to file: %s\n" "$output_file"
+
+        break
+        ;;
+    [Dd]*)
+        # Display the CSV on the screen
+        printf "%s\n" "Role,Role_admin,Addresses"
+        printf "%s\n" "$csv_output"
+
+        break
+        ;;
+    [Nn]*)
+
+        break
+        ;;
+    *) printf "\n$red Please answer yes (Y/y), display (D/d) or nothing (N/n).$nc\n" ;;
+    esac
+done
