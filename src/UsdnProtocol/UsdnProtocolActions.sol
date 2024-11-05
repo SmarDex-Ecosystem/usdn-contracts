@@ -20,6 +20,8 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_, PositionId memory posId_) {
+        Storage storage s = Utils._getMainStorage();
+
         InitiateOpenPositionParams memory params = InitiateOpenPositionParams({
             user: msg.sender,
             to: to,
@@ -29,7 +31,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
             userMaxPrice: userMaxPrice,
             userMaxLeverage: userMaxLeverage,
             deadline: deadline,
-            securityDepositValue: Utils._getMainStorage()._securityDepositValue
+            securityDepositValue: s._securityDepositValue
         });
 
         return ActionsLong.initiateOpenPosition(params, currentPriceData, previousActionsData);

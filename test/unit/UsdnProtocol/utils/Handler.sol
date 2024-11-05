@@ -8,7 +8,6 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsLongLibrary.sol";
@@ -795,11 +794,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         s._lastUpdateTimestamp = fundingStorage.lastUpdateTimestamp;
         s._fundingSF = fundingStorage.fundingSF;
 
-        // _tempStorage._totalExpo = fundingStorage.totalExpo;
-        // _tempStorage._balanceVault = fundingStorage.balanceVault;
-        // _tempStorage._balanceLong = fundingStorage.balanceLong;
-        // _tempStorage._lastUpdateTimestamp = fundingStorage.lastUpdateTimestamp;
-        // _tempStorage._fundingSF = fundingStorage.fundingSF;
         return Core._funding(timestamp, ema);
     }
 

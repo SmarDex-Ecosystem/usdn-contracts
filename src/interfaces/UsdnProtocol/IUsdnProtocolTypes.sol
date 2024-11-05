@@ -651,18 +651,18 @@ interface IUsdnProtocolTypes {
         uint128 _targetUsdnPrice;
         uint128 _usdnRebaseThreshold;
         uint256 _minLongPosition;
-        // State
+        // state
         int256 _lastFundingPerDay;
         uint128 _lastPrice;
         uint128 _lastUpdateTimestamp;
         uint256 _pendingProtocolFee;
-        // Pending actions queue
+        // pending actions queue
         mapping(address => uint256) _pendingActions;
         DoubleEndedQueue.Deque _pendingActionsQueue;
-        // Vault
+        // vault
         uint256 _balanceVault;
         int256 _pendingBalanceVault;
-        // Long positions
+        // long positions
         int256 _EMA;
         uint256 _balanceLong;
         uint256 _totalExpo;
@@ -673,7 +673,9 @@ interface IUsdnProtocolTypes {
         int24 _highestPopulatedTick;
         uint256 _totalLongPositions;
         LibBitmap.Bitmap _tickBitmap;
+        // fallback
         address _protocolFallbackAddr;
+        // EIP712
         mapping(address => uint256) _nonce;
     }
 }
