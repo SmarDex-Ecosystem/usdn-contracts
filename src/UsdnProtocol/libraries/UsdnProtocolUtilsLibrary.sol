@@ -32,6 +32,15 @@ library UsdnProtocolUtilsLibrary {
     using SafeTransferLib for address;
     using SignedMath for int256;
 
+    // keccak256(abi.encode(uint256(keccak256("UsdnProtocol.storage.main")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant STORAGE_MAIN = 0xd143a936a6a372725e12535db83a2cfabcb3715dfd88bc350da3399604dc9700;
+
+    function _getMainStorage() internal pure returns (Types.Storage storage $) {
+        assembly {
+            $.slot := STORAGE_MAIN
+        }
+    }
+
     /**
      * @notice Refunds any excess ether to the user to prevent locking ETH in the contract
      * @param securityDepositValue The security deposit value of the action (zero for a validation action)
@@ -653,14 +662,5 @@ library UsdnProtocolUtilsLibrary {
         HugeUint.Uint512 memory accumulator
     ) internal pure returns (uint128 price_) {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), assetPrice, longTradingExpo, accumulator);
-    }
-
-    // keccak256(abi.encode(uint256(keccak256("UsdnProtocol.storage.main")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant STORAGE_MAIN = 0xd143a936a6a372725e12535db83a2cfabcb3715dfd88bc350da3399604dc9700;
-
-    function _getMainStorage() internal pure returns (Types.Storage storage $) {
-        assembly {
-            $.slot := STORAGE_MAIN
-        }
     }
 }

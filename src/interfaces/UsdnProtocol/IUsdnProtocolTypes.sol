@@ -522,6 +522,7 @@ interface IUsdnProtocolTypes {
     }
 
     /**
+     * @custom:storage-location erc7201:UsdnProtocol.storage.main
      * @notice Structure to hold the state of the protocol
      * @param _tickSpacing The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
