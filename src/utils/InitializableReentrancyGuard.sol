@@ -18,8 +18,26 @@ abstract contract InitializableReentrancyGuard {
     uint256 private constant NOT_ENTERED = 1;
     /// @notice The state of the contract after entering a function
     uint256 private constant ENTERED = 2;
-    /// @notice The state of the contract
-    uint256 private _status;
+
+    /// @custom:storage-location erc7201:InitializableReentrancyGuard.storage.status
+    struct InitializableReentrancyGuardStorage {
+        /// @notice The state of the contract
+        uint256 _status;
+    }
+
+    // keccak256(abi.encode(uint256(keccak256("InitializableReentrancyGuard.storage.status")) - 1)) &
+    // ~bytes32(uint256(0xff));
+    bytes32 private constant STORAGE_STATUS = 0x6f33a3bc64034eea47937f56d5e165f09a61a6a995142939d6f3e40f101ea600;
+
+    function _getInitializableReentrancyGuardStorage()
+        internal
+        pure
+        returns (InitializableReentrancyGuardStorage storage $)
+    {
+        assembly {
+            $.slot := STORAGE_STATUS
+        }
+    }
 
     /// @dev Unauthorized reentrant call
     error InitializableReentrancyGuardReentrantCall();
@@ -32,7 +50,9 @@ abstract contract InitializableReentrancyGuard {
 
     /// @notice Initializes the contract in the uninitialized state
     function __initializeReentrancyGuard_init() internal {
-        _status = UNINITIALIZED;
+        InitializableReentrancyGuardStorage storage $ = _getInitializableReentrancyGuardStorage();
+
+        $._status = UNINITIALIZED;
     }
 
     /**
@@ -53,37 +73,48 @@ abstract contract InitializableReentrancyGuard {
     modifier protocolInitializer() {
         _checkUninitialized();
         _;
-        _status = NOT_ENTERED; // mark initialized
+
+        InitializableReentrancyGuardStorage storage $ = _getInitializableReentrancyGuardStorage();
+
+        $._status = NOT_ENTERED; // mark initialized
     }
 
     /// @notice Reverts if the contract is not initialized
     function _checkInitialized() private view {
-        if (_status == UNINITIALIZED) {
+        InitializableReentrancyGuardStorage storage $ = _getInitializableReentrancyGuardStorage();
+
+        if ($._status == UNINITIALIZED) {
             revert InitializableReentrancyGuardUninitialized();
         }
     }
 
     /// @notice Reverts if the contract is initialized
     function _checkUninitialized() internal view {
-        if (_status != UNINITIALIZED) {
+        InitializableReentrancyGuardStorage storage $ = _getInitializableReentrancyGuardStorage();
+
+        if ($._status != UNINITIALIZED) {
             revert InitializableReentrancyGuardInvalidInitialization();
         }
     }
 
     /// @notice Reverts if `_status` is ENTERED``, or set `_status` to `ENTERED`
     function _nonReentrantBefore() private {
+        InitializableReentrancyGuardStorage storage $ = _getInitializableReentrancyGuardStorage();
+
         // on the first call to `nonReentrant`, `_status` will be `NOT_ENTERED`
-        if (_status == ENTERED) {
+        if ($._status == ENTERED) {
             revert InitializableReentrancyGuardReentrantCall();
         }
 
         // any calls to `nonReentrant` after this point will fail
-        _status = ENTERED;
+        $._status = ENTERED;
     }
 
     /// @notice Set `_status` to `NOT_ENTERED`
     function _nonReentrantAfter() private {
+        InitializableReentrancyGuardStorage storage $ = _getInitializableReentrancyGuardStorage();
+
         // by storing the original value once again, a refund is triggered (see https://eips.ethereum.org/EIPS/eip-2200)
-        _status = NOT_ENTERED;
+        $._status = NOT_ENTERED;
     }
 }
