@@ -128,8 +128,7 @@ contract Deploy is Script {
                     liquidationRewardsManager,
                     100, // tick spacing 100 = 1.05%
                     _feeCollector,
-                    protocolFallback,
-                    "1"
+                    protocolFallback
                 )
             ),
             opts

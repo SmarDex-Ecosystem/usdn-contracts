@@ -51,19 +51,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        IUsdnProtocolFallback protocolFallback,
-        string memory eip712Version
+        IUsdnProtocolFallback protocolFallback
     ) external initializer {
         initializeStorage(
-            usdn,
-            sdex,
-            asset,
-            oracleMiddleware,
-            liquidationRewardsManager,
-            tickSpacing,
-            feeCollector,
-            protocolFallback,
-            eip712Version
+            usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector, protocolFallback
         );
     }
 

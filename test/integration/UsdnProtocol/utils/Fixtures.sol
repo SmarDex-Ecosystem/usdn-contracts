@@ -173,8 +173,7 @@ contract UsdnProtocolBaseIntegrationFixture is
                     liquidationRewardsManager,
                     100, // tick spacing 100 = ~1.005%
                     ADMIN,
-                    protocolFallback,
-                    params.eip712Version
+                    protocolFallback
                 )
             )
         );
