@@ -13,7 +13,7 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
     ) external payable protocolInitializer onlyRole(DEFAULT_ADMIN_ROLE) {
-        return Core.initialize(s, depositAmount, longAmount, desiredLiqPrice, currentPriceData);
+        return Core.initialize(depositAmount, longAmount, desiredLiqPrice, currentPriceData);
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -22,12 +22,12 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
         view
         returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
     {
-        return Core.funding(s, timestamp);
+        return Core.funding(timestamp);
     }
 
     /// @inheritdoc IUsdnProtocolCore
     function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
-        return Core.getUserPendingAction(s, user);
+        return Core.getUserPendingAction(user);
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -36,7 +36,7 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
         view
         returns (uint256 available_)
     {
-        return Core.longAssetAvailableWithFunding(s, currentPrice, timestamp);
+        return Core.longAssetAvailableWithFunding(currentPrice, timestamp);
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -45,6 +45,6 @@ abstract contract UsdnProtocolCore is UsdnProtocolStorage, IUsdnProtocolCore {
         view
         returns (uint256 expo_)
     {
-        return Core.longTradingExpoWithFunding(s, currentPrice, timestamp);
+        return Core.longTradingExpoWithFunding(currentPrice, timestamp);
     }
 }

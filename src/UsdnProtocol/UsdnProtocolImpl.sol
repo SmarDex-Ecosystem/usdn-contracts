@@ -15,6 +15,7 @@ import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
 import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
 import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 
 contract UsdnProtocolImpl is
     IUsdnProtocolImpl,
@@ -40,6 +41,8 @@ contract UsdnProtocolImpl is
         address feeCollector,
         IUsdnProtocolFallback protocolFallback
     ) public initializer {
+        Storage storage s = Utils._getMainStorage();
+
         __AccessControlDefaultAdminRules_init(0, msg.sender);
         __initializeReentrancyGuard_init();
         __Pausable_init();
@@ -137,6 +140,6 @@ contract UsdnProtocolImpl is
     }
 
     fallback() external {
-        _delegate(s._protocolFallbackAddr);
+        _delegate(Utils._getMainStorage()._protocolFallbackAddr);
     }
 }

@@ -18,9 +18,6 @@ abstract contract UsdnProtocolStorage is
     PausableUpgradeable,
     EIP712Upgradeable
 {
-    /// @notice The storage structure of the Usdn protocol
-    Storage internal s;
-
     /// @inheritdoc IUsdnProtocolStorage
     bytes32 public constant SET_EXTERNAL_ROLE = keccak256("SET_EXTERNAL_ROLE");
 
