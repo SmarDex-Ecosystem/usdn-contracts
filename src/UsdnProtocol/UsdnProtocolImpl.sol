@@ -38,16 +38,13 @@ contract UsdnProtocolImpl is
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Managers memory managers,
-        IUsdnProtocolFallback protocolFallback,
-        string memory eip712Version
+        IUsdnProtocolFallback protocolFallback
     ) public initializer {
         __AccessControlDefaultAdminRules_init(0, msg.sender);
         __initializeReentrancyGuard_init();
         __Pausable_init();
-        __EIP712_init("UsdnProtocol", eip712Version);
+        __EIP712_init("UsdnProtocol", "1");
 
-        // roles
         _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
         _setRoleAdmin(CRITICAL_FUNCTIONS_ROLE, ADMIN_CRITICAL_FUNCTIONS_ROLE);
         _setRoleAdmin(SET_PROTOCOL_PARAMS_ROLE, ADMIN_SET_PROTOCOL_PARAMS_ROLE);
@@ -56,14 +53,6 @@ contract UsdnProtocolImpl is
         _setRoleAdmin(PROXY_UPGRADE_ROLE, ADMIN_PROXY_UPGRADE_ROLE);
         _setRoleAdmin(PAUSER_ROLE, ADMIN_PAUSER_ROLE);
         _setRoleAdmin(UNPAUSER_ROLE, ADMIN_UNPAUSER_ROLE);
-        _grantRole(SET_EXTERNAL_ROLE, managers.setExternalManager);
-        _grantRole(CRITICAL_FUNCTIONS_ROLE, managers.criticalFunctionsManager);
-        _grantRole(SET_PROTOCOL_PARAMS_ROLE, managers.setProtocolParamsManager);
-        _grantRole(SET_USDN_PARAMS_ROLE, managers.setUsdnParamsManager);
-        _grantRole(SET_OPTIONS_ROLE, managers.setOptionsManager);
-        _grantRole(PROXY_UPGRADE_ROLE, managers.proxyUpgradeManager);
-        _grantRole(PAUSER_ROLE, managers.pauserManager);
-        _grantRole(UNPAUSER_ROLE, managers.unpauserManager);
 
         // parameters
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1); // x1.1
@@ -89,7 +78,6 @@ contract UsdnProtocolImpl is
         s._sdexBurnOnDepositRatio = 1e6; // 1%
         s._securityDepositValue = 0.5 ether;
 
-        // Long positions
         s._EMA = int256(3 * 10 ** (Constants.FUNDING_RATE_DECIMALS - 4));
 
         // since all USDN must be minted by the protocol, we check that the total supply is 0

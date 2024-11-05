@@ -742,37 +742,6 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     }
 
     /**
-     * @custom:scenario A rebalancer user closes their position partially when the position is too small
-     * @custom:given The user has deposited 2 ether in the rebalancer
-     * @custom:and The rebalancer's position has 4 ether of initial collateral
-     * @custom:and The minimum long position in the protocol is changed to 6 ether
-     * @custom:when The user closes their position partially (1 ether) through a rebalancer partial close
-     * @custom:then The partial close is unauthorized and reverts with `UsdnProtocolLongPositionTooSmall`
-     */
-    function test_RevertWhen_closePartialFromRebalancerPartialUserClose() public {
-        uint88 minAssetDeposit = 2 ether;
-
-        PositionId memory rebalancerPos = _setUpMockRebalancerPosition(minAssetDeposit);
-
-        vm.prank(ADMIN);
-        protocol.setMinLongPosition(3 * minAssetDeposit);
-
-        vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
-        vm.prank(address(rebalancer));
-        protocol.initiateClosePosition(
-            rebalancerPos,
-            minAssetDeposit / 2,
-            DISABLE_MIN_PRICE,
-            USER_1,
-            USER_1,
-            type(uint256).max,
-            abi.encode(params.initialPrice),
-            EMPTY_PREVIOUS_DATA,
-            ""
-        );
-    }
-
-    /**
      * @custom:scenario The user initiates a close position action with an exit price less than the user's min price
      * @custom:given The current price is $2000
      * @custom:when The user initiates a close position with a userMinPrice of $2001

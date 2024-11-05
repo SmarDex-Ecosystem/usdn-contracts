@@ -522,29 +522,6 @@ interface IUsdnProtocolTypes {
     }
 
     /**
-     * @notice Structure to hold the addresses of managers during deployment
-     * @param setExternalManager The manager's address to set the external contracts
-     * @param criticalFunctionsManager The manager's address to perform critical functions
-     * @param setProtocolParamsManager The manager's address to set the protocol parameters
-     * @param setUsdnParamsManager The manager's address to set the USDN parameters
-     * @param setOptionsManager The manager's address to set the protocol options that do not impact the usage of the
-     * protocol
-     * @param proxyUpgradeManager The manager's address to upgrade the protocol implementation
-     * @param pauserManager The manager's address to pause the protocol
-     * @param unpauserManager The manager's address to unpause the protocol
-     */
-    struct Managers {
-        address setExternalManager;
-        address criticalFunctionsManager;
-        address setProtocolParamsManager;
-        address setUsdnParamsManager;
-        address setOptionsManager;
-        address proxyUpgradeManager;
-        address pauserManager;
-        address unpauserManager;
-    }
-
-    /**
      * @notice Structure to hold the state of the protocol
      * @param _tickSpacing The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of

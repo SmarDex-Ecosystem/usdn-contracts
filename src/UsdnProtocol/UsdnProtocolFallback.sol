@@ -617,7 +617,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolFallback
     function setProtocolFeeBps(uint16 newProtocolFeeBps) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        if (newProtocolFeeBps > Constants.BPS_DIVISOR) {
+        if (newProtocolFeeBps > Constants.MAX_PROTOCOL_FEE_BPS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidProtocolFeeBps();
         }
         s._protocolFeeBps = newProtocolFeeBps;
@@ -668,6 +668,9 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolFallback
     function setSecurityDepositValue(uint64 securityDepositValue) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+        if (securityDepositValue > Constants.MAX_SECURITY_DEPOSIT) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidSecurityDeposit();
+        }
         s._securityDepositValue = securityDepositValue;
         emit IUsdnProtocolEvents.SecurityDepositValueUpdated(securityDepositValue);
     }
@@ -725,6 +728,9 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolFallback
     function setMinLongPosition(uint256 newMinLongPosition) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
+        if (newMinLongPosition > Constants.MAX_MIN_LONG_POSITION) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidMinLongPosition();
+        }
         s._minLongPosition = newMinLongPosition;
         emit IUsdnProtocolEvents.MinLongPositionUpdated(newMinLongPosition);
 
@@ -785,6 +791,10 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolFallback
     function setUsdnRebaseThreshold(uint128 newThreshold) external onlyRole(SET_USDN_PARAMS_ROLE) {
         if (newThreshold < s._targetUsdnPrice) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidUsdnRebaseThreshold();
+        }
+        if (newThreshold > uint128(2 * 10 ** s._priceFeedDecimals)) {
+            // values greater than $2 are not allowed
             revert IUsdnProtocolErrors.UsdnProtocolInvalidUsdnRebaseThreshold();
         }
         s._usdnRebaseThreshold = newThreshold;

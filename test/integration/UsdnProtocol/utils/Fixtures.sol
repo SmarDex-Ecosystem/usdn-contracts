@@ -12,23 +12,16 @@ import { UsdnProtocolHandler } from "../../../unit/UsdnProtocol/utils/Handler.so
 import {
     ADMIN,
     CHAINLINK_ORACLE_ETH,
-    CRITICAL_FUNCTIONS_MANAGER,
     DEPLOYER,
-    PAUSER_MANAGER,
-    PROXY_UPGRADE_MANAGER,
     PYTH_ETH_USD,
     PYTH_ORACLE,
     SDEX,
-    SET_EXTERNAL_MANAGER,
-    SET_OPTIONS_MANAGER,
-    SET_PROTOCOL_PARAMS_MANAGER,
-    SET_USDN_PARAMS_MANAGER,
-    UNPAUSER_MANAGER,
     WSTETH
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
+import { RolesUtils } from "../../../utils/RolesUtils.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import {
@@ -48,7 +41,13 @@ import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUs
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
-contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents, IEventsErrors {
+contract UsdnProtocolBaseIntegrationFixture is
+    BaseFixture,
+    RolesUtils,
+    IUsdnProtocolErrors,
+    IUsdnProtocolEvents,
+    IEventsErrors
+{
     struct SetUpParams {
         uint128 initialDeposit;
         uint128 initialLong;
@@ -85,17 +84,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         eip712Version: "1"
     });
 
-    Managers managers = Managers({
-        setExternalManager: SET_EXTERNAL_MANAGER,
-        criticalFunctionsManager: CRITICAL_FUNCTIONS_MANAGER,
-        setProtocolParamsManager: SET_PROTOCOL_PARAMS_MANAGER,
-        setUsdnParamsManager: SET_USDN_PARAMS_MANAGER,
-        setOptionsManager: SET_OPTIONS_MANAGER,
-        proxyUpgradeManager: PROXY_UPGRADE_MANAGER,
-        pauserManager: PAUSER_MANAGER,
-        unpauserManager: UNPAUSER_MANAGER
-    });
-
     Usdn public usdn;
     Sdex public sdex;
     IUsdnProtocolHandler public protocol;
@@ -113,7 +101,29 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
     ExpoImbalanceLimitsBps internal defaultLimits;
 
+    struct SetUpImbalancedData {
+        bool success;
+        uint256 messageValue;
+        uint88 amount;
+        uint128 wstEthPrice;
+        uint128 ethPrice;
+        uint256 oracleFee;
+    }
+
     function _setUp(SetUpParams memory testParams) public virtual {
+        if (!testParams.enableRoles) {
+            managers = Managers({
+                setExternalManager: ADMIN,
+                criticalFunctionsManager: ADMIN,
+                setProtocolParamsManager: ADMIN,
+                setUsdnParamsManager: ADMIN,
+                setOptionsManager: ADMIN,
+                proxyUpgradeManager: ADMIN,
+                pauserManager: ADMIN,
+                unpauserManager: ADMIN
+            });
+        }
+
         vm.startPrank(DEPLOYER);
         if (testParams.fork) {
             string memory url = vm.rpcUrl("mainnet");
@@ -158,19 +168,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
 
-        if (!testParams.enableRoles) {
-            managers = Managers({
-                setExternalManager: ADMIN,
-                criticalFunctionsManager: ADMIN,
-                setProtocolParamsManager: ADMIN,
-                setUsdnParamsManager: ADMIN,
-                setOptionsManager: ADMIN,
-                proxyUpgradeManager: ADMIN,
-                pauserManager: ADMIN,
-                unpauserManager: ADMIN
-            });
-        }
-
         implementation = new UsdnProtocolHandler();
         protocolFallback = new UsdnProtocolFallback();
         address proxy = UnsafeUpgrades.deployUUPSProxy(
@@ -185,9 +182,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                     liquidationRewardsManager,
                     100, // tick spacing 100 = ~1.005%
                     ADMIN,
-                    managers,
-                    protocolFallback,
-                    params.eip712Version
+                    protocolFallback
                 )
             )
         );
@@ -218,6 +213,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
         );
         vm.stopPrank();
+
+        _giveRolesTo(managers, protocol);
+
         vm.prank(managers.setExternalManager);
         protocol.setRebalancer(rebalancer);
         params = testParams;
@@ -243,7 +241,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         skip(oracleMiddleware.getValidationDelay() + 1);
     }
 
-    function _setUpImbalanced(uint128 additionalLongAmount)
+    function _setUpImbalanced(address payable user, uint128 additionalLongAmount)
         internal
         returns (
             int24 tickSpacing_,
@@ -256,7 +254,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         params.initialLong = 200 ether;
         _setUp(params);
 
-        sdex.mintAndApprove(address(this), 50_000 ether, address(protocol), type(uint256).max);
+        sdex.mintAndApprove(user, 50_000 ether, address(protocol), type(uint256).max);
 
         tickSpacing_ = protocol.getTickSpacing();
 
@@ -277,54 +275,47 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         vm.stopPrank();
 
+        vm.deal(user, 10_000 ether);
+
+        vm.startPrank(user);
+        SetUpImbalancedData memory data;
         // mint wstEth to the test contract
-        (bool success,) = address(wstETH).call{ value: 200 ether }("");
-        require(success, "wstETH mint failed");
+        (data.success,) = address(wstETH).call{ value: 200 ether }("");
+        require(data.success, "wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
         wstETH.approve(address(rebalancer), type(uint256).max);
 
-        uint256 messageValue = protocol.getSecurityDepositValue();
+        data.messageValue = protocol.getSecurityDepositValue();
 
-        uint88 amount = 3 ether;
+        data.amount = 3 ether;
 
         // deposit assets in the rebalancer
-        rebalancer.initiateDepositAssets(amount, payable(address(this)));
+        rebalancer.initiateDepositAssets(data.amount, user);
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
-        amountInRebalancer_ += amount;
+        amountInRebalancer_ += data.amount;
 
         // deposit assets in the protocol to imbalance it
-        protocol.initiateDeposit{ value: messageValue }(
-            30 ether,
-            DISABLE_SHARES_OUT_MIN,
-            payable(address(this)),
-            payable(address(this)),
-            type(uint256).max,
-            "",
-            EMPTY_PREVIOUS_DATA
+        protocol.initiateDeposit{ value: data.messageValue }(
+            30 ether, DISABLE_SHARES_OUT_MIN, user, user, type(uint256).max, "", EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
 
-        {
-            uint128 wstEthPrice = 2000 ether;
-            uint128 ethPrice = uint128(wstETH.getWstETHByStETH(wstEthPrice));
-            mockPyth.setPrice(int64(uint64(ethPrice / 1e10)));
-            mockPyth.setLastPublishTime(block.timestamp - 1);
-        }
+        _setOraclePrices(2000 ether);
 
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit);
 
-        protocol.validateDeposit{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit{ value: oracleFee }(user, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
 
         // open a position to liquidate and trigger the rebalancer
-        (, posToLiquidate_) = protocol.initiateOpenPosition{ value: messageValue }(
+        (, posToLiquidate_) = protocol.initiateOpenPosition{ value: data.messageValue }(
             additionalLongAmount,
             1500 ether,
             type(uint128).max,
             protocol.getMaxLeverage(),
-            payable(address(this)),
-            payable(address(this)),
+            user,
+            user,
             type(uint256).max,
             "",
             EMPTY_PREVIOUS_DATA
@@ -335,9 +326,10 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         mockPyth.setLastPublishTime(block.timestamp);
 
         oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateOpenPosition);
-        protocol.validateOpenPosition{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition{ value: oracleFee }(user, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
 
         tickToLiquidateData_ = protocol.getTickData(posToLiquidate_.tick);
+        vm.stopPrank();
 
         vm.prank(managers.setProtocolParamsManager);
         protocol.setExpoImbalanceLimits(

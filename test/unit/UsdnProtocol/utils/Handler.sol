@@ -8,6 +8,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
+import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsLongLibrary.sol";
@@ -50,21 +51,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Managers memory managers,
-        IUsdnProtocolFallback protocolFallback,
-        string memory eip712Version
+        IUsdnProtocolFallback protocolFallback
     ) external initializer {
         initializeStorage(
-            usdn,
-            sdex,
-            asset,
-            oracleMiddleware,
-            liquidationRewardsManager,
-            tickSpacing,
-            feeCollector,
-            managers,
-            protocolFallback,
-            eip712Version
+            usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector, protocolFallback
         );
     }
 
@@ -824,5 +814,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         ActionsUtils._verifyTransferPositionOwnershipDelegation(
             s, posId, delegationSignature, domainSeparatorV4, positionOwner, newPositionOwner
         );
+    }
+
+    function i_setUsdnRebaseThreshold(uint128 threshold) external {
+        s._usdnRebaseThreshold = threshold;
     }
 }

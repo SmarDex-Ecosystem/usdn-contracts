@@ -468,4 +468,6 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         address positionOwner,
         address newPositionOwner
     ) external;
+
+    function i_setUsdnRebaseThreshold(uint128 threshold) external;
 }

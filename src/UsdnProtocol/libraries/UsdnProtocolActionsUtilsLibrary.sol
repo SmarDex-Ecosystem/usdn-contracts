@@ -7,7 +7,6 @@ import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC16
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IBaseRebalancer } from "../../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IOwnershipCallback } from "../../interfaces/UsdnProtocol/IOwnershipCallback.sol";
 import { IUsdnProtocolActions } from "../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -416,17 +415,8 @@ library UsdnProtocolActionsUtilsLibrary {
         // make sure the remaining position is higher than _minLongPosition
         // for the Rebalancer, we allow users to close their position fully in every case
         uint128 remainingAmount = pos.amount - params.amountToClose;
-        if (remainingAmount > 0 && remainingAmount < s._minLongPosition) {
-            IBaseRebalancer rebalancer = s._rebalancer;
-            if (msg.sender == address(rebalancer)) {
-                // note: the rebalancer always indicates the rebalancer user's address as validator
-                uint128 userPosAmount = rebalancer.getUserDepositData(params.validator).amount;
-                if (params.amountToClose != userPosAmount) {
-                    revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
-                }
-            } else {
-                revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
-            }
+        if (remainingAmount > 0 && remainingAmount < s._minLongPosition && msg.sender != address(s._rebalancer)) {
+            revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
         }
     }
 
@@ -472,6 +462,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Types.PrepareInitiateClosePositionParams calldata params,
         address positionOwner
     ) internal {
+        uint256 nonce = s._nonce[positionOwner];
         bytes32 digest = MessageHashUtils.toTypedDataHash(
             params.domainSeparatorV4,
             keccak256(
@@ -484,7 +475,7 @@ library UsdnProtocolActionsUtilsLibrary {
                     params.deadline,
                     positionOwner,
                     msg.sender,
-                    s._nonce[positionOwner]
+                    nonce
                 )
             )
         );
@@ -493,7 +484,7 @@ library UsdnProtocolActionsUtilsLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidDelegationSignature();
         }
 
-        s._nonce[positionOwner] += 1;
+        s._nonce[positionOwner] = nonce + 1;
     }
 
     /**
