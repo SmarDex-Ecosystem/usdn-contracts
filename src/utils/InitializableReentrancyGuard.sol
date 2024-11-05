@@ -38,15 +38,15 @@ abstract contract InitializableReentrancyGuard {
 
     /**
      * @notice Get the struct pointer of the contract storage
-     * @return s The pointer to the struct
+     * @return s_ The pointer to the struct
      */
     function _getInitializableReentrancyGuardStorage()
         internal
         pure
-        returns (InitializableReentrancyGuardStorage storage s)
+        returns (InitializableReentrancyGuardStorage storage s_)
     {
         assembly {
-            s.slot := STORAGE_STATUS
+            s_.slot := STORAGE_STATUS
         }
     }
 
@@ -61,9 +61,9 @@ abstract contract InitializableReentrancyGuard {
 
     /// @notice Initializes the contract in the uninitialized state
     function __initializeReentrancyGuard_init() internal {
-        InitializableReentrancyGuardStorage storage $ = _getInitializableReentrancyGuardStorage();
+        InitializableReentrancyGuardStorage storage s = _getInitializableReentrancyGuardStorage();
 
-        $._status = UNINITIALIZED;
+        s._status = UNINITIALIZED;
     }
 
     /**

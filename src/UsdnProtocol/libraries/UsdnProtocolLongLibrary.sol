@@ -63,6 +63,7 @@ library UsdnProtocolLongLibrary {
      * @param isPriceRecent A boolean indicating if the price is recent
      * @param tempLongBalance The temporary long balance
      * @param tempVaultBalance The temporary vault balance
+     * @param lastPrice The last price used to update the protocol
      * @param rebased A boolean indicating if the USDN token was rebased
      * @param callbackResult The result of the callback
      * @param rebalancerAction The `_triggerRebalancer` action
@@ -496,6 +497,7 @@ library UsdnProtocolLongLibrary {
      * @param liquidatedTicks Information about the liquidated ticks
      * @param currentPrice The current price of the asset
      * @param rebased Whether a USDN rebase was performed
+     * @param rebalancerAction The rebalancer action that was performed
      * @param action The protocol action that triggered liquidations
      * @param rebaseCallbackResult The rebase callback result, if any
      * @param priceData The price oracle update data

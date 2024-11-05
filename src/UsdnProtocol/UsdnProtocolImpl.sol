@@ -141,8 +141,6 @@ contract UsdnProtocolImpl is
     }
 
     fallback() external {
-        Storage storage s = Utils._getMainStorage();
-
-        _delegate(s._protocolFallbackAddr);
+        _delegate(Utils._getMainStorage()._protocolFallbackAddr);
     }
 }

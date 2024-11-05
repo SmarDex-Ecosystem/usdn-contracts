@@ -32,12 +32,19 @@ library UsdnProtocolUtilsLibrary {
     using SafeTransferLib for address;
     using SignedMath for int256;
 
-    // keccak256(abi.encode(uint256(keccak256("UsdnProtocol.storage.main")) - 1)) & ~bytes32(uint256(0xff))
+    /**
+     * @notice The slot in which the main storage is stored
+     * @dev keccak256(abi.encode(uint256(keccak256("UsdnProtocol.storage.main")) - 1)) & ~bytes32(uint256(0xff))
+     */
     bytes32 private constant STORAGE_MAIN = 0xd143a936a6a372725e12535db83a2cfabcb3715dfd88bc350da3399604dc9700;
 
-    function _getMainStorage() internal pure returns (Types.Storage storage $) {
+    /**
+     * @notice Get the main storage slot pointer
+     * @return s_ The main storage slot pointer
+     */
+    function _getMainStorage() internal pure returns (Types.Storage storage s_) {
         assembly {
-            $.slot := STORAGE_MAIN
+            s_.slot := STORAGE_MAIN
         }
     }
 

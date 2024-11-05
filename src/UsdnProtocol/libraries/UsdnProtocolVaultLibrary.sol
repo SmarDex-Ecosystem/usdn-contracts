@@ -75,7 +75,7 @@ library UsdnProtocolVaultLibrary {
      * @param to The address to receive the USDN tokens
      * @param validator The address that will validate the withdrawal
      * @param usdnShares The amount of USDN shares to withdraw
-     * @param sharesOutMin The minimum amount of assets to receive
+     * @param amountOutMin The minimum amount of assets to receive
      * @param securityDepositValue The value of the security deposit for the newly created withdrawal
      */
     struct WithdrawalParams {
