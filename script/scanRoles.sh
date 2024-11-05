@@ -193,57 +193,42 @@ json_output=$(printf "%s" "$json_output" | jq 'sort_by(
     end
 )')
 
-# JSON output
-while true; do
-    read -p $'\n'"Do you want to save the JSON to a file (y), display it on the screen (d), or do nothing (n)? " ydn
-    case $ydn in
-    [Yy]*)
-        # Save the JSON to a file
-        output_file="roles.json"
-        printf "%s" "$json_output" | jq . > "$output_file"
-        printf "JSON saved to file: %s\n" "$output_file"
+process_output() {
+    local output_type="$1"
+    local output_data="$2"
+    local file_name="$3"
+    local header="$4" # Optional, used for CSV headers
 
-        break
-        ;;
-    [Dd]*)
-        # Display the JSON on the screen
-        printf "%s" "$json_output" | jq .
+    while true; do
+        read -p $'\n'"Do you want to save the $output_type to a file (y), display it on the screen (d), or do nothing (n)? " choice
+        case $choice in
+        [Yy]*)
+            # Save the output to a file
+            printf "%s\n" "$header" > "$file_name"
+            printf "%s\n" "$output_data" >> "$file_name"
+            printf "%s saved to file: %s\n" "$output_type" "$file_name"
+            break
+            ;;
+        [Dd]*)
+            # Display the output on the screen
+            printf "%s\n" "$header"
+            printf "%s\n" "$output_data"
+            break
+            ;;
+        [Nn]*)
+            break
+            ;;
+        *)
+            printf "\n$red Please answer with yes (Y/y), display (D/d) or nothing (N/n).$nc\n"
+            ;;
+        esac
+    done
+}
 
-        break
-        ;;
-    [Nn]*)
+# JSON output processing
+json_output_processed=$(printf "%s" "$json_output" | jq .)
+process_output "JSON" "$json_output_processed" "roles.json"
 
-        break
-        ;;
-    *) printf "\n$red Please answer yes (Y/y), display (D/d) or nothing (N/n).$nc\n" ;;
-    esac
-done
-
-# CSV output
-csv_output+=$(printf "$json_output" | jq -r '.[] | [.Role, .Role_admin, (.Addresses | join(","))] | @csv')
-while true; do
-    read -p $'\n'"Do you want to save the CSV to a file (y), display it on the screen (d), or do nothing (n)? " ydn
-    case $ydn in
-    [Yy]*)
-        # Save the CSV to a file
-        output_file="roles.csv"
-        printf "Role,Role_admin,Addresses\n" > "$output_file"
-        printf "%s" "$csv_output" >> "$output_file"
-        printf "CSV saved to file: %s\n" "$output_file"
-
-        break
-        ;;
-    [Dd]*)
-        # Display the CSV on the screen
-        printf "%s\n" "Role,Role_admin,Addresses"
-        printf "%s\n" "$csv_output"
-
-        break
-        ;;
-    [Nn]*)
-
-        break
-        ;;
-    *) printf "\n$red Please answer yes (Y/y), display (D/d) or nothing (N/n).$nc\n" ;;
-    esac
-done
+# CSV output processing
+csv_output=$(printf "%s" "$json_output" | jq -r '.[] | [.Role, .Role_admin, (.Addresses | join(","))] | @csv')
+process_output "CSV" "$csv_output" "roles.csv" "Role,Role_admin,Addresses"
