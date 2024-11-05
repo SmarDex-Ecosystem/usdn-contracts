@@ -38,13 +38,12 @@ contract UsdnProtocolImpl is
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        IUsdnProtocolFallback protocolFallback,
-        string memory eip712Version
+        IUsdnProtocolFallback protocolFallback
     ) public initializer {
         __AccessControlDefaultAdminRules_init(0, msg.sender);
         __initializeReentrancyGuard_init();
         __Pausable_init();
-        __EIP712_init("UsdnProtocol", eip712Version);
+        __EIP712_init("UsdnProtocol", "1");
 
         _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
         _setRoleAdmin(CRITICAL_FUNCTIONS_ROLE, ADMIN_CRITICAL_FUNCTIONS_ROLE);
