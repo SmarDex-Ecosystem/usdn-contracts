@@ -20,6 +20,8 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_, PositionId memory posId_) {
+        Storage storage s = Utils._getMainStorage();
+
         InitiateOpenPositionParams memory params = InitiateOpenPositionParams({
             user: msg.sender,
             to: to,
@@ -32,7 +34,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
             securityDepositValue: s._securityDepositValue
         });
 
-        return ActionsLong.initiateOpenPosition(s, params, currentPriceData, previousActionsData);
+        return ActionsLong.initiateOpenPosition(params, currentPriceData, previousActionsData);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -41,7 +43,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
-        return ActionsLong.validateOpenPosition(s, validator, openPriceData, previousActionsData);
+        return ActionsLong.validateOpenPosition(validator, openPriceData, previousActionsData);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -56,6 +58,8 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         PreviousActionsData calldata previousActionsData,
         bytes calldata delegationSignature
     ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+        Storage storage s = Utils._getMainStorage();
+
         InitiateClosePositionParams memory params = InitiateClosePositionParams({
             to: to,
             validator: validator,
@@ -67,7 +71,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
             domainSeparatorV4: _domainSeparatorV4()
         });
 
-        return ActionsLong.initiateClosePosition(s, params, currentPriceData, previousActionsData, delegationSignature);
+        return ActionsLong.initiateClosePosition(params, currentPriceData, previousActionsData, delegationSignature);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -76,7 +80,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
-        return ActionsLong.validateClosePosition(s, validator, closePriceData, previousActionsData);
+        return ActionsLong.validateClosePosition(validator, closePriceData, previousActionsData);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -87,7 +91,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         initializedAndNonReentrant
         returns (LiqTickInfo[] memory liquidatedTicks_)
     {
-        return ActionsUtils.liquidate(s, currentPriceData);
+        return ActionsUtils.liquidate(currentPriceData);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -98,7 +102,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         initializedAndNonReentrant
         returns (uint256 validatedActions_)
     {
-        return ActionsUtils.validateActionablePendingActions(s, previousActionsData, maxValidations);
+        return ActionsUtils.validateActionablePendingActions(previousActionsData, maxValidations);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -107,7 +111,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         whenNotPaused
         initializedAndNonReentrant
     {
-        return ActionsUtils.transferPositionOwnership(s, posId, delegationSignature, _domainSeparatorV4(), newOwner);
+        return ActionsUtils.transferPositionOwnership(posId, delegationSignature, _domainSeparatorV4(), newOwner);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -121,6 +125,6 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
         view
         returns (Position memory pos_, uint24 liquidationPenalty_)
     {
-        return ActionsUtils.getLongPosition(s, posId);
+        return ActionsUtils.getLongPosition(posId);
     }
 }

@@ -33,6 +33,22 @@ library UsdnProtocolUtilsLibrary {
     using SignedMath for int256;
 
     /**
+     * @notice The slot in which the main storage is stored
+     * @dev keccak256(abi.encode(uint256(keccak256("UsdnProtocol.storage.main")) - 1)) & ~bytes32(uint256(0xff))
+     */
+    bytes32 private constant STORAGE_MAIN = 0xd143a936a6a372725e12535db83a2cfabcb3715dfd88bc350da3399604dc9700;
+
+    /**
+     * @notice Get the main storage slot pointer
+     * @return s_ The main storage slot pointer
+     */
+    function _getMainStorage() internal pure returns (Types.Storage storage s_) {
+        assembly {
+            s_.slot := STORAGE_MAIN
+        }
+    }
+
+    /**
      * @notice Refunds any excess ether to the user to prevent locking ETH in the contract
      * @param securityDepositValue The security deposit value of the action (zero for a validation action)
      * @param amountToRefund The amount to refund to the user:
@@ -80,9 +96,10 @@ library UsdnProtocolUtilsLibrary {
      * @dev This function is called after every action that changes the protocol fee balance
      * Try to call the function `feeCollectorCallback` on the fee collector if it supports the interface (non reverting
      * if it fails)
-     * @param s The storage of the protocol
      */
-    function _checkPendingFee(Types.Storage storage s) internal {
+    function _checkPendingFee() internal {
+        Types.Storage storage s = _getMainStorage();
+
         uint256 pendingFee = s._pendingProtocolFee;
         if (pendingFee >= s._feeThreshold) {
             address feeCollector = s._feeCollector;
@@ -99,20 +116,18 @@ library UsdnProtocolUtilsLibrary {
 
     /**
      * @notice Get the oracle price for the given action and timestamp then validate it
-     * @param s The storage of the protocol
      * @param action The type of action that is being performed by the user
      * @param timestamp The timestamp at which the wanted price was recorded
      * @param actionId The unique identifier of the action
      * @param priceData The price oracle data
      * @return price_ The validated price
      */
-    function _getOraclePrice(
-        Types.Storage storage s,
-        Types.ProtocolAction action,
-        uint256 timestamp,
-        bytes32 actionId,
-        bytes calldata priceData
-    ) internal returns (PriceInfo memory price_) {
+    function _getOraclePrice(Types.ProtocolAction action, uint256 timestamp, bytes32 actionId, bytes calldata priceData)
+        internal
+        returns (PriceInfo memory price_)
+    {
+        Types.Storage storage s = _getMainStorage();
+
         uint256 validationCost = s._oracleMiddleware.validationCost(priceData, action);
         if (address(this).balance < validationCost) {
             revert IUsdnProtocolErrors.UsdnProtocolInsufficientOracleFee();
@@ -125,11 +140,12 @@ library UsdnProtocolUtilsLibrary {
 
     /**
      * @notice Clear the pending action for a user
-     * @param s The storage of the protocol
      * @param user The user's address
      * @param rawIndex The rawIndex of the pending action in the queue
      */
-    function _clearPendingAction(Types.Storage storage s, address user, uint128 rawIndex) internal {
+    function _clearPendingAction(address user, uint128 rawIndex) internal {
+        Types.Storage storage s = _getMainStorage();
+
         s._pendingActionsQueue.clearAt(rawIndex);
         delete s._pendingActions[user];
     }
@@ -138,42 +154,43 @@ library UsdnProtocolUtilsLibrary {
      * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
      * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
      * due to the price change to `currentPrice`
-     * @param s The storage of the protocol
      * @param currentPrice The current price
      * @return available_ The available balance on the long side
      */
-    function _longAssetAvailable(Types.Storage storage s, uint128 currentPrice)
-        internal
-        view
-        returns (int256 available_)
-    {
+    function _longAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
+        Types.Storage storage s = _getMainStorage();
+
         available_ = _longAssetAvailable(s._totalExpo, s._balanceLong, currentPrice, s._lastPrice);
     }
 
     /**
      * @notice Function to calculate the hash and version of a given tick
-     * @param s The storage of the protocol
      * @param tick The tick
      * @return hash_ The hash of the tick
      * @return version_ The version of the tick
      */
-    function _tickHash(Types.Storage storage s, int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+    function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+        Types.Storage storage s = _getMainStorage();
+
         version_ = s._tickVersion[tick];
         hash_ = tickHash(tick, version_);
     }
 
     /**
      * @dev Convert a signed tick to an unsigned index into the Bitmap using the tick spacing in storage
-     * @param s The storage of the protocol
      * @param tick The tick to convert, a multiple of the tick spacing
      * @return index_ The index into the Bitmap
      */
-    function _calcBitmapIndexFromTick(Types.Storage storage s, int24 tick) internal view returns (uint256 index_) {
+    function _calcBitmapIndexFromTick(int24 tick) internal view returns (uint256 index_) {
+        Types.Storage storage s = _getMainStorage();
+
         index_ = _calcBitmapIndexFromTick(tick, s._tickSpacing);
     }
 
     /// @notice See {IUsdnProtocolLong}
-    function getEffectivePriceForTick(Types.Storage storage s, int24 tick) internal view returns (uint128 price_) {
+    function getEffectivePriceForTick(int24 tick) internal view returns (uint128 price_) {
+        Types.Storage storage s = _getMainStorage();
+
         price_ =
             getEffectivePriceForTick(tick, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator);
     }

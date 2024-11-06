@@ -47,16 +47,14 @@ library UsdnProtocolActionsUtilsLibrary {
     /* -------------------------------------------------------------------------- */
 
     /// @notice See {IUsdnProtocolActions}
-    function liquidate(Types.Storage storage s, bytes calldata currentPriceData)
+    function liquidate(bytes calldata currentPriceData)
         external
         returns (Types.LiqTickInfo[] memory liquidatedTicks_)
     {
         uint256 balanceBefore = address(this).balance;
-        PriceInfo memory currentPrice =
-            Utils._getOraclePrice(s, Types.ProtocolAction.Liquidation, 0, "", currentPriceData);
+        PriceInfo memory currentPrice = Utils._getOraclePrice(Types.ProtocolAction.Liquidation, 0, "", currentPriceData);
 
         (liquidatedTicks_,) = Long._applyPnlAndFundingAndLiquidate(
-            s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             Constants.MAX_LIQUIDATION_ITERATION,
@@ -65,33 +63,33 @@ library UsdnProtocolActionsUtilsLibrary {
         );
 
         Utils._refundExcessEther(0, 0, balanceBefore);
-        Utils._checkPendingFee(s);
+        Utils._checkPendingFee();
     }
 
     /// @notice See {IUsdnProtocolActions}
     function validateActionablePendingActions(
-        Types.Storage storage s,
         Types.PreviousActionsData calldata previousActionsData,
         uint256 maxValidations
     ) external returns (uint256 validatedActions_) {
         uint256 balanceBefore = address(this).balance;
 
         uint256 amountToRefund;
-        (validatedActions_, amountToRefund) = _validateMultipleActionable(s, previousActionsData, maxValidations);
+        (validatedActions_, amountToRefund) = _validateMultipleActionable(previousActionsData, maxValidations);
 
         Utils._refundExcessEther(0, amountToRefund, balanceBefore);
-        Utils._checkPendingFee(s);
+        Utils._checkPendingFee();
     }
 
     /// @notice See {IUsdnProtocolActions}
     function transferPositionOwnership(
-        Types.Storage storage s,
         Types.PositionId calldata posId,
         bytes calldata delegationSignature,
         bytes32 domainSeparatorV4,
         address newOwner
     ) external {
-        (bytes32 tickHash, uint256 version) = Utils._tickHash(s, posId.tick);
+        Types.Storage storage s = Utils._getMainStorage();
+
+        (bytes32 tickHash, uint256 version) = Utils._tickHash(posId.tick);
         if (posId.tickVersion != version) {
             revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
         }
@@ -106,7 +104,7 @@ library UsdnProtocolActionsUtilsLibrary {
                 revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
             } else {
                 _verifyTransferPositionOwnershipDelegation(
-                    s, posId, delegationSignature, domainSeparatorV4, pos.user, newOwner
+                    posId, delegationSignature, domainSeparatorV4, pos.user, newOwner
                 );
             }
         }
@@ -125,12 +123,14 @@ library UsdnProtocolActionsUtilsLibrary {
     /* -------------------------------------------------------------------------- */
 
     /// @notice See {IUsdnProtocolActions}
-    function getLongPosition(Types.Storage storage s, Types.PositionId memory posId)
+    function getLongPosition(Types.PositionId memory posId)
         public
         view
         returns (Types.Position memory pos_, uint24 liquidationPenalty_)
     {
-        (bytes32 tickHash, uint256 version) = Utils._tickHash(s, posId.tick);
+        Types.Storage storage s = Utils._getMainStorage();
+
+        (bytes32 tickHash, uint256 version) = Utils._tickHash(posId.tick);
         if (posId.tickVersion != version) {
             revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
         }
@@ -146,21 +146,21 @@ library UsdnProtocolActionsUtilsLibrary {
      * @notice Update protocol balances, then prepare the data for the initiate close position action
      * @dev Reverts if the imbalance limit is reached, or if any of the checks in `_checkInitiateClosePosition` fail
      * Returns without creating a pending action if the position gets liquidated in this transaction
-     * @param s The storage of the protocol
      * @param params The parameters for the _prepareClosePositionData function
      * @return data_ The close position data
      * @return liquidated_ Whether the position was liquidated and the caller should return early
      */
-    function _prepareClosePositionData(
-        Types.Storage storage s,
-        Types.PrepareInitiateClosePositionParams calldata params
-    ) public returns (Types.ClosePositionData memory data_, bool liquidated_) {
-        (data_.pos, data_.liquidationPenalty) = getLongPosition(s, params.posId);
+    function _prepareClosePositionData(Types.PrepareInitiateClosePositionParams calldata params)
+        public
+        returns (Types.ClosePositionData memory data_, bool liquidated_)
+    {
+        Types.Storage storage s = Utils._getMainStorage();
 
-        _checkInitiateClosePosition(s, data_.pos, params);
+        (data_.pos, data_.liquidationPenalty) = getLongPosition(params.posId);
+
+        _checkInitiateClosePosition(data_.pos, params);
 
         PriceInfo memory currentPrice = Utils._getOraclePrice(
-            s,
             Types.ProtocolAction.InitiateClosePosition,
             block.timestamp,
             Utils._calcActionId(params.validator, uint128(block.timestamp)),
@@ -168,7 +168,6 @@ library UsdnProtocolActionsUtilsLibrary {
         );
 
         (, data_.isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
-            s,
             currentPrice.neutralPrice,
             currentPrice.timestamp,
             s._liquidationIteration,
@@ -196,7 +195,7 @@ library UsdnProtocolActionsUtilsLibrary {
         }
 
         data_.totalExpoToClose = (uint256(data_.pos.totalExpo) * params.amountToClose / data_.pos.amount).toUint128();
-        data_.longTradingExpo = Core.longTradingExpoWithFunding(s, data_.lastPrice, uint128(block.timestamp));
+        data_.longTradingExpo = Core.longTradingExpoWithFunding(data_.lastPrice, uint128(block.timestamp));
         data_.liqMulAcc = s._liqMultiplierAccumulator;
 
         // the approximate value position to remove is calculated with `_lastPrice`, so not taking into account
@@ -215,22 +214,22 @@ library UsdnProtocolActionsUtilsLibrary {
 
         // we perform the imbalance check with the full position value subtracted from the long side, which is
         // representative of the state of the balances after this initiate action
-        _checkImbalanceLimitClose(s, data_.totalExpoToClose, data_.tempPositionValue);
+        _checkImbalanceLimitClose(data_.totalExpoToClose, data_.tempPositionValue);
     }
 
     /**
      * @notice Validate multiple actionable pending actions
-     * @param s The storage of the protocol
      * @param previousActionsData The data for the actions to validate (price and raw indices)
      * @param maxValidations The maximum number of validations to perform
      * @return validatedActions_ The number of validated actions
      * @return amountToRefund_ The total amount of security deposits refunded
      */
-    function _validateMultipleActionable(
-        Types.Storage storage s,
-        Types.PreviousActionsData calldata previousActionsData,
-        uint256 maxValidations
-    ) internal returns (uint256 validatedActions_, uint256 amountToRefund_) {
+    function _validateMultipleActionable(Types.PreviousActionsData calldata previousActionsData, uint256 maxValidations)
+        internal
+        returns (uint256 validatedActions_, uint256 amountToRefund_)
+    {
+        Types.Storage storage s = Utils._getMainStorage();
+
         uint256 length = previousActionsData.rawIndices.length;
         if (previousActionsData.priceData.length != length || length < 1) {
             return (0, 0);
@@ -268,16 +267,15 @@ library UsdnProtocolActionsUtilsLibrary {
             }
             if (_isActionable(data.pending.timestamp, lowLatencyDeadline, middlewareLowLatencyDelay, onChainDeadline)) {
                 if (data.pending.action == Types.ProtocolAction.ValidateDeposit) {
-                    data.executed = Vault._validateDepositWithAction(s, data.pending, previousActionsData.priceData[i]);
+                    data.executed = Vault._validateDepositWithAction(data.pending, previousActionsData.priceData[i]);
                 } else if (data.pending.action == Types.ProtocolAction.ValidateWithdrawal) {
-                    data.executed =
-                        Vault._validateWithdrawalWithAction(s, data.pending, previousActionsData.priceData[i]);
+                    data.executed = Vault._validateWithdrawalWithAction(data.pending, previousActionsData.priceData[i]);
                 } else if (data.pending.action == Types.ProtocolAction.ValidateOpenPosition) {
                     (data.executed, data.liq) =
-                        ActionsLong._validateOpenPositionWithAction(s, data.pending, previousActionsData.priceData[i]);
+                        ActionsLong._validateOpenPositionWithAction(data.pending, previousActionsData.priceData[i]);
                 } else if (data.pending.action == Types.ProtocolAction.ValidateClosePosition) {
                     (data.executed, data.liq) =
-                        ActionsLong._validateClosePositionWithAction(s, data.pending, previousActionsData.priceData[i]);
+                        ActionsLong._validateClosePositionWithAction(data.pending, previousActionsData.priceData[i]);
                 }
             } else {
                 // not actionable or empty pending action, let's keep looking
@@ -288,7 +286,7 @@ library UsdnProtocolActionsUtilsLibrary {
             }
             if (data.executed || data.liq) {
                 // validation was performed, let's update the return values and cleanup
-                Utils._clearPendingAction(s, data.pending.validator, data.rawIndex);
+                Utils._clearPendingAction(data.pending.validator, data.rawIndex);
                 amountToRefund_ += data.pending.securityDepositValue;
                 unchecked {
                     validatedActions_++;
@@ -342,14 +340,12 @@ library UsdnProtocolActionsUtilsLibrary {
      * @notice The close vault imbalance limit state verification
      * @dev To ensure that the protocol does not imbalance more than
      * the close limit on the vault side, otherwise revert
-     * @param s The storage of the protocol
      * @param posTotalExpoToClose The total expo to remove position
      * @param posValueToClose The value to remove from the position (and the long balance)
      */
-    function _checkImbalanceLimitClose(Types.Storage storage s, uint256 posTotalExpoToClose, uint256 posValueToClose)
-        internal
-        view
-    {
+    function _checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) internal view {
+        Types.Storage storage s = Utils._getMainStorage();
+
         int256 closeExpoImbalanceLimitBps;
         if (msg.sender == address(s._rebalancer)) {
             closeExpoImbalanceLimitBps = s._rebalancerCloseExpoImbalanceLimitBps;
@@ -377,15 +373,15 @@ library UsdnProtocolActionsUtilsLibrary {
      * @notice Perform checks for the initiate close position action
      * @dev Reverts if the to address is zero, the position was not validated yet, the position is not owned by the
      * user, the amount to close is higher than the position amount, or the amount to close is zero
-     * @param s The storage of the protocol
      * @param pos The position to close
      * @param params The parameters for the {_prepareClosePositionData} function
      */
     function _checkInitiateClosePosition(
-        Types.Storage storage s,
         Types.Position memory pos,
         Types.PrepareInitiateClosePositionParams calldata params
     ) internal {
+        Types.Storage storage s = Utils._getMainStorage();
+
         if (params.to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
@@ -408,7 +404,7 @@ library UsdnProtocolActionsUtilsLibrary {
             if (params.delegationSignature.length == 0) {
                 revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
             } else {
-                _verifyInitiateCloseDelegation(s, params, pos.user);
+                _verifyInitiateCloseDelegation(params, pos.user);
             }
         }
 
@@ -453,15 +449,15 @@ library UsdnProtocolActionsUtilsLibrary {
      * @notice Performs the {initiateClosePosition} EIP712 delegation signature verification
      * @dev Reverts if the function arguments don't match those included in the signature
      * and if the signer isn't the owner of the position
-     * @param s The storage of the protocol
      * @param params The parameters for the {_prepareClosePositionData} function
      * @param positionOwner The position owner
      */
     function _verifyInitiateCloseDelegation(
-        Types.Storage storage s,
         Types.PrepareInitiateClosePositionParams calldata params,
         address positionOwner
     ) internal {
+        Types.Storage storage s = Utils._getMainStorage();
+
         uint256 nonce = s._nonce[positionOwner];
         bytes32 digest = MessageHashUtils.toTypedDataHash(
             params.domainSeparatorV4,
@@ -491,7 +487,6 @@ library UsdnProtocolActionsUtilsLibrary {
      * @notice Performs the {transferPositionOwnership} EIP712 delegation signature verification
      * @dev Reverts if the function arguments don't match those included in the signature
      * and if the signer isn't the owner of the position
-     * @param s The storage of the protocol
      * @param posId The unique identifier of the position
      * @param delegationSignature An EIP712 signature that proves the caller is authorized by the owner of the position
      * to transfer the ownership to a different address on his behalf
@@ -500,13 +495,14 @@ library UsdnProtocolActionsUtilsLibrary {
      * @param newPositionOwner The new position owner
      */
     function _verifyTransferPositionOwnershipDelegation(
-        Types.Storage storage s,
         Types.PositionId calldata posId,
         bytes calldata delegationSignature,
         bytes32 domainSeparatorV4,
         address positionOwner,
         address newPositionOwner
     ) internal {
+        Types.Storage storage s = Utils._getMainStorage();
+
         uint256 nonce = s._nonce[positionOwner];
         bytes32 digest = MessageHashUtils.toTypedDataHash(
             domainSeparatorV4,
