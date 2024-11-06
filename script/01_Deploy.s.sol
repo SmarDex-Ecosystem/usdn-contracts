@@ -2,7 +2,6 @@
 pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
-import { console } from "forge-std/Test.sol";
 
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
