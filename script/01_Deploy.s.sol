@@ -323,13 +323,12 @@ contract Deploy is Script {
         bytes32 SET_EXTERNAL_ROLE = usdnProtocol.SET_EXTERNAL_ROLE();
         usdnProtocol.grantRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
         usdnProtocol.grantRole(SET_EXTERNAL_ROLE, _deployerAddress);
-        // set the rebalancer on the USDN protocol
+
         usdnProtocol.setRebalancer(rebalancer);
 
         usdn.revokeRole(SET_EXTERNAL_ROLE, _deployerAddress);
         usdn.revokeRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
 
-        // grant USDN minter and rebaser roles to protocol
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
         // renounce admin role on the USDN token, no one can later change roles

@@ -406,6 +406,8 @@ interface IUsdnProtocolTypes {
      * @param lastPrice The price of the last balances update
      * @param tickHash The tick hash
      * @param pos The position object
+     * @param liqPriceWithoutPenaltyNorFunding The liquidation price without penalty nor funding used to calculate the
+     * user leverage and the new total expo
      * @param liqPriceWithoutPenalty The new liquidation price without penalty
      * @param leverage The new leverage
      * @param oldPosValue The value of the position according to the old entry price and the _lastPrice
