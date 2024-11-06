@@ -16,9 +16,8 @@ abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
-        return Vault.initiateDeposit(
-            s, amount, sharesOutMin, to, validator, deadline, currentPriceData, previousActionsData
-        );
+        return
+            Vault.initiateDeposit(amount, sharesOutMin, to, validator, deadline, currentPriceData, previousActionsData);
     }
 
     /// @inheritdoc IUsdnProtocolVault
@@ -27,7 +26,7 @@ abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
         bytes calldata depositPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
-        return Vault.validateDeposit(s, validator, depositPriceData, previousActionsData);
+        return Vault.validateDeposit(validator, depositPriceData, previousActionsData);
     }
 
     /// @inheritdoc IUsdnProtocolVault
@@ -41,7 +40,7 @@ abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
         PreviousActionsData calldata previousActionsData
     ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
         return Vault.initiateWithdrawal(
-            s, usdnShares, amountOutMin, to, validator, deadline, currentPriceData, previousActionsData
+            usdnShares, amountOutMin, to, validator, deadline, currentPriceData, previousActionsData
         );
     }
 
@@ -51,7 +50,7 @@ abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
         bytes calldata withdrawalPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
-        return Vault.validateWithdrawal(s, validator, withdrawalPriceData, previousActionsData);
+        return Vault.validateWithdrawal(validator, withdrawalPriceData, previousActionsData);
     }
 
     /// @inheritdoc IUsdnProtocolVault
@@ -60,17 +59,17 @@ abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
         view
         returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
     {
-        return Vault.getActionablePendingActions(s, currentUser);
+        return Vault.getActionablePendingActions(currentUser);
     }
 
     /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice, uint128 timestamp) external view returns (uint256 price_) {
-        return Vault.usdnPrice(s, currentPrice, timestamp);
+        return Vault.usdnPrice(currentPrice, timestamp);
     }
 
     /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice) external view returns (uint256 price_) {
-        return Vault.usdnPrice(s, currentPrice);
+        return Vault.usdnPrice(currentPrice);
     }
 
     /// @inheritdoc IUsdnProtocolVault
@@ -79,6 +78,6 @@ abstract contract UsdnProtocolVault is UsdnProtocolStorage, IUsdnProtocolVault {
         view
         returns (uint256 available_)
     {
-        return Vault.vaultAssetAvailableWithFunding(s, currentPrice, timestamp);
+        return Vault.vaultAssetAvailableWithFunding(currentPrice, timestamp);
     }
 }

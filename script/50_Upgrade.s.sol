@@ -48,7 +48,8 @@ contract Upgrade is Script {
             // call the initialize function of the new implementation to upgrade the fallback contract
             // if this function does not exist, you will need to implement it
             // IMPORTANT: It is mandatory to add a call here, otherwise the transaction will revert
-            // the Solady implementation does not allow us to upgrade without calling a function afterwards
+            // the Solady implementation does not allow us to upgrade without calling a function afterwards.
+            // Consider also to upgrade the EIP712 version if the new implementation has an impact on delegation
             abi.encodeWithSignature("initializeStorageV2(address)", (address(protocolFallback))),
             opts
         );
