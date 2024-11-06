@@ -310,14 +310,14 @@ contract Deploy is Script {
      * @param rebalancer The rebalancer
      */
     function _handlePostDeployment(IUsdnProtocol usdnProtocol, Usdn usdn, Rebalancer rebalancer) internal {
-        // grant roles
         bytes32 ADMIN_SET_EXTERNAL_ROLE = usdnProtocol.ADMIN_SET_EXTERNAL_ROLE();
         bytes32 SET_EXTERNAL_ROLE = usdnProtocol.SET_EXTERNAL_ROLE();
         usdnProtocol.grantRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
         usdnProtocol.grantRole(SET_EXTERNAL_ROLE, _deployerAddress);
+
         // set the rebalancer on the USDN protocol
         usdnProtocol.setRebalancer(rebalancer);
-        // revoke roles
+
         usdn.revokeRole(SET_EXTERNAL_ROLE, _deployerAddress);
         usdn.revokeRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
 
