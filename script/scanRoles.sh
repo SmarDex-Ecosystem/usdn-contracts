@@ -11,19 +11,37 @@ abiUsdnProtocolStorage=$(cat "out/UsdnProtocolStorage.sol/UsdnProtocolStorage.js
 abiUsdn=$(cat "out/Usdn.sol/Usdn.json")
 abiOracleMiddleware=$(cat "out/OracleMiddleware.sol/OracleMiddleware.json")
 
-# Verify that all required arguments are provided
-if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then
-    printf "${red}Error: Invalid number of arguments provided.${nc}\n"
-    printf "Usage: $0 <UsdnProtocolAddress> <UsdnAddress> <OracleMiddlewareAddress> <RPC_URL> [<BlockNumber>]\n"
-    exit 1
-fi
+# Initialize variables
+contractAddressUsdnProtocol=""
+contractAddressUsdn=""
+contractAddressOracleMiddleware=""
+rpcUrl=""
+usdnProtocolBirthBlock=0
 
-# Assign command line arguments to variables
-contractAddressUsdnProtocol="$1"
-contractAddressUsdn="$2"
-contractAddressOracleMiddleware="$3"
-rpcUrl="$4" #should be an archive node RPC
-usdnProtocolBirthBlock="${5:-0}"
+# Function to display usage message
+usage() {
+    printf "${red}Error: Missing required arguments.${nc}\n"
+    printf "Usage: $0 --protocol <UsdnProtocolAddress> --usdn <UsdnAddress> --oracle <OracleMiddlewareAddress> --rpc-url <RPC_URL> [--block-number <BlockNumber>]\n"
+    exit 1
+}
+
+# Parse options
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --protocol) contractAddressUsdnProtocol="$2"; shift ;;
+        --usdn) contractAddressUsdn="$2"; shift ;;
+        --oracle) contractAddressOracleMiddleware="$2"; shift ;;
+        --rpc-url) rpcUrl="$2"; shift ;;
+        --block-number) usdnProtocolBirthBlock="$2"; shift ;;
+        *) usage ;; # Display usage if unexpected argument is found
+    esac
+    shift
+done
+
+# Verify that all required arguments are provided
+if [[ -z "$contractAddressUsdnProtocol" || -z "$contractAddressUsdn" || -z "$contractAddressOracleMiddleware" || -z "$rpcUrl" ]]; then
+    usage
+fi
 
 # Array of contracts to scan
 declare -A contracts=(
