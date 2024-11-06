@@ -130,9 +130,9 @@ This bash script will scan the roles of the UsdnProtocol / Usdn / OracleMiddlewa
 
 you need to run the script with the following arguments:
 
-- `RPC_URL`: the RPC URL of the network you want to scan
-- `USDN_PROTOCOL_ADDRESS`: the address of the deployed USDN protocol
-- `BlockNumber`: the blockNumber to start the scan from
+- `rpc-url`: the RPC URL of the network you want to scan
+- `protocol`: the address of the deployed USDN protocol
+- `block-number`: the blockNumber to start the scan from (optional)
 
 - example:
 
