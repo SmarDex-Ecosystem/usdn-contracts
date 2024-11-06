@@ -436,8 +436,6 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function i_fundingPerDay(int256 ema) external view returns (int256 fundingPerDay_, int256 oldLongExpo_);
 
-    function i_protocolFeeBps() external view returns (int256);
-
     function i_getTickFromDesiredLiqPrice(
         uint128 desiredLiqPriceWithoutPenalty,
         uint256 assetPrice,
@@ -460,4 +458,6 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         address positionOwner,
         Types.PrepareInitiateClosePositionParams calldata params
     ) external;
+
+    function i_setUsdnRebaseThreshold(uint128 threshold) external;
 }

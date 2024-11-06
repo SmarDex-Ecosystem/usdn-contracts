@@ -22,7 +22,8 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
     int24 public tickSpacing;
 
     function setUp() public {
-        (tickSpacing, amountInRebalancer, posToLiquidate, tickToLiquidateData) = _setUpImbalanced(10 ether);
+        (tickSpacing, amountInRebalancer, posToLiquidate, tickToLiquidateData) =
+            _setUpImbalanced(payable(address(this)), 10 ether);
         uint256 maxLeverage = protocol.getMaxLeverage();
         vm.startPrank(DEPLOYER);
         rebalancer.setPositionMaxLeverage(maxLeverage);

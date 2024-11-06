@@ -522,29 +522,7 @@ interface IUsdnProtocolTypes {
     }
 
     /**
-     * @notice Structure to hold the addresses of managers during deployment
-     * @param setExternalManager The manager's address to set the external contracts
-     * @param criticalFunctionsManager The manager's address to perform critical functions
-     * @param setProtocolParamsManager The manager's address to set the protocol parameters
-     * @param setUsdnParamsManager The manager's address to set the USDN parameters
-     * @param setOptionsManager The manager's address to set the protocol options that do not impact the usage of the
-     * protocol
-     * @param proxyUpgradeManager The manager's address to upgrade the protocol implementation
-     * @param pauserManager The manager's address to pause the protocol
-     * @param unpauserManager The manager's address to unpause the protocol
-     */
-    struct Managers {
-        address setExternalManager;
-        address criticalFunctionsManager;
-        address setProtocolParamsManager;
-        address setUsdnParamsManager;
-        address setOptionsManager;
-        address proxyUpgradeManager;
-        address pauserManager;
-        address unpauserManager;
-    }
-
-    /**
+     * @custom:storage-location erc7201:UsdnProtocol.storage.main
      * @notice Structure to hold the state of the protocol
      * @param _tickSpacing The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
@@ -673,18 +651,18 @@ interface IUsdnProtocolTypes {
         uint128 _targetUsdnPrice;
         uint128 _usdnRebaseThreshold;
         uint256 _minLongPosition;
-        // State
+        // state
         int256 _lastFundingPerDay;
         uint128 _lastPrice;
         uint128 _lastUpdateTimestamp;
         uint256 _pendingProtocolFee;
-        // Pending actions queue
+        // pending actions queue
         mapping(address => uint256) _pendingActions;
         DoubleEndedQueue.Deque _pendingActionsQueue;
-        // Vault
+        // vault
         uint256 _balanceVault;
         int256 _pendingBalanceVault;
-        // Long positions
+        // long positions
         int256 _EMA;
         uint256 _balanceLong;
         uint256 _totalExpo;
@@ -695,7 +673,9 @@ interface IUsdnProtocolTypes {
         int24 _highestPopulatedTick;
         uint256 _totalLongPositions;
         LibBitmap.Bitmap _tickBitmap;
+        // fallback
         address _protocolFallbackAddr;
+        // EIP712
         mapping(address => uint256) _nonce;
     }
 }

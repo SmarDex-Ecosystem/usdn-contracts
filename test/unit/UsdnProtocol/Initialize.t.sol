@@ -21,7 +21,6 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     uint128 public constant INITIAL_DEPOSIT = 100 ether;
     uint128 public constant INITIAL_POSITION = 100 ether;
     uint128 public constant INITIAL_PRICE = 3000 ether;
-    string public constant EIP712_VERSION = "1";
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -42,18 +41,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                     liquidationRewardsManager,
                     100, // tick spacing 100 = ~1.005%
                     ADMIN, // Fee collector
-                    Managers({
-                        setExternalManager: address(this),
-                        criticalFunctionsManager: address(this),
-                        setProtocolParamsManager: address(this),
-                        setUsdnParamsManager: address(this),
-                        setOptionsManager: address(this),
-                        proxyUpgradeManager: address(this),
-                        pauserManager: address(this),
-                        unpauserManager: address(this)
-                    }),
-                    protocolFallback,
-                    EIP712_VERSION
+                    protocolFallback
                 )
             )
         );
@@ -67,6 +55,20 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         skip(1);
         protocol.acceptDefaultAdminTransfer();
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
+
+        _giveRolesTo(
+            Managers(
+                address(this),
+                address(this),
+                address(this),
+                address(this),
+                address(this),
+                address(this),
+                address(this),
+                address(this)
+            ),
+            protocol
+        );
     }
 
     /**

@@ -38,12 +38,13 @@ library UsdnProtocolCoreLibrary {
 
     /// @notice See {IUsdnProtocolCore}
     function initialize(
-        Types.Storage storage s,
         uint128 depositAmount,
         uint128 longAmount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
     ) external {
+        Types.Storage storage s = Utils._getMainStorage();
+
         // since all USDN must be minted by the protocol, we check that the total supply is 0
         IUsdn usdn = s._usdn;
         if (usdn.totalSupply() != 0) {
@@ -51,30 +52,32 @@ library UsdnProtocolCoreLibrary {
         }
 
         PriceInfo memory currentPrice =
-            Utils._getOraclePrice(s, Types.ProtocolAction.Initialize, block.timestamp, "", currentPriceData);
+            Utils._getOraclePrice(Types.ProtocolAction.Initialize, block.timestamp, "", currentPriceData);
 
         s._lastUpdateTimestamp = uint128(block.timestamp);
         s._lastPrice = currentPrice.price.toUint128();
 
         (int24 tickWithPenalty, uint128 liqPriceWithoutPenalty) =
-            Long._getTickFromDesiredLiqPrice(s, desiredLiqPrice, s._liquidationPenalty);
+            Long._getTickFromDesiredLiqPrice(desiredLiqPrice, s._liquidationPenalty);
 
-        Long._checkOpenPositionLeverage(s, currentPrice.price.toUint128(), liqPriceWithoutPenalty, s._maxLeverage);
+        Long._checkOpenPositionLeverage(currentPrice.price.toUint128(), liqPriceWithoutPenalty, s._maxLeverage);
 
         uint128 positionTotalExpo =
             Utils._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liqPriceWithoutPenalty);
 
-        _checkInitImbalance(s, positionTotalExpo, longAmount, depositAmount);
+        _checkInitImbalance(positionTotalExpo, longAmount, depositAmount);
 
-        _createInitialDeposit(s, depositAmount, currentPrice.price.toUint128());
+        _createInitialDeposit(depositAmount, currentPrice.price.toUint128());
 
-        _createInitialPosition(s, longAmount, currentPrice.price.toUint128(), tickWithPenalty, positionTotalExpo);
+        _createInitialPosition(longAmount, currentPrice.price.toUint128(), tickWithPenalty, positionTotalExpo);
 
         Utils._refundEther(address(this).balance, payable(msg.sender));
     }
 
     /// @notice See {IUsdnProtocolCore}
-    function removeBlockedPendingAction(Types.Storage storage s, address validator, address payable to) external {
+    function removeBlockedPendingAction(address validator, address payable to) external {
+        Types.Storage storage s = Utils._getMainStorage();
+
         uint256 pendingActionIndex = s._pendingActions[validator];
         if (pendingActionIndex == 0) {
             // no pending action
@@ -82,13 +85,13 @@ library UsdnProtocolCoreLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
         }
         uint128 rawIndex = uint128(pendingActionIndex - 1);
-        _removeBlockedPendingAction(s, rawIndex, to, true);
+        _removeBlockedPendingAction(rawIndex, to, true);
     }
 
     /// @notice See {IUsdnProtocolCore}
-    function removeBlockedPendingActionNoCleanup(Types.Storage storage s, address validator, address payable to)
-        external
-    {
+    function removeBlockedPendingActionNoCleanup(address validator, address payable to) external {
+        Types.Storage storage s = Utils._getMainStorage();
+
         uint256 pendingActionIndex = s._pendingActions[validator];
         if (pendingActionIndex == 0) {
             // no pending action
@@ -96,25 +99,23 @@ library UsdnProtocolCoreLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
         }
         uint128 rawIndex = uint128(pendingActionIndex - 1);
-        _removeBlockedPendingAction(s, rawIndex, to, false);
+        _removeBlockedPendingAction(rawIndex, to, false);
     }
 
     /// @notice See {IUsdnProtocolCore}
-    function getUserPendingAction(Types.Storage storage s, address user)
-        external
-        view
-        returns (Types.PendingAction memory action_)
-    {
-        (action_,) = _getPendingAction(s, user);
+    function getUserPendingAction(address user) external view returns (Types.PendingAction memory action_) {
+        (action_,) = _getPendingAction(user);
     }
 
     /// @notice See {IUsdnProtocolCore}
-    function funding(Types.Storage storage s, uint128 timestamp)
+    function funding(uint128 timestamp)
         external
         view
         returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
     {
-        (funding_, fundingPerDay_, oldLongExpo_) = _funding(s, timestamp, s._EMA);
+        Types.Storage storage s = Utils._getMainStorage();
+
+        (funding_, fundingPerDay_, oldLongExpo_) = _funding(timestamp, s._EMA);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -122,24 +123,26 @@ library UsdnProtocolCoreLibrary {
     /* -------------------------------------------------------------------------- */
 
     /// @notice See {IUsdnProtocolCore}
-    function longAssetAvailableWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (uint256 available_)
     {
+        Types.Storage storage s = Utils._getMainStorage();
+
         if (timestamp < s._lastUpdateTimestamp) {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
 
-        (int256 fundAsset,) = _fundingAsset(s, timestamp, s._EMA);
+        (int256 fundAsset,) = _fundingAsset(timestamp, s._EMA);
 
         int256 tempAvailable;
         if (fundAsset > 0) {
-            tempAvailable = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+            tempAvailable = Utils._longAssetAvailable(currentPrice).safeSub(fundAsset);
         } else {
             int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             // fees have the same sign as fundAsset (negative here), so we need to sub them
-            tempAvailable = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset - fee);
+            tempAvailable = Utils._longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
         }
 
         // clamp the value to 0
@@ -160,12 +163,10 @@ library UsdnProtocolCoreLibrary {
     }
 
     /// @notice See {IUsdnProtocolCore}
-    function longTradingExpoWithFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (uint256 expo_)
-    {
-        expo_ = s._totalExpo - longAssetAvailableWithFunding(s, currentPrice, timestamp);
+    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) public view returns (uint256 expo_) {
+        Types.Storage storage s = Utils._getMainStorage();
+
+        expo_ = s._totalExpo - longAssetAvailableWithFunding(currentPrice, timestamp);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -174,7 +175,6 @@ library UsdnProtocolCoreLibrary {
 
     /**
      * @notice Prepare the pending action struct for an open position and add it to the queue
-     * @param s The storage of the protocol
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
      * @param securityDepositValue The value of the security deposit for the newly created pending action
@@ -182,7 +182,6 @@ library UsdnProtocolCoreLibrary {
      * @return amountToRefund_ Refund The security deposit value of a stale pending action
      */
     function _createOpenPendingAction(
-        Types.Storage storage s,
         address to,
         address validator,
         uint64 securityDepositValue,
@@ -203,7 +202,7 @@ library UsdnProtocolCoreLibrary {
             liqMultiplier: data.liqMultiplier,
             closeBoundedPositionValue: 0
         });
-        amountToRefund_ = _addPendingAction(s, validator, Utils._convertLongPendingAction(action));
+        amountToRefund_ = _addPendingAction(validator, Utils._convertLongPendingAction(action));
     }
 
     /**
@@ -211,16 +210,17 @@ library UsdnProtocolCoreLibrary {
      * calculate the new liquidation multiplier and the temporary new balances for each side
      * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding`, but does not
      * update the balances. This is left to the caller
-     * @param s The storage of the protocol
      * @param currentPrice The current price
      * @param timestamp The timestamp of the current price
      * @return data_ The data containing the temporary long balance, the temporary vault
      * balance, the last price and a flag indicating if the price is recent
      */
-    function _applyPnlAndFunding(Types.Storage storage s, uint128 currentPrice, uint128 timestamp)
+    function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         public
         returns (Types.ApplyPnlAndFundingData memory data_)
     {
+        Types.Storage storage s = Utils._getMainStorage();
+
         int256 fundAsset;
         {
             // cache variable for optimization
@@ -237,17 +237,17 @@ library UsdnProtocolCoreLibrary {
 
             // calculate the funding
             int256 fundingPerDay;
-            (fundAsset, fundingPerDay) = _fundingAsset(s, timestamp, s._EMA);
+            (fundAsset, fundingPerDay) = _fundingAsset(timestamp, s._EMA);
 
             s._lastFundingPerDay = fundingPerDay;
             emit IUsdnProtocolEvents.LastFundingPerDayUpdated(fundingPerDay, timestamp);
 
             // update the funding EMA (mutates the storage)
-            _updateEMA(s, fundingPerDay, timestamp - lastUpdateTimestamp);
+            _updateEMA(fundingPerDay, timestamp - lastUpdateTimestamp);
         }
 
         // take protocol fee on the funding value
-        (int256 fee, int256 fundAssetWithFee) = _calculateFee(s, fundAsset);
+        (int256 fee, int256 fundAssetWithFee) = _calculateFee(fundAsset);
 
         // we subtract the fee from the total balance
         int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256() - fee;
@@ -257,12 +257,12 @@ library UsdnProtocolCoreLibrary {
             // in case of positive funding, the long balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
             // only by the funding amount minus the fee amount
-            data_.tempLongBalance = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAsset);
+            data_.tempLongBalance = Utils._longAssetAvailable(currentPrice).safeSub(fundAsset);
         } else {
             // in case of negative funding, the vault balance must be decremented by the totality of the funding amount
             // however, since we deducted the fee amount from the total balance, the long balance will be incremented
             // only by the funding amount minus the fee amount
-            data_.tempLongBalance = Utils._longAssetAvailable(s, currentPrice).safeSub(fundAssetWithFee);
+            data_.tempLongBalance = Utils._longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
         }
 
         uint256 maxLongBalance = _calcMaxLongBalance(s._totalExpo);
@@ -283,18 +283,16 @@ library UsdnProtocolCoreLibrary {
     /**
      * @notice Remove the pending action from the queue if its tick version doesn't match the current tick version
      * @dev This is only applicable to `ValidateOpenPosition` pending actions
-     * @param s The storage of the protocol
      * @param validator The validator's address
      * @return securityDepositValue_ The security deposit value of the removed stale pending action
      */
-    function _removeStalePendingAction(Types.Storage storage s, address validator)
-        public
-        returns (uint256 securityDepositValue_)
-    {
+    function _removeStalePendingAction(address validator) public returns (uint256 securityDepositValue_) {
+        Types.Storage storage s = Utils._getMainStorage();
+
         if (s._pendingActions[validator] == 0) {
             return 0;
         }
-        (Types.PendingAction memory action, uint128 rawIndex) = _getPendingAction(s, validator);
+        (Types.PendingAction memory action, uint128 rawIndex) = _getPendingAction(validator);
         // the position is only at risk of being liquidated while pending if it is an open position action
         if (action.action == Types.ProtocolAction.ValidateOpenPosition) {
             Types.LongPendingAction memory openAction = Utils._toLongPendingAction(action);
@@ -320,16 +318,17 @@ library UsdnProtocolCoreLibrary {
     /**
      * @notice Add a pending action to the queue
      * @dev This reverts if there is already a pending action for this user
-     * @param s The storage of the protocol
      * @param user The user's address
      * @param action The pending action struct
      * @return amountToRefund_ The security deposit value of the stale pending action
      */
-    function _addPendingAction(Types.Storage storage s, address user, Types.PendingAction memory action)
+    function _addPendingAction(address user, Types.PendingAction memory action)
         public
         returns (uint256 amountToRefund_)
     {
-        amountToRefund_ = _removeStalePendingAction(s, user); // check if there is a pending action that was
+        Types.Storage storage s = Utils._getMainStorage();
+
+        amountToRefund_ = _removeStalePendingAction(user); // check if there is a pending action that was
             // liquidated and remove it
         if (s._pendingActions[user] > 0) {
             revert IUsdnProtocolErrors.UsdnProtocolPendingAction();
@@ -346,14 +345,13 @@ library UsdnProtocolCoreLibrary {
      * pending action ever gets stuck due to something reverting unexpectedly
      * The caller must wait at least 1 hour after the validation deadline to call this function. This is to give the
      * chance to normal users to validate the action if possible
-     * @param s The storage of the protocol
      * @param rawIndex The raw index of the pending action in the queue
      * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
      * @param cleanup If `true`, will attempt to perform more cleanup at the risk of reverting. Always try `true` first
      */
-    function _removeBlockedPendingAction(Types.Storage storage s, uint128 rawIndex, address payable to, bool cleanup)
-        public
-    {
+    function _removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) public {
+        Types.Storage storage s = Utils._getMainStorage();
+
         Types.PendingAction memory pending = s._pendingActionsQueue.atRaw(rawIndex);
         if (block.timestamp < pending.timestamp + s._lowLatencyValidatorDeadline + 1 hours) {
             revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
@@ -377,17 +375,14 @@ library UsdnProtocolCoreLibrary {
         } else if (pending.action == Types.ProtocolAction.ValidateOpenPosition) {
             // for pending opens, we need to remove the position
             Types.LongPendingAction memory open = Utils._toLongPendingAction(pending);
-            (bytes32 tHash, uint256 tickVersion) = Utils._tickHash(s, open.tick);
+            (bytes32 tHash, uint256 tickVersion) = Utils._tickHash(open.tick);
             if (tickVersion == open.tickVersion) {
                 // we only need to modify storage if the pos was not liquidated already
 
                 int256 posValue;
                 if (cleanup) {
                     posValue = Long.getPositionValue(
-                        s,
-                        Types.PositionId(open.tick, open.tickVersion, open.index),
-                        s._lastPrice,
-                        s._lastUpdateTimestamp
+                        Types.PositionId(open.tick, open.tickVersion, open.index), s._lastPrice, s._lastUpdateTimestamp
                     );
                 }
 
@@ -405,7 +400,7 @@ library UsdnProtocolCoreLibrary {
                         TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(open.tick, tickData.liquidationPenalty));
                     if (tickData.totalPos == 0) {
                         // we removed the last position in the tick
-                        s._tickBitmap.unset(Utils._calcBitmapIndexFromTick(s, open.tick));
+                        s._tickBitmap.unset(Utils._calcBitmapIndexFromTick(open.tick));
                         // reset tick penalty
                         tickData.liquidationPenalty = 0;
                     }
@@ -442,17 +437,16 @@ library UsdnProtocolCoreLibrary {
     /**
      * @notice Get the pending action for a user
      * @dev This function reverts if there is no pending action for the user
-     * @param s The storage of the protocol
      * @param user The user's address
      * @return action_ The pending action struct
      * @return rawIndex_ The raw index of the pending action in the queue
      */
-    function _getPendingActionOrRevert(Types.Storage storage s, address user)
+    function _getPendingActionOrRevert(address user)
         public
         view
         returns (Types.PendingAction memory action_, uint128 rawIndex_)
     {
-        (action_, rawIndex_) = _getPendingAction(s, user);
+        (action_, rawIndex_) = _getPendingAction(user);
         if (action_.action == Types.ProtocolAction.None) {
             revert IUsdnProtocolErrors.UsdnProtocolNoPendingAction();
         }
@@ -462,20 +456,19 @@ library UsdnProtocolCoreLibrary {
      * @notice Get the predicted value of the funding (in asset units) since the last state update for the given
      * timestamp
      * @dev If the provided timestamp is older than the last state update, the result will be zero
-     * @param s The storage of the protocol
      * @param timestamp The current timestamp
      * @param ema The EMA of the funding rate
      * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
      * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
      */
-    function _fundingAsset(Types.Storage storage s, uint128 timestamp, int256 ema)
+    function _fundingAsset(uint128 timestamp, int256 ema)
         internal
         view
         returns (int256 fundingAsset_, int256 fundingPerDay_)
     {
         int256 oldLongExpo;
         int256 fund;
-        (fund, fundingPerDay_, oldLongExpo) = _funding(s, timestamp, ema);
+        (fund, fundingPerDay_, oldLongExpo) = _funding(timestamp, ema);
         fundingAsset_ = fund.safeMul(oldLongExpo) / int256(10) ** Constants.FUNDING_RATE_DECIMALS;
     }
 
@@ -485,11 +478,12 @@ library UsdnProtocolCoreLibrary {
      * @dev All required checks are done in the caller function (_applyPnlAndFunding)
      * @dev If the number of seconds elapsed is greater than or equal to the EMA period, the EMA is updated to the last
      * funding value
-     * @param s The storage of the protocol
      * @param fundingPerDay The funding rate per day that was just calculated for the elapsed period
      * @param secondsElapsed The number of seconds elapsed since the last protocol action
      */
-    function _updateEMA(Types.Storage storage s, int256 fundingPerDay, uint128 secondsElapsed) internal {
+    function _updateEMA(int256 fundingPerDay, uint128 secondsElapsed) internal {
+        Types.Storage storage s = Utils._getMainStorage();
+
         s._EMA = _calcEMA(fundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
     }
 
@@ -497,15 +491,13 @@ library UsdnProtocolCoreLibrary {
      * @notice Calculate the protocol fee and apply it to the funding asset amount
      * @dev The funding factor is only adjusted by the fee rate when the funding is negative (vault pays to the long
      * side)
-     * @param s The storage of the protocol
      * @param fundAsset The funding asset amount to be used for the fee calculation
      * @return fee_ The absolute value of the calculated fee
      * @return fundAssetWithFee_ The updated funding asset amount after applying the fee
      */
-    function _calculateFee(Types.Storage storage s, int256 fundAsset)
-        internal
-        returns (int256 fee_, int256 fundAssetWithFee_)
-    {
+    function _calculateFee(int256 fundAsset) internal returns (int256 fee_, int256 fundAssetWithFee_) {
+        Types.Storage storage s = Utils._getMainStorage();
+
         int256 protocolFeeBps = Utils.toInt256(s._protocolFeeBps);
         fee_ = fundAsset * protocolFeeBps / int256(Constants.BPS_DIVISOR);
         // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
@@ -522,11 +514,12 @@ library UsdnProtocolCoreLibrary {
     /**
      * @notice Create initial deposit
      * @dev To be called from `initialize`
-     * @param s The storage of the protocol
      * @param amount The initial deposit amount
      * @param price The current asset price
      */
-    function _createInitialDeposit(Types.Storage storage s, uint128 amount, uint128 price) internal {
+    function _createInitialDeposit(uint128 amount, uint128 price) internal {
+        Types.Storage storage s = Utils._getMainStorage();
+
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             Utils.transferCallback(s._asset, amount, address(this));
         } else {
@@ -562,19 +555,14 @@ library UsdnProtocolCoreLibrary {
     /**
      * @notice Create initial long position
      * @dev To be called from `initialize`
-     * @param s The storage of the protocol
      * @param amount The initial position amount
      * @param price The current asset price
      * @param tick The tick corresponding where the position should be stored
      * @param totalExpo The total expo of the position
      */
-    function _createInitialPosition(
-        Types.Storage storage s,
-        uint128 amount,
-        uint128 price,
-        int24 tick,
-        uint128 totalExpo
-    ) internal {
+    function _createInitialPosition(uint128 amount, uint128 price, int24 tick, uint128 totalExpo) internal {
+        Types.Storage storage s = Utils._getMainStorage();
+
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             Utils.transferCallback(s._asset, amount, address(this));
         } else {
@@ -592,7 +580,7 @@ library UsdnProtocolCoreLibrary {
             timestamp: uint40(block.timestamp)
         });
         // save the position and update the state
-        (posId.tickVersion, posId.index,) = ActionsLong._saveNewPosition(s, posId.tick, long, s._liquidationPenalty);
+        (posId.tickVersion, posId.index,) = ActionsLong._saveNewPosition(posId.tick, long, s._liquidationPenalty);
         s._balanceLong += long.amount;
         emit IUsdnProtocolEvents.InitiatedOpenPosition(
             msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId
@@ -604,16 +592,17 @@ library UsdnProtocolCoreLibrary {
      * @notice Get the pending action for a user
      * @dev To check for the presence of a pending action, compare `action_.action` to `Types.ProtocolAction.None`. There
      * is a pending action only if the action is different from `Types.ProtocolAction.None`
-     * @param s The storage of the protocol
      * @param user The user's address
      * @return action_ The pending action struct if any, otherwise a zero-initialized struct
      * @return rawIndex_ The raw index of the pending action in the queue
      */
-    function _getPendingAction(Types.Storage storage s, address user)
+    function _getPendingAction(address user)
         internal
         view
         returns (Types.PendingAction memory action_, uint128 rawIndex_)
     {
+        Types.Storage storage s = Utils._getMainStorage();
+
         uint256 pendingActionIndex = s._pendingActions[user];
         if (pendingActionIndex == 0) {
             // no pending action
@@ -626,18 +615,14 @@ library UsdnProtocolCoreLibrary {
 
     /**
      * @notice Check if the initialize parameters lead to a balanced protocol
-     * @param s The storage of the protocol
      * @dev This function reverts if the imbalance is exceeded for the deposit or open long action
      * @param positionTotalExpo The total expo of the deployer's long position
      * @param longAmount The amount (collateral) of the deployer's long position
      * @param depositAmount The amount of assets for the deployer's deposit
      */
-    function _checkInitImbalance(
-        Types.Storage storage s,
-        uint128 positionTotalExpo,
-        uint128 longAmount,
-        uint128 depositAmount
-    ) internal view {
+    function _checkInitImbalance(uint128 positionTotalExpo, uint128 longAmount, uint128 depositAmount) internal view {
+        Types.Storage storage s = Utils._getMainStorage();
+
         int256 longTradingExpo = Utils.toInt256(positionTotalExpo - longAmount);
         int256 depositLimit = s._depositExpoImbalanceLimitBps;
         // users should be able to open positions after initialization
@@ -678,16 +663,13 @@ library UsdnProtocolCoreLibrary {
 
     /**
      * @notice Calculate the funding rate per day and the old long exposure
-     * @param s The storage of the protocol
      * @param ema The EMA of the funding rate per day
      * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
      * @return oldLongExpo_ The old long trading expo
      */
-    function _fundingPerDay(Types.Storage storage s, int256 ema)
-        internal
-        view
-        returns (int256 fundingPerDay_, int256 oldLongExpo_)
-    {
+    function _fundingPerDay(int256 ema) internal view returns (int256 fundingPerDay_, int256 oldLongExpo_) {
+        Types.Storage storage s = Utils._getMainStorage();
+
         // imbalanceIndex = (longExpo - vaultExpo) / max(longExpo, vaultExpo)
         // fundingPerDay = (sign(imbalanceIndex) * imbalanceIndex^2 * fundingSF) + _EMA
         // fundingPerDay = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
@@ -744,7 +726,6 @@ library UsdnProtocolCoreLibrary {
     /**
      * @notice Calculate the funding value, funding rate value and the old long exposure
      * @dev Reverts if `timestamp` < `s._lastUpdateTimestamp`
-     * @param s The storage of the protocol
      * @param timestamp The current timestamp
      * @param ema The EMA of the funding rate per day
      * @return funding_ The funding (proportion of long trading expo that needs to be transferred from one side to the
@@ -753,12 +734,14 @@ library UsdnProtocolCoreLibrary {
      * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
      * @return oldLongExpo_ The old long trading expo
      */
-    function _funding(Types.Storage storage s, uint128 timestamp, int256 ema)
+    function _funding(uint128 timestamp, int256 ema)
         internal
         view
         returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
     {
-        (fundingPerDay_, oldLongExpo_) = _fundingPerDay(s, ema);
+        Types.Storage storage s = Utils._getMainStorage();
+
+        (fundingPerDay_, oldLongExpo_) = _fundingPerDay(ema);
 
         uint128 lastUpdateTimestamp = s._lastUpdateTimestamp;
         if (timestamp < lastUpdateTimestamp) {

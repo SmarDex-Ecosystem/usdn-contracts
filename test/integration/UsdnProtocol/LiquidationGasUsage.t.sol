@@ -87,7 +87,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
 
         // disable rebase for setup
         vm.startPrank(SET_USDN_PARAMS_MANAGER);
-        protocol.setUsdnRebaseThreshold(1000 ether);
+        protocol.i_setUsdnRebaseThreshold(1000 ether);
         protocol.setTargetUsdnPrice(1000 ether);
         vm.stopPrank();
 

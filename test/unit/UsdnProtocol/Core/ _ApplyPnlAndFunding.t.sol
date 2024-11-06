@@ -141,7 +141,7 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
             int256 expectedFunding = expectedFundingPerDay / 2; // 24/2 hours passed
             expectedFundingAsset = expectedFunding * int256(protocol.getLongTradingExpo(oldPrice))
                 / int256(10) ** protocol.FUNDING_RATE_DECIMALS();
-            int256 protocolFeeBps = int256(protocol.i_protocolFeeBps());
+            int256 protocolFeeBps = int256(uint256(protocol.getProtocolFeeBps()));
             expectedFeeAsset = expectedFundingAsset * protocolFeeBps / int256(protocol.BPS_DIVISOR());
         }
 

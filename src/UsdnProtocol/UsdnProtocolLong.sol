@@ -9,7 +9,7 @@ import { UsdnProtocolLongLibrary as Long } from "./libraries/UsdnProtocolLongLib
 abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
     /// @inheritdoc IUsdnProtocolLong
     function minTick() external view returns (int24 tick_) {
-        return Long.minTick(s);
+        return Long.minTick();
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -18,12 +18,12 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
         view
         returns (int256 value_)
     {
-        return Long.getPositionValue(s, posId, price, timestamp);
+        return Long.getPositionValue(posId, price, timestamp);
     }
 
     /// @inheritdoc IUsdnProtocolLong
     function getEffectiveTickForPrice(uint128 price) external view returns (int24 tick_) {
-        return Long.getEffectiveTickForPrice(s, price);
+        return Long.getEffectiveTickForPrice(price);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -39,6 +39,6 @@ abstract contract UsdnProtocolLong is UsdnProtocolStorage, IUsdnProtocolLong {
 
     /// @inheritdoc IUsdnProtocolLong
     function getTickLiquidationPenalty(int24 tick) external view returns (uint24 liquidationPenalty_) {
-        return Long.getTickLiquidationPenalty(s, tick);
+        return Long.getTickLiquidationPenalty(tick);
     }
 }

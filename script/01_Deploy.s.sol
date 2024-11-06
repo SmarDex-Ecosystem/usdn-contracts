@@ -8,7 +8,7 @@ import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { Sdex } from "../test/utils/Sdex.sol";
 import { WstETH } from "../test/utils/WstEth.sol";
 
-import { Utils } from "./Utils.s.sol";
+import { Utils } from "./utils/Utils.s.sol";
 
 import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
@@ -30,7 +30,6 @@ contract Deploy is Script {
     address constant CHAINLINK_ETH_PRICE_MAINNET = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
     uint256 constant CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
     uint256 constant CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
-    string constant EIP712_VERSION = "1";
 
     Utils _utils = new Utils();
     address _deployerAddress;
@@ -129,18 +128,7 @@ contract Deploy is Script {
                     liquidationRewardsManager,
                     100, // tick spacing 100 = 1.05%
                     _feeCollector,
-                    Types.Managers({
-                        setExternalManager: _deployerAddress,
-                        criticalFunctionsManager: _deployerAddress,
-                        setProtocolParamsManager: _deployerAddress,
-                        setUsdnParamsManager: _deployerAddress,
-                        setOptionsManager: _deployerAddress,
-                        proxyUpgradeManager: _deployerAddress,
-                        pauserManager: _deployerAddress,
-                        unpauserManager: _deployerAddress
-                    }),
-                    protocolFallback,
-                    vm.envOr("EIP712_VERSION", EIP712_VERSION)
+                    protocolFallback
                 )
             ),
             opts
