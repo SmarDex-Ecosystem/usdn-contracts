@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
+import { console } from "forge-std/Test.sol";
 
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -22,8 +23,6 @@ import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "../src/libraries/HugeUint.sol";
-import { TickMath } from "../src/libraries/TickMath.sol";
 
 contract Deploy is Script {
     address constant WSTETH_MAINNET = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
@@ -320,8 +319,15 @@ contract Deploy is Script {
      * @param rebalancer The rebalancer
      */
     function _handlePostDeployment(IUsdnProtocol usdnProtocol, Usdn usdn, Rebalancer rebalancer) internal {
+        bytes32 ADMIN_SET_EXTERNAL_ROLE = usdnProtocol.ADMIN_SET_EXTERNAL_ROLE();
+        bytes32 SET_EXTERNAL_ROLE = usdnProtocol.SET_EXTERNAL_ROLE();
+        usdnProtocol.grantRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
+        usdnProtocol.grantRole(SET_EXTERNAL_ROLE, _deployerAddress);
         // set the rebalancer on the USDN protocol
         usdnProtocol.setRebalancer(rebalancer);
+
+        usdn.revokeRole(SET_EXTERNAL_ROLE, _deployerAddress);
+        usdn.revokeRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
 
         // grant USDN minter and rebaser roles to protocol
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
