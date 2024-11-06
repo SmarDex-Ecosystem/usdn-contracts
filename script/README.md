@@ -7,7 +7,7 @@ Just run the bash script corresponding to the desired deployment (mainnet or for
 You will be prompted to enter the `RPC_URL` of the network you want to deploy to. If you are deploying with a Ledger, you will also be prompted for the deployer address. And without a Ledger, you will be prompted for the deployer private key.  
 The deployment script for the fork mode does not require any input.
 
-Only one env variables are required : `INIT_LONG_AMOUNT`.
+Only one env variables is required : `INIT_LONG_AMOUNT`.
 The initial deposit amount will be calculated from `INIT_LONG_AMOUNT` with a leverage of 2x.
 
 If `GET_WSTETH=true`, then the script will wrap some ether before initializing the
