@@ -135,6 +135,26 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario Remove a stuck withdrawal with cleanup and verify the pending vault balance
+     * @custom:given A user has initiated a withdrawal which gets stuck for any reason
+     * @custom:and The protocol has vault fees enabled
+     * @custom:when The admin removes the pending action with cleanup
+     * @custom:then The pending action is removed
+     * @custom:and The pending vault balance is the same as before
+     */
+    function test_removeBlockedWithdrawalCleanup_pendingVaultBalance() public {
+        params = DEFAULT_PARAMS;
+        params.flags.enablePositionFees = true;
+        super._setUp(params);
+
+        int256 balanceVaultBefore = protocol.getPendingBalanceVault();
+
+        _removeBlockedVaultScenario(ProtocolAction.InitiateWithdrawal, 10 ether, true, false);
+
+        assertEq(protocol.getPendingBalanceVault(), balanceVaultBefore, "pending vault balance");
+    }
+
+    /**
      * @custom:scenario Remove a stuck withdrawal without cleanup
      * @custom:given A user has initiated a withdrawal which gets stuck for any reason
      * @custom:when The admin removes the pending action without cleanup
