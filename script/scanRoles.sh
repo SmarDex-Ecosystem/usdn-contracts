@@ -5,6 +5,36 @@ green='\033[0;32m'
 blue='\033[0;34m'
 nc='\033[0m'
 
+
+abiUsdnProtocolStorage=$(cat "out/UsdnProtocolStorage.sol/UsdnProtocolStorage.json")
+abiUsdn=$(cat "out/Usdn.sol/Usdn.json")
+abiOracleMiddleware=$(cat "out/OracleMiddleware.sol/OracleMiddleware.json")
+
+select_contract_abi() {    
+    while true; do
+        printf $'\n'"Select the contract you want to scan :"
+        printf "\n1) UsdnProtocol"
+        printf "\n2) Usdn"
+        printf "\n3) OracleMiddleware"
+        read -p $'\n'"Your choice [1-3] : " choice
+        case $choice in
+        [1]*)
+            selectedAbi="$abiUsdnProtocolStorage"
+            break
+            ;;
+        [2]*)
+            selectedAbi="$abiUsdn"
+            break
+            ;;
+        [3]*)
+            selectedAbi="$abiOracleMiddleware"
+            break
+            ;;
+        *) printf "\n${red}Invalid choice. Please select a valid contract.${nc}\n" ;;
+        esac
+    done
+}
+
 get_input() {
     local prompt="$1"
     local input_variable_name="$2"
@@ -22,7 +52,8 @@ get_input() {
     done
 }
 
-get_input "Enter the USDN Protocol's address" usdnProtocolAddress
+select_contract_abi
+get_input "Enter the contract address" contractAddress
 get_input "Enter the RPC URL" rpcUrl
 get_input "Enter the block number where the USDN Protocol was deployed" usdnProtocolBirthBlock
 
@@ -30,15 +61,15 @@ get_input "Enter the block number where the USDN Protocol was deployed" usdnProt
 declare -A abi_roles_map=()
 abi_roles_map["0x0000000000000000000000000000000000000000000000000000000000000000"]="DEFAULT_ADMIN_ROLE"
 
-abi=$(cat "out/UsdnProtocolStorage.sol/UsdnProtocolStorage.json")
-abi_roles=$(echo "$abi" | jq -r '
+abi_roles=$(echo "$selectedAbi" | jq -r '
   .abi[] |
   select(
     .type == "function" and 
     .stateMutability == "view" and 
     (.inputs | length == 0) and 
     (.outputs | length == 1) and
-    (.outputs[0] | .name == "" and .type == "bytes32" and .internalType == "bytes32")
+    (.outputs[0] | .name == "" and .type == "bytes32" and .internalType == "bytes32") and
+    (.name | endswith("_ROLE"))
   ) |
   .name
 ')
@@ -64,7 +95,7 @@ for event in "${events[@]}"; do
     printf "\n$blue Fetching logs for event:$nc $event\n"
 
     # Run cast to get logs for each event and capture output in logs_cast variable
-    logs_cast=$(cast logs --rpc-url "$rpcUrl" --from-block "$usdnProtocolBirthBlock" --to-block latest "$event" --address "$usdnProtocolAddress" -j)
+    logs_cast=$(cast logs --rpc-url "$rpcUrl" --from-block "$usdnProtocolBirthBlock" --to-block latest "$event" --address "$contractAddress" -j)
     status=$?
 
     # Check if the command executed successfully
