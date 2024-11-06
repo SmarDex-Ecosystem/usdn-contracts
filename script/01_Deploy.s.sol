@@ -297,9 +297,7 @@ contract Deploy is Script {
 
         if (vm.envOr("GET_WSTETH", false)) {
             uint256 ethAmount = (depositAmount + longAmount + 10_000) * wstETH.stEthPerToken() / 1 ether;
-
             (bool result,) = address(wstETH).call{ value: ethAmount }(hex"");
-
             require(result, "Failed to mint wstETH");
         }
 
