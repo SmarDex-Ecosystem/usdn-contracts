@@ -16,7 +16,7 @@ import { UsdnProtocolFallback } from "../../../src/UsdnProtocol/UsdnProtocolFall
  * @custom:feature Test the functions linked to initialization of the protocol
  * @custom:given An uninitialized protocol
  */
-contract TestUsdnProtocolInitialize is TransferCallback, UsdnProtocolBaseFixture {
+contract TestUsdnProtocolInitializeWithCallback is TransferCallback, UsdnProtocolBaseFixture {
     uint128 public constant INITIAL_DEPOSIT = 100 ether;
     uint128 public constant INITIAL_POSITION = 100 ether;
     uint128 public constant INITIAL_PRICE = 3000 ether;
@@ -108,6 +108,13 @@ contract TestUsdnProtocolInitialize is TransferCallback, UsdnProtocolBaseFixture
         assertEq(protocol.getBalanceVault(), INITIAL_DEPOSIT, "vault balance");
     }
 
+    /**
+     * @custom:scenario Deployer creates an initial deposit via the internal function by using callback for the transfer
+     * of wstETH
+     * @custom:when The deployer calls the internal function to create an initial deposit without transferring the
+     * wstETH
+     * @custom:then The protocol reverts with `UsdnProtocolPaymentCallbackFailed` error
+     */
     function test_RevertWhen_createInitialDepositWithCallbackNoTransfer() public {
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolPaymentCallbackFailed.selector));
         protocol.i_createInitialDeposit(INITIAL_DEPOSIT, INITIAL_PRICE);
@@ -115,8 +122,7 @@ contract TestUsdnProtocolInitialize is TransferCallback, UsdnProtocolBaseFixture
 
     /**
      * @custom:scenario Deployer creates an initial position via the internal function by using callback for the
-     * transfer
-     * of wstETH
+     * transfer of wstETH
      * @custom:when The deployer calls the internal function to create an initial position
      * @custom:then The deployer's wstETH balance is decreased by the position amount
      * @custom:and The protocol's wstETH balance is increased by the position amount
@@ -158,6 +164,13 @@ contract TestUsdnProtocolInitialize is TransferCallback, UsdnProtocolBaseFixture
         assertEq(pos.timestamp, block.timestamp, "position timestamp");
     }
 
+    /**
+     * @custom:scenario Deployer creates an initial position via the internal function by using callback for the
+     * transfer of wstETH
+     * @custom:when The deployer calls the internal function to create an initial position without transferring the
+     * wstETH
+     * @custom:then The protocol reverts with `UsdnProtocolPaymentCallbackFailed` error
+     */
     function test_RevertWhen_createInitialPositionWithCallbackNoTransfer() public {
         int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
         int24 expectedTick = tickWithoutPenalty + int24(protocol.getLiquidationPenalty());
@@ -166,6 +179,4 @@ contract TestUsdnProtocolInitialize is TransferCallback, UsdnProtocolBaseFixture
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolPaymentCallbackFailed.selector));
         protocol.i_createInitialPosition(INITIAL_POSITION, INITIAL_PRICE, expectedTick, posTotalExpo);
     }
-
-    receive() external payable { }
 }
