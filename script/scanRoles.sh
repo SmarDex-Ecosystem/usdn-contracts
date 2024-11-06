@@ -43,7 +43,7 @@ abi_roles=$(echo "$abi" | jq -r '
   .name
 ')
 for abi_role in $abi_roles; do
-    hash=$(cast keccak "$abi_role" | awk '{print $1}')
+    hash=$(cast keccak "$abi_role")
     abi_roles_map["$hash"]="$abi_role"
 done
 
