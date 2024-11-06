@@ -12,9 +12,9 @@ abiUsdn=$(cat "out/Usdn.sol/Usdn.json")
 abiOracleMiddleware=$(cat "out/OracleMiddleware.sol/OracleMiddleware.json")
 
 # Verify that all required arguments are provided
-if [ "$#" -ne 5 ]; then
+if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then
     printf "${red}Error: Invalid number of arguments provided.${nc}\n"
-    printf "Usage: $0 <UsdnProtocolAddress> <UsdnAddress> <OracleMiddlewareAddress> <RPC_URL> <BlockNumber>\n"
+    printf "Usage: $0 <UsdnProtocolAddress> <UsdnAddress> <OracleMiddlewareAddress> <RPC_URL> [<BlockNumber>]\n"
     exit 1
 fi
 
@@ -24,6 +24,7 @@ contractAddressUsdn="$2"
 contractAddressOracleMiddleware="$3"
 rpcUrl="$4"
 usdnProtocolBirthBlock="$5"
+usdnProtocolBirthBlock="${5:-0}"
 
 # Array of contracts to scan
 declare -A contracts=(
