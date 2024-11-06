@@ -13,15 +13,13 @@ abiOracleMiddleware=$(cat "out/OracleMiddleware.sol/OracleMiddleware.json")
 
 # Initialize variables
 contractAddressUsdnProtocol=""
-contractAddressUsdn=""
-contractAddressOracleMiddleware=""
 rpcUrl=""
 usdnProtocolBirthBlock=0
 
 # Function to display usage message
 usage() {
     printf "${red}Error: Missing required arguments.${nc}\n"
-    printf "Usage: $0 --protocol <UsdnProtocolAddress> --usdn <UsdnAddress> --oracle <OracleMiddlewareAddress> --rpc-url <RPC_URL> [--block-number <BlockNumber>]\n"
+    printf "Usage: $0 --protocol <UsdnProtocolAddress> --rpc-url <RPC_URL> [--block-number <BlockNumber>]\n"
     exit 1
 }
 
@@ -29,8 +27,6 @@ usage() {
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --protocol) contractAddressUsdnProtocol="$2"; shift ;;
-        --usdn) contractAddressUsdn="$2"; shift ;;
-        --oracle) contractAddressOracleMiddleware="$2"; shift ;;
         --rpc-url) rpcUrl="$2"; shift ;;
         --block-number) usdnProtocolBirthBlock="$2"; shift ;;
         *) usage ;; # Display usage if unexpected argument is found
@@ -39,9 +35,18 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Verify that all required arguments are provided
-if [[ -z "$contractAddressUsdnProtocol" || -z "$contractAddressUsdn" || -z "$contractAddressOracleMiddleware" || -z "$rpcUrl" ]]; then
+if [[ -z "$contractAddressUsdnProtocol" || -z "$rpcUrl" ]]; then
     usage
 fi
+
+contractBytesUsdn=$(cast call "$contractAddressUsdnProtocol" "getUsdn()" --rpc-url "$rpcUrl")
+contractAddressUsdn=$(cast parse-bytes32-address "$contractBytesUsdn")
+
+contractBytesOracleMiddleware=$(cast call "$contractAddressUsdnProtocol" "getOracleMiddleware()" --rpc-url "$rpcUrl")
+contractAddressOracleMiddleware=$(cast parse-bytes32-address "$contractBytesOracleMiddleware")
+
+
+# Roles scanning
 
 # Array of contracts to scan
 declare -A contracts=(
@@ -186,3 +191,51 @@ for contract_name in "${!contracts[@]}"; do
     printf "${green}${contract_name} roles CSV saved to ${contract_name}_roles.csv${nc}\n"
 
 done
+
+# Owner scanning
+
+contractBytesRebalancer=$(cast call "$contractAddressUsdnProtocol" "getRebalancer()" --rpc-url "$rpcUrl")
+contractAddressRebalancer=$(cast parse-bytes32-address "$contractBytesRebalancer")
+contractBytesLiquidationRewardsManager=$(cast call "$contractAddressUsdnProtocol" "getLiquidationRewardsManager()" --rpc-url "$rpcUrl")
+contractAddressLiquidationRewardsManager=$(cast parse-bytes32-address "$contractBytesLiquidationRewardsManager")
+
+# Define an array to store owner information
+declare -A owners
+
+# Fetch and store owner of Rebalancer contract
+printf "${blue}Fetching owner of Rebalancer contract:${nc} $contractAddressRebalancer\n"
+bytesOwnerRebalancer=$(cast call "$contractAddressRebalancer" "owner()" --rpc-url "$rpcUrl")
+ownerLiquidationRewardsManager=$(cast parse-bytes32-address "$bytesOwnerRebalancer")
+if [[ $? -ne 0 ]]; then
+    printf "${red}Failed to retrieve owner of Rebalancer contract${nc}\n"
+else
+    owners["Rebalancer"]="$ownerRebalancer"
+fi
+
+# Fetch and store owner of LiquidationRewardsManager contract
+printf "${blue}Fetching owner of LiquidationRewardsManager contract:${nc} $contractAddressLiquidationRewardsManager\n"
+bytesOwnerLiquidationRewardsManager=$(cast call "$contractAddressLiquidationRewardsManager" "owner()" --rpc-url "$rpcUrl")
+ownerLiquidationRewardsManager=$(cast parse-bytes32-address "$bytesOwnerLiquidationRewardsManager")
+if [[ $? -ne 0 ]]; then
+    printf "${red}Failed to retrieve owner of LiquidationRewardsManager contract${nc}\n"
+else
+    owners["LiquidationRewardsManager"]="$ownerLiquidationRewardsManager"
+fi
+
+# Create JSON output
+json_output="["
+for contract in "${!owners[@]}"; do
+    json_output+=$(jq -n --arg contract "$contract" --arg owner "${owners[$contract]}" '{Contract: $contract, Owner: $owner}'), 
+done
+json_output="${json_output%,}]"
+json_output=$(printf "%s" "$json_output" | jq .)
+echo "$json_output" > "owners.json"
+printf "${green}Owners JSON saved to owners.json${nc}\n"
+
+# Create CSV output
+csv_output="Contract,Owner\n"
+for contract in "${!owners[@]}"; do
+    csv_output+="$contract,${owners[$contract]}\n"
+done
+printf "$csv_output" > "owners.csv"
+printf "${green}Owners CSV saved to owners.csv${nc}\n"
