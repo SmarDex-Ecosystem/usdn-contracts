@@ -22,8 +22,7 @@ fi
 contractAddressUsdnProtocol="$1"
 contractAddressUsdn="$2"
 contractAddressOracleMiddleware="$3"
-rpcUrl="$4"
-usdnProtocolBirthBlock="$5"
+rpcUrl="$4" #should be a archive node RPC
 usdnProtocolBirthBlock="${5:-0}"
 
 # Array of contracts to scan
