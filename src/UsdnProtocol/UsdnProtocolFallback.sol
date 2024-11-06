@@ -17,6 +17,8 @@ import { HugeUint } from "../libraries/HugeUint.sol";
 import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
+
+import { UsdnProtocolLongLibrary as Long } from "./libraries/UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVaultLibrary.sol";
 
@@ -26,6 +28,25 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolFallback
     function getEffectivePriceForTick(int24 tick) external view returns (uint128 price_) {
         return Utils.getEffectivePriceForTick(tick);
+    }
+
+    function getLiqPriceFromDesiredLiqPrice(
+        uint128 desiredLiqPriceWithoutPenalty,
+        uint256 assetPrice,
+        uint256 longTradingExpo
+    ) external view returns (uint128) {
+        Storage storage s = Utils._getMainStorage();
+
+        (, uint128 liqPrice) = Long._getTickFromDesiredLiqPrice(
+            desiredLiqPriceWithoutPenalty,
+            assetPrice,
+            longTradingExpo,
+            s._liqMultiplierAccumulator,
+            s._tickSpacing,
+            s._liquidationPenalty
+        );
+
+        return liqPrice;
     }
 
     /// @inheritdoc IUsdnProtocolFallback

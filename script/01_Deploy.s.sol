@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { Script } from "forge-std/Script.sol";
 
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { Sdex } from "../test/utils/Sdex.sol";
 import { WstETH } from "../test/utils/WstEth.sol";
@@ -21,6 +22,8 @@ import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../src/libraries/HugeUint.sol";
+import { TickMath } from "../src/libraries/TickMath.sol";
 
 contract Deploy is Script {
     address constant WSTETH_MAINNET = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
@@ -292,15 +295,22 @@ contract Deploy is Script {
         uint256 depositAmount,
         uint256 longAmount
     ) internal {
-        // we want a leverage of ~2x so we get the current price from the middleware and divide it by two
-        uint256 desiredLiqPrice = wstEthOracleMiddleware.parseAndValidatePrice(
+        uint256 price = wstEthOracleMiddleware.parseAndValidatePrice(
             "", uint128(block.timestamp), Types.ProtocolAction.Initialize, ""
-        ).price / 2;
+        ).price;
 
-        // approve wstETH spending for initialization
+        // we want a leverage of ~2x so we get the current price from the middleware and divide it by two
+        uint128 desiredLiqPrice = uint128(price / 2);
+        // get the liquidation price with the tick rounding
+        uint128 liqPriceWithoutPenalty = usdnProtocol.getLiqPriceFromDesiredLiqPrice(desiredLiqPrice, price, 0);
+        // get the total exposure of the wanted long position
+        uint256 positionTotalExpo = FixedPointMathLib.fullMulDiv(longAmount, price, price - liqPriceWithoutPenalty);
+        // get the amount to deposit to reach a balanced state
+        depositAmount = positionTotalExpo - longAmount;
+
         wstETH.approve(address(usdnProtocol), depositAmount + longAmount);
 
-        usdnProtocol.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
+        usdnProtocol.initialize(uint128(depositAmount), uint128(longAmount), desiredLiqPrice, "");
     }
 
     /**

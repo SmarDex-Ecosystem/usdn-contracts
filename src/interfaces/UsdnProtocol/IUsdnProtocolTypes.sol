@@ -191,8 +191,7 @@ interface IUsdnProtocolTypes {
      * @param liqMultiplier A fixed precision representation of the liquidation multiplier (with
      * `LIQUIDATION_MULTIPLIER_DECIMALS` decimals) used to calculate the effective price for a given tick number
      * @param closeBoundedPositionValue The amount that was removed from the long balance on `initiateClosePosition`
-     * (only
-     * used when closing a position)
+     * (only used when closing a position)
      */
     struct LongPendingAction {
         ProtocolAction action; // 1 byte
