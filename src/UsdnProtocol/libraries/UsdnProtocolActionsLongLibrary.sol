@@ -296,15 +296,10 @@ library UsdnProtocolActionsLongLibrary {
             return (true, false);
         }
 
-        // Calculate the liquidation price using the multiplier state at T+24 to avoid the influence of later funding
-        uint128 liqPriceWithoutPenaltyNorFunding = Utils._getEffectivePriceForTick(
-            Utils.calcTickWithoutPenalty(data.action.tick, data.liquidationPenalty), data.action.liqMultiplier
-        );
-
         // calculate the new total expo
         uint128 expoBefore = data.pos.totalExpo;
         uint128 expoAfter =
-            Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, liqPriceWithoutPenaltyNorFunding);
+            Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenaltyNorFunding);
 
         // update the total expo of the position
         data.pos.totalExpo = expoAfter;
@@ -650,8 +645,13 @@ library UsdnProtocolActionsLongLibrary {
             return (data_, true);
         }
 
-        // reverts if liqPriceWithoutPenalty >= startPrice
-        data_.leverage = Utils._getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
+        data_.liqPriceWithoutPenaltyNorFunding = Utils._getEffectivePriceForTick(
+            Utils.calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty), data_.action.liqMultiplier
+        );
+        // calculate the leverage of the position without considering the penalty nor the funding by using the
+        // multiplier state at T+24
+        // reverts if liqPriceWithoutPenaltyNorFunding >= startPrice
+        data_.leverage = Utils._getLeverage(data_.startPrice, data_.liqPriceWithoutPenaltyNorFunding);
     }
 
     /**

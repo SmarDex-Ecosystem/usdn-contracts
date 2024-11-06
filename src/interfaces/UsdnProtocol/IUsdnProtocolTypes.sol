@@ -419,6 +419,7 @@ interface IUsdnProtocolTypes {
         uint128 lastPrice;
         bytes32 tickHash;
         Position pos;
+        uint128 liqPriceWithoutPenaltyNorFunding;
         uint128 liqPriceWithoutPenalty;
         uint256 leverage;
         uint256 oldPosValue;
