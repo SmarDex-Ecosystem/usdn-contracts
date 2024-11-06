@@ -63,7 +63,7 @@ contract Deploy is Script {
     {
         _handleEnvVariables();
 
-        (uint256 depositAmount, uint256 longAmount) = _getInitialAmounts();
+        uint256 longAmount = _getInitialLongAmount();
 
         _isProdEnv = block.chainid == 1;
 
@@ -72,7 +72,7 @@ contract Deploy is Script {
 
         vm.startBroadcast(_deployerAddress);
 
-        (Usdn_, Wusdn_, Sdex_, WstETH_) = _handlePeripheryDeployment(depositAmount, longAmount);
+        (Usdn_, Wusdn_, Sdex_, WstETH_) = _handlePeripheryDeployment();
 
         WstEthOracleMiddleware_ = _deployWstEthOracleMiddleware(address(WstETH_));
 
@@ -84,7 +84,7 @@ contract Deploy is Script {
 
         _handlePostDeployment(UsdnProtocol_, Usdn_, Rebalancer_);
 
-        _initializeUsdnProtocol(UsdnProtocol_, WstETH_, WstEthOracleMiddleware_, depositAmount, longAmount);
+        _initializeUsdnProtocol(UsdnProtocol_, WstETH_, WstEthOracleMiddleware_, longAmount);
 
         vm.stopBroadcast();
     }
@@ -237,11 +237,9 @@ contract Deploy is Script {
      * @notice Deploy the WstETH token
      * @dev Will return the already deployed one if an address is in the env variables
      * Will return the mainnet address if the chain is mainnet
-     * @param depositAmount The amount to deposit during the protocol initialization
-     * @param longAmount The size of the long to open during the protocol initialization
      * @return wstEth_ The deployed contract
      */
-    function _deployWstETH(uint256 depositAmount, uint256 longAmount) internal returns (WstETH wstEth_) {
+    function _deployWstETH() internal returns (WstETH wstEth_) {
         address payable wstETHAddress;
         if (_isProdEnv) {
             wstETHAddress = payable(WSTETH_MAINNET);
@@ -251,13 +249,6 @@ contract Deploy is Script {
 
         if (wstETHAddress != address(0)) {
             wstEth_ = WstETH(wstETHAddress);
-            if (vm.envOr("GET_WSTETH", false)) {
-                uint256 ethAmount = (depositAmount + longAmount + 10_000) * wstEth_.stEthPerToken() / 1 ether;
-
-                (bool result,) = wstETHAddress.call{ value: ethAmount }(hex"");
-
-                require(result, "Failed to mint wstETH");
-            }
         } else {
             wstEth_ = new WstETH();
         }
@@ -283,14 +274,12 @@ contract Deploy is Script {
      * @param usdnProtocol The USDN protocol
      * @param wstETH The WstETH token
      * @param wstEthOracleMiddleware The WstETH oracle middleware
-     * @param depositAmount The amount to deposit during the protocol initialization
      * @param longAmount The size of the long to open during the protocol initialization
      */
     function _initializeUsdnProtocol(
         IUsdnProtocol usdnProtocol,
         WstETH wstETH,
         WstEthOracleMiddleware wstEthOracleMiddleware,
-        uint256 depositAmount,
         uint256 longAmount
     ) internal {
         uint256 price = wstEthOracleMiddleware.parseAndValidatePrice(
@@ -304,7 +293,15 @@ contract Deploy is Script {
         // get the total exposure of the wanted long position
         uint256 positionTotalExpo = FixedPointMathLib.fullMulDiv(longAmount, price, price - liqPriceWithoutPenalty);
         // get the amount to deposit to reach a balanced state
-        depositAmount = positionTotalExpo - longAmount;
+        uint256 depositAmount = positionTotalExpo - longAmount;
+
+        if (vm.envOr("GET_WSTETH", false)) {
+            uint256 ethAmount = (depositAmount + longAmount + 10_000) * wstETH.stEthPerToken() / 1 ether;
+
+            (bool result,) = address(wstETH).call{ value: ethAmount }(hex"");
+
+            require(result, "Failed to mint wstETH");
+        }
 
         wstETH.approve(address(usdnProtocol), depositAmount + longAmount);
 
@@ -336,19 +333,14 @@ contract Deploy is Script {
 
     /**
      * @notice Handle the deployment of the periphery contracts
-     * @param depositAmount The amount to deposit during the protocol initialization
-     * @param longAmount The size of the long to open during the protocol initialization
      * @return usdn_ The USDN token
      * @return wusdn_ The WUSDN token
      * @return sdex_ The SDEX token
      * @return wstETH_ The WstETH token
      */
-    function _handlePeripheryDeployment(uint256 depositAmount, uint256 longAmount)
-        internal
-        returns (Usdn usdn_, Wusdn wusdn_, Sdex sdex_, WstETH wstETH_)
-    {
+    function _handlePeripheryDeployment() internal returns (Usdn usdn_, Wusdn wusdn_, Sdex sdex_, WstETH wstETH_) {
         (usdn_, wusdn_) = _deployUsdnAndWusdn();
-        wstETH_ = _deployWstETH(depositAmount, longAmount);
+        wstETH_ = _deployWstETH();
         sdex_ = _deploySdex();
     }
 
@@ -369,20 +361,14 @@ contract Deploy is Script {
     }
 
     /**
-     * @notice Get the initial amounts for the protocol initialization
-     * @return depositAmount The amount to deposit
+     * @notice Get the initial long amount for the protocol initialization
      * @return longAmount The size of the long
      */
-    function _getInitialAmounts() internal view returns (uint256 depositAmount, uint256 longAmount) {
-        try vm.envUint("INIT_DEPOSIT_AMOUNT") {
-            depositAmount = vm.envUint("INIT_DEPOSIT_AMOUNT");
-        } catch {
-            revert("INIT_DEPOSIT_AMOUNT is required");
-        }
+    function _getInitialLongAmount() internal view returns (uint256 longAmount) {
         try vm.envUint("INIT_LONG_AMOUNT") {
             longAmount = vm.envUint("INIT_LONG_AMOUNT");
         } catch {
-            revert("INIT_DEPOSIT_AMOUNT is required");
+            revert("INIT_LONG_AMOUNT is required");
         }
     }
 }

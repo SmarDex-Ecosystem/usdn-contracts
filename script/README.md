@@ -4,10 +4,11 @@
 
 Just run the bash script corresponding to the desired deployment (mainnet or fork).
 
-You will be prompted to enter the `RPC_URL` of the network you want to deploy to (mainnet and sepolia). If you are deploying with a Ledger, you will also be prompted for the deployer address. And without a Ledger, you will be prompted for the deployer private key.  
+You will be prompted to enter the `RPC_URL` of the network you want to deploy to. If you are deploying with a Ledger, you will also be prompted for the deployer address. And without a Ledger, you will be prompted for the deployer private key.  
 The deployment script for the fork mode does not require any input.
 
-Only two env variables are required : `INIT_DEPOSIT_AMOUNT` and `INIT_LONG_AMOUNT`.
+Only one env variables are required : `INIT_LONG_AMOUNT`.
+The initial deposit amount will be calculated from `INIT_LONG_AMOUNT` with a leverage of 2x.
 
 If `GET_WSTETH=true`, then the script will wrap some ether before initializing the
 contract so that there is enough balance.
@@ -20,7 +21,6 @@ contract so that there is enough balance.
 Environment variables can be used to control the script execution:
 
 #### Required
-- `INIT_DEPOSIT_AMOUNT`: amount to use for the `initialize` function call
 - `INIT_LONG_AMOUNT`: amount to use for the `initialize` function call
 
 #### Optional
