@@ -29,6 +29,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         return Utils.getEffectivePriceForTick(tick);
     }
 
+    /// @inheritdoc IUsdnProtocolFallback
     function getLiqPriceFromDesiredLiqPrice(
         uint128 desiredLiqPriceWithoutPenalty,
         uint256 assetPrice,
