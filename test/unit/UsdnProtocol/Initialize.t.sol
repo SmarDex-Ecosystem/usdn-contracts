@@ -22,7 +22,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     uint128 public constant INITIAL_POSITION = 100 ether;
     uint128 public constant INITIAL_PRICE = 3000 ether;
 
-    function setUp() public {
+    function setUp() public virtual {
         super._setUp(DEFAULT_PARAMS);
         vm.startPrank(ADMIN);
         usdn = new Usdn(address(0), address(0));
@@ -83,7 +83,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:and The `ValidatedDeposit` event is emitted for the dead address
      * @custom:and The `ValidatedDeposit` event is emitted for the deployer
      */
-    function test_createInitialDeposit() public {
+    function test_createInitialDeposit() public virtual {
         uint256 expectedUsdnMinted = (
             uint256(INITIAL_DEPOSIT) * INITIAL_PRICE
                 / 10 ** (protocol.getAssetDecimals() + protocol.getPriceFeedDecimals() - protocol.TOKENS_DECIMALS())
@@ -116,7 +116,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:and The `ValidatedOpenPosition` event is emitted
      * @custom:and The position is stored in the protocol
      */
-    function test_createInitialPosition() public {
+    function test_createInitialPosition() public virtual {
         int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
         int24 expectedTick = tickWithoutPenalty + int24(protocol.getLiquidationPenalty());
         uint128 posTotalExpo = 2 * INITIAL_POSITION;
@@ -232,7 +232,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:and All the events are emitted
      * @custom:and The position is stored in the protocol
      */
-    function test_initialize() public {
+    function test_initialize() public virtual {
         uint256 expectedUsdnMinted = (
             uint256(INITIAL_DEPOSIT) * INITIAL_PRICE
                 / 10 ** (protocol.getAssetDecimals() + protocol.getPriceFeedDecimals() - protocol.TOKENS_DECIMALS())
@@ -354,7 +354,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:when The deployer sends ether while initializing the protocol
      * @custom:then The protocol refunds the excess ether and the balance remains the same
      */
-    function test_initializeRefundEther() public {
+    function test_initializeRefundEther() public virtual {
         uint256 balanceBefore = address(this).balance;
         protocol.initialize{ value: 1 ether }(
             INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE)
