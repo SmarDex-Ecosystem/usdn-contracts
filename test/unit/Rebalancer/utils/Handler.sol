@@ -29,4 +29,15 @@ contract RebalancerHandler is Rebalancer, Test {
     function i_refundEther() external {
         return _refundEther();
     }
+
+    /// @dev Verifies the EIP712 delegation signature
+    function i_verifyInitiateCloseDelegation(
+        uint88 amount,
+        address to,
+        uint256 userMinPrice,
+        uint256 deadline,
+        bytes calldata delegationData
+    ) external returns (address depositOwner_) {
+        depositOwner_ = _verifyInitiateCloseDelegation(amount, to, userMinPrice, deadline, delegationData);
+    }
 }

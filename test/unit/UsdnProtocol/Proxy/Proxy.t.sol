@@ -82,8 +82,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
             liquidationRewardsManager,
             _tickSpacing,
             address(feeCollector),
-            IUsdnProtocolFallback(address(0)),
-            params.eip712Version
+            IUsdnProtocolFallback(address(0))
         );
     }
 
@@ -110,8 +109,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
             liquidationRewardsManager,
             _tickSpacing,
             address(feeCollector),
-            IUsdnProtocolFallback(address(0)),
-            params.eip712Version
+            IUsdnProtocolFallback(address(0))
         );
     }
 

@@ -101,6 +101,15 @@ contract UsdnProtocolBaseIntegrationFixture is
 
     ExpoImbalanceLimitsBps internal defaultLimits;
 
+    struct SetUpImbalancedData {
+        bool success;
+        uint256 messageValue;
+        uint88 amount;
+        uint128 wstEthPrice;
+        uint128 ethPrice;
+        uint256 oracleFee;
+    }
+
     function _setUp(SetUpParams memory testParams) public virtual {
         if (!testParams.enableRoles) {
             managers = Managers({
@@ -173,8 +182,7 @@ contract UsdnProtocolBaseIntegrationFixture is
                     liquidationRewardsManager,
                     100, // tick spacing 100 = ~1.005%
                     ADMIN,
-                    protocolFallback,
-                    params.eip712Version
+                    protocolFallback
                 )
             )
         );
@@ -233,7 +241,7 @@ contract UsdnProtocolBaseIntegrationFixture is
         skip(oracleMiddleware.getValidationDelay() + 1);
     }
 
-    function _setUpImbalanced(uint128 additionalLongAmount)
+    function _setUpImbalanced(address payable user, uint128 additionalLongAmount)
         internal
         returns (
             int24 tickSpacing_,
@@ -246,7 +254,7 @@ contract UsdnProtocolBaseIntegrationFixture is
         params.initialLong = 200 ether;
         _setUp(params);
 
-        sdex.mintAndApprove(address(this), 50_000 ether, address(protocol), type(uint256).max);
+        sdex.mintAndApprove(user, 50_000 ether, address(protocol), type(uint256).max);
 
         tickSpacing_ = protocol.getTickSpacing();
 
@@ -267,54 +275,47 @@ contract UsdnProtocolBaseIntegrationFixture is
 
         vm.stopPrank();
 
+        vm.deal(user, 10_000 ether);
+
+        vm.startPrank(user);
+        SetUpImbalancedData memory data;
         // mint wstEth to the test contract
-        (bool success,) = address(wstETH).call{ value: 200 ether }("");
-        require(success, "wstETH mint failed");
+        (data.success,) = address(wstETH).call{ value: 200 ether }("");
+        require(data.success, "wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
         wstETH.approve(address(rebalancer), type(uint256).max);
 
-        uint256 messageValue = protocol.getSecurityDepositValue();
+        data.messageValue = protocol.getSecurityDepositValue();
 
-        uint88 amount = 3 ether;
+        data.amount = 3 ether;
 
         // deposit assets in the rebalancer
-        rebalancer.initiateDepositAssets(amount, payable(address(this)));
+        rebalancer.initiateDepositAssets(data.amount, user);
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
-        amountInRebalancer_ += amount;
+        amountInRebalancer_ += data.amount;
 
         // deposit assets in the protocol to imbalance it
-        protocol.initiateDeposit{ value: messageValue }(
-            30 ether,
-            DISABLE_SHARES_OUT_MIN,
-            payable(address(this)),
-            payable(address(this)),
-            type(uint256).max,
-            "",
-            EMPTY_PREVIOUS_DATA
+        protocol.initiateDeposit{ value: data.messageValue }(
+            30 ether, DISABLE_SHARES_OUT_MIN, user, user, type(uint256).max, "", EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
 
-        {
-            uint128 wstEthPrice = 2000 ether;
-            uint128 ethPrice = uint128(wstETH.getWstETHByStETH(wstEthPrice));
-            mockPyth.setPrice(int64(uint64(ethPrice / 1e10)));
-            mockPyth.setLastPublishTime(block.timestamp - 1);
-        }
+        _setOraclePrices(2000 ether);
 
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit);
 
-        protocol.validateDeposit{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit{ value: oracleFee }(user, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
 
         // open a position to liquidate and trigger the rebalancer
-        (, posToLiquidate_) = protocol.initiateOpenPosition{ value: messageValue }(
+        (, posToLiquidate_) = protocol.initiateOpenPosition{ value: data.messageValue }(
             additionalLongAmount,
             1500 ether,
             type(uint128).max,
             protocol.getMaxLeverage(),
-            payable(address(this)),
-            payable(address(this)),
+            user,
+            user,
             type(uint256).max,
             "",
             EMPTY_PREVIOUS_DATA
@@ -325,9 +326,10 @@ contract UsdnProtocolBaseIntegrationFixture is
         mockPyth.setLastPublishTime(block.timestamp);
 
         oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateOpenPosition);
-        protocol.validateOpenPosition{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition{ value: oracleFee }(user, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
 
         tickToLiquidateData_ = protocol.getTickData(posToLiquidate_.tick);
+        vm.stopPrank();
 
         vm.prank(managers.setProtocolParamsManager);
         protocol.setExpoImbalanceLimits(

@@ -58,8 +58,7 @@ contract RebalancerFixture is BaseFixture, RolesUtils, IRebalancerTypes, IRebala
                     liquidationRewardsManager,
                     100, // tick spacing 100 = ~1.005%
                     ADMIN, // Fee collector
-                    protocolFallback,
-                    "1"
+                    protocolFallback
                 )
             )
         );
