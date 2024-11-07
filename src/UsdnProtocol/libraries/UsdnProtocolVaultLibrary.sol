@@ -835,7 +835,7 @@ library UsdnProtocolVaultLibrary {
         data_.usdnTotalShares = s._usdn.totalShares();
         data_.feeBps = s._vaultFeeBps;
         data_.withdrawalAmountAfterFees =
-            Utils._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares, data_.feeBps);
+            Utils._calcAssetsFromUsdnBurned(usdnShares, data_.balanceVault, data_.usdnTotalShares, data_.feeBps);
         if (data_.withdrawalAmountAfterFees < amountOutMin) {
             revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
         }
@@ -1027,14 +1027,15 @@ library UsdnProtocolVaultLibrary {
         uint256 shares = Utils._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
 
         // we can add back the _pendingBalanceVault we subtracted in the initiate action
-        uint256 tempWithdrawalAfterFees =
-            Utils._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps);
+        uint256 tempWithdrawalAfterFees = Utils._calcAssetsFromUsdnBurned(
+            shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps
+        );
         s._pendingBalanceVault += tempWithdrawalAfterFees.toInt256();
 
         IUsdn usdn = s._usdn;
         // calculate the amount of asset to transfer with the same fees as recorded during the initiate action
         uint256 assetToTransferAfterFees =
-            Utils._calcBurnUsdn(shares, available, withdrawal.usdnTotalShares, withdrawal.feeBps);
+            Utils._calcAssetsFromUsdnBurned(shares, available, withdrawal.usdnTotalShares, withdrawal.feeBps);
 
         usdn.burnShares(shares);
 
