@@ -246,7 +246,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         // if the user entered the rebalancer before and was not liquidated
         if (depositData.entryPositionVersion > _lastLiquidatedVersion) {
             uint128 positionVersion = _positionVersion;
-            PositionData memory positionData = _positionData[positionVersion];
+            PositionData storage positionData = _positionData[positionVersion];
             // if the current position was not liquidated, revert
             if (_usdnProtocol.getTickVersion(positionData.tick) == positionData.tickVersion) {
                 revert RebalancerDepositUnauthorized();
