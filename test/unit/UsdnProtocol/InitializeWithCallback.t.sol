@@ -45,8 +45,8 @@ contract TestUsdnProtocolInitializeWithCallback is TransferCallback, TestUsdnPro
     /**
      * @custom:scenario Deployer creates an initial deposit via the internal function by using callback for the transfer
      * of wstETH
-     * @dev The transferActive flag is set to true to allow the transfer of wstETH. Refer to the
-     * test_createInitialDeposit function for more details.
+     * @custom:given Refer to the test_createInitialDeposit function for more details.
+     * @custom:but The wstETH are transferred via the callback
      */
     function test_createInitialDeposit() public override {
         transferActive = true;
@@ -56,21 +56,29 @@ contract TestUsdnProtocolInitializeWithCallback is TransferCallback, TestUsdnPro
     /**
      * @custom:scenario Deployer creates an initial position via the internal function by using callback for the
      * transfer of wstETH
-     * @dev The transferActive flag is set to true to allow the transfer of wstETH. Refer to the
-     * test_createInitialPosition function for more details.
+     * @custom:given Refer to the test_createInitialPosition function for more details.
+     * @custom:but The wstETH are transferred via the callback
      */
     function test_createInitialPosition() public override {
         transferActive = true;
         super.test_createInitialPosition();
     }
 
-    // @dev The following functions are overridden to allow the transfer of wstETH
+    /**
+     * @custom:scenario Deployer initializes the protocol and uses the callback for the transfer of wstETH
+     * @custom:given Refer to the test_initialize function for more details.
+     * @custom:but The wstETH are transferred via the callback
+     */
     function test_initialize() public override {
         transferActive = true;
         super.test_initialize();
     }
 
-    // @dev The following functions are overridden to allow the transfer of wstETH
+    /**
+     * @custom:scenario Send too much ether while initializing and use the callback for the transfer of wstETH
+     * @custom:given Refer to the test_initializeRefundEther function for more details.
+     * @custom:but The wstETH are transferred via the callback
+     */
     function test_initializeRefundEther() public override {
         transferActive = true;
         super.test_initializeRefundEther();
