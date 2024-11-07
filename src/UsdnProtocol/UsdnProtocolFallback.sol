@@ -87,7 +87,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         Storage storage s = Utils._getMainStorage();
 
         uint256 available = Vault.vaultAssetAvailableWithFunding(price, timestamp);
-        assetExpected_ = Utils._calcAssetsFromUsdnBurned(usdnShares, available, s._usdn.totalShares(), s._vaultFeeBps);
+        assetExpected_ = Utils._calcAmountToWithdraw(usdnShares, available, s._usdn.totalShares(), s._vaultFeeBps);
     }
 
     /// @inheritdoc IUsdnProtocolFallback

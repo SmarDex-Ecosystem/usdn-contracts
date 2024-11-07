@@ -567,7 +567,7 @@ library UsdnProtocolUtilsLibrary {
      * @param feeBps The fee in basis points
      * @return expectedAssetsAmount_ The expected amount of assets to be received, after fees
      */
-    function _calcAssetsFromUsdnBurned(
+    function _calcAmountToWithdraw(
         uint256 usdnShares,
         uint256 vaultAvailableBalance,
         uint256 usdnSharesTotalSupply,
