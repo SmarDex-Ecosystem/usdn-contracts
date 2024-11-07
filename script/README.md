@@ -2,29 +2,43 @@
 
 ## Deploy protocol
 
-Just run the bash script corresponding to the desired deployment (mainnet or fork).
+### Production mode:
 
-You will be prompted to enter the `RPC_URL` of the network you want to deploy to. If you are deploying with a Ledger, you will also be prompted for the deployer address. And without a Ledger, you will be prompted for the deployer private key.  
-The deployment script for the fork mode does not require any input.
+For a mainnet deployment, you hace to use the shell script. It will prompt you to enter the required environment variables :
+- the rpc url
+- the initial long amount
+- the get wstETH flag
+- the private key of the deployer (or public key if you use a ledger)
 
-Only one env variables is required : `INIT_LONG_AMOUNT`.
-The initial deposit amount will be calculated from `INIT_LONG_AMOUNT` with a leverage of 2x.
-
-If `GET_WSTETH=true`, then the script will wrap some ether before initializing the
-contract so that there is enough balance.
-
+```shell
+deployMainnet.sh
 ```
-./script/deployMainnet.sh
-./script/deployFork.sh
+
+The script can be run with the following command with `-t` or `--test` flag to deploy with default values. (rpc url: localhost:8545, initial long amount: 100 ethers, get wstETH: true, deployer : 29th account of anvil)
+
+### Fork mode:
+
+The deployment script for the fork mode does not require any input:
+```shell
+deployFork.sh
 ```
+
+### Standalone mode:
+
+You can run the forge script directly with the following command:
+```shell
+forge script script/01_DeployProtocol.s.sol:DeployProtocol -f YOUR_RPC_URL --private-key YOUR_PRIVATE_KEY --broadcast
+```
+Required environment variables: `INIT_LONG_AMOUNT` and `DEPLOYER_ADDRESS`
+
+### Environment variables:
 
 Environment variables can be used to control the script execution:
 
-#### Required
 - `INIT_LONG_AMOUNT`: amount to use for the `initialize` function call
-
-#### Optional
-- `DEPLOYER_ADDRESS`: required only for fork deployment, the address of the deployer
+- `DEPLOYER_ADDRESS`: the address of the deployer
+- `USDN_ADDRESS`: required if running `01_Deploy.s.sol` in a production environment (not fork)
+- `GET_WSTETH`: whether to get wstETH by sending ether to the wstETH contract or not. Only applicable if `WSTETH_ADDRESS` is given.
 - `FEE_COLLECTOR`: the receiver of all protocol fees (set to `DEPLOYER_ADDRESS` if not set in the environment)
 - `SDEX_ADDRESS`: if provided, skips deployment of the SDEX token
 - `WSTETH_ADDRESS`: if provided, skips deployment of the wstETH token
@@ -37,15 +51,13 @@ Environment variables can be used to control the script execution:
 - `LIQUIDATION_REWARDS_MANAGER_ADDRESS`: if provided, skips deployment of the liquidation rewards manager
 - `REBALANCER_ADDRESS`: if provided, skips deployment of the rebalancer
 - `CHAINLINK_GAS_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
-- `USDN_ADDRESS`: required if running `01_Deploy.s.sol` in a production environment (not fork)
-- `GET_WSTETH`: whether to get wstETH by sending ether to the wstETH contract or not. Only applicable if `WSTETH_ADDRESS` is given.
 
-Example using the real wstETH and depositing 10 ETH for both vault side and long side for mainnet deployment (with liquidation
-at 1 USD so a leverage close to 1x):
+
+Example using the real wstETH and depositing 10 ETH for both vault side and long side for mainnet deployment:
 
 ```
-export INIT_DEPOSIT_AMOUNT=10000000000000000000
 export INIT_LONG_AMOUNT=10000000000000000000
+export DEPLOYER_ADDRESS=0x1234567890123456789012345678901234567890
 export GET_WSTETH=true
 ```
 
