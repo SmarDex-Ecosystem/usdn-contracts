@@ -97,7 +97,7 @@ for contract_name in "${!contracts[@]}"; do
     # Fetch logs for each event. This loop will fetch logs for each event and store them in logs
     for event in "${events[@]}"; do
         printf "${blue}Fetching logs for event:${nc} $event\n"
-        logs_cast=$(cast logs --rpc-url "$rpcUrl" --from-block "$usdnProtocolBirthBlock" --to-block latest "$event" --address "${!contractAddressVar}" -j)
+        logs_cast=$(cast logs --rpc-url "$rpcUrl" --from-block "$usdnProtocolBirthBlock" --to-block latest "$event" --address "${!contractAddressVar}" --json)
         status=$?
 
         if [ $status -ne 0 ]; then
