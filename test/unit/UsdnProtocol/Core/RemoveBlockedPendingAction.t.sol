@@ -330,18 +330,17 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         uint256 balanceBefore = address(this).balance;
         uint256 balanceLongBefore = protocol.getBalanceLong();
         uint256 balanceVaultBefore = protocol.getBalanceVault();
+        uint256 balanceToBefore = wstETH.balanceOf(address(this));
 
         _removeBlockedLongScenario(ProtocolAction.InitiateClosePosition, 10 ether, true, false);
 
         assertApproxEqAbs(protocol.getBalanceLong(), balanceLongBefore, 1, "balance long");
-        assertApproxEqAbs(protocol.getBalanceVault(), balanceVaultBefore + 10 ether, 1, "balance vault");
-        assertEq(
-            protocol.getBalanceLong() + protocol.getBalanceVault(),
-            balanceLongBefore + balanceVaultBefore + 10 ether,
-            "total balance"
-        );
+        assertApproxEqAbs(protocol.getBalanceVault(), balanceVaultBefore, 1, "balance vault");
 
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
+
+        // -1 because of rounding
+        assertEq(wstETH.balanceOf(address(this)), balanceToBefore + 10 ether - 1, "asset balance after");
     }
 
     /**
