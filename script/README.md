@@ -29,7 +29,10 @@ You can run the forge script directly with the following command:
 ```shell
 forge script script/01_DeployProtocol.s.sol:DeployProtocol -f YOUR_RPC_URL --private-key YOUR_PRIVATE_KEY --broadcast
 ```
-Required environment variables: `INIT_LONG_AMOUNT` and `DEPLOYER_ADDRESS`
+
+Required environment variables: `INIT_LONG_AMOUNT` and `DEPLOYER_ADDRESS`.
+
+If running on mainnet, remenber to deploy the USDN token first with the `00_DeployUSDN.s.sol` script and set the `USDN_ADDRESS` environment variable. 
 
 ### Environment variables:
 
