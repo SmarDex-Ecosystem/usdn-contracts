@@ -9,51 +9,16 @@ green='\033[0;32m'
 blue='\033[0;34m'
 nc='\033[0m'
 
-broadcast="broadcast/00_DeployUsdn.s.sol/1/run-latest.json"
+broadcastRepo="broadcast/00_DeployUsdn.s.sol/"
+broadcastFile="/run-latest.json"
+
+requiredDependencies=("forge" "cast" "jq")
+checkRequiredDependencies
+checkNodeVersion
+
 ledger=false
-
-# Check NodeJS version
-node_version=$(node -v)
-node_version=$((${node_version:1:2})) # Remove the "V", the minor version and then convert to integer
-if [ $node_version -lt 20 ]; then
-    printf "\n$red NodeJS version is lower than 20 (it is $node_version), please update it$nc\n"
-    exit 1
-else
-    printf "\n$green NodeJS version is $node_version, you are good to go!$nc\n"
-fi
-
-read -p $'\n'"Enter the RPC URL : " userRpcUrl
-rpcUrl="$userRpcUrl"
-
-while true; do
-    read -p $'\n'"Do you wish to use a ledger? (Yy/Nn) : " yn
-    case $yn in
-    [Yy]*)
-        read -p $'\n'"Enter the deployer address : " deployerAddress
-        address=$deployerAddress
-
-        printf "\n\n$green Running script in Ledger mode with :\n"
-        ledger=true
-
-        break
-        ;;
-    [Nn]*)
-        read -s -p $'\n'"Enter the private key : " privateKey
-        deployerPrivateKey=$privateKey
-
-        address=$(cast wallet address $deployerPrivateKey)
-        if [[ -z $address ]]; then
-            printf "\n$red The private key is invalid$nc\n\n"
-            exit 1
-        fi
-
-        printf "\n\n$green Running script in Non-Ledger mode with :\n"
-
-        break
-        ;;
-    *) printf "\nPlease answer yes (Y/y) or no (N/n).\n" ;;
-    esac
-done
+rpcUrl=getUserInput "RPC URL"
+handleKeys
 
 while true; do
     printf "\n$blue Address :$nc $address"
@@ -112,3 +77,58 @@ else
 fi
 
 popd >/dev/null
+
+function checkRequiredDependencies() {
+    for dep in "${requiredDependencies[@]}"; do
+        if ! command -v $dep &>/dev/null; then
+            printf "\n$red $dep is required but it's not installed. Please install it and try again$nc\n"
+            exit 1
+        fi
+    done
+}
+
+function checkNodeVersion() {
+    node_version=$(node -v)
+    node_version=$((${node_version:1:2})) # Remove the "V", the minor version and then convert to integer
+    if [ $node_version -lt 20 ]; then
+        printf "\n$red NodeJS version is lower than 20 (it is $node_version), please update it$nc\n"
+        exit 1
+    fi
+}
+
+function getUserInput() {
+    read -p $'\n'"Enter the $1 : " answer
+    return $answer
+}
+
+function handleKeys() {
+    while true; do
+        read -p $'\n'"Do you wish to use a ledger? (Yy/Nn) : " yn
+        case $yn in
+        [Yy]*)
+            read -p $'\n'"Enter the deployer address : " deployerAddress
+            address=$deployerAddress
+
+            printf "\n\n$green Running script in Ledger mode with :\n"
+            ledger=true
+
+            break
+            ;;
+        [Nn]*)
+            read -s -p $'\n'"Enter the private key : " privateKey
+            deployerPrivateKey=$privateKey
+
+            address=$(cast wallet address $deployerPrivateKey)
+            if [[ -z $address ]]; then
+                printf "\n$red The private key is invalid$nc\n\n"
+                exit 1
+            fi
+
+            printf "\n\n$green Running script in Non-Ledger mode with :\n"
+
+            break
+            ;;
+        *) printf "\nPlease answer yes (Y/y) or no (N/n).\n" ;;
+        esac
+    done
+}

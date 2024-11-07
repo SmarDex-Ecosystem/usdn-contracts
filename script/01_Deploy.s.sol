@@ -201,13 +201,15 @@ contract Deploy is Script {
      * @return wusdn_ The deployed Wusdn contract
      */
     function _deployUsdnAndWusdn() internal returns (Usdn usdn_, Wusdn wusdn_) {
-        if (_isProdEnv) {
-            try vm.envAddress("USDN_ADDRESS") {
-                usdn_ = Usdn(vm.envAddress("USDN_ADDRESS"));
-            } catch {
-                revert("USDN_ADDRESS is required on mainnet");
-            }
+        address usdnAddress = payable(vm.envOr("USDN_ADDRESS", address(0)));
+
+        if (usdnAddress != address(0)) {
+            usdn_ = Usdn(usdnAddress);
         } else {
+            if (_isProdEnv) {
+                uint256 nonce = vm.getNonce(_deployerAddress);
+                require(nonce == 0, "Nonce must be 0, for vanity reasons");
+            }
             usdn_ = new Usdn(address(0), address(0));
         }
 
