@@ -52,19 +52,24 @@ function handleWstETH() {
     done
 }
 
-# Asks the user if he wants to use a ledger or a private key
+# Asks the user if he wants to use a hardware wallet or a private key
 # to deploy the contracts and handles the input
 function handleKeys() {
     while true; do
-        read -p $'\n'"Do you wish to use a ledger? (Yy/Nn) : " yn
+        read -p $'\n'"Do you wish to use a hardware wallet? (trezor/ledger/nN) : " yn
         case $yn in
-        [Yy]*)
+        "ledger"*)
             read -p $'\n'"Enter the deployer address : " deployerAddress
             address=$deployerAddress
-
             printf "\n\n$green Running script in Ledger mode with :\n"
-            ledger=true
-
+            hardwareWallet="ledger"
+            break
+            ;;
+        "trezor"*)
+            read -p $'\n'"Enter the deployer address : " deployerAddress
+            address=$deployerAddress
+            printf "\n\n$green Running script in Trezor mode with :\n"
+            hardwareWallet="trezor"
             break
             ;;
         [Nn]*)
@@ -81,15 +86,17 @@ function handleKeys() {
 
             break
             ;;
-        *) printf "\nPlease answer yes (Y/y) or no (N/n).\n" ;;
+        *) printf "\nPlease answer trezor, ledger or no (N/n).\n" ;;
         esac
     done
 }
 
 # Deploys the USDN token contract and exports the address
 function deployUsdn() {
-    if [ "$ledger" = true ]; then
+    if [ "$hardwareWallet" = "ledger" ]; then
         forge script -l -f "$rpcUrl" script/00_DeployUsdn.s.sol:DeployUsdn --broadcast --slow
+    elif [ "$hardwareWallet" = "trezor" ]; then
+        forge script -t -f "$rpcUrl" script/00_DeployUsdn.s.sol:DeployUsdn --broadcast --slow
     else
         forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/00_DeployUsdn.s.sol:DeployUsdn --broadcast --slow
     fi
@@ -128,7 +135,7 @@ function deployUsdn() {
 requiredDependencies=("forge" "cast" "jq")
 checkRequiredDependencies
 checkNodeVersion
-ledger=false
+hardwareWallet=false
 getWstETH=false
 
 if [ "$1" = "-t" ] || [ "$1" = "--test" ]; then
@@ -177,8 +184,10 @@ fi
 
 deployUsdn
 
-if [ "$ledger" = true ]; then
+if [ "$hardwareWallet" = "ledger" ]; then
     forge script -l -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast --slow
+elif [ "$hardwareWallet" = "trezor" ]; then
+    forge script -t -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast --slow
 else
     forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/01_DeployProtocol.s.sol:DeployProtocol --broadcast --slow
 fi

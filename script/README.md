@@ -8,7 +8,7 @@ For a mainnet deployment, you hace to use the shell script. It will prompt you t
 - the rpc url
 - the initial long amount
 - the get wstETH flag
-- the private key of the deployer (or public key if you use a ledger)
+- the private key of the deployer (or public key if you use a ledger/trezor)
 
 ```shell
 deployMainnet.sh
