@@ -106,8 +106,8 @@ for contract_name in "${!contracts[@]}"; do
                 fourth_topic=$(printf "$log" | jq -r '.topics[3]')
                 
                 log=$(printf "$log" | jq --arg new_topic "$event" '.topics[0] = $new_topic')
-                new_second_topic=${abi_roles_map[$second_topic]}
-                log=$(printf "$log" | jq --arg new_topic "$new_second_topic" '.topics[1] = $new_topic')
+                role=${abi_roles_map[$second_topic]}
+                log=$(printf "$log" | jq --arg new_topic "$role" '.topics[1] = $new_topic')
                 if [[ "$event" == "RoleAdminChanged(bytes32,bytes32,bytes32)" ]]; then
                     role=${abi_roles_map[$third_topic]}
                     log=$(printf "$log" | jq --arg new_topic "$role" '.topics[2] = $new_topic')
