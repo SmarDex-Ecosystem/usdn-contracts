@@ -219,11 +219,11 @@ declare -A owners
 # Fetch and store owner of Rebalancer contract
 printf "${blue}Fetching owner of Rebalancer contract:${nc} $contractAddressRebalancer\n"
 bytesOwnerRebalancer=$(cast call "$contractAddressRebalancer" "owner()" --rpc-url "$rpcUrl")
-ownerLiquidationRewardsManager=$(cast parse-bytes32-address "$bytesOwnerRebalancer")
+ownerRebalancer=$(cast parse-bytes32-address "$bytesOwnerRebalancer")
 if [[ $? -ne 0 ]]; then
     printf "${red}Failed to retrieve owner of Rebalancer contract${nc}\n"
 else
-    owners["Rebalancer"]="$ownerRebalancer"
+    owners["Rebalancer"]=$ownerRebalancer
 fi
 
 # Fetch and store owner of LiquidationRewardsManager contract
@@ -233,7 +233,7 @@ ownerLiquidationRewardsManager=$(cast parse-bytes32-address "$bytesOwnerLiquidat
 if [[ $? -ne 0 ]]; then
     printf "${red}Failed to retrieve owner of LiquidationRewardsManager contract${nc}\n"
 else
-    owners["LiquidationRewardsManager"]="$ownerLiquidationRewardsManager"
+    owners["LiquidationRewardsManager"]=$ownerLiquidationRewardsManager
 fi
 
 # Create JSON output
