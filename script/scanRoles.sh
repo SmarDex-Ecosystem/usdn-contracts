@@ -39,9 +39,9 @@ if [[ -z "$contractAddressUsdnProtocol" || -z "$rpcUrl" ]]; then
     usage
 fi
 
+# Get contract address for USDN and OracleMiddleware from UsdnProtocol contract
 contractBytesUsdn=$(cast call "$contractAddressUsdnProtocol" "getUsdn()" --rpc-url "$rpcUrl")
 contractAddressUsdn=$(cast parse-bytes32-address "$contractBytesUsdn")
-
 contractBytesOracleMiddleware=$(cast call "$contractAddressUsdnProtocol" "getOracleMiddleware()" --rpc-url "$rpcUrl")
 contractAddressOracleMiddleware=$(cast parse-bytes32-address "$contractBytesOracleMiddleware")
 
@@ -59,6 +59,7 @@ declare -A contracts=(
 declare -A abi_roles_map=()
 abi_roles_map["0x0000000000000000000000000000000000000000000000000000000000000000"]="DEFAULT_ADMIN_ROLE"
 
+# Loop through each contract and scan for roles. After scanning, the end result will be saved in a JSON and CSV file
 for contract_name in "${!contracts[@]}"; do
     printf "\n${blue}Scanning roles for contract:${nc} $contract_name\n"
 
@@ -77,20 +78,23 @@ for contract_name in "${!contracts[@]}"; do
       .name
     ')
     
+    # Create a map of bytes32 to associated role
     for abi_role in $abi_roles; do
         hash=$(cast keccak "$abi_role")
         abi_roles_map["$hash"]="$abi_role"
     done
 
-    # Fetch logs for each relevant event
+    # List of openzeppelin access control events
     declare -a events=(
         "RoleGranted(bytes32,address,address)"
         "RoleRevoked(bytes32,address,address)"
         "RoleAdminChanged(bytes32,bytes32,bytes32)"
     )
+
     declare -a logs=()
     contractAddressVar="contractAddress${contract_name// /}"
 
+    # Fetch logs for each event. This loop will fetch logs for each event and store them in logs
     for event in "${events[@]}"; do
         printf "${blue}Fetching logs for event:${nc} $event\n"
         logs_cast=$(cast logs --rpc-url "$rpcUrl" --from-block "$usdnProtocolBirthBlock" --to-block latest "$event" --address "${!contractAddressVar}" -j)
@@ -120,12 +124,14 @@ for contract_name in "${!contracts[@]}"; do
                     log=$(printf "$log" | jq --arg new_topic "$address" '.topics[3] = $new_topic')
                 fi
 
+                # Convert block number and log index to decimal
                 block_number=$(printf "$log" | jq -r '.blockNumber')
                 decimal_block_number=$((block_number))
                 log=$(printf "$log" | jq --argjson new_block_number "$decimal_block_number" '.blockNumber = $new_block_number')
                 log_index=$(printf "$log" | jq -r '.logIndex')
                 decimal_log_index=$((log_index))
                 log=$(printf "$log" | jq --argjson new_log_index "$decimal_log_index" '.logIndex = $new_log_index')
+
                 logs+=("$log")
             done
         fi
@@ -136,6 +142,7 @@ for contract_name in "${!contracts[@]}"; do
         continue
     fi
 
+    # Sort logs by block number and logIndex
     sorted_logs=$(printf "%s\n" "${logs[@]}" | jq -s 'sort_by(.blockNumber, .logIndex)')
     printf "\n${green}Sorted logs for $contract_name by block number and logIndex:${nc}\n"
     mapfile -t sorted_logs <<< "$(printf "$sorted_logs" | jq -c '.[]')"
@@ -144,6 +151,9 @@ for contract_name in "${!contracts[@]}"; do
     declare -A admin_role
     declare -A addresses
 
+    # Loop through each log and extract role, address, and admin_role
+    # Addresses will be added or removed based on the event
+    # The admin_role will be updated if the event is RoleAdminChanged
     for log in "${sorted_logs[@]}"; do
         event=$(printf "$log" | jq -r '.topics[0]')
         role=$(printf "$log" | jq -r '.topics[1]')
@@ -160,10 +170,12 @@ for contract_name in "${!contracts[@]}"; do
         fi
     done
 
+    # Create JSON output
     json_output="["
     for role in "${!roles[@]}"; do
         address_list=$(printf "${addresses[$role]}" | tr ' ' '\n' | jq -R . | jq -s .)
         admin_value="${admin_role[$role]}"
+        # If admin role is not found, set it to DEFAULT_ADMIN_ROLE
         if [[ -z "$admin_value" ]]; then
             admin_role[$role]="DEFAULT_ADMIN_ROLE"
         fi
@@ -174,6 +186,7 @@ for contract_name in "${!contracts[@]}"; do
             '{Role: $role, Role_admin: $admin, Addresses: $addresses}'), 
     done
 
+    # Sort roles by DEFAULT_ADMIN_ROLE, ADMIN_*, and others
     json_output="${json_output%,}]"
     json_output=$(printf "%s" "$json_output" | jq 'sort_by(
         if .Role == "DEFAULT_ADMIN_ROLE" then 0 
@@ -182,10 +195,10 @@ for contract_name in "${!contracts[@]}"; do
         end
     )')
 
+    # Save JSON and CSV output
     json_output_processed=$(printf "%s" "$json_output" | jq .)
     echo "$json_output_processed" > "${contract_name}_roles.json"
     printf "${green}${contract_name} roles JSON saved to ${contract_name}_roles.json${nc}\n"
-
     csv_output=$(printf "%s" "$json_output" | jq -r '.[] | [.Role, .Role_admin, (.Addresses | join(","))] | @csv')
     printf "Role,Role_admin,Addresses\n$csv_output" > "${contract_name}_roles.csv"
     printf "${green}${contract_name} roles CSV saved to ${contract_name}_roles.csv${nc}\n"
@@ -194,6 +207,7 @@ done
 
 # Owner scanning
 
+# Get contract address for Rebalancer and LiquidationRewardsManager from UsdnProtocol contract
 contractBytesRebalancer=$(cast call "$contractAddressUsdnProtocol" "getRebalancer()" --rpc-url "$rpcUrl")
 contractAddressRebalancer=$(cast parse-bytes32-address "$contractBytesRebalancer")
 contractBytesLiquidationRewardsManager=$(cast call "$contractAddressUsdnProtocol" "getLiquidationRewardsManager()" --rpc-url "$rpcUrl")
