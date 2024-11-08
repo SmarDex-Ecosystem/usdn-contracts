@@ -178,9 +178,12 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * If the new owner is a contract that supports the `IOwnershipCallback` interface, its `ownershipCallback` function
      * will be called after the transfer of ownership
      * @param posId The unique position ID
+     * @param delegationSignature An optional EIP712 signature to provide when position ownership is transferred on the
+     * owner's behalf. If used, it needs to be encoded with `abi.encodePacked(r, s, v)`
      * @param newOwner The new position owner
      */
-    function transferPositionOwnership(PositionId calldata posId, address newOwner) external;
+    function transferPositionOwnership(PositionId calldata posId, bytes calldata delegationSignature, address newOwner)
+        external;
 
     /**
      * @notice Get the hash generated from the tick and a version

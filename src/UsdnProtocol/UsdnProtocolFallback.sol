@@ -189,6 +189,16 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
+    function INITIATE_CLOSE_TYPEHASH() external pure returns (bytes32) {
+        return Constants.INITIATE_CLOSE_TYPEHASH;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function TRANSFER_POSITION_OWNERSHIP_TYPEHASH() external pure returns (bytes32) {
+        return Constants.TRANSFER_POSITION_OWNERSHIP_TYPEHASH;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
     function getTickSpacing() external view returns (int24) {
         return Utils._getMainStorage()._tickSpacing;
     }

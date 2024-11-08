@@ -455,8 +455,16 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
     function i_calcMaxLongBalance(uint256 totalExpo) external pure returns (uint256);
 
     function i_verifyInitiateCloseDelegation(
+        Types.PrepareInitiateClosePositionParams calldata params,
+        address positionOwner
+    ) external;
+
+    function i_verifyTransferPositionOwnershipDelegation(
+        Types.PositionId calldata posId,
+        bytes calldata delegationSignature,
+        bytes32 domainSeparatorV4,
         address positionOwner,
-        Types.PrepareInitiateClosePositionParams calldata params
+        address newPositionOwner
     ) external;
 
     function i_setUsdnRebaseThreshold(uint128 threshold) external;

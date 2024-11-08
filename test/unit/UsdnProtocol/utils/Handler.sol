@@ -827,10 +827,22 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_verifyInitiateCloseDelegation(
-        address positionOwner,
-        Types.PrepareInitiateClosePositionParams calldata params
+        Types.PrepareInitiateClosePositionParams calldata params,
+        address positionOwner
     ) external {
-        ActionsUtils._verifyInitiateCloseDelegation(positionOwner, params);
+        ActionsUtils._verifyInitiateCloseDelegation(params, positionOwner);
+    }
+
+    function i_verifyTransferPositionOwnershipDelegation(
+        Types.PositionId calldata posId,
+        bytes calldata delegationSignature,
+        bytes32 domainSeparatorV4,
+        address positionOwner,
+        address newPositionOwner
+    ) external {
+        ActionsUtils._verifyTransferPositionOwnershipDelegation(
+            posId, delegationSignature, domainSeparatorV4, positionOwner, newPositionOwner
+        );
     }
 
     function i_setUsdnRebaseThreshold(uint128 threshold) external {
