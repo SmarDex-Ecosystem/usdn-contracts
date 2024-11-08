@@ -191,8 +191,7 @@ interface IUsdnProtocolTypes {
      * @param liqMultiplier A fixed precision representation of the liquidation multiplier (with
      * `LIQUIDATION_MULTIPLIER_DECIMALS` decimals) used to calculate the effective price for a given tick number
      * @param closeBoundedPositionValue The amount that was removed from the long balance on `initiateClosePosition`
-     * (only
-     * used when closing a position)
+     * (only used when closing a position)
      */
     struct LongPendingAction {
         ProtocolAction action; // 1 byte
@@ -407,6 +406,8 @@ interface IUsdnProtocolTypes {
      * @param lastPrice The price of the last balances update
      * @param tickHash The tick hash
      * @param pos The position object
+     * @param liqPriceWithoutPenaltyNorFunding The liquidation price without penalty nor funding used to calculate the
+     * user leverage and the new total expo
      * @param liqPriceWithoutPenalty The new liquidation price without penalty
      * @param leverage The new leverage
      * @param oldPosValue The value of the position according to the old entry price and the _lastPrice
@@ -419,6 +420,7 @@ interface IUsdnProtocolTypes {
         uint128 lastPrice;
         bytes32 tickHash;
         Position pos;
+        uint128 liqPriceWithoutPenaltyNorFunding;
         uint128 liqPriceWithoutPenalty;
         uint256 leverage;
         uint256 oldPosValue;

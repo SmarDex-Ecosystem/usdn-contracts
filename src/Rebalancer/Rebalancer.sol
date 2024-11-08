@@ -272,6 +272,8 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         - included in a liquidated position
             - amount > 0
             - 0 < entryPositionVersion <= _lastLiquidatedVersion
+            OR 
+            - positionData.tickVersion != protocol.getTickVersion(positionData.tick)
         */
         if (to == address(0)) {
             revert RebalancerInvalidAddressTo();
@@ -282,8 +284,18 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
         UserDeposit memory depositData = _userDeposit[to];
 
+        // if the user entered the rebalancer before and was not liquidated
         if (depositData.entryPositionVersion > _lastLiquidatedVersion) {
-            revert RebalancerDepositUnauthorized();
+            uint128 positionVersion = _positionVersion;
+            PositionData storage positionData = _positionData[positionVersion];
+            // if the current position was not liquidated, revert
+            if (_usdnProtocol.getTickVersion(positionData.tick) == positionData.tickVersion) {
+                revert RebalancerDepositUnauthorized();
+            }
+
+            // update the last liquidated version and delete the user data
+            _lastLiquidatedVersion = positionVersion;
+            delete depositData;
         } else if (depositData.entryPositionVersion > 0) {
             // if the user was in a position that got liquidated, we should reset the deposit data
             delete depositData;
@@ -505,7 +517,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
                 accMultiplier = FixedPointMathLib.fullMulDiv(
                     previousPosValue, previousPositionData.entryAccMultiplier, previousPositionData.amount
                 );
-            } else {
+            } else if (_lastLiquidatedVersion != positionVersion) {
                 // update the last liquidated version tracker
                 _lastLiquidatedVersion = positionVersion;
             }
