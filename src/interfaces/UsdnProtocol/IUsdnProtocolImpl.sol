@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+import { IAccessControlDefaultAdminRules } from
+    "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
+import { IERC5267 } from "@openzeppelin/contracts/interfaces/IERC5267.sol";
+import { IERC5313 } from "@openzeppelin/contracts/interfaces/IERC5313.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IBaseLiquidationRewardsManager } from "../LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
@@ -8,9 +12,9 @@ import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware
 import { IUsdn } from "../Usdn/IUsdn.sol";
 import { IUsdnProtocolActions } from "./IUsdnProtocolActions.sol";
 import { IUsdnProtocolCore } from "./IUsdnProtocolCore.sol";
+import { IUsdnProtocolErrors } from "./IUsdnProtocolErrors.sol";
 import { IUsdnProtocolFallback } from "./IUsdnProtocolFallback.sol";
 import { IUsdnProtocolLong } from "./IUsdnProtocolLong.sol";
-import { IUsdnProtocolStorage } from "./IUsdnProtocolStorage.sol";
 import { IUsdnProtocolVault } from "./IUsdnProtocolVault.sol";
 
 /**
@@ -18,11 +22,14 @@ import { IUsdnProtocolVault } from "./IUsdnProtocolVault.sol";
  * @notice Interface for the implementation of the USDN protocol (completed with {IUsdnProtocolFallback})
  */
 interface IUsdnProtocolImpl is
-    IUsdnProtocolStorage,
     IUsdnProtocolActions,
     IUsdnProtocolVault,
     IUsdnProtocolLong,
-    IUsdnProtocolCore
+    IUsdnProtocolCore,
+    IUsdnProtocolErrors,
+    IAccessControlDefaultAdminRules,
+    IERC5313,
+    IERC5267
 {
     /**
      * @notice Function to initialize the protocol storage

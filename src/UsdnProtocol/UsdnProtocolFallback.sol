@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { AccessControlDefaultAdminRulesUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -13,15 +17,20 @@ import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
+import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
-import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./libraries/UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVaultLibrary.sol";
 
-contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
+contract UsdnProtocolFallback is
+    IUsdnProtocolFallback,
+    PausableUpgradeable,
+    AccessControlDefaultAdminRulesUpgradeable,
+    EIP712Upgradeable
+{
     using SafeCast for uint256;
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -35,7 +44,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         uint256 assetPrice,
         uint256 longTradingExpo
     ) external view returns (uint128) {
-        Storage storage s = Utils._getMainStorage();
+        Types.Storage storage s = Utils._getMainStorage();
 
         (, uint128 liqPrice) = Long._getTickFromDesiredLiqPrice(
             desiredLiqPriceWithoutPenalty,
@@ -65,7 +74,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         view
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_)
     {
-        Storage storage s = Utils._getMainStorage();
+        Types.Storage storage s = Utils._getMainStorage();
 
         uint256 vaultBalance = Vault.vaultAssetAvailableWithFunding(price, timestamp);
         if (vaultBalance == 0) {
@@ -84,7 +93,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         view
         returns (uint256 assetExpected_)
     {
-        Storage storage s = Utils._getMainStorage();
+        Types.Storage storage s = Utils._getMainStorage();
 
         uint256 available = Vault.vaultAssetAvailableWithFunding(price, timestamp);
         assetExpected_ = Utils._calcBurnUsdn(usdnShares, available, s._usdn.totalShares(), s._vaultFeeBps);
@@ -103,7 +112,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolFallback
     function removeBlockedPendingAction(address validator, address payable to)
         external
-        onlyRole(CRITICAL_FUNCTIONS_ROLE)
+        onlyRole(Constants.CRITICAL_FUNCTIONS_ROLE)
     {
         Core.removeBlockedPendingAction(validator, to);
     }
@@ -111,7 +120,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolFallback
     function removeBlockedPendingActionNoCleanup(address validator, address payable to)
         external
-        onlyRole(CRITICAL_FUNCTIONS_ROLE)
+        onlyRole(Constants.CRITICAL_FUNCTIONS_ROLE)
     {
         Core.removeBlockedPendingActionNoCleanup(validator, to);
     }
@@ -119,7 +128,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolFallback
     function removeBlockedPendingAction(uint128 rawIndex, address payable to)
         external
-        onlyRole(CRITICAL_FUNCTIONS_ROLE)
+        onlyRole(Constants.CRITICAL_FUNCTIONS_ROLE)
     {
         Core._removeBlockedPendingAction(rawIndex, to, true);
     }
@@ -127,7 +136,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolFallback
     function removeBlockedPendingActionNoCleanup(uint128 rawIndex, address payable to)
         external
-        onlyRole(CRITICAL_FUNCTIONS_ROLE)
+        onlyRole(Constants.CRITICAL_FUNCTIONS_ROLE)
     {
         Core._removeBlockedPendingAction(rawIndex, to, false);
     }
@@ -421,16 +430,16 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getTickData(int24 tick) external view returns (TickData memory) {
-        Storage storage s = Utils._getMainStorage();
+    function getTickData(int24 tick) external view returns (Types.TickData memory) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         bytes32 cachedTickHash = Utils.tickHash(tick, s._tickVersion[tick]);
         return Utils._getMainStorage()._tickData[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory) {
-        Storage storage s = Utils._getMainStorage();
+    function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Types.Position memory) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         uint256 version = s._tickVersion[tick];
         bytes32 cachedTickHash = Utils.tickHash(tick, version);
@@ -449,28 +458,28 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolFallback
     function getDepositExpoImbalanceLimitBps() external view returns (int256 depositExpoImbalanceLimitBps_) {
-        Storage storage s = Utils._getMainStorage();
+        Types.Storage storage s = Utils._getMainStorage();
 
         depositExpoImbalanceLimitBps_ = s._depositExpoImbalanceLimitBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function getWithdrawalExpoImbalanceLimitBps() external view returns (int256 withdrawalExpoImbalanceLimitBps_) {
-        Storage storage s = Utils._getMainStorage();
+        Types.Storage storage s = Utils._getMainStorage();
 
         withdrawalExpoImbalanceLimitBps_ = s._withdrawalExpoImbalanceLimitBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function getOpenExpoImbalanceLimitBps() external view returns (int256 openExpoImbalanceLimitBps_) {
-        Storage storage s = Utils._getMainStorage();
+        Types.Storage storage s = Utils._getMainStorage();
 
         openExpoImbalanceLimitBps_ = s._openExpoImbalanceLimitBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_) {
-        Storage storage s = Utils._getMainStorage();
+        Types.Storage storage s = Utils._getMainStorage();
 
         closeExpoImbalanceLimitBps_ = s._closeExpoImbalanceLimitBps;
     }
@@ -481,14 +490,14 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         view
         returns (int256 rebalancerCloseExpoImbalanceLimitBps_)
     {
-        Storage storage s = Utils._getMainStorage();
+        Types.Storage storage s = Utils._getMainStorage();
 
         rebalancerCloseExpoImbalanceLimitBps_ = s._rebalancerCloseExpoImbalanceLimitBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function getLongImbalanceTargetBps() external view returns (int256 longImbalanceTargetBps_) {
-        Storage storage s = Utils._getMainStorage();
+        Types.Storage storage s = Utils._getMainStorage();
 
         longImbalanceTargetBps_ = s._longImbalanceTargetBps;
     }
@@ -510,6 +519,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolFallback
     function domainSeparatorV4() external view returns (bytes32) {
+        // to do : do we really want this here ?
         return _domainSeparatorV4();
     }
 
@@ -523,8 +533,11 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware) external onlyRole(SET_EXTERNAL_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware)
+        external
+        onlyRole(Constants.SET_EXTERNAL_ROLE)
+    {
+        Types.Storage storage s = Utils._getMainStorage();
 
         if (address(newOracleMiddleware) == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareAddress();
@@ -536,9 +549,9 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolFallback
     function setLiquidationRewardsManager(IBaseLiquidationRewardsManager newLiquidationRewardsManager)
         external
-        onlyRole(SET_EXTERNAL_ROLE)
+        onlyRole(Constants.SET_EXTERNAL_ROLE)
     {
-        Storage storage s = Utils._getMainStorage();
+        Types.Storage storage s = Utils._getMainStorage();
 
         if (address(newLiquidationRewardsManager) == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationRewardsManagerAddress();
@@ -550,8 +563,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setRebalancer(IBaseRebalancer newRebalancer) external onlyRole(SET_EXTERNAL_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setRebalancer(IBaseRebalancer newRebalancer) external onlyRole(Constants.SET_EXTERNAL_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         s._rebalancer = newRebalancer;
 
@@ -559,8 +572,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setFeeCollector(address newFeeCollector) external onlyRole(SET_EXTERNAL_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setFeeCollector(address newFeeCollector) external onlyRole(Constants.SET_EXTERNAL_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         if (newFeeCollector == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidFeeCollector();
@@ -576,9 +589,9 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolFallback
     function setValidatorDeadlines(uint128 newLowLatencyValidatorDeadline, uint128 newOnChainValidatorDeadline)
         external
-        onlyRole(CRITICAL_FUNCTIONS_ROLE)
+        onlyRole(Constants.CRITICAL_FUNCTIONS_ROLE)
     {
-        Storage storage s = Utils._getMainStorage();
+        Types.Storage storage s = Utils._getMainStorage();
 
         uint16 lowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
 
@@ -602,8 +615,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setMinLeverage(uint256 newMinLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setMinLeverage(uint256 newMinLeverage) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         // zero minLeverage
         if (newMinLeverage <= 10 ** Constants.LEVERAGE_DECIMALS) {
@@ -619,8 +632,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setMaxLeverage(uint256 newMaxLeverage) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setMaxLeverage(uint256 newMaxLeverage) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         if (newMaxLeverage <= s._minLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage();
@@ -636,8 +649,11 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setLiquidationPenalty(uint24 newLiquidationPenalty) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setLiquidationPenalty(uint24 newLiquidationPenalty)
+        external
+        onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE)
+    {
+        Types.Storage storage s = Utils._getMainStorage();
 
         if (newLiquidationPenalty > Constants.MAX_LIQUIDATION_PENALTY) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPenalty();
@@ -648,8 +664,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setEMAPeriod(uint128 newEMAPeriod) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setEMAPeriod(uint128 newEMAPeriod) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         if (newEMAPeriod > Constants.MAX_EMA_PERIOD) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidEMAPeriod();
@@ -660,8 +676,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setFundingSF(uint256 newFundingSF) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setFundingSF(uint256 newFundingSF) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         if (newFundingSF > 10 ** Constants.FUNDING_SF_DECIMALS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidFundingSF();
@@ -672,8 +688,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setProtocolFeeBps(uint16 newProtocolFeeBps) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setProtocolFeeBps(uint16 newProtocolFeeBps) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         if (newProtocolFeeBps > Constants.MAX_PROTOCOL_FEE_BPS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidProtocolFeeBps();
@@ -683,8 +699,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setPositionFeeBps(uint16 newPositionFee) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setPositionFeeBps(uint16 newPositionFee) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         // `newPositionFee` greater than 20%
         if (newPositionFee > Constants.MAX_POSITION_FEE_BPS) {
@@ -695,8 +711,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setVaultFeeBps(uint16 newVaultFee) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setVaultFeeBps(uint16 newVaultFee) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         // `newVaultFee` greater than 20%
         if (newVaultFee > Constants.MAX_VAULT_FEE_BPS) {
@@ -707,8 +723,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setRebalancerBonusBps(uint16 newBonus) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setRebalancerBonusBps(uint16 newBonus) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         // `newBonus` greater than 100%
         if (newBonus > Constants.BPS_DIVISOR) {
@@ -719,8 +735,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         // `newRatio` greater than 5%
         if (newRatio > Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
@@ -733,8 +749,11 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setSecurityDepositValue(uint64 securityDepositValue) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setSecurityDepositValue(uint64 securityDepositValue)
+        external
+        onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE)
+    {
+        Types.Storage storage s = Utils._getMainStorage();
 
         if (securityDepositValue > Constants.MAX_SECURITY_DEPOSIT) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidSecurityDeposit();
@@ -751,8 +770,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
         uint256 newCloseLimitBps,
         uint256 newRebalancerCloseLimitBps,
         int256 newLongImbalanceTargetBps
-    ) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    ) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         s._openExpoImbalanceLimitBps = newOpenLimitBps.toInt256();
         s._depositExpoImbalanceLimitBps = newDepositLimitBps.toInt256();
@@ -797,8 +816,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setMinLongPosition(uint256 newMinLongPosition) external onlyRole(SET_PROTOCOL_PARAMS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setMinLongPosition(uint256 newMinLongPosition) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         if (newMinLongPosition > Constants.MAX_MIN_LONG_POSITION) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMinLongPosition();
@@ -817,8 +836,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyRole(SET_OPTIONS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyRole(Constants.SET_OPTIONS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         // safetyMarginBps greater than 20%
         if (newSafetyMarginBps > Constants.MAX_SAFETY_MARGIN_BPS) {
@@ -830,8 +849,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setLiquidationIteration(uint16 newLiquidationIteration) external onlyRole(SET_OPTIONS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setLiquidationIteration(uint16 newLiquidationIteration) external onlyRole(Constants.SET_OPTIONS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         if (newLiquidationIteration > Constants.MAX_LIQUIDATION_ITERATION) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationIteration();
@@ -842,8 +861,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setFeeThreshold(uint256 newFeeThreshold) external onlyRole(SET_OPTIONS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setFeeThreshold(uint256 newFeeThreshold) external onlyRole(Constants.SET_OPTIONS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         s._feeThreshold = newFeeThreshold;
         emit IUsdnProtocolEvents.FeeThresholdUpdated(newFeeThreshold);
@@ -854,8 +873,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setTargetUsdnPrice(uint128 newPrice) external onlyRole(SET_USDN_PARAMS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setTargetUsdnPrice(uint128 newPrice) external onlyRole(Constants.SET_USDN_PARAMS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         if (newPrice > s._usdnRebaseThreshold) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidTargetUsdnPrice();
@@ -869,8 +888,8 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setUsdnRebaseThreshold(uint128 newThreshold) external onlyRole(SET_USDN_PARAMS_ROLE) {
-        Storage storage s = Utils._getMainStorage();
+    function setUsdnRebaseThreshold(uint128 newThreshold) external onlyRole(Constants.SET_USDN_PARAMS_ROLE) {
+        Types.Storage storage s = Utils._getMainStorage();
 
         if (newThreshold < s._targetUsdnPrice) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidUsdnRebaseThreshold();
@@ -888,7 +907,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolFallback
-    function pause() external onlyRole(PAUSER_ROLE) {
+    function pause() external onlyRole(Constants.PAUSER_ROLE) {
         _pause();
     }
 
@@ -897,7 +916,7 @@ contract UsdnProtocolFallback is IUsdnProtocolFallback, UsdnProtocolStorage {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolFallback
-    function unpause() external onlyRole(UNPAUSER_ROLE) {
+    function unpause() external onlyRole(Constants.UNPAUSER_ROLE) {
         _unpause();
     }
 }

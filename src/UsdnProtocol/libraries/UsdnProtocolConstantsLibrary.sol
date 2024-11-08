@@ -39,4 +39,52 @@ library UsdnProtocolConstantsLibrary {
     bytes32 internal constant INITIATE_CLOSE_TYPEHASH = keccak256(
         "InitiateClosePositionDelegation(bytes32 posIdHash,uint128 amountToClose,uint256 userMinPrice,address to,uint256 deadline,address positionOwner,address positionCloser,uint256 nonce)"
     );
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant SET_EXTERNAL_ROLE = keccak256("SET_EXTERNAL_ROLE");
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant CRITICAL_FUNCTIONS_ROLE = keccak256("CRITICAL_FUNCTIONS_ROLE");
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant SET_PROTOCOL_PARAMS_ROLE = keccak256("SET_PROTOCOL_PARAMS_ROLE");
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant SET_USDN_PARAMS_ROLE = keccak256("SET_USDN_PARAMS_ROLE");
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant SET_OPTIONS_ROLE = keccak256("SET_OPTIONS_ROLE");
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant PROXY_UPGRADE_ROLE = keccak256("PROXY_UPGRADE_ROLE");
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant UNPAUSER_ROLE = keccak256("UNPAUSER_ROLE");
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_SET_EXTERNAL_ROLE = keccak256("ADMIN_SET_EXTERNAL_ROLE");
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_CRITICAL_FUNCTIONS_ROLE = keccak256("ADMIN_CRITICAL_FUNCTIONS_ROLE");
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_SET_PROTOCOL_PARAMS_ROLE = keccak256("ADMIN_SET_PROTOCOL_PARAMS_ROLE");
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_SET_USDN_PARAMS_ROLE = keccak256("ADMIN_SET_USDN_PARAMS_ROLE");
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_SET_OPTIONS_ROLE = keccak256("ADMIN_SET_OPTIONS_ROLE");
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_PROXY_UPGRADE_ROLE = keccak256("ADMIN_PROXY_UPGRADE_ROLE");
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_PAUSER_ROLE = keccak256("ADMIN_PAUSER_ROLE");
+
+    // / @inheritdoc IUsdnProtocolStorage
+    bytes32 public constant ADMIN_UNPAUSER_ROLE = keccak256("ADMIN_UNPAUSER_ROLE");
 }

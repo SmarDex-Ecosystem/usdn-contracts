@@ -1,13 +1,24 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { AccessControlDefaultAdminRulesUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+
 import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
+import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./libraries/UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 
-abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActions {
+abstract contract UsdnProtocolActions is
+    IUsdnProtocolActions,
+    InitializableReentrancyGuard,
+    AccessControlDefaultAdminRulesUpgradeable,
+    PausableUpgradeable,
+    EIP712Upgradeable
+{
     /// @inheritdoc IUsdnProtocolActions
     function initiateOpenPosition(
         uint128 amount,
