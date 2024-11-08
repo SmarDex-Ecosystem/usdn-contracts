@@ -19,7 +19,7 @@ import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnPro
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
-import { UsdnProtocolLongLibrary as Long } from "./libraries/UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolSettersLibrary as Setters } from "./libraries/UsdnProtocolSettersLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVaultLibrary.sol";
 
@@ -518,13 +518,7 @@ contract UsdnProtocolFallback is
         external
         onlyRole(Constants.SET_EXTERNAL_ROLE)
     {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        if (address(newOracleMiddleware) == address(0)) {
-            revert UsdnProtocolInvalidMiddlewareAddress();
-        }
-        s._oracleMiddleware = newOracleMiddleware;
-        emit IUsdnProtocolEvents.OracleMiddlewareUpdated(address(newOracleMiddleware));
+        Setters.setOracleMiddleware(newOracleMiddleware);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -532,35 +526,17 @@ contract UsdnProtocolFallback is
         external
         onlyRole(Constants.SET_EXTERNAL_ROLE)
     {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        if (address(newLiquidationRewardsManager) == address(0)) {
-            revert UsdnProtocolInvalidLiquidationRewardsManagerAddress();
-        }
-
-        s._liquidationRewardsManager = newLiquidationRewardsManager;
-
-        emit IUsdnProtocolEvents.LiquidationRewardsManagerUpdated(address(newLiquidationRewardsManager));
+        Setters.setLiquidationRewardsManager(newLiquidationRewardsManager);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setRebalancer(IBaseRebalancer newRebalancer) external onlyRole(Constants.SET_EXTERNAL_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        s._rebalancer = newRebalancer;
-
-        emit IUsdnProtocolEvents.RebalancerUpdated(address(newRebalancer));
+        Setters.setRebalancer(newRebalancer);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setFeeCollector(address newFeeCollector) external onlyRole(Constants.SET_EXTERNAL_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        if (newFeeCollector == address(0)) {
-            revert UsdnProtocolInvalidFeeCollector();
-        }
-        s._feeCollector = newFeeCollector;
-        emit IUsdnProtocolEvents.FeeCollectorUpdated(newFeeCollector);
+        Setters.setFeeCollector(newFeeCollector);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -572,23 +548,7 @@ contract UsdnProtocolFallback is
         external
         onlyRole(Constants.CRITICAL_FUNCTIONS_ROLE)
     {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        uint16 lowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
-
-        if (newLowLatencyValidatorDeadline < Constants.MIN_VALIDATION_DEADLINE) {
-            revert UsdnProtocolInvalidValidatorDeadline();
-        }
-        if (newLowLatencyValidatorDeadline > lowLatencyDelay) {
-            revert UsdnProtocolInvalidValidatorDeadline();
-        }
-        if (newOnChainValidatorDeadline > Constants.MAX_VALIDATION_DEADLINE) {
-            revert UsdnProtocolInvalidValidatorDeadline();
-        }
-
-        s._lowLatencyValidatorDeadline = newLowLatencyValidatorDeadline;
-        s._onChainValidatorDeadline = newOnChainValidatorDeadline;
-        emit IUsdnProtocolEvents.ValidatorDeadlinesUpdated(newLowLatencyValidatorDeadline, newOnChainValidatorDeadline);
+        Setters.setValidatorDeadlines(newLowLatencyValidatorDeadline, newOnChainValidatorDeadline);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -597,36 +557,12 @@ contract UsdnProtocolFallback is
 
     /// @inheritdoc IUsdnProtocolFallback
     function setMinLeverage(uint256 newMinLeverage) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        // zero minLeverage
-        if (newMinLeverage <= 10 ** Constants.LEVERAGE_DECIMALS) {
-            revert UsdnProtocolInvalidMinLeverage();
-        }
-
-        if (newMinLeverage >= s._maxLeverage) {
-            revert UsdnProtocolInvalidMinLeverage();
-        }
-
-        s._minLeverage = newMinLeverage;
-        emit IUsdnProtocolEvents.MinLeverageUpdated(newMinLeverage);
+        Setters.setMinLeverage(newMinLeverage);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setMaxLeverage(uint256 newMaxLeverage) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        if (newMaxLeverage <= s._minLeverage) {
-            revert UsdnProtocolInvalidMaxLeverage();
-        }
-
-        // `maxLeverage` greater than 100
-        if (newMaxLeverage > Constants.MAX_LEVERAGE) {
-            revert UsdnProtocolInvalidMaxLeverage();
-        }
-
-        s._maxLeverage = newMaxLeverage;
-        emit IUsdnProtocolEvents.MaxLeverageUpdated(newMaxLeverage);
+        Setters.setMaxLeverage(newMaxLeverage);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -634,99 +570,42 @@ contract UsdnProtocolFallback is
         external
         onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE)
     {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        if (newLiquidationPenalty > Constants.MAX_LIQUIDATION_PENALTY) {
-            revert UsdnProtocolInvalidLiquidationPenalty();
-        }
-
-        s._liquidationPenalty = newLiquidationPenalty;
-        emit IUsdnProtocolEvents.LiquidationPenaltyUpdated(newLiquidationPenalty);
+        Setters.setLiquidationPenalty(newLiquidationPenalty);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setEMAPeriod(uint128 newEMAPeriod) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        if (newEMAPeriod > Constants.MAX_EMA_PERIOD) {
-            revert UsdnProtocolInvalidEMAPeriod();
-        }
-
-        s._EMAPeriod = newEMAPeriod;
-        emit IUsdnProtocolEvents.EMAPeriodUpdated(newEMAPeriod);
+        Setters.setEMAPeriod(newEMAPeriod);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setFundingSF(uint256 newFundingSF) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        if (newFundingSF > 10 ** Constants.FUNDING_SF_DECIMALS) {
-            revert UsdnProtocolInvalidFundingSF();
-        }
-
-        s._fundingSF = newFundingSF;
-        emit IUsdnProtocolEvents.FundingSFUpdated(newFundingSF);
+        Setters.setFundingSF(newFundingSF);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setProtocolFeeBps(uint16 newProtocolFeeBps) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        if (newProtocolFeeBps > Constants.MAX_PROTOCOL_FEE_BPS) {
-            revert UsdnProtocolInvalidProtocolFeeBps();
-        }
-        s._protocolFeeBps = newProtocolFeeBps;
-        emit IUsdnProtocolEvents.FeeBpsUpdated(newProtocolFeeBps);
+        Setters.setProtocolFeeBps(newProtocolFeeBps);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setPositionFeeBps(uint16 newPositionFee) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        // `newPositionFee` greater than 20%
-        if (newPositionFee > Constants.MAX_POSITION_FEE_BPS) {
-            revert UsdnProtocolInvalidPositionFee();
-        }
-        s._positionFeeBps = newPositionFee;
-        emit IUsdnProtocolEvents.PositionFeeUpdated(newPositionFee);
+        Setters.setPositionFeeBps(newPositionFee);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setVaultFeeBps(uint16 newVaultFee) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        // `newVaultFee` greater than 20%
-        if (newVaultFee > Constants.MAX_VAULT_FEE_BPS) {
-            revert UsdnProtocolInvalidVaultFee();
-        }
-        s._vaultFeeBps = newVaultFee;
-        emit IUsdnProtocolEvents.VaultFeeUpdated(newVaultFee);
+        Setters.setVaultFeeBps(newVaultFee);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setRebalancerBonusBps(uint16 newBonus) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        // `newBonus` greater than 100%
-        if (newBonus > Constants.BPS_DIVISOR) {
-            revert UsdnProtocolInvalidRebalancerBonus();
-        }
-        s._rebalancerBonusBps = newBonus;
-        emit IUsdnProtocolEvents.RebalancerBonusUpdated(newBonus);
+        Setters.setRebalancerBonusBps(newBonus);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        // `newRatio` greater than 5%
-        if (newRatio > Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
-            revert UsdnProtocolInvalidBurnSdexOnDepositRatio();
-        }
-
-        s._sdexBurnOnDepositRatio = newRatio;
-
-        emit IUsdnProtocolEvents.BurnSdexOnDepositRatioUpdated(newRatio);
+        Setters.setSdexBurnOnDepositRatio(newRatio);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -734,13 +613,7 @@ contract UsdnProtocolFallback is
         external
         onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE)
     {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        if (securityDepositValue > Constants.MAX_SECURITY_DEPOSIT) {
-            revert UsdnProtocolInvalidSecurityDeposit();
-        }
-        s._securityDepositValue = securityDepositValue;
-        emit IUsdnProtocolEvents.SecurityDepositValueUpdated(securityDepositValue);
+        Setters.setSecurityDepositValue(securityDepositValue);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -752,41 +625,7 @@ contract UsdnProtocolFallback is
         uint256 newRebalancerCloseLimitBps,
         int256 newLongImbalanceTargetBps
     ) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        s._openExpoImbalanceLimitBps = newOpenLimitBps.toInt256();
-        s._depositExpoImbalanceLimitBps = newDepositLimitBps.toInt256();
-
-        if (newWithdrawalLimitBps != 0 && newWithdrawalLimitBps < newOpenLimitBps) {
-            // withdrawal limit lower than open not permitted
-            revert UsdnProtocolInvalidExpoImbalanceLimit();
-        }
-        s._withdrawalExpoImbalanceLimitBps = newWithdrawalLimitBps.toInt256();
-
-        if (newCloseLimitBps != 0 && newCloseLimitBps < newDepositLimitBps) {
-            // close limit lower than deposit not permitted
-            revert UsdnProtocolInvalidExpoImbalanceLimit();
-        }
-        s._closeExpoImbalanceLimitBps = newCloseLimitBps.toInt256();
-
-        if (newRebalancerCloseLimitBps != 0 && newRebalancerCloseLimitBps > newCloseLimitBps) {
-            // rebalancer close limit higher than close limit not permitted
-            revert UsdnProtocolInvalidExpoImbalanceLimit();
-        }
-        s._rebalancerCloseExpoImbalanceLimitBps = newRebalancerCloseLimitBps.toInt256();
-
-        // casts are safe here as values are safely casted earlier
-        if (
-            newLongImbalanceTargetBps > int256(newCloseLimitBps)
-                || newLongImbalanceTargetBps < -int256(newWithdrawalLimitBps)
-                || newLongImbalanceTargetBps < -int256(Constants.BPS_DIVISOR / 2) // The target cannot be lower than -50%
-        ) {
-            revert UsdnProtocolInvalidLongImbalanceTarget();
-        }
-
-        s._longImbalanceTargetBps = newLongImbalanceTargetBps;
-
-        emit IUsdnProtocolEvents.ImbalanceLimitsUpdated(
+        Setters.setExpoImbalanceLimits(
             newOpenLimitBps,
             newDepositLimitBps,
             newWithdrawalLimitBps,
@@ -798,18 +637,7 @@ contract UsdnProtocolFallback is
 
     /// @inheritdoc IUsdnProtocolFallback
     function setMinLongPosition(uint256 newMinLongPosition) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        if (newMinLongPosition > Constants.MAX_MIN_LONG_POSITION) {
-            revert UsdnProtocolInvalidMinLongPosition();
-        }
-        s._minLongPosition = newMinLongPosition;
-        emit IUsdnProtocolEvents.MinLongPositionUpdated(newMinLongPosition);
-
-        IBaseRebalancer rebalancer = s._rebalancer;
-        if (address(rebalancer) != address(0) && rebalancer.getMinAssetDeposit() < newMinLongPosition) {
-            rebalancer.setMinAssetDeposit(newMinLongPosition);
-        }
+        Setters.setMinLongPosition(newMinLongPosition);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -818,35 +646,17 @@ contract UsdnProtocolFallback is
 
     /// @inheritdoc IUsdnProtocolFallback
     function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyRole(Constants.SET_OPTIONS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        // safetyMarginBps greater than 20%
-        if (newSafetyMarginBps > Constants.MAX_SAFETY_MARGIN_BPS) {
-            revert UsdnProtocolInvalidSafetyMarginBps();
-        }
-
-        s._safetyMarginBps = newSafetyMarginBps;
-        emit IUsdnProtocolEvents.SafetyMarginBpsUpdated(newSafetyMarginBps);
+        Setters.setSafetyMarginBps(newSafetyMarginBps);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setLiquidationIteration(uint16 newLiquidationIteration) external onlyRole(Constants.SET_OPTIONS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        if (newLiquidationIteration > Constants.MAX_LIQUIDATION_ITERATION) {
-            revert UsdnProtocolInvalidLiquidationIteration();
-        }
-
-        s._liquidationIteration = newLiquidationIteration;
-        emit IUsdnProtocolEvents.LiquidationIterationUpdated(newLiquidationIteration);
+        Setters.setLiquidationIteration(newLiquidationIteration);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setFeeThreshold(uint256 newFeeThreshold) external onlyRole(Constants.SET_OPTIONS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        s._feeThreshold = newFeeThreshold;
-        emit IUsdnProtocolEvents.FeeThresholdUpdated(newFeeThreshold);
+        Setters.setFeeThreshold(newFeeThreshold);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -855,32 +665,12 @@ contract UsdnProtocolFallback is
 
     /// @inheritdoc IUsdnProtocolFallback
     function setTargetUsdnPrice(uint128 newPrice) external onlyRole(Constants.SET_USDN_PARAMS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        if (newPrice > s._usdnRebaseThreshold) {
-            revert UsdnProtocolInvalidTargetUsdnPrice();
-        }
-        if (newPrice < uint128(10 ** s._priceFeedDecimals)) {
-            // values smaller than $1 are not allowed
-            revert UsdnProtocolInvalidTargetUsdnPrice();
-        }
-        s._targetUsdnPrice = newPrice;
-        emit IUsdnProtocolEvents.TargetUsdnPriceUpdated(newPrice);
+        Setters.setTargetUsdnPrice(newPrice);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function setUsdnRebaseThreshold(uint128 newThreshold) external onlyRole(Constants.SET_USDN_PARAMS_ROLE) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        if (newThreshold < s._targetUsdnPrice) {
-            revert UsdnProtocolInvalidUsdnRebaseThreshold();
-        }
-        if (newThreshold > uint128(2 * 10 ** s._priceFeedDecimals)) {
-            // values greater than $2 are not allowed
-            revert UsdnProtocolInvalidUsdnRebaseThreshold();
-        }
-        s._usdnRebaseThreshold = newThreshold;
-        emit IUsdnProtocolEvents.UsdnRebaseThresholdUpdated(newThreshold);
+        Setters.setUsdnRebaseThreshold(newThreshold);
     }
 
     /* -------------------------------------------------------------------------- */
