@@ -135,4 +135,9 @@ abstract contract UsdnProtocolActions is
     {
         return ActionsUtils.getLongPosition(posId);
     }
+
+    /// @inheritdoc IUsdnProtocolActions
+    function domainSeparatorV4() external view returns (bytes32) {
+        return _domainSeparatorV4();
+    }
 }

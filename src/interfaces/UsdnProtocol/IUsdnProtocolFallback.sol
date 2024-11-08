@@ -590,12 +590,6 @@ interface IUsdnProtocolFallback is IUsdnProtocolErrors {
     function getNonce(address owner) external view returns (uint256);
 
     /**
-     * @notice Get the domain separator v4
-     * @return The domain separator v4
-     */
-    function domainSeparatorV4() external view returns (bytes32);
-
-    /**
      * @notice Get The EIP712 {initiateClosePosition} typehash
      * @return The {initiateClosePosition} typehash
      */

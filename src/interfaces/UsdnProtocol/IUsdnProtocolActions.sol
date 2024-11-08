@@ -200,4 +200,10 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
         external
         view
         returns (Position memory pos_, uint24 liquidationPenalty_);
+
+    /**
+     * @notice Get the domain separator v4
+     * @return The domain separator v4
+     */
+    function domainSeparatorV4() external view returns (bytes32);
 }

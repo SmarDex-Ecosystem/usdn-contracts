@@ -4,7 +4,6 @@ pragma solidity 0.8.26;
 import { AccessControlDefaultAdminRulesUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -27,8 +26,7 @@ import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVault
 contract UsdnProtocolFallback is
     IUsdnProtocolFallback,
     PausableUpgradeable,
-    AccessControlDefaultAdminRulesUpgradeable,
-    EIP712Upgradeable
+    AccessControlDefaultAdminRulesUpgradeable
 {
     using SafeCast for uint256;
 
@@ -514,12 +512,6 @@ contract UsdnProtocolFallback is
     /// @inheritdoc IUsdnProtocolFallback
     function getNonce(address owner) external view returns (uint256) {
         return Utils._getMainStorage()._nonce[owner];
-    }
-
-    /// @inheritdoc IUsdnProtocolFallback
-    function domainSeparatorV4() external view returns (bytes32) {
-        // to do : do we really want this here ?
-        return _domainSeparatorV4();
     }
 
     /// @inheritdoc IUsdnProtocolFallback
