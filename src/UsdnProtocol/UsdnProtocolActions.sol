@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { AccessControlDefaultAdminRulesUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 
@@ -15,7 +13,6 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtils
 abstract contract UsdnProtocolActions is
     IUsdnProtocolActions,
     InitializableReentrancyGuard,
-    AccessControlDefaultAdminRulesUpgradeable,
     PausableUpgradeable,
     EIP712Upgradeable
 {

@@ -1,22 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { AccessControlDefaultAdminRulesUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 
 import { IUsdnProtocolVault } from "../interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVaultLibrary.sol";
 
-abstract contract UsdnProtocolVault is
-    IUsdnProtocolVault,
-    InitializableReentrancyGuard,
-    AccessControlDefaultAdminRulesUpgradeable,
-    PausableUpgradeable,
-    EIP712Upgradeable
-{
+abstract contract UsdnProtocolVault is IUsdnProtocolVault, InitializableReentrancyGuard, PausableUpgradeable {
     /// @inheritdoc IUsdnProtocolVault
     function initiateDeposit(
         uint128 amount,
