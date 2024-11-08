@@ -211,14 +211,14 @@ interface IUsdnProtocolFallback {
     function MIN_LONG_TRADING_EXPO_BPS() external pure returns (uint256);
 
     /**
-     * @notice Get The EIP712 {initiateClosePosition} typehash
-     * @return The {initiateClosePosition} typehash
+     * @notice Get The EIP712 typehash for the {initiateClosePosition} delegation
+     * @return The typehash
      */
     function INITIATE_CLOSE_TYPEHASH() external pure returns (bytes32);
 
     /**
-     * @notice Get The EIP712 {transferPositionOwnership} typehash
-     * @return The {transferPositionOwnership} typehash
+     * @notice Get The EIP712 typehash for the {transferPositionOwnership} delegation
+     * @return The typehash
      */
     function TRANSFER_POSITION_OWNERSHIP_TYPEHASH() external pure returns (bytes32);
 
