@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-contract SigUtils {
+contract PermitSigUtils {
     bytes32 internal immutable _domainSeparator;
 
     constructor(bytes32 domainSeparator) {
