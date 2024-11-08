@@ -12,14 +12,16 @@ import { UsdnProtocolImplV2 } from "../utils/UsdnProtocolImplV2.sol";
 
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @custom:feature The proxy functionality of the protocol
  * @custom:background Given an initialized protocol
  */
+
 contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
     Types.Storage sV1;
 
@@ -60,7 +62,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), protocol.PROXY_UPGRADE_ROLE()
+                IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), Constants.PROXY_UPGRADE_ROLE
             )
         );
         protocol.upgradeToAndCall(address(newImplementation), bytes(""));

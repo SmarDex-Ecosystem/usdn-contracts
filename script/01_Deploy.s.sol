@@ -19,6 +19,8 @@ import { Usdn } from "../src/Usdn/Usdn.sol";
 import { Wusdn } from "../src/Usdn/Wusdn.sol";
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -313,8 +315,8 @@ contract Deploy is Script {
      * @param rebalancer The rebalancer
      */
     function _handlePostDeployment(IUsdnProtocol usdnProtocol, Usdn usdn, Rebalancer rebalancer) internal {
-        bytes32 ADMIN_SET_EXTERNAL_ROLE = usdnProtocol.ADMIN_SET_EXTERNAL_ROLE();
-        bytes32 SET_EXTERNAL_ROLE = usdnProtocol.SET_EXTERNAL_ROLE();
+        bytes32 ADMIN_SET_EXTERNAL_ROLE = Constants.ADMIN_SET_EXTERNAL_ROLE;
+        bytes32 SET_EXTERNAL_ROLE = Constants.SET_EXTERNAL_ROLE;
         usdnProtocol.grantRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
         usdnProtocol.grantRole(SET_EXTERNAL_ROLE, _deployerAddress);
 
