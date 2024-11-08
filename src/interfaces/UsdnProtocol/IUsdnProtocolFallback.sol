@@ -8,13 +8,14 @@ import { IBaseLiquidationRewardsManager } from "../LiquidationRewardsManager/IBa
 import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../Usdn/IUsdn.sol";
+import { IUsdnProtocolErrors } from "./IUsdnProtocolErrors.sol";
 import { IUsdnProtocolTypes as Types } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolFallback
  * @notice Interface for the USDN protocol fallback functions
  */
-interface IUsdnProtocolFallback {
+interface IUsdnProtocolFallback is IUsdnProtocolErrors {
     /**
      * @notice Get the liquidation price corresponding to a given tick number
      * @dev Uses the values from storage for the various variables. Note that ticks that are

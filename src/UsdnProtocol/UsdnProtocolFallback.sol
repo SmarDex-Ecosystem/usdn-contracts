@@ -14,7 +14,6 @@ import { IBaseLiquidationRewardsManager } from
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
-import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -78,7 +77,7 @@ contract UsdnProtocolFallback is
 
         uint256 vaultBalance = Vault.vaultAssetAvailableWithFunding(price, timestamp);
         if (vaultBalance == 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
+            revert UsdnProtocolEmptyVault();
         }
         IUsdn usdn = s._usdn;
         uint256 fees = FixedPointMathLib.fullMulDiv(amount, s._vaultFeeBps, Constants.BPS_DIVISOR);
@@ -105,7 +104,7 @@ contract UsdnProtocolFallback is
         if (securityDepositValue > 0) {
             Utils._refundEther(securityDepositValue, validator);
         } else {
-            revert IUsdnProtocolErrors.UsdnProtocolNotEligibleForRefund(validator);
+            revert UsdnProtocolNotEligibleForRefund(validator);
         }
     }
 
@@ -540,7 +539,7 @@ contract UsdnProtocolFallback is
         Types.Storage storage s = Utils._getMainStorage();
 
         if (address(newOracleMiddleware) == address(0)) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareAddress();
+            revert UsdnProtocolInvalidMiddlewareAddress();
         }
         s._oracleMiddleware = newOracleMiddleware;
         emit IUsdnProtocolEvents.OracleMiddlewareUpdated(address(newOracleMiddleware));
@@ -554,7 +553,7 @@ contract UsdnProtocolFallback is
         Types.Storage storage s = Utils._getMainStorage();
 
         if (address(newLiquidationRewardsManager) == address(0)) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationRewardsManagerAddress();
+            revert UsdnProtocolInvalidLiquidationRewardsManagerAddress();
         }
 
         s._liquidationRewardsManager = newLiquidationRewardsManager;
@@ -576,7 +575,7 @@ contract UsdnProtocolFallback is
         Types.Storage storage s = Utils._getMainStorage();
 
         if (newFeeCollector == address(0)) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidFeeCollector();
+            revert UsdnProtocolInvalidFeeCollector();
         }
         s._feeCollector = newFeeCollector;
         emit IUsdnProtocolEvents.FeeCollectorUpdated(newFeeCollector);
@@ -596,13 +595,13 @@ contract UsdnProtocolFallback is
         uint16 lowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
 
         if (newLowLatencyValidatorDeadline < Constants.MIN_VALIDATION_DEADLINE) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidValidatorDeadline();
+            revert UsdnProtocolInvalidValidatorDeadline();
         }
         if (newLowLatencyValidatorDeadline > lowLatencyDelay) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidValidatorDeadline();
+            revert UsdnProtocolInvalidValidatorDeadline();
         }
         if (newOnChainValidatorDeadline > Constants.MAX_VALIDATION_DEADLINE) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidValidatorDeadline();
+            revert UsdnProtocolInvalidValidatorDeadline();
         }
 
         s._lowLatencyValidatorDeadline = newLowLatencyValidatorDeadline;
@@ -620,11 +619,11 @@ contract UsdnProtocolFallback is
 
         // zero minLeverage
         if (newMinLeverage <= 10 ** Constants.LEVERAGE_DECIMALS) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidMinLeverage();
+            revert UsdnProtocolInvalidMinLeverage();
         }
 
         if (newMinLeverage >= s._maxLeverage) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidMinLeverage();
+            revert UsdnProtocolInvalidMinLeverage();
         }
 
         s._minLeverage = newMinLeverage;
@@ -636,12 +635,12 @@ contract UsdnProtocolFallback is
         Types.Storage storage s = Utils._getMainStorage();
 
         if (newMaxLeverage <= s._minLeverage) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage();
+            revert UsdnProtocolInvalidMaxLeverage();
         }
 
         // `maxLeverage` greater than 100
         if (newMaxLeverage > Constants.MAX_LEVERAGE) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage();
+            revert UsdnProtocolInvalidMaxLeverage();
         }
 
         s._maxLeverage = newMaxLeverage;
@@ -656,7 +655,7 @@ contract UsdnProtocolFallback is
         Types.Storage storage s = Utils._getMainStorage();
 
         if (newLiquidationPenalty > Constants.MAX_LIQUIDATION_PENALTY) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPenalty();
+            revert UsdnProtocolInvalidLiquidationPenalty();
         }
 
         s._liquidationPenalty = newLiquidationPenalty;
@@ -668,7 +667,7 @@ contract UsdnProtocolFallback is
         Types.Storage storage s = Utils._getMainStorage();
 
         if (newEMAPeriod > Constants.MAX_EMA_PERIOD) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidEMAPeriod();
+            revert UsdnProtocolInvalidEMAPeriod();
         }
 
         s._EMAPeriod = newEMAPeriod;
@@ -680,7 +679,7 @@ contract UsdnProtocolFallback is
         Types.Storage storage s = Utils._getMainStorage();
 
         if (newFundingSF > 10 ** Constants.FUNDING_SF_DECIMALS) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidFundingSF();
+            revert UsdnProtocolInvalidFundingSF();
         }
 
         s._fundingSF = newFundingSF;
@@ -692,7 +691,7 @@ contract UsdnProtocolFallback is
         Types.Storage storage s = Utils._getMainStorage();
 
         if (newProtocolFeeBps > Constants.MAX_PROTOCOL_FEE_BPS) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidProtocolFeeBps();
+            revert UsdnProtocolInvalidProtocolFeeBps();
         }
         s._protocolFeeBps = newProtocolFeeBps;
         emit IUsdnProtocolEvents.FeeBpsUpdated(newProtocolFeeBps);
@@ -704,7 +703,7 @@ contract UsdnProtocolFallback is
 
         // `newPositionFee` greater than 20%
         if (newPositionFee > Constants.MAX_POSITION_FEE_BPS) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidPositionFee();
+            revert UsdnProtocolInvalidPositionFee();
         }
         s._positionFeeBps = newPositionFee;
         emit IUsdnProtocolEvents.PositionFeeUpdated(newPositionFee);
@@ -716,7 +715,7 @@ contract UsdnProtocolFallback is
 
         // `newVaultFee` greater than 20%
         if (newVaultFee > Constants.MAX_VAULT_FEE_BPS) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidVaultFee();
+            revert UsdnProtocolInvalidVaultFee();
         }
         s._vaultFeeBps = newVaultFee;
         emit IUsdnProtocolEvents.VaultFeeUpdated(newVaultFee);
@@ -728,7 +727,7 @@ contract UsdnProtocolFallback is
 
         // `newBonus` greater than 100%
         if (newBonus > Constants.BPS_DIVISOR) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidRebalancerBonus();
+            revert UsdnProtocolInvalidRebalancerBonus();
         }
         s._rebalancerBonusBps = newBonus;
         emit IUsdnProtocolEvents.RebalancerBonusUpdated(newBonus);
@@ -740,7 +739,7 @@ contract UsdnProtocolFallback is
 
         // `newRatio` greater than 5%
         if (newRatio > Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidBurnSdexOnDepositRatio();
+            revert UsdnProtocolInvalidBurnSdexOnDepositRatio();
         }
 
         s._sdexBurnOnDepositRatio = newRatio;
@@ -756,7 +755,7 @@ contract UsdnProtocolFallback is
         Types.Storage storage s = Utils._getMainStorage();
 
         if (securityDepositValue > Constants.MAX_SECURITY_DEPOSIT) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidSecurityDeposit();
+            revert UsdnProtocolInvalidSecurityDeposit();
         }
         s._securityDepositValue = securityDepositValue;
         emit IUsdnProtocolEvents.SecurityDepositValueUpdated(securityDepositValue);
@@ -778,19 +777,19 @@ contract UsdnProtocolFallback is
 
         if (newWithdrawalLimitBps != 0 && newWithdrawalLimitBps < newOpenLimitBps) {
             // withdrawal limit lower than open not permitted
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidExpoImbalanceLimit();
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
         s._withdrawalExpoImbalanceLimitBps = newWithdrawalLimitBps.toInt256();
 
         if (newCloseLimitBps != 0 && newCloseLimitBps < newDepositLimitBps) {
             // close limit lower than deposit not permitted
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidExpoImbalanceLimit();
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
         s._closeExpoImbalanceLimitBps = newCloseLimitBps.toInt256();
 
         if (newRebalancerCloseLimitBps != 0 && newRebalancerCloseLimitBps > newCloseLimitBps) {
             // rebalancer close limit higher than close limit not permitted
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidExpoImbalanceLimit();
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
         s._rebalancerCloseExpoImbalanceLimitBps = newRebalancerCloseLimitBps.toInt256();
 
@@ -800,7 +799,7 @@ contract UsdnProtocolFallback is
                 || newLongImbalanceTargetBps < -int256(newWithdrawalLimitBps)
                 || newLongImbalanceTargetBps < -int256(Constants.BPS_DIVISOR / 2) // The target cannot be lower than -50%
         ) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidLongImbalanceTarget();
+            revert UsdnProtocolInvalidLongImbalanceTarget();
         }
 
         s._longImbalanceTargetBps = newLongImbalanceTargetBps;
@@ -820,7 +819,7 @@ contract UsdnProtocolFallback is
         Types.Storage storage s = Utils._getMainStorage();
 
         if (newMinLongPosition > Constants.MAX_MIN_LONG_POSITION) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidMinLongPosition();
+            revert UsdnProtocolInvalidMinLongPosition();
         }
         s._minLongPosition = newMinLongPosition;
         emit IUsdnProtocolEvents.MinLongPositionUpdated(newMinLongPosition);
@@ -841,7 +840,7 @@ contract UsdnProtocolFallback is
 
         // safetyMarginBps greater than 20%
         if (newSafetyMarginBps > Constants.MAX_SAFETY_MARGIN_BPS) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidSafetyMarginBps();
+            revert UsdnProtocolInvalidSafetyMarginBps();
         }
 
         s._safetyMarginBps = newSafetyMarginBps;
@@ -853,7 +852,7 @@ contract UsdnProtocolFallback is
         Types.Storage storage s = Utils._getMainStorage();
 
         if (newLiquidationIteration > Constants.MAX_LIQUIDATION_ITERATION) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationIteration();
+            revert UsdnProtocolInvalidLiquidationIteration();
         }
 
         s._liquidationIteration = newLiquidationIteration;
@@ -877,11 +876,11 @@ contract UsdnProtocolFallback is
         Types.Storage storage s = Utils._getMainStorage();
 
         if (newPrice > s._usdnRebaseThreshold) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidTargetUsdnPrice();
+            revert UsdnProtocolInvalidTargetUsdnPrice();
         }
         if (newPrice < uint128(10 ** s._priceFeedDecimals)) {
             // values smaller than $1 are not allowed
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidTargetUsdnPrice();
+            revert UsdnProtocolInvalidTargetUsdnPrice();
         }
         s._targetUsdnPrice = newPrice;
         emit IUsdnProtocolEvents.TargetUsdnPriceUpdated(newPrice);
@@ -892,11 +891,11 @@ contract UsdnProtocolFallback is
         Types.Storage storage s = Utils._getMainStorage();
 
         if (newThreshold < s._targetUsdnPrice) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidUsdnRebaseThreshold();
+            revert UsdnProtocolInvalidUsdnRebaseThreshold();
         }
         if (newThreshold > uint128(2 * 10 ** s._priceFeedDecimals)) {
             // values greater than $2 are not allowed
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidUsdnRebaseThreshold();
+            revert UsdnProtocolInvalidUsdnRebaseThreshold();
         }
         s._usdnRebaseThreshold = newThreshold;
         emit IUsdnProtocolEvents.UsdnRebaseThresholdUpdated(newThreshold);
