@@ -13,15 +13,12 @@ program
   .argument('<contract1>', 'first contract to compare')
   .argument('<contract2>', 'second contract to compare')
   .allowExcessArguments(false)
-  .option('-s, --storage <storageContract>', 'the common storage layout')
   .option('-d, --debug', 'output extra debugging')
   .parse(process.argv);
 
 const options = program.opts();
 const DEBUG = !!options.debug;
-const STORAGE: string = options.storage;
 const contracts = program.args;
-let storageFunctions: string[] = []; // if storage contract is provided, we will ignore its functions because they are common
 
 // parse arguments
 const solFiles = globSync(`src/UsdnProtocol/{${contracts.join(',')}}`);
@@ -33,25 +30,6 @@ if (solFiles.length !== 2) {
 if (DEBUG) console.log('contracts:', solFiles);
 for (const [i, file] of solFiles.entries()) {
   solFiles[i] = basename(file, '.sol');
-}
-
-// parse storage contract
-if (STORAGE) {
-  if (DEBUG) console.log('storage:', STORAGE);
-  const storagePath = `./out/${STORAGE}/${basename(STORAGE, '.sol')}.json`;
-
-  try {
-    const file = readFileSync(storagePath);
-    const artifact = JSON.parse(file.toString());
-    storageFunctions = artifact.abi
-      .filter((abiItem: AbiFunction) => abiItem.type === 'function')
-      .map((abiItem: AbiFunction) => toFunctionSignature(abiItem));
-
-    if (DEBUG) console.log('storage functions:', storageFunctions);
-  } catch {
-    console.error(`\n${storagePath} does not exist`);
-    process.exit(1);
-  }
 }
 
 // check for clashes
@@ -73,10 +51,7 @@ for (const file of solFiles) {
           console.log(`${signature}: selector ${selector} is already in the map with signature ${existingSignature}`);
         }
 
-        if (STORAGE && storageFunctions.includes(signature)) continue;
-
-        // if the function selector is already in the map
-        // but not in the storage contract then we have a clash
+        // if the function selector is already in the map then we have a clash
         console.log(
           '\n',
           pc.bgRed('ERROR:'),

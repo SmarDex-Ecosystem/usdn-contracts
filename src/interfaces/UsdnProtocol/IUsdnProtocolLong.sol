@@ -18,6 +18,25 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     function minTick() external view returns (int24);
 
     /**
+     * @notice Get the liquidation price from a desired one by taking into account the tick rounding
+     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without the penalty
+     * @param assetPrice The current price of the asset
+     * @param longTradingExpo The trading expo of the long side
+     * @param accumulator The liquidation multiplier accumulator
+     * @param tickSpacing The tick spacing
+     * @param liquidationPenalty The liquidation penalty
+     * @return The new liquidation price without the penalty
+     */
+    function getLiqPriceFromDesiredLiqPrice(
+        uint128 desiredLiqPriceWithoutPenalty,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator,
+        int24 tickSpacing,
+        uint24 liquidationPenalty
+    ) external view returns (uint128);
+
+    /**
      * @notice Get the value of a long position when the asset price is equal to the given price, at the given timestamp
      * @dev If the current price is smaller than the liquidation price of the position without a liquidation penalty,
      * then the value of the position is negative

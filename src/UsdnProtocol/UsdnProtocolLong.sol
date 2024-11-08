@@ -11,6 +11,19 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong {
         return Long.minTick();
     }
 
+    function getLiqPriceFromDesiredLiqPrice(
+        uint128 desiredLiqPriceWithoutPenalty,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator,
+        int24 tickSpacing,
+        uint24 liquidationPenalty
+    ) external pure returns (uint128 liqPrice_) {
+        (, liqPrice_) = Long._getTickFromDesiredLiqPrice(
+            desiredLiqPriceWithoutPenalty, assetPrice, longTradingExpo, accumulator, tickSpacing, liquidationPenalty
+        );
+    }
+
     /// @inheritdoc IUsdnProtocolLong
     function getPositionValue(PositionId calldata posId, uint128 price, uint128 timestamp)
         external

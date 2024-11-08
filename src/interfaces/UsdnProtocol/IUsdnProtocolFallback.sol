@@ -26,19 +26,6 @@ interface IUsdnProtocolFallback is IUsdnProtocolErrors {
     function getEffectivePriceForTick(int24 tick) external view returns (uint128);
 
     /**
-     * @notice Get the liquidation price from a desired one by taking into account the tick rounding
-     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without the penalty
-     * @param assetPrice The current price of the asset
-     * @param longTradingExpo The trading expo of the long side
-     * @return The new liquidation price without the penalty
-     */
-    function getLiqPriceFromDesiredLiqPrice(
-        uint128 desiredLiqPriceWithoutPenalty,
-        uint256 assetPrice,
-        uint256 longTradingExpo
-    ) external view returns (uint128);
-
-    /**
      * @notice Get the liquidation price corresponding to a given tick number, taking into account the effect of funding
      * @dev Note that ticks that are not a multiple of the tick spacing cannot contain a long position
      * @param tick The tick number

@@ -36,26 +36,6 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getLiqPriceFromDesiredLiqPrice(
-        uint128 desiredLiqPriceWithoutPenalty,
-        uint256 assetPrice,
-        uint256 longTradingExpo
-    ) external view returns (uint128) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        (, uint128 liqPrice) = Long._getTickFromDesiredLiqPrice(
-            desiredLiqPriceWithoutPenalty,
-            assetPrice,
-            longTradingExpo,
-            s._liqMultiplierAccumulator,
-            s._tickSpacing,
-            s._liquidationPenalty
-        );
-
-        return liqPrice;
-    }
-
-    /// @inheritdoc IUsdnProtocolFallback
     function getEffectivePriceForTick(
         int24 tick,
         uint256 assetPrice,

@@ -84,19 +84,16 @@ contract Utils is Script {
         pure
         returns (string[] memory inputs_)
     {
-        inputs_ = new string[](7);
+        inputs_ = new string[](5);
         uint8 i = 0;
 
         // create the command to run the functionClashes.ts script:
-        // npx tsx UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
+        // npx tsx UsdnProtocolImpl.sol UsdnProtocolFallback.sol
         inputs_[i++] = "npx";
         inputs_[i++] = "tsx";
         inputs_[i++] = FUNC_CLASHES_SCRIPT_PATH;
         inputs_[i++] = implementationFile;
-        inputs_[i++] = fallbackFile;
-        // we need to give the storage contract to remove common functions
-        inputs_[i++] = "-s";
-        inputs_[i] = "UsdnProtocolStorage.sol";
+        inputs_[i] = fallbackFile;
     }
 
     /**
