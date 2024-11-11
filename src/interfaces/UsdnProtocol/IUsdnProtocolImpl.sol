@@ -4,7 +4,6 @@ pragma solidity >=0.8.0;
 import { IAccessControlDefaultAdminRules } from
     "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
 import { IERC5267 } from "@openzeppelin/contracts/interfaces/IERC5267.sol";
-import { IERC5313 } from "@openzeppelin/contracts/interfaces/IERC5313.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IBaseLiquidationRewardsManager } from "../LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
@@ -28,7 +27,6 @@ interface IUsdnProtocolImpl is
     IUsdnProtocolCore,
     IUsdnProtocolErrors,
     IAccessControlDefaultAdminRules,
-    IERC5313,
     IERC5267
 {
     /**
