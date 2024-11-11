@@ -5,7 +5,6 @@ import { AccessControlDefaultAdminRulesUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IBaseLiquidationRewardsManager } from
@@ -16,7 +15,6 @@ import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
-import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolSettersLibrary as Setters } from "./libraries/UsdnProtocolSettersLibrary.sol";
@@ -26,11 +24,8 @@ import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVault
 contract UsdnProtocolFallback is
     IUsdnProtocolFallback,
     PausableUpgradeable,
-    AccessControlDefaultAdminRulesUpgradeable,
-    InitializableReentrancyGuard
+    AccessControlDefaultAdminRulesUpgradeable
 {
-    using SafeCast for uint256;
-
     /// @inheritdoc IUsdnProtocolFallback
     function getActionablePendingActions(address currentUser)
         external

@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -23,7 +22,6 @@ import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.so
 
 library UsdnProtocolActionsLongLibrary {
     using HugeUint for HugeUint.Uint512;
-    using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeTransferLib for address;
 
