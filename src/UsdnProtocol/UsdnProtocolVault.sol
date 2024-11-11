@@ -9,53 +9,6 @@ import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVault
 
 abstract contract UsdnProtocolVault is IUsdnProtocolVault, InitializableReentrancyGuard, PausableUpgradeable {
     /// @inheritdoc IUsdnProtocolVault
-    function initiateDeposit(
-        uint128 amount,
-        uint256 sharesOutMin,
-        address to,
-        address payable validator,
-        uint256 deadline,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
-        return
-            Vault.initiateDeposit(amount, sharesOutMin, to, validator, deadline, currentPriceData, previousActionsData);
-    }
-
-    /// @inheritdoc IUsdnProtocolVault
-    function validateDeposit(
-        address payable validator,
-        bytes calldata depositPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
-        return Vault.validateDeposit(validator, depositPriceData, previousActionsData);
-    }
-
-    /// @inheritdoc IUsdnProtocolVault
-    function initiateWithdrawal(
-        uint152 usdnShares,
-        uint256 amountOutMin,
-        address to,
-        address payable validator,
-        uint256 deadline,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
-        return Vault.initiateWithdrawal(
-            usdnShares, amountOutMin, to, validator, deadline, currentPriceData, previousActionsData
-        );
-    }
-
-    /// @inheritdoc IUsdnProtocolVault
-    function validateWithdrawal(
-        address payable validator,
-        bytes calldata withdrawalPriceData,
-        PreviousActionsData calldata previousActionsData
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
-        return Vault.validateWithdrawal(validator, withdrawalPriceData, previousActionsData);
-    }
-
-    /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice, uint128 timestamp) external view returns (uint256 price_) {
         return Vault.usdnPrice(currentPrice, timestamp);
     }

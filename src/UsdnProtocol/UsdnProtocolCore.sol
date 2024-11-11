@@ -31,22 +31,4 @@ abstract contract UsdnProtocolCore is
     {
         return Core.funding(timestamp);
     }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
-        external
-        view
-        returns (uint256 available_)
-    {
-        return Core.longAssetAvailableWithFunding(currentPrice, timestamp);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
-        external
-        view
-        returns (uint256 expo_)
-    {
-        return Core.longTradingExpoWithFunding(currentPrice, timestamp);
-    }
 }

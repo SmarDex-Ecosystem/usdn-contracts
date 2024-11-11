@@ -3,6 +3,8 @@ pragma solidity 0.8.26;
 
 import { IUsdnProtocolLong } from "../interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
+import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./libraries/UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./libraries/UsdnProtocolLongLibrary.sol";
 
 abstract contract UsdnProtocolLong is IUsdnProtocolLong {
@@ -53,5 +55,32 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong {
     /// @inheritdoc IUsdnProtocolLong
     function getTickLiquidationPenalty(int24 tick) external view returns (uint24 liquidationPenalty_) {
         return Long.getTickLiquidationPenalty(tick);
+    }
+
+    /// @inheritdoc IUsdnProtocolLong
+    function getLongPosition(PositionId memory posId)
+        external
+        view
+        returns (Position memory pos_, uint24 liquidationPenalty_)
+    {
+        return ActionsUtils.getLongPosition(posId);
+    }
+
+    /// @inheritdoc IUsdnProtocolLong
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+        external
+        view
+        returns (uint256 available_)
+    {
+        return Core.longAssetAvailableWithFunding(currentPrice, timestamp);
+    }
+
+    /// @inheritdoc IUsdnProtocolLong
+    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
+        external
+        view
+        returns (uint256 expo_)
+    {
+        return Core.longTradingExpoWithFunding(currentPrice, timestamp);
     }
 }

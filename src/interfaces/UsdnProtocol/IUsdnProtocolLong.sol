@@ -83,4 +83,36 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
      * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
      */
     function getTickLiquidationPenalty(int24 tick) external view returns (uint24);
+
+    /**
+     * @notice Get a long position identified by its tick, tickVersion and index
+     * @param posId The unique position identifier
+     * @return pos_ The position data
+     * @return liquidationPenalty_ The liquidation penalty for that position (and associated tick)
+     */
+    function getLongPosition(PositionId calldata posId)
+        external
+        view
+        returns (Position memory pos_, uint24 liquidationPenalty_);
+
+    /**
+     * @notice Get the predicted value of the long balance for the given asset price and timestamp
+     * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
+     * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
+     * update, the function reverts with `UsdnProtocolTimestampTooOld`. The value cannot be below 0
+     * @param currentPrice The current or predicted asset price
+     * @param timestamp The timestamp corresponding to `currentPrice`
+     * @return The long balance
+     */
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
+
+    /**
+     * @notice Get the predicted value of the long trading exposure for the given asset price and timestamp
+     * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
+     * update is taken into account
+     * @param currentPrice The current or predicted asset price
+     * @param timestamp The timestamp corresponding to `currentPrice`
+     * @return The long trading exposure
+     */
+    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
 }

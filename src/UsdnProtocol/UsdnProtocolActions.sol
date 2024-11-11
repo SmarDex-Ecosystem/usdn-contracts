@@ -9,6 +9,7 @@ import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGu
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./libraries/UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVaultLibrary.sol";
 
 abstract contract UsdnProtocolActions is
     IUsdnProtocolActions,
@@ -92,6 +93,53 @@ abstract contract UsdnProtocolActions is
     }
 
     /// @inheritdoc IUsdnProtocolActions
+    function initiateDeposit(
+        uint128 amount,
+        uint256 sharesOutMin,
+        address to,
+        address payable validator,
+        uint256 deadline,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+        return
+            Vault.initiateDeposit(amount, sharesOutMin, to, validator, deadline, currentPriceData, previousActionsData);
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
+    function validateDeposit(
+        address payable validator,
+        bytes calldata depositPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+        return Vault.validateDeposit(validator, depositPriceData, previousActionsData);
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
+    function initiateWithdrawal(
+        uint152 usdnShares,
+        uint256 amountOutMin,
+        address to,
+        address payable validator,
+        uint256 deadline,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+        return Vault.initiateWithdrawal(
+            usdnShares, amountOutMin, to, validator, deadline, currentPriceData, previousActionsData
+        );
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
+    function validateWithdrawal(
+        address payable validator,
+        bytes calldata withdrawalPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+        return Vault.validateWithdrawal(validator, withdrawalPriceData, previousActionsData);
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
     function liquidate(bytes calldata currentPriceData)
         external
         payable
@@ -120,15 +168,6 @@ abstract contract UsdnProtocolActions is
         initializedAndNonReentrant
     {
         return ActionsUtils.transferPositionOwnership(posId, delegationSignature, _domainSeparatorV4(), newOwner);
-    }
-
-    /// @inheritdoc IUsdnProtocolActions
-    function getLongPosition(PositionId memory posId)
-        external
-        view
-        returns (Position memory pos_, uint24 liquidationPenalty_)
-    {
-        return ActionsUtils.getLongPosition(posId);
     }
 
     /// @inheritdoc IUsdnProtocolActions
