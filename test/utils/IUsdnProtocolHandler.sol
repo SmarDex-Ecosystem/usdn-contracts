@@ -354,7 +354,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         external
         view;
 
-    function i_calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
+    function i_calcAmountToWithdraw(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
         external
         pure
         returns (uint256 assetExpected_);
@@ -455,8 +455,16 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
     function i_calcMaxLongBalance(uint256 totalExpo) external pure returns (uint256);
 
     function i_verifyInitiateCloseDelegation(
+        Types.PrepareInitiateClosePositionParams calldata params,
+        address positionOwner
+    ) external;
+
+    function i_verifyTransferPositionOwnershipDelegation(
+        Types.PositionId calldata posId,
+        bytes calldata delegationSignature,
+        bytes32 domainSeparatorV4,
         address positionOwner,
-        Types.PrepareInitiateClosePositionParams calldata params
+        address newPositionOwner
     ) external;
 
     function i_setUsdnRebaseThreshold(uint128 threshold) external;

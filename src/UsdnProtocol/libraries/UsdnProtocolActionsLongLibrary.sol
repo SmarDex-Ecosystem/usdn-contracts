@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -23,7 +22,6 @@ import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.so
 
 library UsdnProtocolActionsLongLibrary {
     using HugeUint for HugeUint.Uint512;
-    using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeTransferLib for address;
 
@@ -274,7 +272,7 @@ library UsdnProtocolActionsLongLibrary {
             data.pos.validated = true;
             // insert position into new tick
             (maxLeverageData.newPosId.tickVersion, maxLeverageData.newPosId.index,) =
-                _saveNewPosition(maxLeverageData.newPosId.tick, data.pos, maxLeverageData.liquidationPenalty);
+                Core._saveNewPosition(maxLeverageData.newPosId.tick, data.pos, maxLeverageData.liquidationPenalty);
 
             // adjust the balances to reflect the new value of the position
             uint256 updatedPosValue =
@@ -337,65 +335,6 @@ library UsdnProtocolActionsLongLibrary {
     }
 
     /**
-     * @notice Save a new position in the protocol, adjusting the tick data and global variables
-     * @dev Note: this method does not update the long balance
-     * @param tick The tick to hold the new position
-     * @param long The position to save
-     * @param liquidationPenalty The liquidation penalty for the tick
-     * @return tickVersion_ The version of the tick
-     * @return index_ The index of the position in the tick array
-     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
-     */
-    function _saveNewPosition(int24 tick, Types.Position memory long, uint24 liquidationPenalty)
-        public
-        returns (uint256 tickVersion_, uint256 index_, HugeUint.Uint512 memory liqMultiplierAccumulator_)
-    {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        bytes32 tickHash;
-        (tickHash, tickVersion_) = Utils._tickHash(tick);
-
-        // add to tick array
-        Types.Position[] storage tickArray = s._longPositions[tickHash];
-        index_ = tickArray.length;
-        if (tick > s._highestPopulatedTick) {
-            // keep track of the highest populated tick
-            s._highestPopulatedTick = tick;
-
-            emit IUsdnProtocolEvents.HighestPopulatedTickUpdated(tick);
-        }
-        tickArray.push(long);
-
-        // adjust state
-        s._totalExpo += long.totalExpo;
-        ++s._totalLongPositions;
-
-        // update tick data
-        Types.TickData storage tickData = s._tickData[tickHash];
-        // the unadjusted tick price for the accumulator might be different depending
-        // if we already have positions in the tick or not
-        uint256 unadjustedTickPrice;
-        if (tickData.totalPos == 0) {
-            // first position in this tick, we need to reflect that it is populated
-            s._tickBitmap.set(Utils._calcBitmapIndexFromTick(tick));
-            // we store the data for this tick
-            tickData.totalExpo = long.totalExpo;
-            tickData.totalPos = 1;
-            tickData.liquidationPenalty = liquidationPenalty;
-            unadjustedTickPrice = TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(tick, liquidationPenalty));
-        } else {
-            tickData.totalExpo += long.totalExpo;
-            tickData.totalPos += 1;
-            // we do not need to adjust the tick's `liquidationPenalty` since it remains constant
-            unadjustedTickPrice =
-                TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(tick, tickData.liquidationPenalty));
-        }
-        // update the accumulator with the correct tick price (depending on the liquidation penalty value)
-        liqMultiplierAccumulator_ = s._liqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));
-        s._liqMultiplierAccumulator = liqMultiplierAccumulator_;
-    }
-
-    /**
      * @notice Initiate an open position action
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `Types.ProtocolAction.InitiateOpenPosition` action
@@ -455,7 +394,8 @@ library UsdnProtocolActionsLongLibrary {
             totalExpo: data.positionTotalExpo,
             timestamp: uint40(block.timestamp)
         });
-        (data.posId.tickVersion, data.posId.index,) = _saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
+        (data.posId.tickVersion, data.posId.index,) =
+            Core._saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
         // because of the position fee, the position value is smaller than the amount
         s._balanceLong += data.positionValue;
         // positionValue must be smaller than or equal to amount, because the adjustedPrice (with fee) is larger than

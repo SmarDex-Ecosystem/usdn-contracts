@@ -16,7 +16,6 @@ import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdn
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
-import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
@@ -701,7 +700,7 @@ library UsdnProtocolLongLibrary {
         });
 
         // save the position on the provided tick
-        (posId_.tickVersion, posId_.index,) = ActionsLong._saveNewPosition(posId_.tick, long, liquidationPenalty);
+        (posId_.tickVersion, posId_.index,) = Core._saveNewPosition(posId_.tick, long, liquidationPenalty);
 
         // emit both initiate and validate events
         // so the position is considered the same as other positions by event indexers

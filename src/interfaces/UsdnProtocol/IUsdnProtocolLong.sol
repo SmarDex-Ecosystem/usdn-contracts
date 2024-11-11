@@ -18,6 +18,25 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     function minTick() external view returns (int24);
 
     /**
+     * @notice Get the liquidation price from a desired one by taking into account the tick rounding
+     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without the penalty
+     * @param assetPrice The current price of the asset
+     * @param longTradingExpo The trading expo of the long side
+     * @param accumulator The liquidation multiplier accumulator
+     * @param tickSpacing The tick spacing
+     * @param liquidationPenalty The liquidation penalty
+     * @return The new liquidation price without the penalty
+     */
+    function getLiqPriceFromDesiredLiqPrice(
+        uint128 desiredLiqPriceWithoutPenalty,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator,
+        int24 tickSpacing,
+        uint24 liquidationPenalty
+    ) external view returns (uint128);
+
+    /**
      * @notice Get the value of a long position when the asset price is equal to the given price, at the given timestamp
      * @dev If the current price is smaller than the liquidation price of the position without a liquidation penalty,
      * then the value of the position is negative
@@ -64,4 +83,36 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
      * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
      */
     function getTickLiquidationPenalty(int24 tick) external view returns (uint24);
+
+    /**
+     * @notice Get a long position identified by its tick, tickVersion and index
+     * @param posId The unique position identifier
+     * @return pos_ The position data
+     * @return liquidationPenalty_ The liquidation penalty for that position (and associated tick)
+     */
+    function getLongPosition(PositionId calldata posId)
+        external
+        view
+        returns (Position memory pos_, uint24 liquidationPenalty_);
+
+    /**
+     * @notice Get the predicted value of the long balance for the given asset price and timestamp
+     * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
+     * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
+     * update, the function reverts with `UsdnProtocolTimestampTooOld`. The value cannot be below 0
+     * @param currentPrice The current or predicted asset price
+     * @param timestamp The timestamp corresponding to `currentPrice`
+     * @return The long balance
+     */
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
+
+    /**
+     * @notice Get the predicted value of the long trading exposure for the given asset price and timestamp
+     * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
+     * update is taken into account
+     * @param currentPrice The current or predicted asset price
+     * @param timestamp The timestamp corresponding to `currentPrice`
+     * @return The long trading exposure
+     */
+    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
 }
