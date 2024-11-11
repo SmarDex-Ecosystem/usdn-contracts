@@ -23,10 +23,8 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.so
 
 library UsdnProtocolVaultLibrary {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
-    using SafeCast for int256;
     using SafeCast for uint256;
     using SafeTransferLib for address;
-    using SignedMath for int256;
     using SignedMath for int256;
 
     /**

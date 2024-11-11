@@ -553,7 +553,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         external
         returns (uint256, uint256, HugeUint.Uint512 memory)
     {
-        return ActionsLong._saveNewPosition(tick, long, liquidationPenalty);
+        return Core._saveNewPosition(tick, long, liquidationPenalty);
     }
 
     function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view {

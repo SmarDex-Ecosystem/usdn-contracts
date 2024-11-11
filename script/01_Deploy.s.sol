@@ -19,9 +19,12 @@ import { Usdn } from "../src/Usdn/Usdn.sol";
 import { Wusdn } from "../src/Usdn/Wusdn.sol";
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../src/libraries/HugeUint.sol";
 
 contract Deploy is Script {
     address constant WSTETH_MAINNET = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
@@ -282,6 +285,8 @@ contract Deploy is Script {
         WstEthOracleMiddleware wstEthOracleMiddleware,
         uint256 longAmount
     ) internal {
+        uint24 liquidationPenalty = usdnProtocol.getLiquidationPenalty();
+        int24 tickSpacing = usdnProtocol.getTickSpacing();
         uint256 price = wstEthOracleMiddleware.parseAndValidatePrice(
             "", uint128(block.timestamp), Types.ProtocolAction.Initialize, ""
         ).price;
@@ -289,7 +294,9 @@ contract Deploy is Script {
         // we want a leverage of ~2x so we get the current price from the middleware and divide it by two
         uint128 desiredLiqPrice = uint128(price / 2);
         // get the liquidation price with the tick rounding
-        uint128 liqPriceWithoutPenalty = usdnProtocol.getLiqPriceFromDesiredLiqPrice(desiredLiqPrice, price, 0);
+        uint128 liqPriceWithoutPenalty = usdnProtocol.getLiqPriceFromDesiredLiqPrice(
+            desiredLiqPrice, price, 0, HugeUint.wrap(0), tickSpacing, liquidationPenalty
+        );
         // get the total exposure of the wanted long position
         uint256 positionTotalExpo = FixedPointMathLib.fullMulDiv(longAmount, price, price - liqPriceWithoutPenalty);
         // get the amount to deposit to reach a balanced state
@@ -313,8 +320,8 @@ contract Deploy is Script {
      * @param rebalancer The rebalancer
      */
     function _handlePostDeployment(IUsdnProtocol usdnProtocol, Usdn usdn, Rebalancer rebalancer) internal {
-        bytes32 ADMIN_SET_EXTERNAL_ROLE = usdnProtocol.ADMIN_SET_EXTERNAL_ROLE();
-        bytes32 SET_EXTERNAL_ROLE = usdnProtocol.SET_EXTERNAL_ROLE();
+        bytes32 ADMIN_SET_EXTERNAL_ROLE = Constants.ADMIN_SET_EXTERNAL_ROLE;
+        bytes32 SET_EXTERNAL_ROLE = Constants.SET_EXTERNAL_ROLE;
         usdnProtocol.grantRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
         usdnProtocol.grantRole(SET_EXTERNAL_ROLE, _deployerAddress);
 
