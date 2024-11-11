@@ -275,7 +275,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors
         assertEq(firstPos.amount, params.initialLong, "first pos amount");
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
         assertEq(protocol.getFeeCollector(), address(feeCollector), "fee collector");
-        assertEq(protocol.owner(), ADMIN, "protocol owner");
+        assertEq(protocol.defaultAdmin(), ADMIN, "protocol owner");
     }
 
     /**
