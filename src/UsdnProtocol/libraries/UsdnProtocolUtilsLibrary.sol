@@ -187,7 +187,7 @@ library UsdnProtocolUtilsLibrary {
         index_ = _calcBitmapIndexFromTick(tick, s._tickSpacing);
     }
 
-    /// @notice See {IUsdnProtocolLong}
+    /// @notice See {IUsdnProtocolFallback}
     function getEffectivePriceForTick(int24 tick) internal view returns (uint128 price_) {
         Types.Storage storage s = _getMainStorage();
 
@@ -195,7 +195,7 @@ library UsdnProtocolUtilsLibrary {
             getEffectivePriceForTick(tick, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator);
     }
 
-    /// @notice See {IUsdnProtocolActions}
+    /// @notice See {IUsdnProtocolFallback}
     function tickHash(int24 tick, uint256 version) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(tick, version));
     }
@@ -661,7 +661,7 @@ library UsdnProtocolUtilsLibrary {
         }
     }
 
-    /// @notice See {IUsdnProtocolLong}
+    /// @notice See {IUsdnProtocolFallback}
     function getEffectivePriceForTick(
         int24 tick,
         uint256 assetPrice,
