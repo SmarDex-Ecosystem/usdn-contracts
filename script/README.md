@@ -4,7 +4,7 @@
 
 ### Production mode:
 
-For a mainnet deployment, you hace to use the shell script. It will prompt you to enter the required environment variables :
+For a mainnet deployment, you have to use the shell script. It will prompt you to enter the required environment variables :
 - the rpc url
 - the initial long amount
 - the get wstETH flag
