@@ -17,11 +17,11 @@ import { UsdnProtocolConstantsLibrary as Constants } from
 import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @custom:feature The proxy functionality of the protocol
  * @custom:background Given an initialized protocol
  */
-
 contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
     Types.Storage sV1;
 
