@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { USER_1 } from "../../utils/Constants.sol";
 import { RebalancerFixture } from "./utils/Fixtures.sol";
 
+import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @custom:feature The `resetDepositAssets` function of the rebalancer contract
  * @custom:background Given the user has not interacted with the Rebalancer
@@ -93,18 +95,9 @@ contract TestRebalancerResetDepositAssets is RebalancerFixture {
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
-        rebalancer.incrementPositionVersion();
 
-        vm.expectRevert(RebalancerNoPendingAction.selector);
-        rebalancer.resetDepositAssets();
-    }
-
-    function test_RevertWhen_resetDepositWhenLiquidated() public {
-        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
-        skip(rebalancer.getTimeLimits().validationDelay);
-        rebalancer.validateDepositAssets();
-        rebalancer.incrementPositionVersion();
-        rebalancer.setLastLiquidatedVersion(rebalancer.getPositionVersion());
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
 
         vm.expectRevert(RebalancerNoPendingAction.selector);
         rebalancer.resetDepositAssets();

@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 import { USER_1 } from "../../utils/Constants.sol";
-import { SigUtils } from "../../utils/SigUtils.sol";
+import { PermitSigUtils } from "../../utils/PermitSigUtils.sol";
 import { UsdnTokenFixture } from "./utils/Fixtures.sol";
 
 /**
@@ -11,13 +11,13 @@ import { UsdnTokenFixture } from "./utils/Fixtures.sol";
  * @custom:and A user `alice` with a private key
  */
 contract TestUsdnPermit is UsdnTokenFixture {
-    SigUtils internal sigUtils;
+    PermitSigUtils internal sigUtils;
     uint256 internal userPrivateKey;
     address internal user;
 
     function setUp() public override {
         super.setUp();
-        sigUtils = new SigUtils(usdn.DOMAIN_SEPARATOR());
+        sigUtils = new PermitSigUtils(usdn.DOMAIN_SEPARATOR());
         (user, userPrivateKey) = makeAddrAndKey("alice");
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
         usdn.mint(user, 100 ether);
@@ -57,7 +57,7 @@ contract TestUsdnPermit is UsdnTokenFixture {
     function test_permit() public {
         uint256 nonce = usdn.nonces(user);
 
-        SigUtils.Permit memory permit = SigUtils.Permit({
+        PermitSigUtils.Permit memory permit = PermitSigUtils.Permit({
             owner: user,
             spender: address(this),
             value: 100 ether,
@@ -87,7 +87,7 @@ contract TestUsdnPermit is UsdnTokenFixture {
     function test_permitTransfer() public {
         uint256 nonce = usdn.nonces(user);
 
-        SigUtils.Permit memory permit = SigUtils.Permit({
+        PermitSigUtils.Permit memory permit = PermitSigUtils.Permit({
             owner: user,
             spender: address(this),
             value: 100 ether,
@@ -115,7 +115,7 @@ contract TestUsdnPermit is UsdnTokenFixture {
     function test_RevertWhen_signatureIsOutdated() public {
         uint256 nonce = usdn.nonces(user);
 
-        SigUtils.Permit memory permit = SigUtils.Permit({
+        PermitSigUtils.Permit memory permit = PermitSigUtils.Permit({
             owner: user,
             spender: address(this),
             value: 100 ether,
@@ -136,7 +136,7 @@ contract TestUsdnPermit is UsdnTokenFixture {
      * @custom:then The transaction reverts with the `ERC2612InvalidSignature` error
      */
     function test_RevertWhen_invalidSigner() public {
-        SigUtils.Permit memory permit = SigUtils.Permit({
+        PermitSigUtils.Permit memory permit = PermitSigUtils.Permit({
             owner: user,
             spender: address(this),
             value: 100 ether,

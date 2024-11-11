@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { USER_1 } from "../../../utils/Constants.sol";
+import { DelegationSignatureUtils } from "../../../utils/DelegationSignatureUtils.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -10,7 +11,7 @@ import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUs
  * @custom:feature Test the {_verifyInitiateCloseDelegation} internal function
  * @custom:given A initiated protocol
  */
-contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixture, DelegationSignatureUtils {
     uint256 internal constant POSITION_OWNER_PK = 1;
     uint256 internal constant ATTACKER_PK = 2;
     address internal positionOwner = vm.addr(POSITION_OWNER_PK);
@@ -48,7 +49,6 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
      */
     function test_verifyInitiateCloseDelegation() public {
         protocol.i_verifyInitiateCloseDelegation(
-            delegation.positionOwner,
             PrepareInitiateClosePositionParams(
                 delegation.to,
                 address(this),
@@ -59,7 +59,8 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
                 "",
                 delegationSignature,
                 domainSeparatorV4
-            )
+            ),
+            delegation.positionOwner
         );
 
         assertEq(protocol.getNonce(positionOwner), initialNonce + 1, "Nonce should be incremented");
@@ -74,7 +75,6 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
     function test_revertWhen_verifyInitiateCloseDelegationChangeParam() public {
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegationSignature.selector);
         protocol.i_verifyInitiateCloseDelegation(
-            delegation.positionOwner,
             PrepareInitiateClosePositionParams(
                 address(this), // the compromised value
                 address(this),
@@ -85,7 +85,8 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
                 "",
                 delegationSignature,
                 domainSeparatorV4
-            )
+            ),
+            delegation.positionOwner
         );
     }
 
@@ -100,7 +101,6 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
 
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegationSignature.selector);
         protocol.i_verifyInitiateCloseDelegation(
-            delegation.positionOwner,
             PrepareInitiateClosePositionParams(
                 delegation.to,
                 address(this),
@@ -111,7 +111,8 @@ contract TestUsdnProtocolVerifyInitiateCloseDelegation is UsdnProtocolBaseFixtur
                 "",
                 delegationSignature,
                 domainSeparatorV4
-            )
+            ),
+            delegation.positionOwner
         );
     }
 }

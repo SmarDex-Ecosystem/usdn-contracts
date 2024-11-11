@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
+import { ADMIN, DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
@@ -168,6 +168,70 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         );
 
         _checkValidateWithdrawalWithPrice(uint128(10_000 ether), 0, address(this));
+    }
+
+    function test_validateWithdrawalWithNotEnoughFundsInVault() public {
+        vm.prank(USER_1);
+        usdn.approve(address(protocol), type(uint256).max);
+
+        uint128 user1Amount = DEPOSIT_AMOUNT * 2;
+        setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, user1Amount, params.initialPrice);
+        uint256 user1Shares = usdn.sharesOf(USER_1);
+
+        skip(1 hours);
+
+        // initiate a withdrawal for USER_1 with the vault side in profit
+        bytes memory currentPrice = abi.encode(params.initialPrice * 9 / 10);
+        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
+        vm.prank(USER_1);
+        protocol.initiateWithdrawal{ value: validationCost }(
+            uint152(user1Shares),
+            DISABLE_AMOUNT_OUT_MIN,
+            USER_1,
+            USER_1,
+            type(uint256).max,
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
+        );
+
+        skip(1 hours);
+
+        // transfer the deployer's shares to address(this)
+        vm.startPrank(DEPLOYER);
+        usdn.transferShares(address(this), usdn.sharesOf(DEPLOYER));
+        vm.stopPrank();
+
+        // initiate and validate a withdrawal for address(this) with no profit
+        currentPrice = abi.encode(params.initialPrice);
+        protocol.initiateWithdrawal{ value: validationCost }(
+            uint152(usdn.sharesOf(address(this))),
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(this),
+            type(uint256).max,
+            currentPrice,
+            EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+        protocol.validateWithdrawal{ value: validationCost }(payable(this), currentPrice, EMPTY_PREVIOUS_DATA);
+
+        // validate the withdrawal for USER_1 with the vault side at the same amount of profit than the initiate
+        _waitDelay();
+
+        assertGt(
+            protocol.i_calcAmountToWithdraw(
+                user1Shares,
+                protocol.vaultAssetAvailableWithFunding(params.initialPrice * 9 / 10, uint128(block.timestamp)),
+                usdn.totalShares(),
+                protocol.getVaultFeeBps()
+            ),
+            protocol.getBalanceVault(),
+            "The amount of assets withdrawn must be greater than the balance of the vault"
+        );
+        currentPrice = abi.encode(params.initialPrice * 9 / 10);
+        protocol.validateWithdrawal{ value: validationCost }(USER_1, currentPrice, EMPTY_PREVIOUS_DATA);
+
+        assertEq(protocol.getBalanceVault(), 0, "The withdrawal should have emptied the vault");
     }
 
     /**

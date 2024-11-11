@@ -191,8 +191,7 @@ interface IUsdnProtocolTypes {
      * @param liqMultiplier A fixed precision representation of the liquidation multiplier (with
      * `LIQUIDATION_MULTIPLIER_DECIMALS` decimals) used to calculate the effective price for a given tick number
      * @param closeBoundedPositionValue The amount that was removed from the long balance on `initiateClosePosition`
-     * (only
-     * used when closing a position)
+     * (only used when closing a position)
      */
     struct LongPendingAction {
         ProtocolAction action; // 1 byte
@@ -407,6 +406,8 @@ interface IUsdnProtocolTypes {
      * @param lastPrice The price of the last balances update
      * @param tickHash The tick hash
      * @param pos The position object
+     * @param liqPriceWithoutPenaltyNorFunding The liquidation price without penalty nor funding used to calculate the
+     * user leverage and the new total expo
      * @param liqPriceWithoutPenalty The new liquidation price without penalty
      * @param leverage The new leverage
      * @param oldPosValue The value of the position according to the old entry price and the _lastPrice
@@ -419,6 +420,7 @@ interface IUsdnProtocolTypes {
         uint128 lastPrice;
         bytes32 tickHash;
         Position pos;
+        uint128 liqPriceWithoutPenaltyNorFunding;
         uint128 liqPriceWithoutPenalty;
         uint256 leverage;
         uint256 oldPosValue;
@@ -522,6 +524,7 @@ interface IUsdnProtocolTypes {
     }
 
     /**
+     * @custom:storage-location erc7201:UsdnProtocol.storage.main
      * @notice Structure to hold the state of the protocol
      * @param _tickSpacing The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
@@ -650,18 +653,18 @@ interface IUsdnProtocolTypes {
         uint128 _targetUsdnPrice;
         uint128 _usdnRebaseThreshold;
         uint256 _minLongPosition;
-        // State
+        // state
         int256 _lastFundingPerDay;
         uint128 _lastPrice;
         uint128 _lastUpdateTimestamp;
         uint256 _pendingProtocolFee;
-        // Pending actions queue
+        // pending actions queue
         mapping(address => uint256) _pendingActions;
         DoubleEndedQueue.Deque _pendingActionsQueue;
-        // Vault
+        // vault
         uint256 _balanceVault;
         int256 _pendingBalanceVault;
-        // Long positions
+        // long positions
         int256 _EMA;
         uint256 _balanceLong;
         uint256 _totalExpo;
@@ -672,7 +675,9 @@ interface IUsdnProtocolTypes {
         int24 _highestPopulatedTick;
         uint256 _totalLongPositions;
         LibBitmap.Bitmap _tickBitmap;
+        // fallback
         address _protocolFallbackAddr;
+        // EIP712
         mapping(address => uint256) _nonce;
     }
 }

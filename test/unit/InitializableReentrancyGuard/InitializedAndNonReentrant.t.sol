@@ -34,8 +34,7 @@ contract TestInitializableReentrancyGuardInitializedAndNonReentrant is
      * @custom:then The call reverts with a InitializableReentrancyGuardReentrantCall error
      */
     function test_RevertWhen_reentrant() public {
-        // Load the storage slot for the `_status` private storage variable
-        uint256 status = uint256(vm.load(address(handler), bytes32(uint256(0))));
+        uint256 status = handler.i_getInitializableReentrancyGuardStorage()._status;
         if (_reenter) {
             assertEq(status, 2, "Status should be ENTERED");
 
@@ -53,7 +52,7 @@ contract TestInitializableReentrancyGuardInitializedAndNonReentrant is
         vm.expectCall(address(handler), abi.encodeWithSelector(handler.func_initializedAndNonReentrant.selector), 2);
         handler.func_initializedAndNonReentrant();
 
-        status = uint256(vm.load(address(handler), bytes32(uint256(0))));
+        status = handler.i_getInitializableReentrancyGuardStorage()._status;
         assertEq(status, 1, "Status should be NOT_ENTERED");
     }
 
