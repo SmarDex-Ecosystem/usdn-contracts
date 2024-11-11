@@ -507,11 +507,6 @@ contract UsdnProtocolFallback is
         return Utils._getMainStorage()._nonce[owner];
     }
 
-    /// @inheritdoc IUsdnProtocolFallback
-    function getInitiateCloseTypehash() external pure returns (bytes32) {
-        return Constants.INITIATE_CLOSE_TYPEHASH;
-    }
-
     /* -------------------------------------------------------------------------- */
     /*                              SET_EXTERNAL_ROLE                             */
     /* -------------------------------------------------------------------------- */

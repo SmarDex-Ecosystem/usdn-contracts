@@ -621,12 +621,6 @@ interface IUsdnProtocolFallback is IUsdnProtocolErrors {
      */
     function getNonce(address owner) external view returns (uint256);
 
-    /**
-     * @notice Get The EIP712 {initiateClosePosition} typehash
-     * @return The {initiateClosePosition} typehash
-     */
-    function getInitiateCloseTypehash() external pure returns (bytes32);
-
     /* -------------------------------------------------------------------------- */
     /*                                   Setters                                  */
     /* -------------------------------------------------------------------------- */
