@@ -367,8 +367,9 @@ library UsdnProtocolCoreLibrary {
             Types.WithdrawalPendingAction memory withdrawal = Utils._toWithdrawalPendingAction(pending);
             uint256 shares = Utils._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
             // calculate the pending amount after fees to update the pending vault balance
-            uint256 pendingAmountAfterFees =
-                Utils._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps);
+            uint256 pendingAmountAfterFees = Utils._calcAmountToWithdraw(
+                shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps
+            );
             s._pendingBalanceVault += pendingAmountAfterFees.toInt256();
             s._usdn.transferShares(to, shares);
         } else if (pending.action == Types.ProtocolAction.ValidateOpenPosition) {

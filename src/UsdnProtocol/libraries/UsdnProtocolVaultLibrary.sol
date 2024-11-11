@@ -833,7 +833,7 @@ library UsdnProtocolVaultLibrary {
         data_.usdnTotalShares = s._usdn.totalShares();
         data_.feeBps = s._vaultFeeBps;
         data_.withdrawalAmountAfterFees =
-            Utils._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares, data_.feeBps);
+            Utils._calcAmountToWithdraw(usdnShares, data_.balanceVault, data_.usdnTotalShares, data_.feeBps);
         if (data_.withdrawalAmountAfterFees < amountOutMin) {
             revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
         }
@@ -1026,19 +1026,25 @@ library UsdnProtocolVaultLibrary {
 
         // we can add back the _pendingBalanceVault we subtracted in the initiate action
         uint256 tempWithdrawalAfterFees =
-            Utils._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps);
+            Utils._calcAmountToWithdraw(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps);
         s._pendingBalanceVault += tempWithdrawalAfterFees.toInt256();
 
         IUsdn usdn = s._usdn;
         // calculate the amount of asset to transfer with the same fees as recorded during the initiate action
         uint256 assetToTransferAfterFees =
-            Utils._calcBurnUsdn(shares, available, withdrawal.usdnTotalShares, withdrawal.feeBps);
+            Utils._calcAmountToWithdraw(shares, available, withdrawal.usdnTotalShares, withdrawal.feeBps);
 
         usdn.burnShares(shares);
 
         // send the asset to the user
         if (assetToTransferAfterFees > 0) {
-            s._balanceVault -= assetToTransferAfterFees;
+            uint256 balanceVault = s._balanceVault;
+            // if there aren't enough funds in the vault, send what remains
+            if (assetToTransferAfterFees > balanceVault) {
+                assetToTransferAfterFees = balanceVault;
+            }
+
+            s._balanceVault = balanceVault - assetToTransferAfterFees;
             address(s._asset).safeTransfer(withdrawal.to, assetToTransferAfterFees);
         }
 
