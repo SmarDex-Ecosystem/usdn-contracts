@@ -116,23 +116,6 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
     ) external payable returns (bool success_);
 
     /**
-     * @notice Retrieve a list of pending actions, one of which must be validated by the next user action in the
-     * protocol
-     * @dev If this function returns a non-empty list of pending actions, then the next user action MUST include the
-     * corresponding list of price update data and raw indices as the last parameter
-     * @param currentUser The address of the user that will submit the price signatures for third-party actions
-     * validations. This is used to filter out their actions from the returned list
-     * @return actions_ The pending actions if any, otherwise an empty array. Note that some items can be zero-valued
-     * and there is no need to provide price data for those (an empty `bytes` suffices)
-     * @return rawIndices_ The raw indices of the actionable pending actions in the queue if any, otherwise an empty
-     * array
-     */
-    // function getActionablePendingActions(address currentUser)
-    //     external
-    //     view
-    //     returns (PendingAction[] memory actions_, uint128[] memory rawIndices_);
-
-    /**
      * @notice Get the predicted value of the USDN token price for the given asset price and timestamp
      * @dev The effect of the funding and any profit or loss of the long positions since the last contract state
      * update is taken into account

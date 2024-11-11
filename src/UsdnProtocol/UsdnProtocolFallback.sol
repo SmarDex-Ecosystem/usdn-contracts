@@ -32,7 +32,7 @@ contract UsdnProtocolFallback is
 {
     using SafeCast for uint256;
 
-    // / @inheritdoc IUsdnProtocolVault
+    /// @inheritdoc IUsdnProtocolFallback
     function getActionablePendingActions(address currentUser)
         external
         view
@@ -41,12 +41,12 @@ contract UsdnProtocolFallback is
         return Vault.getActionablePendingActions(currentUser);
     }
 
-    // / @inheritdoc IUsdnProtocolCore
+    /// @inheritdoc IUsdnProtocolFallback
     function getUserPendingAction(address user) external view returns (Types.PendingAction memory action_) {
         return Core.getUserPendingAction(user);
     }
 
-    // / @inheritdoc IUsdnProtocolActions
+    /// @inheritdoc IUsdnProtocolFallback
     function tickHash(int24 tick, uint256 version) external pure returns (bytes32) {
         return Utils.tickHash(tick, version);
     }

@@ -26,14 +26,6 @@ interface IUsdnProtocolCore is IUsdnProtocolTypes {
         returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_);
 
     /**
-     * @notice Retrieve a user pending action
-     * @param user The user's address
-     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and
-     * `ProtocolAction.None`
-     */
-    // function getUserPendingAction(address user) external view returns (PendingAction memory action_);
-
-    /**
      * @notice Initialize the protocol, making a first deposit and creating a first long position
      * @dev This function can only be called once, and no other user action can be performed until it is called
      * Consult the current oracle middleware implementation to know the expected format for the price data, using the

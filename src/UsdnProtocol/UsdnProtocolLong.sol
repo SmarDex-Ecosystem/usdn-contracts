@@ -11,6 +11,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong {
         return Long.minTick();
     }
 
+    /// @inheritdoc IUsdnProtocolLong
     function getLiqPriceFromDesiredLiqPrice(
         uint128 desiredLiqPriceWithoutPenalty,
         uint256 assetPrice,

@@ -166,11 +166,10 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * validation will be performed
      * @return validatedActions_ The number of validated actionable pending actions
      */
-    // function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256
-    // maxValidations)
-    //     external
-    //     payable
-    //     returns (uint256 validatedActions_);
+    function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
+        external
+        payable
+        returns (uint256 validatedActions_);
 
     /**
      * @notice Transfer the ownership of a position to another address
@@ -185,14 +184,6 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      */
     function transferPositionOwnership(PositionId calldata posId, bytes calldata delegationSignature, address newOwner)
         external;
-
-    /**
-     * @notice Get the hash generated from the tick and a version
-     * @param tick The tick number
-     * @param version The tick version
-     * @return The hash of the tick and version
-     */
-    // function tickHash(int24 tick, uint256 version) external pure returns (bytes32);
 
     /**
      * @notice Get a long position identified by its tick, tickVersion and index

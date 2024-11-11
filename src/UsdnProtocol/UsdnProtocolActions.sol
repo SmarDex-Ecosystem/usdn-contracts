@@ -111,7 +111,7 @@ abstract contract UsdnProtocolActions is
         return ActionsUtils.transferPositionOwnership(posId, delegationSignature, _domainSeparatorV4(), newOwner);
     }
 
-    // / @inheritdoc IUsdnProtocolActions
+    /// @inheritdoc IUsdnProtocolActions
     function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
         external
         payable
