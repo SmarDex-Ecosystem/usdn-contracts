@@ -572,12 +572,12 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         return Utils._calcFixedPrecisionMultiplier(assetPrice, longTradingExpo, accumulator);
     }
 
-    function i_calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
+    function i_calcAmountToWithdraw(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
         external
         pure
         returns (uint256 assetExpected_)
     {
-        return Utils._calcBurnUsdn(usdnShares, available, usdnTotalShares, feeBps);
+        return Utils._calcAmountToWithdraw(usdnShares, available, usdnTotalShares, feeBps);
     }
 
     function i_calcTickWithoutPenalty(int24 tick, uint24 liquidationPenalty) external pure returns (int24) {
