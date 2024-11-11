@@ -701,7 +701,7 @@ library UsdnProtocolLongLibrary {
         });
 
         // save the position on the provided tick
-        (posId_.tickVersion, posId_.index,) = ActionsLong._saveNewPosition(posId_.tick, long, liquidationPenalty);
+        (posId_.tickVersion, posId_.index,) = Core._saveNewPosition(posId_.tick, long, liquidationPenalty);
 
         // emit both initiate and validate events
         // so the position is considered the same as other positions by event indexers

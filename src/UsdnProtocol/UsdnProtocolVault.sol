@@ -56,15 +56,6 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, InitializableReentran
     }
 
     /// @inheritdoc IUsdnProtocolVault
-    function getActionablePendingActions(address currentUser)
-        external
-        view
-        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
-    {
-        return Vault.getActionablePendingActions(currentUser);
-    }
-
-    /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice, uint128 timestamp) external view returns (uint256 price_) {
         return Vault.usdnPrice(currentPrice, timestamp);
     }

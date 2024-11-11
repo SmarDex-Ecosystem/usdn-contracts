@@ -103,17 +103,6 @@ abstract contract UsdnProtocolActions is
     }
 
     /// @inheritdoc IUsdnProtocolActions
-    function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
-        external
-        payable
-        whenNotPaused
-        initializedAndNonReentrant
-        returns (uint256 validatedActions_)
-    {
-        return ActionsUtils.validateActionablePendingActions(previousActionsData, maxValidations);
-    }
-
-    /// @inheritdoc IUsdnProtocolActions
     function transferPositionOwnership(PositionId calldata posId, bytes calldata delegationSignature, address newOwner)
         external
         whenNotPaused
@@ -122,9 +111,15 @@ abstract contract UsdnProtocolActions is
         return ActionsUtils.transferPositionOwnership(posId, delegationSignature, _domainSeparatorV4(), newOwner);
     }
 
-    /// @inheritdoc IUsdnProtocolActions
-    function tickHash(int24 tick, uint256 version) external pure returns (bytes32) {
-        return Utils.tickHash(tick, version);
+    // / @inheritdoc IUsdnProtocolActions
+    function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
+        external
+        payable
+        whenNotPaused
+        initializedAndNonReentrant
+        returns (uint256 validatedActions_)
+    {
+        return ActionsUtils.validateActionablePendingActions(previousActionsData, maxValidations);
     }
 
     /// @inheritdoc IUsdnProtocolActions

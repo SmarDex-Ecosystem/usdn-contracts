@@ -31,7 +31,7 @@ interface IUsdnProtocolCore is IUsdnProtocolTypes {
      * @return action_ The pending action if any, otherwise a struct with all fields set to zero and
      * `ProtocolAction.None`
      */
-    function getUserPendingAction(address user) external view returns (PendingAction memory action_);
+    // function getUserPendingAction(address user) external view returns (PendingAction memory action_);
 
     /**
      * @notice Initialize the protocol, making a first deposit and creating a first long position

@@ -13,10 +13,11 @@ import { IBaseLiquidationRewardsManager } from
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
-import { IUsdnProtocolEvents } from "../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
+import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
+import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./libraries/UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolSettersLibrary as Setters } from "./libraries/UsdnProtocolSettersLibrary.sol";
@@ -26,9 +27,29 @@ import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVault
 contract UsdnProtocolFallback is
     IUsdnProtocolFallback,
     PausableUpgradeable,
-    AccessControlDefaultAdminRulesUpgradeable
+    AccessControlDefaultAdminRulesUpgradeable,
+    InitializableReentrancyGuard
 {
     using SafeCast for uint256;
+
+    // / @inheritdoc IUsdnProtocolVault
+    function getActionablePendingActions(address currentUser)
+        external
+        view
+        returns (Types.PendingAction[] memory actions_, uint128[] memory rawIndices_)
+    {
+        return Vault.getActionablePendingActions(currentUser);
+    }
+
+    // / @inheritdoc IUsdnProtocolCore
+    function getUserPendingAction(address user) external view returns (Types.PendingAction memory action_) {
+        return Core.getUserPendingAction(user);
+    }
+
+    // / @inheritdoc IUsdnProtocolActions
+    function tickHash(int24 tick, uint256 version) external pure returns (bytes32) {
+        return Utils.tickHash(tick, version);
+    }
 
     /// @inheritdoc IUsdnProtocolFallback
     function getEffectivePriceForTick(int24 tick) external view returns (uint128 price_) {
@@ -444,31 +465,23 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getDepositExpoImbalanceLimitBps() external view returns (int256 depositExpoImbalanceLimitBps_) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        depositExpoImbalanceLimitBps_ = s._depositExpoImbalanceLimitBps;
+    function getDepositExpoImbalanceLimitBps() external view returns (int256) {
+        return Utils._getMainStorage()._depositExpoImbalanceLimitBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getWithdrawalExpoImbalanceLimitBps() external view returns (int256 withdrawalExpoImbalanceLimitBps_) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        withdrawalExpoImbalanceLimitBps_ = s._withdrawalExpoImbalanceLimitBps;
+    function getWithdrawalExpoImbalanceLimitBps() external view returns (int256) {
+        return Utils._getMainStorage()._withdrawalExpoImbalanceLimitBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getOpenExpoImbalanceLimitBps() external view returns (int256 openExpoImbalanceLimitBps_) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        openExpoImbalanceLimitBps_ = s._openExpoImbalanceLimitBps;
+    function getOpenExpoImbalanceLimitBps() external view returns (int256) {
+        return Utils._getMainStorage()._openExpoImbalanceLimitBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        closeExpoImbalanceLimitBps_ = s._closeExpoImbalanceLimitBps;
+        return Utils._getMainStorage()._closeExpoImbalanceLimitBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -477,16 +490,12 @@ contract UsdnProtocolFallback is
         view
         returns (int256 rebalancerCloseExpoImbalanceLimitBps_)
     {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        rebalancerCloseExpoImbalanceLimitBps_ = s._rebalancerCloseExpoImbalanceLimitBps;
+        return Utils._getMainStorage()._rebalancerCloseExpoImbalanceLimitBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function getLongImbalanceTargetBps() external view returns (int256 longImbalanceTargetBps_) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        longImbalanceTargetBps_ = s._longImbalanceTargetBps;
+        return Utils._getMainStorage()._longImbalanceTargetBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback

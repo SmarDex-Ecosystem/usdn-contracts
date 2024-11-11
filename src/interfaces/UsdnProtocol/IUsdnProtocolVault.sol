@@ -127,10 +127,10 @@ interface IUsdnProtocolVault is IUsdnProtocolTypes {
      * @return rawIndices_ The raw indices of the actionable pending actions in the queue if any, otherwise an empty
      * array
      */
-    function getActionablePendingActions(address currentUser)
-        external
-        view
-        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_);
+    // function getActionablePendingActions(address currentUser)
+    //     external
+    //     view
+    //     returns (PendingAction[] memory actions_, uint128[] memory rawIndices_);
 
     /**
      * @notice Get the predicted value of the USDN token price for the given asset price and timestamp

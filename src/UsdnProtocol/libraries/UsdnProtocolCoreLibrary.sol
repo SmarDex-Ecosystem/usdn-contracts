@@ -436,6 +436,65 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
+     * @notice Save a new position in the protocol, adjusting the tick data and global variables
+     * @dev Note: this method does not update the long balance
+     * @param tick The tick to hold the new position
+     * @param long The position to save
+     * @param liquidationPenalty The liquidation penalty for the tick
+     * @return tickVersion_ The version of the tick
+     * @return index_ The index of the position in the tick array
+     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
+     */
+    function _saveNewPosition(int24 tick, Types.Position memory long, uint24 liquidationPenalty)
+        public
+        returns (uint256 tickVersion_, uint256 index_, HugeUint.Uint512 memory liqMultiplierAccumulator_)
+    {
+        Types.Storage storage s = Utils._getMainStorage();
+
+        bytes32 tickHash;
+        (tickHash, tickVersion_) = Utils._tickHash(tick);
+
+        // add to tick array
+        Types.Position[] storage tickArray = s._longPositions[tickHash];
+        index_ = tickArray.length;
+        if (tick > s._highestPopulatedTick) {
+            // keep track of the highest populated tick
+            s._highestPopulatedTick = tick;
+
+            emit IUsdnProtocolEvents.HighestPopulatedTickUpdated(tick);
+        }
+        tickArray.push(long);
+
+        // adjust state
+        s._totalExpo += long.totalExpo;
+        ++s._totalLongPositions;
+
+        // update tick data
+        Types.TickData storage tickData = s._tickData[tickHash];
+        // the unadjusted tick price for the accumulator might be different depending
+        // if we already have positions in the tick or not
+        uint256 unadjustedTickPrice;
+        if (tickData.totalPos == 0) {
+            // first position in this tick, we need to reflect that it is populated
+            s._tickBitmap.set(Utils._calcBitmapIndexFromTick(tick));
+            // we store the data for this tick
+            tickData.totalExpo = long.totalExpo;
+            tickData.totalPos = 1;
+            tickData.liquidationPenalty = liquidationPenalty;
+            unadjustedTickPrice = TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(tick, liquidationPenalty));
+        } else {
+            tickData.totalExpo += long.totalExpo;
+            tickData.totalPos += 1;
+            // we do not need to adjust the tick's `liquidationPenalty` since it remains constant
+            unadjustedTickPrice =
+                TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(tick, tickData.liquidationPenalty));
+        }
+        // update the accumulator with the correct tick price (depending on the liquidation penalty value)
+        liqMultiplierAccumulator_ = s._liqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));
+        s._liqMultiplierAccumulator = liqMultiplierAccumulator_;
+    }
+
+    /**
      * @notice Get the pending action for a user
      * @dev This function reverts if there is no pending action for the user
      * @param user The user's address
@@ -581,7 +640,7 @@ library UsdnProtocolCoreLibrary {
             timestamp: uint40(block.timestamp)
         });
         // save the position and update the state
-        (posId.tickVersion, posId.index,) = ActionsLong._saveNewPosition(posId.tick, long, s._liquidationPenalty);
+        (posId.tickVersion, posId.index,) = _saveNewPosition(posId.tick, long, s._liquidationPenalty);
         s._balanceLong += long.amount;
         emit IUsdnProtocolEvents.InitiatedOpenPosition(
             msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId

@@ -33,11 +33,6 @@ abstract contract UsdnProtocolCore is
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
-        return Core.getUserPendingAction(user);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         external
         view
