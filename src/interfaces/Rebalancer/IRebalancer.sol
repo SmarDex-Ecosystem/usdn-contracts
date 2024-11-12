@@ -33,6 +33,12 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function INITIATE_CLOSE_TYPEHASH() external view returns (bytes32);
 
     /**
+     * @notice The max close delay
+     * @return The max close delay
+     */
+    function MAX_CLOSE_DELAY() external view returns (uint256);
+
+    /**
      * @notice Returns the address of the asset used by the USDN protocol
      * @return The address of the asset used by the USDN protocol
      */
@@ -102,6 +108,12 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @return The domain separator v4
      */
     function domainSeparatorV4() external view returns (bytes32);
+
+    /**
+     * @notice Get the close deadline
+     * @return The close deadline value
+     */
+    function getCloseDeadline() external view returns (uint80);
 
     /**
      * @notice Deposit assets into this contract to be included in the next position after validation
@@ -193,6 +205,8 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @param validationDelay The validation delay
      * @param validationDeadline The validation deadline
      * @param actionCooldown The cooldown period duration
+     * @param closeDelay The close delay
      */
-    function setTimeLimits(uint80 validationDelay, uint80 validationDeadline, uint80 actionCooldown) external;
+    function setTimeLimits(uint80 validationDelay, uint80 validationDeadline, uint80 actionCooldown, uint80 closeDelay)
+        external;
 }

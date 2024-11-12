@@ -22,6 +22,7 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
         rebalancer.initiateDepositAssets(minAsset, address(this));
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
+        vm.warp(rebalancer.getCloseDeadline() + 1);
     }
 
     /**
@@ -93,6 +94,20 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
             minAsset, USER_1, USER_1, DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
         vm.stopPrank();
+    }
+
+    /**
+     * @custom:scenario Call {initiateClosePosition} function with a timestamp before the close deadline
+     * @custom:when The {initiateClosePosition} function is called
+     * @custom:then It should revert with {RebalancerCloseDelay}
+     */
+    function test_RevertWhen_rebalancerBeforeDeadline() public {
+        vm.warp(block.timestamp - 1);
+
+        vm.expectRevert(IRebalancerErrors.RebalancerCloseDelay.selector);
+        rebalancer.initiateClosePosition(
+            minAsset, address(this), payable(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
+        );
     }
 
     receive() external payable { }

@@ -82,6 +82,9 @@ interface IRebalancerEvents {
      * @param validationDelay The new validation delay
      * @param validationDeadline The new validation deadline
      * @param actionCooldown The new action cooldown
+     * @param closeDelay The new close delay
      */
-    event TimeLimitsUpdated(uint256 validationDelay, uint256 validationDeadline, uint256 actionCooldown);
+    event TimeLimitsUpdated(
+        uint256 validationDelay, uint256 validationDeadline, uint256 actionCooldown, uint256 closeDelay
+    );
 }

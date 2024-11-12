@@ -52,4 +52,7 @@ interface IRebalancerErrors {
 
     /// @dev Indicates that the signature provided for a delegation is invalid
     error RebalancerInvalidDelegationSignature();
+
+    /// @dev Indicates that the user can't initiate a close position at the moment
+    error RebalancerCloseDelay();
 }
