@@ -33,8 +33,9 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function INITIATE_CLOSE_TYPEHASH() external view returns (bytes32);
 
     /**
-     * @notice The max close delay
-     * @return The max close delay
+     * @notice The maximum amount in seconds to wait to execute a {initiateClosePosition} since a new rebalancer
+     * long position has been created
+     * @return The max close delay value
      */
     function MAX_CLOSE_DELAY() external view returns (uint256);
 
@@ -110,10 +111,10 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function domainSeparatorV4() external view returns (bytes32);
 
     /**
-     * @notice Get the close deadline
-     * @return The close deadline value
+     * @notice Get the timestamp by which a user must wait to perform a {initiateClosePosition}
+     * @return The timestamp value
      */
-    function getCloseDeadline() external view returns (uint80);
+    function getCloseLockedUntil() external view returns (uint80);
 
     /**
      * @notice Deposit assets into this contract to be included in the next position after validation
