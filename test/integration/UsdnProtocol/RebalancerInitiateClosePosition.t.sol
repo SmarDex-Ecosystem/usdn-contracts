@@ -412,7 +412,7 @@ contract TestRebalancerInitiateClosePosition is
         rebalancer.validateDepositAssets();
         vm.stopPrank();
 
-        vm.warp(rebalancer.getCloseDeadline() + 1);
+        vm.warp(rebalancer.getCloseLockedUntil() + 1);
         mockChainlinkOnChain.setLastPublishTime(block.timestamp);
 
         vm.startPrank(user);
@@ -468,7 +468,7 @@ contract TestRebalancerInitiateClosePosition is
         // wait 1 minute to provide a fresh price
         skip(1 minutes);
 
-        vm.warp(rebalancer.getCloseDeadline() + 1);
+        vm.warp(rebalancer.getCloseLockedUntil() + 1);
         mockChainlinkOnChain.setLastPublishTime(block.timestamp);
 
         // try to withdraw from the rebalancer again

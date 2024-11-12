@@ -22,7 +22,7 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
         rebalancer.initiateDepositAssets(minAsset, address(this));
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
-        vm.warp(rebalancer.getCloseDeadline() + 1);
+        vm.warp(rebalancer.getCloseLockedUntil() + 1);
     }
 
     /**
