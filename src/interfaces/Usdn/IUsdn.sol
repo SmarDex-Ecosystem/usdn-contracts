@@ -38,7 +38,10 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
 
     /**
      * @notice Transfer a given amount of shares from the `from` to `to`
-     * @dev There should be sufficient allowance for the spender
+     * @dev There should be sufficient allowance for the spender. Be careful to the rebase logic. The allowance is in
+     * tokens. So, after a rebasing, the same amount of shares will be worth a higher amount of tokens. In this case,
+     * the allowance of the initial tokens will not be enough to transfer the new amount of tokens. This workflow can be
+     * also happen when your transaction is in a mempool and the rebase pass before your transaction
      * @param from The owner of the shares
      * @param to Recipient of the shares
      * @param value Number of shares to transfer
@@ -71,6 +74,10 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
 
     /**
      * @notice Destroy a `value` amount of tokens from `account`, deducting from the caller's allowance
+     * @dev There should be sufficient allowance for the spender. Be careful to the rebase logic. The allowance is in
+     * tokens. So, after a rebasing, the same amount of shares will be worth a higher amount of tokens. In this case,
+     * the allowance of the initial tokens will not be enough to burn the new amount of tokens. This workflow can be
+     * also happen when your transaction is in a mempool and the rebase pass before your transaction
      * @param account Account to burn tokens from
      * @param value Amount of tokens to burn, is internally converted to the proper shares amounts
      */
