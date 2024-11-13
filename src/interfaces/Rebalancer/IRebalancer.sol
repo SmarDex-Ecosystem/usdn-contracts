@@ -111,10 +111,10 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function domainSeparatorV4() external view returns (bytes32);
 
     /**
-     * @notice Get the timestamp by which a user must wait to perform a {initiateClosePosition}
+     * @notice Get the timestamp until which a user must wait to perform a {initiateClosePosition}
      * @return The timestamp value
      */
-    function getCloseLockedUntil() external view returns (uint80);
+    function getCloseLockedUntil() external view returns (uint256);
 
     /**
      * @notice Deposit assets into this contract to be included in the next position after validation
@@ -208,6 +208,6 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @param actionCooldown The cooldown period duration
      * @param closeDelay The close delay
      */
-    function setTimeLimits(uint80 validationDelay, uint80 validationDeadline, uint80 actionCooldown, uint80 closeDelay)
+    function setTimeLimits(uint64 validationDelay, uint64 validationDeadline, uint64 actionCooldown, uint64 closeDelay)
         external;
 }

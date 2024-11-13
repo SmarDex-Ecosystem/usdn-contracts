@@ -99,12 +99,16 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
     /**
      * @custom:scenario Call {initiateClosePosition} function with a timestamp before the close deadline
      * @custom:when The {initiateClosePosition} function is called
-     * @custom:then It should revert with {RebalancerCloseDelay}
+     * @custom:then It should revert with {RebalancerCloseLockedUntil}
      */
     function test_RevertWhen_rebalancerBeforeDeadline() public {
         vm.warp(block.timestamp - 1);
 
-        vm.expectRevert(IRebalancerErrors.RebalancerCloseDelay.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IRebalancerErrors.RebalancerCloseLockedUntil.selector, rebalancer.getCloseLockedUntil()
+            )
+        );
         rebalancer.initiateClosePosition(
             minAsset, address(this), payable(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );

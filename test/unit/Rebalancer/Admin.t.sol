@@ -153,10 +153,10 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:and The correct event should have been emitted
      */
     function test_setTimeLimits() public adminPrank {
-        uint80 newValidationDelay = 0;
-        uint80 newValidationDeadline = 5 minutes;
-        uint80 newActionCooldown = 48 hours;
-        uint80 newCloseDelay = 4 hours;
+        uint64 newValidationDelay = 0;
+        uint64 newValidationDeadline = 5 minutes;
+        uint64 newActionCooldown = 48 hours;
+        uint64 newCloseDelay = 4 hours;
 
         vm.expectEmit();
         emit TimeLimitsUpdated(newValidationDelay, newValidationDeadline, newActionCooldown, newCloseDelay);

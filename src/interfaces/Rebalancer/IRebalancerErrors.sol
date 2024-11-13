@@ -53,6 +53,9 @@ interface IRebalancerErrors {
     /// @dev Indicates that the signature provided for a delegation is invalid
     error RebalancerInvalidDelegationSignature();
 
-    /// @dev Indicates that the user can't initiate a close position at the moment
-    error RebalancerCloseDelay();
+    /**
+     * @dev Indicates that the user can't initiate a close position until the {closeLockedUntil} timestamp
+     * @param closeLockedUntil The timestamp by which a user must wait to perform a {initiateClosePosition}
+     */
+    error RebalancerCloseLockedUntil(uint256 closeLockedUntil);
 }

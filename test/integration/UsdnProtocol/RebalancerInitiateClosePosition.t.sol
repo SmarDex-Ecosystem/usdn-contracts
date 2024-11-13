@@ -412,9 +412,6 @@ contract TestRebalancerInitiateClosePosition is
         rebalancer.validateDepositAssets();
         vm.stopPrank();
 
-        vm.warp(rebalancer.getCloseLockedUntil() + 1);
-        mockChainlinkOnChain.setLastPublishTime(block.timestamp);
-
         vm.startPrank(user);
         // revert with a protocol error as the tick should not be accessible anymore
         // but the _lastLiquidatedVersion has not been updated yet

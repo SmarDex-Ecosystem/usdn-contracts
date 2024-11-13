@@ -47,6 +47,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
      * @param validator The address that should validate the open position
      * @param userMinPrice The minimum price at which the position can be closed
      * @param deadline The deadline of the close position to be initiated
+     * @param closeLockedUntil The timestamp by which a user must wait to perform a {initiateClosePosition}
      */
     struct InitiateCloseData {
         UserDeposit userDepositData;
@@ -65,6 +66,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         address payable validator;
         uint256 userMinPrice;
         uint256 deadline;
+        uint256 closeLockedUntil;
     }
 
     /// @notice Modifier to check if the caller is the USDN protocol or the owner
@@ -128,7 +130,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
      * @notice The timestamp by which a user must wait to perform a {initiateClosePosition}
      * @dev This value will be updated each time a new rebalancer long position is created
      */
-    uint80 internal _closeLockedUntil;
+    uint256 internal _closeLockedUntil;
 
     /**
      * @notice The time limits for the initiate/validate process of deposits and withdrawals
@@ -271,7 +273,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IRebalancer
-    function getCloseLockedUntil() external view returns (uint80) {
+    function getCloseLockedUntil() external view returns (uint256) {
         return _closeLockedUntil;
     }
 
@@ -350,7 +352,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         } else if (depositData.entryPositionVersion > 0) {
             revert RebalancerDepositUnauthorized();
         }
-        _closeLockedUntil = uint80(block.timestamp) + _timeLimits.closeDelay;
 
         _checkValidationTime(depositData.initiateTimestamp);
 
@@ -498,6 +499,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         data.validator = validator;
         data.userMinPrice = userMinPrice;
         data.deadline = deadline;
+        data.closeLockedUntil = _closeLockedUntil;
 
         return _initiateClosePosition(data, currentPriceData, previousActionsData, delegationData);
     }
@@ -558,7 +560,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
             // Reset the pending assets amount as they are all used in the new position
             _pendingAssetsAmount = 0;
-            _closeLockedUntil = uint80(block.timestamp) + _timeLimits.closeDelay;
+            _closeLockedUntil = block.timestamp + _timeLimits.closeDelay;
         } else {
             _positionData[positionVersion].tick = Constants.NO_POSITION_TICK;
         }
@@ -594,7 +596,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IRebalancer
-    function setTimeLimits(uint80 validationDelay, uint80 validationDeadline, uint80 actionCooldown, uint80 closeDelay)
+    function setTimeLimits(uint64 validationDelay, uint64 validationDeadline, uint64 actionCooldown, uint64 closeDelay)
         external
         onlyOwner
     {
@@ -720,8 +722,8 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         Types.PreviousActionsData calldata previousActionsData,
         bytes calldata delegationData
     ) internal returns (bool success_) {
-        if (block.timestamp <= _closeLockedUntil) {
-            revert RebalancerCloseDelay();
+        if (block.timestamp <= data.closeLockedUntil) {
+            revert RebalancerCloseLockedUntil(data.closeLockedUntil);
         }
         if (data.amount == 0) {
             revert RebalancerInvalidAmount();

@@ -48,9 +48,9 @@ interface IRebalancerTypes {
      * {initiateClosePosition}
      */
     struct TimeLimits {
-        uint80 validationDelay;
-        uint80 validationDeadline;
-        uint80 actionCooldown;
-        uint80 closeDelay;
+        uint64 validationDelay;
+        uint64 validationDeadline;
+        uint64 actionCooldown;
+        uint64 closeDelay;
     }
 }
