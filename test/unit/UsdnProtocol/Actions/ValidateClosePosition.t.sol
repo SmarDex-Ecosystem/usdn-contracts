@@ -858,6 +858,14 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         assertEq(address(this).balance, balanceContractBefore, "contract balance after refund");
     }
 
+    /**
+     * @custom:scenario The user validates a close position action with a price greater than the liquidation price,
+     * but with a negative position value due to the Pyth confidence interval
+     * @custom:given The user validate a `closePosition` action
+     * @custom:when The value of the position is negative
+     * @custom:then The user receives 0 assets but the vault balance is updated
+     * @custom:and An {ValidatedClosePosition} event is emitted
+     */
     function test_notLiquidable_negPositionValue() public {
         bytes memory priceData = abi.encode(params.initialPrice);
 
@@ -879,14 +887,17 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         uint256 vaultBalanceBefore = protocol.getBalanceVault();
 
+        // we set the Pyth confidence interval to -30% to make the position value negative
         oracleMiddleware.setPythConfBps(-3000);
+
         vm.recordLogs();
         protocol.validateClosePosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
-        Vm.Log[] memory logs = vm.getRecordedLogs();
 
+        Vm.Log[] memory logs = vm.getRecordedLogs();
         for (uint256 i = 0; i < logs.length; i++) {
             bytes32 selector = logs[i].topics[0];
             assertTrue(selector != IERC20.Transfer.selector, "no transfer should occur");
+
             if (selector == ValidatedClosePosition.selector) {
                 (, uint256 amountReceived, int256 profit) = abi.decode(logs[i].data, (PositionId, uint256, int256));
                 assertEq(amountReceived, 0, "amount received should be 0");
@@ -895,7 +906,11 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         }
 
         uint256 vaultBalanceAfter = protocol.getBalanceVault();
-        assertEq(vaultBalanceBefore + long.closeBoundedPositionValue, vaultBalanceAfter, "vault balance should be 0");
+        assertEq(
+            vaultBalanceBefore + long.closeBoundedPositionValue,
+            vaultBalanceAfter,
+            "vault balance should be increased by `closeBoundedPositionValue`"
+        );
     }
 
     /// @dev Allow refund tests
