@@ -23,7 +23,7 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
     // if true, then the middleware requires a payment of 1 wei for any action
     bool internal _requireValidationCost = false;
     // confidence of pyth price to adjust `PriceInfo.price`
-    int256 _pythConfBps = 0;
+    int256 internal _pythConfBps = 0;
 
     bytes32 public lastActionId;
 
@@ -65,9 +65,9 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
 
         uint256 adjustedPrice = priceValue;
         if (_pythConfBps > 0) {
-            adjustedPrice = priceValue * uint256(_pythConfBps) / BPS_DIVISOR;
+            adjustedPrice += priceValue * uint256(_pythConfBps) / BPS_DIVISOR;
         } else if (_pythConfBps < 0) {
-            adjustedPrice = priceValue * BPS_DIVISOR / uint256(-_pythConfBps);
+            adjustedPrice -= priceValue * uint256(-_pythConfBps) / BPS_DIVISOR;
         }
 
         PriceInfo memory price = PriceInfo({ price: adjustedPrice, neutralPrice: priceValue, timestamp: ts });
@@ -121,6 +121,10 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
 
     function setRequireValidationCost(bool req) external {
         _requireValidationCost = req;
+    }
+
+    function setPythConfBps(int256 confBps) external {
+        _pythConfBps = confBps;
     }
 
     function withdrawEther(address to) external {

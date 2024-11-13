@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { Vm } from "forge-std/Vm.sol";
+
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -13,7 +16,7 @@ import { InitializableReentrancyGuard } from "../../../../src/utils/Initializabl
  * @custom:feature The initiate close position functions of the USDN Protocol
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x
- * @custom:and a validated long position of 1 ether with 10x leverage.
+ * @custom:and A validated long position of 1 ether with 10x leverage
  */
 contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture {
     using SafeCast for uint256;
@@ -63,7 +66,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:then The call reverts because the pending action is not ValidateClosePosition
      */
     function test_RevertWhen_validateClosePositionWithTheWrongPendingAction() public {
-        // Setup an initiate action to have a pending validate action for this user
+        // setup an initiate action to have a pending validate action for this user
         setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
@@ -76,7 +79,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         bytes memory priceData = abi.encode(params.initialPrice);
 
-        // Try to validate a close position action with a pending action other than ValidateClosePosition
+        // try to validate a close position action with a pending action other than ValidateClosePosition
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidPendingAction.selector));
         protocol.i_validateClosePosition(payable(address(this)), priceData);
     }
@@ -115,7 +118,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario A user validates closes a position but sends too much ether
      * @custom:given A validated long position
-     * @custom:and oracle validation cost == 0
+     * @custom:and Oracle validation cost == 0
      * @custom:when User calls validateClosePosition with an amount of ether greater than the validation cost
      * @custom:then The protocol refunds the amount sent
      */
@@ -147,13 +150,13 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario A user validates closes a position with a pending action
      * @custom:given A validated long position
-     * @custom:and an initiated open position action from another user
+     * @custom:and An initiated open position action from another user
      * @custom:when User calls validateClosePosition with valid price data for the pending action
      * @custom:then The user validates the pending action
      */
     function test_validateClosePositionValidatePendingAction() public {
         bytes memory priceData = abi.encode(params.initialPrice);
-        // Initiate an open position action for another user
+        // initiate an open position action for another user
         setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
@@ -227,8 +230,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:given A validated open position of 1 wsteth
      * @custom:when The user validates the close of the position
      * @custom:then The state of the protocol is updated
-     * @custom:and a ValidatedClosePosition event is emitted
-     * @custom:and the user receives the position amount
+     * @custom:and A ValidatedClosePosition event is emitted
+     * @custom:and The user receives the position amount
      */
     function test_internalValidateClosePosition() public {
         _internalValidateClosePositionScenario(address(this), address(this));
@@ -239,8 +242,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:given A validated open position of 1 wsteth
      * @custom:when The user validates the close of the position with another recipient
      * @custom:then The state of the protocol is updated
-     * @custom:and a ValidatedClosePosition event is emitted
-     * @custom:and the recipient receives the position amount
+     * @custom:and A ValidatedClosePosition event is emitted
+     * @custom:and The recipient receives the position amount
      */
     function test_internalValidateClosePositionForAnotherUser() public {
         _internalValidateClosePositionScenario(USER_1, address(this));
@@ -251,21 +254,21 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:given A validated open position of 1 wsteth
      * @custom:when The validator validates the close of the position for another owner
      * @custom:then The state of the protocol is updated
-     * @custom:and a ValidatedClosePosition event is emitted
-     * @custom:and the recipient receives the position amount
+     * @custom:and A ValidatedClosePosition event is emitted
+     * @custom:and The recipient receives the position amount
      */
     function test_internalValidateClosePositionDifferentValidator() public {
         _internalValidateClosePositionScenario(address(this), USER_1);
     }
 
     /**
-     * @custom:scenario The validator validates a close position action for another recipient and another owner
+     * @custom:scenario The validator validates a close position action for another recipient and Another owner
      * @custom:given A validated open position of 1 wsteth
      * @custom:when The validator validates the close of the position with another recipient
      * @custom:and The validator validates the close of the position for another owner
      * @custom:then The state of the protocol is updated
-     * @custom:and a ValidatedClosePosition event is emitted
-     * @custom:and the recipient receives the position amount
+     * @custom:and A ValidatedClosePosition event is emitted
+     * @custom:and The recipient receives the position amount
      */
     function test_internalValidateClosePositionForAnotherUserDifferentValidator() public {
         _internalValidateClosePositionScenario(USER_1, USER_2);
@@ -335,11 +338,11 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario Validate a partial close of a position
      * @custom:given A validated open position
-     * @custom:and the initiate position is already done for half of the position
+     * @custom:and The initiate position is already done for half of the position
      * @custom:when The owner of the position validates the close position action
      * @custom:then The state of the protocol is updated
-     * @custom:and a ValidatedClosePosition event is emitted
-     * @custom:and the user receives half of the position amount
+     * @custom:and A ValidatedClosePosition event is emitted
+     * @custom:and The user receives half of the position amount
      */
     function test_internalValidatePartialClosePosition() public {
         InternalValidatePartialClosePosition memory data;
@@ -458,8 +461,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and The price dipped below the entry price before the validation
      * @custom:when The owner of the position validates the close position action
      * @custom:then The state of the protocol is updated
-     * @custom:and a ValidatedClosePosition event is emitted
-     * @custom:and the user receive parts of his funds back
+     * @custom:and A ValidatedClosePosition event is emitted
+     * @custom:and The user receive parts of his funds back
      */
     function test_internalValidatePartialCloseUnderwaterPosition() public {
         bytes memory priceData = abi.encode(params.initialPrice);
@@ -530,8 +533,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and The price increased above by 200$ before the validation
      * @custom:when The owner of the position validates the close position action
      * @custom:then The state of the protocol is updated
-     * @custom:and a ValidatedClosePosition event is emitted
-     * @custom:and the user receives his funds back + some profits
+     * @custom:and A ValidatedClosePosition event is emitted
+     * @custom:and The user receives his funds back + some profits
      */
     function test_internalValidatePartialClosePositionInProfit() public {
         bytes memory priceData = abi.encode(params.initialPrice);
@@ -600,9 +603,9 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and The price dipped below its liquidation price before the validation
      * @custom:when The owner of the position validates the close position action
      * @custom:then The state of the protocol is updated
-     * @custom:and a LiquidatedPosition event is emitted
-     * @custom:and a LiquidatedTick event is emitted
-     * @custom:and the user doesn't receive his funds back
+     * @custom:and A LiquidatedPosition event is emitted
+     * @custom:and A LiquidatedTick event is emitted
+     * @custom:and The user doesn't receive his funds back
      */
     function test_internalValidatePartialCloseLiquidatePosition() public {
         TestData memory data;
@@ -659,7 +662,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         data.totalPositionsBefore = protocol.getTotalLongPositions();
         data.priceData = abi.encode(data.liquidationPrice);
 
-        // Make sure we liquidate the tick and the position at once
+        // make sure we liquidate the tick and the position at once
         vm.expectEmit(true, true, false, false);
         emit LiquidatedTick(posId.tick, posId.tickVersion, 0, 0, 0);
         vm.expectEmit(true, false, false, false);
@@ -696,7 +699,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and The `validateClosePosition` is called with a price below liquidation
      * @custom:then The position is liquidated
      * @custom:and The user doesn't receive their funds back
-     * @custom:and the vault receives any remaining collateral at the time of `initiateClosePosition`
+     * @custom:and The vault receives any remaining collateral at the time of `initiateClosePosition`
      */
     function test_internalValidateCloseLiquidatePosition() public {
         // liquidate the position in setup, leaving only the deployer position
@@ -738,7 +741,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         uint256 vaultBalanceBefore = protocol.getBalanceVault();
 
-        // Make sure we liquidate the position
+        // make sure we liquidate the position
         vm.expectEmit(true, false, false, false);
         emit LiquidatedPosition(DEPLOYER, PositionId(0, 0, 0), 0, 0);
         protocol.i_validateClosePosition(DEPLOYER, priceData);
@@ -790,8 +793,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario The user validates a close position action with a reentrancy attempt
      * @custom:given A validated open position with an initiated close action done
-     * @custom:and a user being a smart contract that calls validateClosePosition with too much ether
-     * @custom:and a receive() function that calls validateClosePosition again
+     * @custom:and A user being a smart contract that calls validateClosePosition with too much ether
+     * @custom:and A receive() function that calls validateClosePosition again
      * @custom:when The user calls validateClosePosition again from the callback
      * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
      */
@@ -813,9 +816,9 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         );
 
         _reenter = true;
-        // If a reentrancy occurred, the function should have been called 2 times
+        // if a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateClosePosition.selector), 2);
-        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        // the value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.validateClosePosition{ value: 1 }(
             payable(address(this)), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
         );
@@ -871,7 +874,28 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         );
         _waitDelay();
 
-        protocol.validateClosePosition{ value: 1 ether }(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        LongPendingAction memory long = protocol.i_toLongPendingAction(pending);
+
+        uint256 vaultBalanceBefore = protocol.getBalanceVault();
+
+        oracleMiddleware.setPythConfBps(-3000);
+        vm.recordLogs();
+        protocol.validateClosePosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        for (uint256 i = 0; i < logs.length; i++) {
+            bytes32 selector = logs[i].topics[0];
+            assertTrue(selector != IERC20.Transfer.selector, "no transfer should occur");
+            if (selector == ValidatedClosePosition.selector) {
+                (, uint256 amountReceived, int256 profit) = abi.decode(logs[i].data, (PositionId, uint256, int256));
+                assertEq(amountReceived, 0, "amount received should be 0");
+                assertEq(profit, -int128(POSITION_AMOUNT), "profit should be -1 ether");
+            }
+        }
+
+        uint256 vaultBalanceAfter = protocol.getBalanceVault();
+        assertEq(vaultBalanceBefore + long.closeBoundedPositionValue, vaultBalanceAfter, "vault balance should be 0");
     }
 
     /// @dev Allow refund tests

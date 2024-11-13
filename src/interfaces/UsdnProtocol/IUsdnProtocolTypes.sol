@@ -184,7 +184,7 @@ interface IUsdnProtocolTypes {
      * @param validator The `validator` address
      * @param securityDepositValue The security deposit of the pending action
      * @param tick The tick of the position
-     * @param closeAmount The amount of the pending action (only used when closing a position)
+     * @param closeAmount The portion of the initial position amount to close (only used when closing a position)
      * @param closePosTotalExpo The total expo of the position (only used when closing a position)
      * @param tickVersion The version of the tick
      * @param index The index of the position in the tick list
