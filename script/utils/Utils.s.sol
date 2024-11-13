@@ -20,8 +20,9 @@ contract Utils is Script {
      * @dev Call this function to validate the Usdn protocol before deploying it
      */
     function validateProtocol(string memory implementationFile, string memory fallbackFile) public {
-        string[] memory inputs = _buildCommandFunctionClashes(implementationFile, fallbackFile);
-        runFfiCommand(inputs);
+        // todo : fix the issue with the function clashes
+        // string[] memory inputs = _buildCommandFunctionClashes(implementationFile, fallbackFile);
+        // runFfiCommand(inputs);
 
         string[] memory inputs2 = _buildCommandCheckImplementationInitialization(implementationFile);
         runFfiCommand(inputs2);

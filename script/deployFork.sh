@@ -11,20 +11,20 @@ deployerPrivateKey=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f
 
 # Setup deployment script environment variables
 export DEPLOYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-export INIT_DEPOSIT_AMOUNT=1000000000000000000000
 export INIT_LONG_AMOUNT=1000000000000000000000
 export GET_WSTETH=true
 
-forge script --non-interactive --private-key $deployerPrivateKey -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
+forge script --non-interactive --private-key $deployerPrivateKey -f "$rpcUrl" script/01_DeployProtocol.s.sol:DeployProtocol --broadcast
 
-DEPLOYMENT_LOG=$(cat "broadcast/01_Deploy.s.sol/31337/run-latest.json")
+DEPLOYMENT_LOG=$(cat "broadcast/01_DeployProtocol.s.sol/31337/run-latest.json")
 
 USDN_TX_HASH=$(echo "$DEPLOYMENT_LOG" | jq '.transactions[] | select(.contractName == "Usdn" and .transactionType == "CREATE") | .hash')
 USDN_RECEIPT=$(echo "$DEPLOYMENT_LOG" | jq ".receipts[] | select(.transactionHash == $USDN_TX_HASH)")
 USDN_PROTOCOL_TX_HASH=$(echo "$DEPLOYMENT_LOG" | jq '.transactions[] | select(.contractName == "ERC1967Proxy" and .transactionType == "CREATE") | .hash')
 USDN_PROTOCOL_RECEIPT=$(echo "$DEPLOYMENT_LOG" | jq ".receipts[] | select(.transactionHash == $USDN_PROTOCOL_TX_HASH)")
 
-FORK_ENV_DUMP=$(cat <<EOF
+FORK_ENV_DUMP=$(
+    cat <<EOF
 SDEX_TOKEN_ADDRESS=$(echo "$DEPLOYMENT_LOG" | jq '.returns.Sdex_.value' | xargs printf "%s\n")
 USDN_TOKEN_ADDRESS=$(echo "$DEPLOYMENT_LOG" | jq '.returns.Usdn_.value' | xargs printf "%s\n")
 WUSDN_TOKEN_ADDRESS=$(echo "$DEPLOYMENT_LOG" | jq '.returns.Wusdn_.value' | xargs printf "%s\n")
