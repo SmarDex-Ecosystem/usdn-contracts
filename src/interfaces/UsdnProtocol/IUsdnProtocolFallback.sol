@@ -798,12 +798,31 @@ interface IUsdnProtocolFallback is IUsdnProtocolErrors {
     /**
      * @notice Pauses related USDN protocol functions
      * @dev Pauses simultaneously all initiate/validate, refundSecurityDeposit and transferPositionOwnership functions
+     * Before pausing, this function will call `_applyPnlAndFunding` with `_lastPrice` and the current timestamp
+     * This is done to stop the funding rate from accumulating while the protocol is paused, be sure to call {unpause}
+     * when unpausing
      */
     function pause() external;
 
     /**
+     * @notice Pauses related USDN protocol functions
+     * @dev Pauses simultaneously all initiate/validate, refundSecurityDeposit and transferPositionOwnership functions
+     * This safe version will not call `_applyPnlAndFunding` before pausing
+     */
+    function pauseSafe() external;
+
+    /**
      * @notice Unpauses related USDN protocol functions
      * @dev Unpauses simultaneously all initiate/validate, refundSecurityDeposit and transferPositionOwnership functions
+     * This function will set `_lastUpdateTimestamp` to the current timestamp to prevent any funding during the pause
+     * Only meant to be called after a {pause} call
      */
     function unpause() external;
+
+    /**
+     * @notice Unpauses related USDN protocol functions
+     * @dev Unpauses simultaneously all initiate/validate, refundSecurityDeposit and transferPositionOwnership functions
+     * This safe version will not set `_lastUpdateTimestamp` to the current timestamp
+     */
+    function unpauseSafe() external;
 }

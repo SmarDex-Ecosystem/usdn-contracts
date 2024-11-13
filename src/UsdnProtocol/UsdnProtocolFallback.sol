@@ -681,6 +681,11 @@ contract UsdnProtocolFallback is
         _pause();
     }
 
+    /// @inheritdoc IUsdnProtocolFallback
+    function pauseSafe() external onlyRole(Constants.PAUSER_ROLE) {
+        _pause();
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                            UNPAUSER_ROLE                                     */
     /* -------------------------------------------------------------------------- */
@@ -688,6 +693,11 @@ contract UsdnProtocolFallback is
     /// @inheritdoc IUsdnProtocolFallback
     function unpause() external onlyRole(Constants.UNPAUSER_ROLE) {
         Utils._getMainStorage()._lastUpdateTimestamp = uint128(block.timestamp);
+        _unpause();
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function unpauseSafe() external onlyRole(Constants.UNPAUSER_ROLE) {
         _unpause();
     }
 }
