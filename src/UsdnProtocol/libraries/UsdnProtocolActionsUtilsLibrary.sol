@@ -83,9 +83,9 @@ library UsdnProtocolActionsUtilsLibrary {
     /// @notice See {IUsdnProtocolActions}
     function transferPositionOwnership(
         Types.PositionId calldata posId,
+        address newOwner,
         bytes calldata delegationSignature,
-        bytes32 domainSeparatorV4,
-        address newOwner
+        bytes32 domainSeparatorV4
     ) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -104,7 +104,7 @@ library UsdnProtocolActionsUtilsLibrary {
                 revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
             } else {
                 _verifyTransferPositionOwnershipDelegation(
-                    posId, delegationSignature, domainSeparatorV4, pos.user, newOwner
+                    posId, pos.user, newOwner, delegationSignature, domainSeparatorV4
                 );
             }
         }
@@ -488,18 +488,18 @@ library UsdnProtocolActionsUtilsLibrary {
      * @dev Reverts if the function arguments don't match those included in the signature
      * and if the signer isn't the owner of the position
      * @param posId The unique identifier of the position
+     * @param positionOwner The current position owner
+     * @param newPositionOwner The new position owner
      * @param delegationSignature An EIP712 signature that proves the caller is authorized by the owner of the position
      * to transfer the ownership to a different address on his behalf
      * @param domainSeparatorV4 The domain separator v4
-     * @param positionOwner The current position owner
-     * @param newPositionOwner The new position owner
      */
     function _verifyTransferPositionOwnershipDelegation(
         Types.PositionId calldata posId,
-        bytes calldata delegationSignature,
-        bytes32 domainSeparatorV4,
         address positionOwner,
-        address newPositionOwner
+        address newPositionOwner,
+        bytes calldata delegationSignature,
+        bytes32 domainSeparatorV4
     ) internal {
         Types.Storage storage s = Utils._getMainStorage();
 

@@ -835,13 +835,13 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
 
     function i_verifyTransferPositionOwnershipDelegation(
         Types.PositionId calldata posId,
-        bytes calldata delegationSignature,
-        bytes32 domainSeparatorV4,
         address positionOwner,
-        address newPositionOwner
+        address newPositionOwner,
+        bytes calldata delegationSignature,
+        bytes32 domainSeparatorV4
     ) external {
         ActionsUtils._verifyTransferPositionOwnershipDelegation(
-            posId, delegationSignature, domainSeparatorV4, positionOwner, newPositionOwner
+            posId, positionOwner, newPositionOwner, delegationSignature, domainSeparatorV4
         );
     }
 

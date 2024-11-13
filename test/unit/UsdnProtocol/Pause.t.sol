@@ -57,7 +57,7 @@ contract TestUsdnProtocolPausable is UsdnProtocolBaseFixture {
         protocol.refundSecurityDeposit(ADDR_ZERO);
 
         vm.expectRevert(pausedErr);
-        protocol.transferPositionOwnership(emptyPosId, "", ADDR_ZERO);
+        protocol.transferPositionOwnership(emptyPosId, ADDR_ZERO, "");
 
         vm.expectRevert(pausedErr);
         protocol.liquidate("");
