@@ -666,6 +666,8 @@ library UsdnProtocolVaultLibrary {
 
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             if (data.sdexToBurn > 0) {
+                // This logic must be modified if this protocol is deployed twice, as an attacker could burn SDEX once
+                // for both deposits by re-entering one protocol from the other.
                 Utils.transferCallback(s._sdex, data.sdexToBurn, Constants.DEAD_ADDRESS);
             }
             Utils.transferCallback(s._asset, params.amount, address(this));
