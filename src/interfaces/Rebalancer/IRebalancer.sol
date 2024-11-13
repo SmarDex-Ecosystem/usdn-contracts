@@ -111,7 +111,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     function domainSeparatorV4() external view returns (bytes32);
 
     /**
-     * @notice Get the timestamp until which a user must wait to perform a {initiateClosePosition}
+     * @notice Get the timestamp by which a user must wait to perform a {initiateClosePosition}
      * @return The timestamp value
      */
     function getCloseLockedUntil() external view returns (uint256);

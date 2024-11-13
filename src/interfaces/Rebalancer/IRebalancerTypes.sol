@@ -44,7 +44,7 @@ interface IRebalancerTypes {
      * action
      * @param actionCooldown Duration from the initiate action during which the user can't interact with the Rebalancer
      * if the `validationDeadline` elapsed.
-     * @param closeDelay Duration from the last updatePosition during which the user can't perform a
+     * @param closeDelay Duration from the last rebalancer long position opening during which the user can't perform a
      * {initiateClosePosition}
      */
     struct TimeLimits {

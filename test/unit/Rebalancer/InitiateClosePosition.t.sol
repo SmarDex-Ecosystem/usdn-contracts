@@ -97,11 +97,11 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario Call {initiateClosePosition} function with a timestamp before the close deadline
+     * @custom:scenario Call {initiateClosePosition} function with a timestamp before the {closeLockedUntil}
      * @custom:when The {initiateClosePosition} function is called
      * @custom:then It should revert with {RebalancerCloseLockedUntil}
      */
-    function test_RevertWhen_rebalancerBeforeDeadline() public {
+    function test_RevertWhen_rebalancerBeforeCloseLockedUntil() public {
         vm.warp(block.timestamp - 1);
 
         vm.expectRevert(
