@@ -3,6 +3,11 @@ pragma solidity 0.8.26;
 
 import { USER_1 } from "../../utils/Constants.sol";
 import { RebalancerFixture } from "./utils/Fixtures.sol";
+import { RebalancerHandler } from "./utils/Handler.sol";
+import { UsdnProtocolMock } from "./utils/UsdnProtocolMock.sol";
+
+import { IUsdnProtocol } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `initiateDepositAssets` function of the rebalancer contract
@@ -14,6 +19,10 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
     function setUp() public {
         super._setUp();
 
+        usdnProtocol = IUsdnProtocol(address(new UsdnProtocolMock(wstETH)));
+        rebalancer = new RebalancerHandler(usdnProtocol);
+
+        wstETH.approve(address(usdnProtocol), type(uint256).max);
         wstETH.mintAndApprove(address(this), 10_000 ether, address(rebalancer), type(uint256).max);
         wstETH.mintAndApprove(USER_1, 10_000 ether, address(rebalancer), type(uint256).max);
     }
@@ -54,16 +63,58 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
      * @custom:given A user deposited assets and the position gets liquidated
      * @custom:when The user deposit assets again
      * @custom:then The deposit happens as expected
+     * @custom:and The last liquidated version is updated
      */
     function test_depositAfterBeingLiquidated() public {
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
 
-        rebalancer.incrementPositionVersion();
-        rebalancer.setLastLiquidatedVersion(rebalancer.getPositionVersion());
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
+
+        // increase the tick version to simulate the tick being liquidated
+        UsdnProtocolMock(address(usdnProtocol)).setTickVersion(0, 1);
 
         _initiateDepositScenario(INITIAL_DEPOSIT, address(this));
+        assertEq(
+            rebalancer.getPositionVersion(),
+            rebalancer.getLastLiquidatedVersion(),
+            "The last liquidated version value should be equal to the current position version"
+        );
+    }
+
+    /**
+     * @custom:scenario The user deposits assets after their previous position got liquidated
+     * @custom:given A user deposited assets and the position gets liquidated
+     * @custom:and Another user updates the last liquidated version before the current user
+     * @custom:when The user deposit assets again
+     * @custom:then The deposit happens as expected
+     */
+    function test_depositAfterBeingLiquidatedAndLiquidatedVersionAlreadyUpdated() public {
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
+        vm.prank(USER_1);
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, USER_1);
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+        vm.prank(USER_1);
+        rebalancer.validateDepositAssets();
+
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
+
+        // increase the tick version to simulate the tick being liquidated
+        UsdnProtocolMock(address(usdnProtocol)).setTickVersion(0, 1);
+
+        // first user updates _lastLiquidatedVersion
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
+        assertEq(
+            rebalancer.getPositionVersion(),
+            rebalancer.getLastLiquidatedVersion(),
+            "The last liquidated version value should be equal to the current position version"
+        );
+
+        _initiateDepositScenario(INITIAL_DEPOSIT, USER_1);
     }
 
     /**
@@ -71,6 +122,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
      * @custom:given The 'to' address deposited assets and the position got liquidated
      * @custom:when The user deposit assets again with a 'to' address
      * @custom:then The deposit happens as expected
+     * @custom:and The last liquidated version is updated
      */
     function test_depositToAfterBeingLiquidated() public {
         vm.startPrank(USER_1);
@@ -79,10 +131,18 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
         rebalancer.validateDepositAssets();
         vm.stopPrank();
 
-        rebalancer.incrementPositionVersion();
-        rebalancer.setLastLiquidatedVersion(rebalancer.getPositionVersion());
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
+
+        // increase the tick version to simulate the tick being liquidated
+        UsdnProtocolMock(address(usdnProtocol)).setTickVersion(0, 1);
 
         _initiateDepositScenario(INITIAL_DEPOSIT, USER_1);
+        assertEq(
+            rebalancer.getPositionVersion(),
+            rebalancer.getLastLiquidatedVersion(),
+            "The last liquidated version value should be equal to the current position version"
+        );
     }
 
     /**
@@ -111,7 +171,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
             "The user should have sent the assets"
         );
         if (to != address(this)) {
-            assertEq(wstETH.balanceOf(to), toBalanceBefore, "The balance of \"to\" should have not changed");
+            assertEq(wstETH.balanceOf(to), toBalanceBefore, "The balance of `to` should have not changed");
         }
         assertEq(rebalancer.getPendingAssetsAmount(), pendingBefore, "Pending assets should not have changed");
 
@@ -197,7 +257,9 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
-        rebalancer.incrementPositionVersion();
+
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
 
         vm.expectRevert(RebalancerDepositUnauthorized.selector);
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
