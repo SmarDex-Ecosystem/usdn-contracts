@@ -1,13 +1,22 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+
 import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import { UsdnProtocolStorage } from "./UsdnProtocolStorage.sol";
+import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./libraries/UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVaultLibrary.sol";
 
-abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActions {
+abstract contract UsdnProtocolActions is
+    IUsdnProtocolActions,
+    InitializableReentrancyGuard,
+    PausableUpgradeable,
+    EIP712Upgradeable
+{
     /// @inheritdoc IUsdnProtocolActions
     function initiateOpenPosition(
         uint128 amount,
@@ -84,6 +93,53 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     }
 
     /// @inheritdoc IUsdnProtocolActions
+    function initiateDeposit(
+        uint128 amount,
+        uint256 sharesOutMin,
+        address to,
+        address payable validator,
+        uint256 deadline,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+        return
+            Vault.initiateDeposit(amount, sharesOutMin, to, validator, deadline, currentPriceData, previousActionsData);
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
+    function validateDeposit(
+        address payable validator,
+        bytes calldata depositPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+        return Vault.validateDeposit(validator, depositPriceData, previousActionsData);
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
+    function initiateWithdrawal(
+        uint152 usdnShares,
+        uint256 amountOutMin,
+        address to,
+        address payable validator,
+        uint256 deadline,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+        return Vault.initiateWithdrawal(
+            usdnShares, amountOutMin, to, validator, deadline, currentPriceData, previousActionsData
+        );
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
+    function validateWithdrawal(
+        address payable validator,
+        bytes calldata withdrawalPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+        return Vault.validateWithdrawal(validator, withdrawalPriceData, previousActionsData);
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
     function liquidate(bytes calldata currentPriceData)
         external
         payable
@@ -106,25 +162,16 @@ abstract contract UsdnProtocolActions is UsdnProtocolStorage, IUsdnProtocolActio
     }
 
     /// @inheritdoc IUsdnProtocolActions
-    function transferPositionOwnership(PositionId calldata posId, address newOwner)
+    function transferPositionOwnership(PositionId calldata posId, bytes calldata delegationSignature, address newOwner)
         external
         whenNotPaused
         initializedAndNonReentrant
     {
-        return ActionsUtils.transferPositionOwnership(posId, newOwner);
+        return ActionsUtils.transferPositionOwnership(posId, delegationSignature, _domainSeparatorV4(), newOwner);
     }
 
     /// @inheritdoc IUsdnProtocolActions
-    function tickHash(int24 tick, uint256 version) external pure returns (bytes32) {
-        return Utils.tickHash(tick, version);
-    }
-
-    /// @inheritdoc IUsdnProtocolActions
-    function getLongPosition(PositionId memory posId)
-        external
-        view
-        returns (Position memory pos_, uint24 liquidationPenalty_)
-    {
-        return ActionsUtils.getLongPosition(posId);
+    function domainSeparatorV4() external view returns (bytes32) {
+        return _domainSeparatorV4();
     }
 }

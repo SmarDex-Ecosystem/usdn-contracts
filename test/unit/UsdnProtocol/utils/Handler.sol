@@ -553,7 +553,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         external
         returns (uint256, uint256, HugeUint.Uint512 memory)
     {
-        return ActionsLong._saveNewPosition(tick, long, liquidationPenalty);
+        return Core._saveNewPosition(tick, long, liquidationPenalty);
     }
 
     function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view {
@@ -572,12 +572,12 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         return Utils._calcFixedPrecisionMultiplier(assetPrice, longTradingExpo, accumulator);
     }
 
-    function i_calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
+    function i_calcAmountToWithdraw(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
         external
         pure
         returns (uint256 assetExpected_)
     {
-        return Utils._calcBurnUsdn(usdnShares, available, usdnTotalShares, feeBps);
+        return Utils._calcAmountToWithdraw(usdnShares, available, usdnTotalShares, feeBps);
     }
 
     function i_calcTickWithoutPenalty(int24 tick, uint24 liquidationPenalty) external pure returns (int24) {
@@ -827,10 +827,22 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_verifyInitiateCloseDelegation(
-        address positionOwner,
-        Types.PrepareInitiateClosePositionParams calldata params
+        Types.PrepareInitiateClosePositionParams calldata params,
+        address positionOwner
     ) external {
-        ActionsUtils._verifyInitiateCloseDelegation(positionOwner, params);
+        ActionsUtils._verifyInitiateCloseDelegation(params, positionOwner);
+    }
+
+    function i_verifyTransferPositionOwnershipDelegation(
+        Types.PositionId calldata posId,
+        bytes calldata delegationSignature,
+        bytes32 domainSeparatorV4,
+        address positionOwner,
+        address newPositionOwner
+    ) external {
+        ActionsUtils._verifyTransferPositionOwnershipDelegation(
+            posId, delegationSignature, domainSeparatorV4, positionOwner, newPositionOwner
+        );
     }
 
     function i_setUsdnRebaseThreshold(uint128 threshold) external {

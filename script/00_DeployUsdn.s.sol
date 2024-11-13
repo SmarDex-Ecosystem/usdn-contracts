@@ -8,9 +8,8 @@ import { Usdn } from "../src/Usdn/Usdn.sol";
 contract DeployUsdn is Script {
     function run() external returns (Usdn Usdn_) {
         address deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
-        uint64 nonce = vm.getNonce(deployerAddress);
 
-        require(block.chainid == 1, "DeployUsdn: not allowed in test environment, use 01_Deploy.s.sol instead");
+        uint64 nonce = vm.getNonce(deployerAddress);
         require(nonce == 0, "Nonce must be 0");
 
         vm.broadcast(deployerAddress);
