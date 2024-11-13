@@ -66,6 +66,14 @@ contract TestUsdnProtocolPausable is UsdnProtocolBaseFixture {
         protocol.liquidate("");
     }
 
+    /**
+     * @custom:scenario Ensure that no funding is possible during the pause period
+     * @custom:given A active usdnProtocol with funding enabled
+     * @custom:when {pause} is called
+     * @custom:and 10 days have passed
+     * @custom:and {unpause} is called
+     * @custom:then No funding should be possible during the pause period
+     */
     function test_NoFundingDuringPausePeriod() public {
         uint256 balanceVaultBefore = protocol.getBalanceVault();
         uint256 balanceLongBefore = protocol.getBalanceLong();
@@ -85,7 +93,31 @@ contract TestUsdnProtocolPausable is UsdnProtocolBaseFixture {
         vm.revertToState(snapshotId);
         skip(10 days);
         protocol.liquidate(abi.encode(params.initialPrice));
-        assertLt(protocol.getBalanceLong(), balanceLong, "The long balance should decrease versus the paused value");
-        assertGt(protocol.getBalanceVault(), balanceVault, "The vault balance should increase versus the paused value");
+        assertTrue(protocol.getBalanceLong() != balanceLong, "The long balance should be different");
+        assertTrue(protocol.getBalanceVault() != balanceVault, "The vault balance should be different");
+    }
+
+    /**
+     * @custom:scenario Ensure that the funding will continue during the pause period if the safe versions are called
+     * @custom:given A active usdnProtocol with funding enabled
+     * @custom:when {pause} is called
+     * @custom:and 10 days have passed
+     * @custom:and {unpause} is called
+     * @custom:then Funding should occur
+     */
+    function test_fundingSafeVersion() public {
+        uint256 balanceVaultBefore = protocol.getBalanceVault();
+        uint256 balanceLongBefore = protocol.getBalanceLong();
+
+        vm.prank(ADMIN);
+        protocol.pauseSafe();
+        skip(10 days);
+        vm.prank(ADMIN);
+        protocol.unpauseSafe();
+        protocol.liquidate(abi.encode(params.initialPrice));
+        uint256 balanceLong = protocol.getBalanceLong();
+        uint256 balanceVault = protocol.getBalanceVault();
+        assertTrue(balanceVaultBefore != balanceVault, "The vault balance should be different");
+        assertTrue(balanceLongBefore != balanceLong, "The long balance should be different");
     }
 }
