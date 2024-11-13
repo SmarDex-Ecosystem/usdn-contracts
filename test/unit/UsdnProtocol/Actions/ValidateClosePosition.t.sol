@@ -262,7 +262,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     }
 
     /**
-     * @custom:scenario The validator validates a close position action for another recipient and Another owner
+     * @custom:scenario The validator validates a close position action for another recipient and another owner
      * @custom:given A validated open position of 1 wsteth
      * @custom:when The validator validates the close of the position with another recipient
      * @custom:and The validator validates the close of the position for another owner
