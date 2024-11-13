@@ -461,10 +461,10 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function i_verifyTransferPositionOwnershipDelegation(
         Types.PositionId calldata posId,
-        bytes calldata delegationSignature,
-        bytes32 domainSeparatorV4,
         address positionOwner,
-        address newPositionOwner
+        address newPositionOwner,
+        bytes calldata delegationSignature,
+        bytes32 domainSeparatorV4
     ) external;
 
     function i_setUsdnRebaseThreshold(uint128 threshold) external;
