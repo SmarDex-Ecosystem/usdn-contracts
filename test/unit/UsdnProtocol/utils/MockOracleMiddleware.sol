@@ -22,6 +22,8 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
     uint256 internal _timeElapsedLimit = 1 hours;
     // if true, then the middleware requires a payment of 1 wei for any action
     bool internal _requireValidationCost = false;
+    // confidence of pyth price to adjust `PriceInfo.price`
+    int256 _pythConfBps = 0;
 
     bytes32 public lastActionId;
 
@@ -61,7 +63,14 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
 
         lastActionId = actionId;
 
-        PriceInfo memory price = PriceInfo({ price: priceValue, neutralPrice: priceValue, timestamp: ts });
+        uint256 adjustedPrice = priceValue;
+        if (_pythConfBps > 0) {
+            adjustedPrice = priceValue * uint256(_pythConfBps) / BPS_DIVISOR;
+        } else if (_pythConfBps < 0) {
+            adjustedPrice = priceValue * BPS_DIVISOR / uint256(-_pythConfBps);
+        }
+
+        PriceInfo memory price = PriceInfo({ price: adjustedPrice, neutralPrice: priceValue, timestamp: ts });
         return price;
     }
 

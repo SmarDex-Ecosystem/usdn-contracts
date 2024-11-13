@@ -796,8 +796,8 @@ library UsdnProtocolActionsLongLibrary {
         uint256 assetToTransfer;
         if (data.positionValue > 0) {
             assetToTransfer = uint256(data.positionValue);
-            // normally, the position value should be smaller than `long.closeBoundedPositionValue` (due to the position
-            // fee)
+            // normally, the position value should be smaller than `long.closeBoundedPositionValue`
+            // (due to the position fee)
             // we can send the difference (any remaining collateral) to the vault
             // if the price increased since the initiation, it's possible that the position value is higher than the
             // `long.closeBoundedPositionValue`. In that case, we need to take the missing assets from the vault
@@ -836,6 +836,8 @@ library UsdnProtocolActionsLongLibrary {
                     }
                 }
             }
+        } else if (data.positionValue < 0) {
+            s._balanceVault += long.closeBoundedPositionValue;
         }
         // in case the position value is zero or negative, we don't transfer any asset to the user
 

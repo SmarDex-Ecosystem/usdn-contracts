@@ -855,6 +855,25 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         assertEq(address(this).balance, balanceContractBefore, "contract balance after refund");
     }
 
+    function test_notLiquidable_negPositionValue() public {
+        bytes memory priceData = abi.encode(params.initialPrice);
+
+        protocol.initiateClosePosition(
+            posId,
+            POSITION_AMOUNT,
+            DISABLE_MIN_PRICE,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA,
+            ""
+        );
+        _waitDelay();
+
+        protocol.validateClosePosition{ value: 1 ether }(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
+    }
+
     /// @dev Allow refund tests
     receive() external payable {
         // test reentrancy
