@@ -22,8 +22,8 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
     uint256 internal _timeElapsedLimit = 1 hours;
     // if true, then the middleware requires a payment of 1 wei for any action
     bool internal _requireValidationCost = false;
-    // confidence of pyth price to adjust `PriceInfo.price`
-    int256 internal _pythConfBps = 0;
+    // confidence applied to the price to adjust `PriceInfo.price`
+    int256 internal _priceConfBps = 0;
 
     bytes32 public lastActionId;
 
@@ -64,10 +64,10 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
         lastActionId = actionId;
 
         uint256 adjustedPrice = priceValue;
-        if (_pythConfBps > 0) {
-            adjustedPrice += priceValue * uint256(_pythConfBps) / BPS_DIVISOR;
-        } else if (_pythConfBps < 0) {
-            adjustedPrice -= priceValue * uint256(-_pythConfBps) / BPS_DIVISOR;
+        if (_priceConfBps > 0) {
+            adjustedPrice += priceValue * uint256(_priceConfBps) / BPS_DIVISOR;
+        } else if (_priceConfBps < 0) {
+            adjustedPrice -= priceValue * uint256(-_priceConfBps) / BPS_DIVISOR;
         }
 
         PriceInfo memory price = PriceInfo({ price: adjustedPrice, neutralPrice: priceValue, timestamp: ts });
@@ -123,8 +123,8 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
         _requireValidationCost = req;
     }
 
-    function setPythConfBps(int256 confBps) external {
-        _pythConfBps = confBps;
+    function setPriceConfBps(int256 confBps) external {
+        _priceConfBps = confBps;
     }
 
     function withdrawEther(address to) external {

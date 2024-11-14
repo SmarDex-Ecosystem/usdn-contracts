@@ -887,8 +887,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         uint256 vaultBalanceBefore = protocol.getBalanceVault();
 
-        // we set the Pyth confidence interval to -30% to make the position value negative
-        oracleMiddleware.setPythConfBps(-3000);
+        // we set the price confidence interval to -30% to make the position value negative
+        oracleMiddleware.setPriceConfBps(-3000);
 
         vm.recordLogs();
         protocol.validateClosePosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
