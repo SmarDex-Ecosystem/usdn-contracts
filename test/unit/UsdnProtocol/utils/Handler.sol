@@ -8,6 +8,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
+import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsLongLibrary.sol";
@@ -23,7 +24,6 @@ import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddlewa
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
-import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -33,7 +33,7 @@ import { SignedMath } from "../../../../src/libraries/SignedMath.sol";
  * @title UsdnProtocolHandler
  * @dev Wrapper to aid in testing the protocol
  */
-contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
+contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for int256;
@@ -92,7 +92,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     function mockLiquidate(bytes calldata currentPriceData)
         external
         payable
-        returns (Types.LiqTickInfo[] memory liquidatedTicks_)
+        returns (LiqTickInfo[] memory liquidatedTicks_)
     {
         Storage storage s = Utils._getMainStorage();
 
@@ -224,7 +224,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_initiateClosePosition(
-        Types.InitiateClosePositionParams memory params,
+        InitiateClosePositionParams memory params,
         bytes calldata currentPriceData,
         bytes calldata delegationSignature
     ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_) {
@@ -620,7 +620,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
             liqMultiplierAccumulator: liqMultiplierAccumulator
         });
 
-        Types.RebalancerPositionData memory position =
+        RebalancerPositionData memory position =
             Long._calcRebalancerPositionTick(neutralPrice, positionAmount, rebalancerMaxLeverage, cache);
 
         return (position.tick, position.totalExpo, position.liquidationPenalty);
@@ -659,7 +659,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 longBalance,
         uint256 vaultBalance,
         int256 remainingCollateral
-    ) external returns (uint256 longBalance_, uint256 vaultBalance_, Types.RebalancerAction rebalancerAction_) {
+    ) external returns (uint256 longBalance_, uint256 vaultBalance_, RebalancerAction rebalancerAction_) {
         return Long._triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
     }
 
@@ -702,10 +702,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_sendRewardsToLiquidator(
-        Types.LiqTickInfo[] calldata liquidatedTicks,
+        LiqTickInfo[] calldata liquidatedTicks,
         uint256 currentPrice,
         bool rebased,
-        Types.RebalancerAction rebalancerAction,
+        RebalancerAction rebalancerAction,
         ProtocolAction action,
         bytes memory rebaseCallbackResult,
         bytes memory priceData
@@ -733,7 +733,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         return Vault._prepareWithdrawalData(validator, usdnShares, amountOutMin, currentPriceData);
     }
 
-    function i_prepareClosePositionData(Types.PrepareInitiateClosePositionParams calldata params)
+    function i_prepareClosePositionData(PrepareInitiateClosePositionParams calldata params)
         external
         returns (ClosePositionData memory data_, bool liquidated_)
     {
@@ -747,10 +747,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         return ActionsLong._prepareValidateOpenPositionData(pending, priceData);
     }
 
-    function i_checkInitiateClosePosition(
-        Types.Position memory pos,
-        Types.PrepareInitiateClosePositionParams calldata params
-    ) external {
+    function i_checkInitiateClosePosition(Position memory pos, PrepareInitiateClosePositionParams calldata params)
+        external
+    {
         ActionsUtils._checkInitiateClosePosition(pos, params);
     }
 
@@ -775,7 +774,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         external
         returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_)
     {
-        Types.Storage storage s = Utils._getMainStorage();
+        Storage storage s = Utils._getMainStorage();
 
         s._totalExpo = fundingStorage.totalExpo;
         s._balanceVault = fundingStorage.balanceVault;
@@ -826,15 +825,14 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         return Core._calcMaxLongBalance(totalExpo);
     }
 
-    function i_verifyInitiateCloseDelegation(
-        Types.PrepareInitiateClosePositionParams calldata params,
-        address positionOwner
-    ) external {
+    function i_verifyInitiateCloseDelegation(PrepareInitiateClosePositionParams calldata params, address positionOwner)
+        external
+    {
         ActionsUtils._verifyInitiateCloseDelegation(params, positionOwner);
     }
 
     function i_verifyTransferPositionOwnershipDelegation(
-        Types.PositionId calldata posId,
+        PositionId calldata posId,
         address positionOwner,
         address newPositionOwner,
         bytes calldata delegationSignature,
@@ -846,7 +844,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_setUsdnRebaseThreshold(uint128 threshold) external {
-        Types.Storage storage s = Utils._getMainStorage();
+        Storage storage s = Utils._getMainStorage();
 
         s._usdnRebaseThreshold = threshold;
     }

@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
-
 /**
  * @title IUsdnProtocolVault
  * @notice Interface for the vault layer of the USDN protocol
  */
-interface IUsdnProtocolVault is IUsdnProtocolTypes {
+interface IUsdnProtocolVault {
     /**
      * @notice Get the predicted value of the USDN token price for the given asset price and timestamp
      * @dev The effect of the funding and any profit or loss of the long positions since the last contract state
