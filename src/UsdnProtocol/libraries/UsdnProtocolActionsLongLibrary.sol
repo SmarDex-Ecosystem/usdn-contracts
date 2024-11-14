@@ -796,24 +796,24 @@ library UsdnProtocolActionsLongLibrary {
         uint256 assetToTransfer;
         if (data.positionValue > 0) {
             assetToTransfer = uint256(data.positionValue);
-            // normally, the position value should be smaller than `long.closeBoundedPositionValue` (due to the position
-            // fee)
+            // normally, the position value should be smaller than `long.closeBoundedPositionValue`
+            // (due to the position fee)
             // we can send the difference (any remaining collateral) to the vault
             // if the price increased since the initiation, it's possible that the position value is higher than the
             // `long.closeBoundedPositionValue`. In that case, we need to take the missing assets from the vault
             if (assetToTransfer < long.closeBoundedPositionValue) {
                 uint256 remainingCollateral;
                 unchecked {
-                    // since assetToTransfer is strictly smaller than closeBoundedPositionValue, this operation can't
-                    // underflow
+                    // since assetToTransfer is strictly smaller than closeBoundedPositionValue,
+                    // this operation can't underflow
                     remainingCollateral = long.closeBoundedPositionValue - assetToTransfer;
                 }
                 s._balanceVault += remainingCollateral;
             } else if (assetToTransfer > long.closeBoundedPositionValue) {
                 uint256 missingValue;
                 unchecked {
-                    // since assetToTransfer is strictly larger than closeBoundedPositionValue, this operation can't
-                    // underflow
+                    // since assetToTransfer is strictly larger than closeBoundedPositionValue,
+                    // this operation can't underflow
                     missingValue = assetToTransfer - long.closeBoundedPositionValue;
                 }
                 uint256 balanceVault = s._balanceVault;
@@ -821,12 +821,12 @@ library UsdnProtocolActionsLongLibrary {
                 if (missingValue > balanceVault) {
                     s._balanceVault = 0;
                     unchecked {
-                        // since `missingValue` is strictly larger than `balanceVault`, their subtraction can't
-                        // underflow
+                        // since `missingValue` is strictly larger than `balanceVault`,
+                        // their subtraction can't underflow
                         // moreover, since (missingValue - balanceVault) is smaller than or equal to `missingValue`,
                         // and since `missingValue` is smaller than or equal to `assetToTransfer`,
-                        // (missingValue - balanceVault) is smaller than or equal to `assetToTransfer`, and their
-                        // subtraction can't underflow
+                        // (missingValue - balanceVault) is smaller than or equal to `assetToTransfer`,
+                        // and their subtraction can't underflow
                         assetToTransfer -= missingValue - balanceVault;
                     }
                 } else {
@@ -836,18 +836,21 @@ library UsdnProtocolActionsLongLibrary {
                     }
                 }
             }
-        }
-        // in case the position value is zero or negative, we don't transfer any asset to the user
 
-        // send the asset to the user
-        if (assetToTransfer > 0) {
-            address(s._asset).safeTransfer(long.to, assetToTransfer);
+            if (assetToTransfer > 0) {
+                address(s._asset).safeTransfer(long.to, assetToTransfer);
+            }
+        } else {
+            // if the position value <= 0, including the fees and the Pyth confidence interval, no assets will be
+            // transferred. However, the `closeBoundedPositionValue` must still be credited to the vault
+
+            s._balanceVault += long.closeBoundedPositionValue;
         }
 
         isValidated_ = true;
 
         emit IUsdnProtocolEvents.ValidatedClosePosition(
-            long.validator, // not necessarily the position owner
+            long.validator,
             long.to,
             Types.PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
             assetToTransfer,
