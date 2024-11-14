@@ -17,7 +17,7 @@ export GET_WSTETH=true
 
 forge script --non-interactive --private-key $deployerPrivateKey -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
 
-DEPLOYMENT_LOG=$(cat "./broadcast/01_DeployProtocol.s.sol/31337/run-latest.json")
+DEPLOYMENT_LOG=$(cat "/usr/app/broadcast/01_DeployProtocol.s.sol/31337/run-latest.json")
 
 USDN_TX_HASH=$(echo "$DEPLOYMENT_LOG" | jq '.transactions[] | select(.contractName == "Usdn" and .transactionType == "CREATE") | .hash')
 USDN_RECEIPT=$(echo "$DEPLOYMENT_LOG" | jq ".receipts[] | select(.transactionHash == $USDN_TX_HASH)")
