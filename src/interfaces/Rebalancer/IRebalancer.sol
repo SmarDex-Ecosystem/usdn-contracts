@@ -206,7 +206,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @param validationDelay The validation delay
      * @param validationDeadline The validation deadline
      * @param actionCooldown The cooldown period duration
-     * @param closeDelay The close delay
+     * @param closeDelay The close delay that will be applied to the next long position opening
      */
     function setTimeLimits(uint64 validationDelay, uint64 validationDeadline, uint64 actionCooldown, uint64 closeDelay)
         external;
