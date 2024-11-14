@@ -69,7 +69,7 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
         vm.prank(USER_1);
         usdn.approve(address(protocol), type(uint256).max);
 
-        uint256 id = vm.snapshot();
+        uint256 id = vm.snapshotState();
 
         vm.startPrank(USER_1);
         protocol.initiateWithdrawal{ value: securityDeposit }(
@@ -88,7 +88,7 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
 
         uint256 user1BalanceOneWithdraw = wstETH.balanceOf(USER_1);
 
-        vm.revertTo(id);
+        vm.revertToState(id);
 
         vm.startPrank(USER_1);
         protocol.initiateWithdrawal{ value: securityDeposit }(

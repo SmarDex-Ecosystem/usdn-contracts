@@ -94,11 +94,11 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
         /* ---------------------------- set up positions ---------------------------- */
 
         _createPosition(200 ether);
-        snapshots.push(vm.snapshot());
+        snapshots.push(vm.snapshotState());
         _createPosition(150 ether);
-        snapshots.push(vm.snapshot());
+        snapshots.push(vm.snapshotState());
         _createPosition(100 ether);
-        snapshots.push(vm.snapshot());
+        snapshots.push(vm.snapshotState());
     }
 
     /**
@@ -137,7 +137,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
 
         for (uint16 ticksToLiquidate = 1; ticksToLiquidate <= 3; ++ticksToLiquidate) {
             // revert to a state where there are `ticksToLiquidate` ticks to liquidate
-            vm.revertTo(snapshotsMem[ticksToLiquidate - 1]);
+            vm.revertToState(snapshotsMem[ticksToLiquidate - 1]);
 
             // disable the rebalancer
             vm.prank(SET_EXTERNAL_MANAGER);
@@ -214,7 +214,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
         uint256 oracleFee = oracleMiddleware.validationCost(data, ProtocolAction.Liquidation);
 
         // take a snapshot to re-do liquidations with different iterations
-        uint256 snapshotId = vm.snapshot();
+        uint256 snapshotId = vm.snapshotState();
         for (uint256 i = 0; i < 2; ++i) {
             uint16 ticksToLiquidate = 3;
 
@@ -238,7 +238,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             assertEq(liquidatedTicks.length, ticksToLiquidate, "We expect 3 positions liquidated");
 
             // cancel the liquidation so it's available again
-            vm.revertTo(snapshotId);
+            vm.revertToState(snapshotId);
         }
 
         // calculate the gas used by the rebalancer trigger
