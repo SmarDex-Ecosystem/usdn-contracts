@@ -15,6 +15,7 @@ import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
+import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolSettersLibrary as Setters } from "./libraries/UsdnProtocolSettersLibrary.sol";
@@ -24,7 +25,8 @@ import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVault
 contract UsdnProtocolFallback is
     IUsdnProtocolFallback,
     PausableUpgradeable,
-    AccessControlDefaultAdminRulesUpgradeable
+    AccessControlDefaultAdminRulesUpgradeable,
+    InitializableReentrancyGuard
 {
     /// @inheritdoc IUsdnProtocolFallback
     function getActionablePendingActions(address currentUser)
@@ -92,7 +94,7 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function refundSecurityDeposit(address payable validator) external whenNotPaused {
+    function refundSecurityDeposit(address payable validator) external whenNotPaused initializedAndNonReentrant {
         uint256 securityDepositValue = Core._removeStalePendingAction(validator);
         if (securityDepositValue > 0) {
             Utils._refundEther(securityDepositValue, validator);
