@@ -7,7 +7,7 @@ import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
- * @custom:feature The `getValidationCost` function of `OracleMiddleware`
+ * @custom:feature The {validationCost} function of `OracleMiddleware`
  */
 contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     bytes[] public data;
@@ -18,7 +18,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `getValidationCost` function
+     * @custom:scenario Call {validationCost} function
      * @custom:when Protocol action is a value that is not supported
      * @custom:then The validation cost is the same as pythOracle
      */
@@ -33,7 +33,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `getValidationCost` function
+     * @custom:scenario Call {validationCost} function
      * @custom:when Data starts with the Pyth magic number
      * @custom:then The validation cost is the same as pythOracle
      */
@@ -44,7 +44,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `getValidationCost` function
+     * @custom:scenario Call {validationCost} function
      * @custom:when Data is empty
      * @custom:then The validation cost is the same as pythOracle
      */
@@ -55,7 +55,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `getValidationCost` function
+     * @custom:scenario Call {validationCost} function
      * @custom:when Data has no Pyth magic number
      * @custom:then The validation cost is 0
      */
