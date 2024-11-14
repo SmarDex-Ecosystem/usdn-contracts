@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
-
 /**
  * @title IUsdnProtocolCore
  * @notice Interface for the core layer of the USDN protocol
  */
-interface IUsdnProtocolCore is IUsdnProtocolTypes {
+interface IUsdnProtocolCore {
     /**
      * @notice Get the predicted value of the funding since the last state update for the given timestamp
      * @dev When multiplied with the long trading exposure, the funding value gives the asset balance that needs to be
