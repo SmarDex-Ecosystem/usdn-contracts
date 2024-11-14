@@ -22,9 +22,9 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtils
 import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVaultLibrary.sol";
 
 contract UsdnProtocolFallback is
-    PausableUpgradeable,
     IUsdnProtocolErrors,
     IUsdnProtocolFallback,
+    PausableUpgradeable,
     AccessControlDefaultAdminRulesUpgradeable
 {
     /// @inheritdoc IUsdnProtocolFallback
