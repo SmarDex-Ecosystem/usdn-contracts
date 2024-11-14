@@ -34,7 +34,7 @@ contract TestInitializableReentrancyGuardInitializedAndNonReentrant is
      * @custom:then The call reverts with a InitializableReentrancyGuardReentrantCall error
      */
     function test_RevertWhen_reentrant() public {
-        uint256 status = handler.i_getInitializableReentrancyGuardStorage()._status;
+        uint256 status = handler.i_getTransientReentrancyStatus();
         if (_reenter) {
             assertEq(status, 2, "Status should be ENTERED");
 

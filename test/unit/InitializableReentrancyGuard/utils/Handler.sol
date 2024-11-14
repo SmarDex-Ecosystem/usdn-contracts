@@ -27,4 +27,8 @@ contract InitializableReentrancyGuardHandler is InitializableReentrancyGuard {
     {
         return _getInitializableReentrancyGuardStorage();
     }
+
+    function i_getTransientReentrancyStatus() external view returns (uint256) {
+        return _getTransientReentrancyStatus();
+    }
 }

@@ -14,6 +14,8 @@ abstract contract InitializableReentrancyGuard {
 
     /// @notice The uninitialized state of the contract
     uint256 private constant UNINITIALIZED = 0;
+    /// @notice The initialized state of the contract
+    uint256 private constant INITIALIZED = 1;
     /// @notice The state of the contract before entering a function
     uint256 private constant NOT_ENTERED = 1;
     /// @notice The state of the contract after entering a function
@@ -47,6 +49,26 @@ abstract contract InitializableReentrancyGuard {
     {
         assembly {
             s_.slot := STORAGE_STATUS
+        }
+    }
+
+    /**
+     * @notice Get the transient reentrancy status
+     * @return status_ The status used to check reentrancy
+     */
+    function _getTransientReentrancyStatus() internal view returns (uint256 status_) {
+        assembly {
+            status_ := tload(STORAGE_STATUS)
+        }
+    }
+
+    /**
+     * @notice Set the transient reentrancy status
+     * @param  status The transient status to set
+     */
+    function _setTransientReentrancyStatus(uint256 status) internal {
+        assembly {
+            tstore(STORAGE_STATUS, status)
         }
     }
 
@@ -87,7 +109,7 @@ abstract contract InitializableReentrancyGuard {
 
         InitializableReentrancyGuardStorage storage s = _getInitializableReentrancyGuardStorage();
 
-        s._status = NOT_ENTERED; // mark initialized
+        s._status = INITIALIZED;
     }
 
     /// @notice Reverts if the contract is not initialized
@@ -110,22 +132,19 @@ abstract contract InitializableReentrancyGuard {
 
     /// @notice Reverts if `_status` is ENTERED``, or set `_status` to `ENTERED`
     function _nonReentrantBefore() private {
-        InitializableReentrancyGuardStorage storage s = _getInitializableReentrancyGuardStorage();
+        uint256 status = _getTransientReentrancyStatus();
 
         // on the first call to `nonReentrant`, `_status` will be `NOT_ENTERED`
-        if (s._status == ENTERED) {
+        if (status == ENTERED) {
             revert InitializableReentrancyGuardReentrantCall();
         }
 
         // any calls to `nonReentrant` after this point will fail
-        s._status = ENTERED;
+        _setTransientReentrancyStatus(ENTERED);
     }
 
     /// @notice Set `_status` to `NOT_ENTERED`
     function _nonReentrantAfter() private {
-        InitializableReentrancyGuardStorage storage s = _getInitializableReentrancyGuardStorage();
-
-        // by storing the original value once again, a refund is triggered (see https://eips.ethereum.org/EIPS/eip-2200)
-        s._status = NOT_ENTERED;
+        _setTransientReentrancyStatus(NOT_ENTERED);
     }
 }
