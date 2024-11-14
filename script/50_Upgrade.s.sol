@@ -5,10 +5,12 @@ import { Script } from "forge-std/Script.sol";
 
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import { Utils } from "./Utils.s.sol";
+import { Utils } from "./utils/Utils.s.sol";
 
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 contract Upgrade is Script {
@@ -22,7 +24,7 @@ contract Upgrade is Script {
 
         // Make sure the address used has the permission to upgrade the protocol
         require(
-            _usdnProtocol.hasRole(_usdnProtocol.PROXY_UPGRADE_ROLE(), _deployerAddress),
+            _usdnProtocol.hasRole(Constants.PROXY_UPGRADE_ROLE, _deployerAddress),
             "DEPLOYER_ADDRESS does not have the permission to upgrade the protocol"
         );
 
@@ -48,7 +50,8 @@ contract Upgrade is Script {
             // call the initialize function of the new implementation to upgrade the fallback contract
             // if this function does not exist, you will need to implement it
             // IMPORTANT: It is mandatory to add a call here, otherwise the transaction will revert
-            // the Solady implementation does not allow us to upgrade without calling a function afterwards
+            // the Solady implementation does not allow us to upgrade without calling a function afterwards.
+            // Consider also to upgrade the EIP712 version if the new implementation has an impact on delegation
             abi.encodeWithSignature("initializeStorageV2(address)", (address(protocolFallback))),
             opts
         );

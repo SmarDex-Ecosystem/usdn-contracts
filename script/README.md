@@ -1,16 +1,48 @@
-# Deployments
+# Scripts
 
-## Set parameters
+## Deploy protocol
+
+### Production mode:
+
+For a mainnet deployment, you have to use the shell script. It will prompt you to enter the required environment variables :
+- the rpc url
+- the initial long amount
+- the get wstETH flag
+- the private key of the deployer (or public key if you use a ledger/trezor)
+
+```shell
+deployMainnet.sh
+```
+
+The script can be run with the following command with `-t` or `--test` flag to deploy with default values. (rpc url: localhost:8545, initial long amount: 100 ethers, get wstETH: true, deployer : 29th account of anvil)
+
+### Fork mode:
+
+The deployment script for the fork mode does not require any input:
+```shell
+deployFork.sh
+```
+
+### Standalone mode:
+
+You can run the forge script directly with the following command:
+```shell
+forge script script/01_DeployProtocol.s.sol:DeployProtocol -f YOUR_RPC_URL --private-key YOUR_PRIVATE_KEY --broadcast
+```
+
+Required environment variables: `INIT_LONG_AMOUNT` and `DEPLOYER_ADDRESS`.
+
+If running on mainnet, remenber to deploy the USDN token first with the `00_DeployUSDN.s.sol` script and set the `USDN_ADDRESS` environment variable. 
+
+### Environment variables:
 
 Environment variables can be used to control the script execution:
 
-#### Required
-- `INIT_DEPOSIT_AMOUNT`: amount to use for the `initialize` function call
 - `INIT_LONG_AMOUNT`: amount to use for the `initialize` function call
-
-#### Optional
-- `DEPLOYER_ADDRESS`: required only for fork deployment, the address of the deployer
-- `FEE_COLLECTOR`: set to `DEPLOYER_ADDRESS` if not set, the receiver of all protocol fees
+- `DEPLOYER_ADDRESS`: the address of the deployer
+- `USDN_ADDRESS`: required if running `01_Deploy.s.sol` in a production environment (not fork)
+- `GET_WSTETH`: whether to get wstETH by sending ether to the wstETH contract or not. Only applicable if `WSTETH_ADDRESS` is given.
+- `FEE_COLLECTOR`: the receiver of all protocol fees (set to `DEPLOYER_ADDRESS` if not set in the environment)
 - `SDEX_ADDRESS`: if provided, skips deployment of the SDEX token
 - `WSTETH_ADDRESS`: if provided, skips deployment of the wstETH token
 - `MIDDLEWARE_ADDRESS`: if provided, skips deployment of the oracle middleware
@@ -22,34 +54,16 @@ Environment variables can be used to control the script execution:
 - `LIQUIDATION_REWARDS_MANAGER_ADDRESS`: if provided, skips deployment of the liquidation rewards manager
 - `REBALANCER_ADDRESS`: if provided, skips deployment of the rebalancer
 - `CHAINLINK_GAS_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
-- `USDN_ADDRESS`: required if running `01_Deploy.s.sol` in a production environment (not fork)
-- `GET_WSTETH`: whether to get wstETH by sending ether to the wstETH contract or not. Only applicable if `WSTETH_ADDRESS` is given.
 
-Example using the real wstETH and depositing 10 ETH for both vault side and long side for mainnet deployment (with liquidation
-at 1 USD so a leverage close to 1x):
+
+Example using the real wstETH and depositing 10 ETH for both vault side and long side for mainnet deployment:
 
 ```
-export INIT_DEPOSIT_AMOUNT=10000000000000000000
 export INIT_LONG_AMOUNT=10000000000000000000
+export DEPLOYER_ADDRESS=0x1234567890123456789012345678901234567890
 export GET_WSTETH=true
 ```
 
-## Deploy protocol
-
-Just run the bash script corresponding to the desired deployment (mainnet or fork).
-
-You will be prompted to enter the `RPC_URL` of the network you want to deploy to (mainnet and sepolia). If you are deploying with a Ledger, you will also be prompted for the deployer address. And without a Ledger, you will be prompted for the deployer private key.  
-The deployment script for the fork mode does not require any input.
-
-Only two env variables are required : `INIT_DEPOSIT_AMOUNT` and `INIT_LONG_AMOUNT`.
-
-If `GET_WSTETH=true`, then the script will wrap some ether before initializing the
-contract so that there is enough balance.
-
-```
-./script/deployMainnet.sh
-./script/deployFork.sh
-```
 
 ## Upgrade protocol
 
@@ -67,6 +81,22 @@ Before you launch the upgrade script, there are a few things you need to do:
   * If needed, comment the line that re-deploy the fallback contract
 
 If you are ready to upgrade the protocol, then you can launch the bash script `script/upgrade.sh`. It will prompt you to enter a RPC url, the address of the deployed USDN protocol, and a private key. The address derived from the private key must have the `PROXY_UPGRADE_ROLE` role.
+
+## Transfer ownership
+
+This bash script will prompt you to enter an RPC url, the protocol address, the new owner address and a private key. The address derived from the private key must have the `DEFAULT_ADMIN_ROLE` role.
+
+```bash
+./script/transferProtocolOwnership.sh
+```
+
+If you want to run the script with foundry directly, in a standalone mode, you need to make sure that required environment variable is set:
+* `NEW_OWNER_ADDRESS`: the address of the new owner
+* `USDN_PROTOCOL_ADDRESS`: the address of the deployed USDN protocol
+
+```solidity
+forge script script/03_TransferProtocolOwnership.s.sol -f YOUR_RPC_URL --private-key YOUR_PRIVATE_KEY --broadcast
+```
 
 ## Anvil fork configuration
 
@@ -89,7 +119,7 @@ The script first requires that the ABIs have been exported with `npm run exportA
 Then, it can be used like so:
 
 ```
-npx tsx script/logsAnalysis.ts -r https://fork-rpc-url.com/ --protocol 0x24EcC5E6EaA700368B8FAC259d3fBD045f695A08 --usdn 0x0D92d35D311E54aB8EEA0394d7E773Fc5144491a --middleware 0x4278C5d322aB92F1D876Dd7Bd9b44d1748b88af2
+npx tsx script/utils/logsAnalysis.ts -r https://fork-rpc-url.com/ --protocol 0x24EcC5E6EaA700368B8FAC259d3fBD045f695A08 --usdn 0x0D92d35D311E54aB8EEA0394d7E773Fc5144491a --middleware 0x4278C5d322aB92F1D876Dd7Bd9b44d1748b88af2
 ```
 
 The parameters are the RPC URL and the deployed addresses of the 3 main contracts.
@@ -102,5 +132,5 @@ We can specify a common base contract to filter wanted duplications with the `-s
 It can be used like so:
 
 ```
-npx tsx script/functionClashes.ts UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
+npx tsx script/utils/functionClashes.ts UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
 ```

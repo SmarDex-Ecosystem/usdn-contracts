@@ -19,4 +19,12 @@ contract InitializableReentrancyGuardHandler is InitializableReentrancyGuard {
     function i_checkUninitialized() external view {
         return _checkUninitialized();
     }
+
+    function i_getInitializableReentrancyGuardStorage()
+        external
+        pure
+        returns (InitializableReentrancyGuardStorage memory)
+    {
+        return _getInitializableReentrancyGuardStorage();
+    }
 }

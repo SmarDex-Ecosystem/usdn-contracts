@@ -191,14 +191,15 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         _waitDelay();
 
-        expected.expectedLiqPrice = protocol.getEffectivePriceForTick(
-            protocol.i_calcTickWithoutPenalty(posId.tick),
-            uint256(newPrice),
-            protocol.longTradingExpoWithFunding(
-                newPrice, tempPos.timestamp + uint128(oracleMiddleware.getValidationDelay())
-            ),
-            protocol.getLiqMultiplierAccumulator()
-        );
+        {
+            (PendingAction memory pending,) = protocol.i_getPendingActionOrRevert(validator);
+            LongPendingAction memory longPendingAction = protocol.i_toLongPendingAction(pending);
+
+            expected.expectedLiqPrice = protocol.i_getEffectivePriceForTick(
+                protocol.i_calcTickWithoutPenalty(longPendingAction.tick), longPendingAction.liqMultiplier
+            );
+        }
+
         expected.expectedPosTotalExpo =
             protocol.i_calcPositionTotalExpo(tempPos.amount, newPrice, expected.expectedLiqPrice);
         expected.expectedPosValue =

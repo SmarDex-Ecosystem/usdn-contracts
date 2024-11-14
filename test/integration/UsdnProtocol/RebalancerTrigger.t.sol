@@ -22,13 +22,22 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
     int24 public tickSpacing;
 
     function setUp() public {
-        (tickSpacing, amountInRebalancer, posToLiquidate, tickToLiquidateData) = _setUpImbalanced(10 ether);
+        (tickSpacing, amountInRebalancer, posToLiquidate, tickToLiquidateData) =
+            _setUpImbalanced(payable(address(this)), 10 ether);
         uint256 maxLeverage = protocol.getMaxLeverage();
         vm.startPrank(DEPLOYER);
         rebalancer.setPositionMaxLeverage(maxLeverage);
-        // disable liquidation rewards
-        liquidationRewardsManager.setRewardsParameters(0, 0, 0, 0, 0, 0, 0, 0, 0.1 ether);
         vm.stopPrank();
+    }
+
+    struct RebalancerTestData {
+        uint256 ethPrice;
+        uint128 remainingCollateral;
+        uint128 bonus;
+        uint256 totalExpo;
+        uint256 vaultAssetAvailable;
+        uint256 liqRewards;
+        HugeUint.Uint512 liqAcc;
     }
 
     /**
@@ -40,28 +49,32 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
      * @custom:and A rebalancer position is created
      */
     function test_rebalancerTrigger() public {
+        RebalancerTestData memory data;
         skip(5 minutes);
 
         uint128 wstEthPrice = 1490 ether;
-        {
-            uint128 ethPrice = uint128(wstETH.getWstETHByStETH(wstEthPrice)) / 1e10;
-            mockPyth.setPrice(int64(uint64(ethPrice)));
-            mockPyth.setLastPublishTime(block.timestamp);
-            wstEthPrice = uint128(wstETH.getStETHByWstETH(ethPrice * 1e10));
-        }
+
+        data.ethPrice = uint128(wstETH.getWstETHByStETH(wstEthPrice)) / 1e10;
+        mockPyth.setPrice(int64(uint64(data.ethPrice)));
+        mockPyth.setLastPublishTime(block.timestamp);
+        wstEthPrice = uint128(wstETH.getStETHByWstETH(data.ethPrice * 1e10));
 
         int256 positionValue = protocol.getPositionValue(posToLiquidate, wstEthPrice, uint40(block.timestamp));
         assertGt(positionValue, 0, "position value should be positive");
-        uint128 remainingCollateral = uint128(uint256(positionValue));
 
-        uint128 bonus = uint128(uint256(remainingCollateral) * protocol.getRebalancerBonusBps() / BPS_DIVISOR);
-        uint256 totalExpo = protocol.getTotalExpo() - tickToLiquidateData.totalExpo;
-        uint256 vaultAssetAvailable =
-            uint256(protocol.vaultAssetAvailableWithFunding(wstEthPrice, uint40(block.timestamp))) + remainingCollateral;
+        data.remainingCollateral = uint128(uint256(positionValue));
+        data.bonus = uint128(uint256(data.remainingCollateral) * protocol.getRebalancerBonusBps() / BPS_DIVISOR);
+
+        data.totalExpo = protocol.getTotalExpo() - tickToLiquidateData.totalExpo;
+
+        data.vaultAssetAvailable = uint256(
+            protocol.vaultAssetAvailableWithFunding(wstEthPrice, uint40(block.timestamp))
+        ) + data.remainingCollateral;
         uint256 longAssetAvailable =
-            protocol.longAssetAvailableWithFunding(wstEthPrice, uint40(block.timestamp)) - remainingCollateral;
-        uint256 tradingExpoToFill = vaultAssetAvailable * BPS_DIVISOR
-            / uint256(int256(BPS_DIVISOR) + protocol.getLongImbalanceTargetBps()) - (totalExpo - longAssetAvailable);
+            protocol.longAssetAvailableWithFunding(wstEthPrice, uint40(block.timestamp)) - data.remainingCollateral;
+
+        uint256 tradingExpoToFill = data.vaultAssetAvailable * BPS_DIVISOR
+            / uint256(int256(BPS_DIVISOR) + protocol.getLongImbalanceTargetBps()) - (data.totalExpo - longAssetAvailable);
 
         // calculate the state of the liq accumulator after the liquidations
         HugeUint.Uint512 memory expectedAccumulator = HugeUint.sub(
@@ -73,9 +86,9 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
             )
         );
 
-        int256 imbalance =
-            protocol.i_calcImbalanceCloseBps(int256(vaultAssetAvailable), int256(longAssetAvailable), totalExpo);
-        // Sanity check
+        int256 imbalance = protocol.i_calcImbalanceCloseBps(
+            int256(data.vaultAssetAvailable), int256(longAssetAvailable), data.totalExpo
+        );
         assertGt(
             imbalance,
             protocol.getCloseExpoImbalanceLimitBps(),
@@ -83,9 +96,9 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         );
 
         (int24 expectedTick,) = protocol.i_getTickFromDesiredLiqPrice(
-            protocol.i_calcLiqPriceFromTradingExpo(wstEthPrice, amountInRebalancer + bonus, tradingExpoToFill),
+            protocol.i_calcLiqPriceFromTradingExpo(wstEthPrice, amountInRebalancer + data.bonus, tradingExpoToFill),
             wstEthPrice,
-            totalExpo - longAssetAvailable,
+            data.totalExpo - longAssetAvailable,
             expectedAccumulator,
             tickSpacing,
             tickToLiquidateData.liquidationPenalty
@@ -93,11 +106,15 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
             protocol.i_calcTickWithoutPenalty(expectedTick, protocol.getLiquidationPenalty()),
             wstEthPrice,
-            totalExpo - longAssetAvailable,
+            data.totalExpo - longAssetAvailable,
             expectedAccumulator
         );
+
         uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
-        _expectEmits(wstEthPrice, amountInRebalancer, bonus, liqPriceWithoutPenalty, expectedTick, 1);
+
+        data.liqRewards = _calcRewards(int256(uint256(data.remainingCollateral)), wstEthPrice);
+
+        _expectEmits(wstEthPrice, amountInRebalancer, data.bonus, liqPriceWithoutPenalty, expectedTick, 1);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
 
         imbalance = protocol.i_calcImbalanceCloseBps(
@@ -117,12 +134,12 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         );
         expectedAccumulator = expectedAccumulator.add(HugeUint.wrap(unadjustedTickPrice * pos.totalExpo));
 
-        HugeUint.Uint512 memory liqAcc = protocol.getLiqMultiplierAccumulator();
-        assertEq(liqAcc.hi, 0, "The hi attribute should be 0");
-        assertEq(liqAcc.lo, expectedAccumulator.lo, "The lo attribute should be the expected value");
+        data.liqAcc = protocol.getLiqMultiplierAccumulator();
+        assertEq(data.liqAcc.hi, 0, "The hi attribute should be 0");
+        assertEq(data.liqAcc.lo, expectedAccumulator.lo, "The lo attribute should be the expected value");
 
-        assertEq(protocol.getBalanceLong(), longAssetAvailable + amountInRebalancer + bonus, "balance long");
-        assertEq(protocol.getBalanceVault(), vaultAssetAvailable - bonus, "balance vault");
+        assertEq(protocol.getBalanceLong(), longAssetAvailable + amountInRebalancer + data.bonus, "balance long");
+        assertEq(protocol.getBalanceVault(), data.vaultAssetAvailable - data.bonus - data.liqRewards, "balance vault");
     }
 
     /**
@@ -202,6 +219,37 @@ contract TestUsdnProtocolRebalancerTrigger is UsdnProtocolBaseIntegrationFixture
         );
         vm.expectEmit(address(rebalancer));
         emit PositionVersionUpdated(newPositionVersion, defaultAccMultiplier, amount, expectedPositionId);
+    }
+
+    /**
+     * @dev Calculate the rewards for the liquidation
+     * @param remainingCollateral The remaining collateral after the liquidation
+     * @param wstEthPrice The price of the asset
+     */
+    function _calcRewards(int256 remainingCollateral, uint128 wstEthPrice) internal view returns (uint256 rewards_) {
+        uint256 tradingExpoWithFunding = protocol.longTradingExpoWithFunding(wstEthPrice, uint40(block.timestamp));
+        uint128 tickPrice = protocol.getEffectivePriceForTick(
+            posToLiquidate.tick, wstEthPrice, tradingExpoWithFunding, protocol.getLiqMultiplierAccumulator()
+        );
+        uint128 tickPriceWithoutPenalty = protocol.getEffectivePriceForTick(
+            protocol.i_calcTickWithoutPenalty(posToLiquidate.tick, tickToLiquidateData.liquidationPenalty),
+            wstEthPrice,
+            tradingExpoWithFunding,
+            protocol.getLiqMultiplierAccumulator()
+        );
+
+        LiqTickInfo[] memory liquidatedTicks = new LiqTickInfo[](1);
+        liquidatedTicks[0] = LiqTickInfo({
+            totalPositions: tickToLiquidateData.totalPos,
+            totalExpo: tickToLiquidateData.totalExpo,
+            remainingCollateral: int256(uint256(remainingCollateral)),
+            tickPrice: tickPrice,
+            priceWithoutPenalty: tickPriceWithoutPenalty
+        });
+
+        rewards_ = liquidationRewardsManager.getLiquidationRewards(
+            liquidatedTicks, wstEthPrice, false, RebalancerAction.Opened, ProtocolAction.None, "", ""
+        );
     }
 
     receive() external payable { }

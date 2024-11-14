@@ -1,16 +1,20 @@
 {
   "name": "@smardex/usdn-contracts",
-  "version": "0.20.0",
+  "version": "0.22.0",
   "description": "Contracts for the USDN token and derivatives protocol",
   "repository": "git@github.com:SmarDex-Ecosystem/usdn-contracts.git",
   "author": "RA2 Tech",
   "license": "BUSL-1.1",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dockerize": true,
   "scripts": {
     "clean": "rm -rf dist && rm -rf node_modules && rm -rf .coverage && rm -rf out && rm -rf dependencies && forge clean && npm run installDeps",
     "cov:html": "npm run coverage && genhtml --ignore-errors corrupt,inconsistent -o .coverage lcov.info && open .coverage/index.html",
     "cov": "forge build --skip .sol && forge coverage --no-match-coverage \"(script|mock|test)\" --no-match-test \"(FFI|Fork|Fuzz|invariant)\" --no-match-contract Fork -vvv --offline",
     "coverage": "npm run cov -- --report lcov",
-    "exportAbi": "forge build --skip \"test/**/*\" --skip script && tsx ./script/exportAbi.ts -g '{interfaces/**/*.sol,**/*[mM]ock*.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
+    "exportAbi": "forge build --skip \"test/**/*\" --skip script && tsx ./script/utils/exportAbi.ts -g '{interfaces/**/*.sol,**/*[mM]ock*.sol}' && tsx ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
     "format:js": "npx @biomejs/biome format . --write",
     "format": "forge fmt",
     "installDeps": "npm i && forge soldeer install",
@@ -42,7 +46,6 @@
     "luxon": "^3.4.4",
     "picocolors": "^1.0.1",
     "solhint": "^5.0.2",
-    "tsup": "^8.2.3",
     "tsx": "^4.19.1",
     "viem": "^2.18.5"
   }

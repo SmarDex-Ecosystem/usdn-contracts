@@ -191,8 +191,7 @@ interface IUsdnProtocolTypes {
      * @param liqMultiplier A fixed precision representation of the liquidation multiplier (with
      * `LIQUIDATION_MULTIPLIER_DECIMALS` decimals) used to calculate the effective price for a given tick number
      * @param closeBoundedPositionValue The amount that was removed from the long balance on `initiateClosePosition`
-     * (only
-     * used when closing a position)
+     * (only used when closing a position)
      */
     struct LongPendingAction {
         ProtocolAction action; // 1 byte
@@ -333,27 +332,31 @@ interface IUsdnProtocolTypes {
 
     /**
      * @notice Parameters for the internal `_prepareClosePositionData` function
-     * @param owner The owner of the position
      * @param to The address that will receive the assets
      * @param validator The address of the pending action validator
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param userMinPrice The minimum price at which the position can be closed
+     * @param deadline The deadline until the position can be closed
      * @param currentPriceData The current price data
+     * @param delegationSignature An EIP712 signature that proves the caller is authorized by the owner of the position
+     * to close it on their behalf
+     * @param domainSeparatorV4 The domain separator v4
      */
     struct PrepareInitiateClosePositionParams {
-        address owner;
         address to;
         address validator;
         PositionId posId;
         uint128 amountToClose;
         uint256 userMinPrice;
+        uint256 deadline;
         bytes currentPriceData;
+        bytes delegationSignature;
+        bytes32 domainSeparatorV4;
     }
 
     /**
      * @notice Parameters for the internal `_initiateClosePosition` function
-     * @param owner The owner of the position
      * @param to The address that will receive the closed amount
      * @param validator The address that will validate the close position
      * @param posId The position id
@@ -361,9 +364,9 @@ interface IUsdnProtocolTypes {
      * @param userMinPrice The minimum price at which the position can be closed
      * @param deadline The deadline of the close position to be initiated
      * @param securityDepositValue The value of the security deposit for the newly created pending action
+     * @param domainSeparatorV4 The domain separator v4 for EIP712 signature
      */
     struct InitiateClosePositionParams {
-        address owner;
         address to;
         address payable validator;
         uint256 deadline;
@@ -371,6 +374,7 @@ interface IUsdnProtocolTypes {
         uint128 amountToClose;
         uint256 userMinPrice;
         uint64 securityDepositValue;
+        bytes32 domainSeparatorV4;
     }
 
     /**
@@ -402,6 +406,8 @@ interface IUsdnProtocolTypes {
      * @param lastPrice The price of the last balances update
      * @param tickHash The tick hash
      * @param pos The position object
+     * @param liqPriceWithoutPenaltyNorFunding The liquidation price without penalty nor funding used to calculate the
+     * user leverage and the new total expo
      * @param liqPriceWithoutPenalty The new liquidation price without penalty
      * @param leverage The new leverage
      * @param oldPosValue The value of the position according to the old entry price and the _lastPrice
@@ -414,6 +420,7 @@ interface IUsdnProtocolTypes {
         uint128 lastPrice;
         bytes32 tickHash;
         Position pos;
+        uint128 liqPriceWithoutPenaltyNorFunding;
         uint128 liqPriceWithoutPenalty;
         uint256 leverage;
         uint256 oldPosValue;
@@ -517,34 +524,13 @@ interface IUsdnProtocolTypes {
     }
 
     /**
-     * @notice Structure to hold the addresses of managers during deployment
-     * @param setExternalManager The manager's address to set the external contracts
-     * @param criticalFunctionsManager The manager's address to perform critical functions
-     * @param setProtocolParamsManager The manager's address to set the protocol parameters
-     * @param setUsdnParamsManager The manager's address to set the USDN parameters
-     * @param setOptionsManager The manager's address to set the protocol options that do not impact the usage of the
-     * protocol
-     * @param proxyUpgradeManager The manager's address to upgrade the protocol implementation
-     * @param pauserManager The manager's address to pause the protocol
-     * @param unpauserManager The manager's address to unpause the protocol
-     */
-    struct Managers {
-        address setExternalManager;
-        address criticalFunctionsManager;
-        address setProtocolParamsManager;
-        address setUsdnParamsManager;
-        address setOptionsManager;
-        address proxyUpgradeManager;
-        address pauserManager;
-        address unpauserManager;
-    }
-
-    /**
+     * @custom:storage-location erc7201:UsdnProtocol.storage.main
      * @notice Structure to hold the state of the protocol
      * @param _tickSpacing The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
      * 100 is equivalent to a ~1.005% increase in liquidation price between ticks
      * @param _asset The asset ERC20 contract
+     * Assets with a blacklist are not supported because the protocol would be DoS if transfers revert
      * @param _assetDecimals The asset decimals
      * @param _priceFeedDecimals The price feed decimals (18)
      * @param _usdn The USDN ERC20 contract
@@ -601,8 +587,6 @@ interface IUsdnProtocolTypes {
      * @param _securityDepositValue The deposit required for a new position
      * @param _targetUsdnPrice The nominal (target) price of USDN (with _priceFeedDecimals)
      * @param _usdnRebaseThreshold The USDN price threshold to trigger a rebase (with _priceFeedDecimals)
-     * @param _usdnRebaseInterval The interval between two automatic rebase checks. Disabled by default
-     * @dev A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
      * @param _minLongPosition The minimum long position size (with `_assetDecimals`)
      * @param _lastFundingPerDay The funding rate calculated at the last update timestamp
      * @param _lastPrice The price of the asset during the last balances update (with price feed decimals)
@@ -614,7 +598,6 @@ interface IUsdnProtocolTypes {
      * @param _pendingActionsQueue The queue of pending actions
      * @param _balanceVault  The balance of deposits (with asset decimals)
      * @param _pendingBalanceVault The unreflected balance change due to pending vault actions (with asset decimals)
-     * @param _lastRebaseCheck The timestamp when the last USDN rebase check was performed
      * @param _EMA The exponential moving average of the funding (0.0003 at initialization)
      * @param _balanceLong The balance of long positions (with asset decimals)
      * @param _totalExpo The total exposure of the long positions (with asset decimals)
@@ -629,6 +612,7 @@ interface IUsdnProtocolTypes {
      * @param _totalLongPositions Cache of the total long positions count
      * @param _tickBitmap The bitmap used to quickly find populated ticks
      * @param _protocolFallbackAddr The address of the fallback contract
+     * @param _nonce The user EIP712 nonce
      */
     struct Storage {
         // immutable
@@ -668,21 +652,19 @@ interface IUsdnProtocolTypes {
         uint64 _securityDepositValue;
         uint128 _targetUsdnPrice;
         uint128 _usdnRebaseThreshold;
-        uint256 _usdnRebaseInterval;
         uint256 _minLongPosition;
-        // State
+        // state
         int256 _lastFundingPerDay;
         uint128 _lastPrice;
         uint128 _lastUpdateTimestamp;
         uint256 _pendingProtocolFee;
-        // Pending actions queue
+        // pending actions queue
         mapping(address => uint256) _pendingActions;
         DoubleEndedQueue.Deque _pendingActionsQueue;
-        // Vault
+        // vault
         uint256 _balanceVault;
         int256 _pendingBalanceVault;
-        uint256 _lastRebaseCheck;
-        // Long positions
+        // long positions
         int256 _EMA;
         uint256 _balanceLong;
         uint256 _totalExpo;
@@ -693,6 +675,9 @@ interface IUsdnProtocolTypes {
         int24 _highestPopulatedTick;
         uint256 _totalLongPositions;
         LibBitmap.Bitmap _tickBitmap;
+        // fallback
         address _protocolFallbackAddr;
+        // EIP712
+        mapping(address => uint256) _nonce;
     }
 }

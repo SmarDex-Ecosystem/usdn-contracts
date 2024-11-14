@@ -49,4 +49,7 @@ interface IRebalancerErrors {
 
     /// @dev Indicates that the address could not accept the ether refund
     error RebalancerEtherRefundFailed();
+
+    /// @dev Indicates that the signature provided for a delegation is invalid
+    error RebalancerInvalidDelegationSignature();
 }

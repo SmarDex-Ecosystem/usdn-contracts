@@ -12,6 +12,8 @@ import { UsdnProtocolImplV2 } from "../utils/UsdnProtocolImplV2.sol";
 
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -60,7 +62,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), protocol.PROXY_UPGRADE_ROLE()
+                IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), Constants.PROXY_UPGRADE_ROLE
             )
         );
         protocol.upgradeToAndCall(address(newImplementation), bytes(""));
@@ -82,16 +84,6 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
             liquidationRewardsManager,
             _tickSpacing,
             address(feeCollector),
-            Managers({
-                setExternalManager: ADMIN,
-                criticalFunctionsManager: ADMIN,
-                setProtocolParamsManager: ADMIN,
-                setUsdnParamsManager: ADMIN,
-                setOptionsManager: ADMIN,
-                proxyUpgradeManager: ADMIN,
-                pauserManager: ADMIN,
-                unpauserManager: ADMIN
-            }),
             IUsdnProtocolFallback(address(0))
         );
     }
@@ -119,16 +111,6 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
             liquidationRewardsManager,
             _tickSpacing,
             address(feeCollector),
-            Managers({
-                setExternalManager: ADMIN,
-                criticalFunctionsManager: ADMIN,
-                setProtocolParamsManager: ADMIN,
-                setUsdnParamsManager: ADMIN,
-                setOptionsManager: ADMIN,
-                proxyUpgradeManager: ADMIN,
-                pauserManager: ADMIN,
-                unpauserManager: ADMIN
-            }),
             IUsdnProtocolFallback(address(0))
         );
     }
@@ -200,7 +182,6 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         sV1._feeCollector = protocol.getFeeCollector();
         sV1._targetUsdnPrice = protocol.getTargetUsdnPrice();
         sV1._usdnRebaseThreshold = protocol.getUsdnRebaseThreshold();
-        sV1._usdnRebaseInterval = protocol.getUsdnRebaseInterval();
         sV1._minLongPosition = protocol.getMinLongPosition();
         sV1._lastFundingPerDay = protocol.getLastFundingPerDay();
         sV1._lastPrice = protocol.getLastPrice();
@@ -208,7 +189,6 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         sV1._pendingProtocolFee = protocol.getPendingProtocolFee();
         sV1._balanceVault = protocol.getBalanceVault();
         sV1._pendingBalanceVault = protocol.getPendingBalanceVault();
-        sV1._lastRebaseCheck = protocol.getLastRebaseCheck();
         sV1._EMA = protocol.getEMA();
         sV1._balanceLong = protocol.getBalanceLong();
         sV1._totalExpo = protocol.getTotalExpo();
@@ -253,7 +233,6 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         assertEq(sV1._feeCollector, protocol.getFeeCollector());
         assertEq(sV1._targetUsdnPrice, protocol.getTargetUsdnPrice());
         assertEq(sV1._usdnRebaseThreshold, protocol.getUsdnRebaseThreshold());
-        assertEq(sV1._usdnRebaseInterval, protocol.getUsdnRebaseInterval());
         assertEq(sV1._minLongPosition, protocol.getMinLongPosition());
         assertEq(sV1._lastFundingPerDay, protocol.getLastFundingPerDay());
         assertEq(sV1._lastPrice, protocol.getLastPrice());
@@ -261,7 +240,6 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         assertEq(sV1._pendingProtocolFee, protocol.getPendingProtocolFee());
         assertEq(sV1._balanceVault, protocol.getBalanceVault());
         assertEq(sV1._pendingBalanceVault, protocol.getPendingBalanceVault());
-        assertEq(sV1._lastRebaseCheck, protocol.getLastRebaseCheck());
         assertEq(sV1._EMA, protocol.getEMA());
         assertEq(sV1._balanceLong, protocol.getBalanceLong());
         assertEq(sV1._totalExpo, protocol.getTotalExpo());

@@ -38,6 +38,8 @@ forge soldeer install @openzeppelin-contracts~5.0.2
 
 The last step is to update the remappings array in the `foundry.toml` config file.
 
+You must have `Node.js` >= 20 installed.
+
 ### Nix
 
 If using [`nix`](https://nixos.org/), the repository provides a development shell in the form of a flake.
@@ -88,6 +90,15 @@ which records gas usage for all tests. When tests have changed, a new snapshot s
 Deployment for anvil forks should be done with a custom bash script at `script/deployFork.sh` which can be run without
 arguments. It must set up any environment variable required by the foundry deployment script.
 Deployment for mainnet should be done with a custom bash script at `script/deployMainnet.sh` which can be run without arguments. You will be prompted to enter the `RPC_URL` of the network you want to deploy to. If you are deploying with a Ledger, you will also be prompted for the deployer address. And without a Ledger, you will be prompted for the deployer private key.
+
+### Docker Anvil Fork
+
+You can deploy the contracts to an anvil fork using docker. The following commands will build the docker image and run the deployment script.
+
+```bash
+docker build -t usdn-anvil .
+docker run --rm -it -p 8545:8545 usdn-anvil script/deployFork.sh
+```
 
 ## Foundry Documentation
 

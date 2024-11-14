@@ -198,7 +198,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             payable(address(this)),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
@@ -255,13 +256,12 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         skip(1 hours);
         uint128 depositAmount = 1 ether;
         uint128 price = 2000 ether;
-        bytes memory priceData = abi.encode(price); // only used to apply funding
 
         uint128 initialBlock = uint128(block.timestamp);
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, price);
 
-        uint128 amountAfterFees =
-            uint128(depositAmount - uint256(depositAmount) * protocol.getVaultFeeBps() / protocol.BPS_DIVISOR());
+        uint128 fees = uint128(depositAmount * protocol.getVaultFeeBps() / protocol.BPS_DIVISOR());
+        uint128 amountAfterFees = depositAmount - fees;
         uint256 expectedSharesBalanceA = Utils._calcMintUsdnShares(
             amountAfterFees, uint256(protocol.vaultAssetAvailableWithFunding(price, initialBlock)), usdn.totalShares()
         );
@@ -278,7 +278,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
                 protocol.i_vaultAssetAvailable(
                     deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, price, deposit.assetPrice
                 )
-            ),
+            ) + fees,
             deposit.usdnTotalShares
         );
 
@@ -288,7 +288,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
         uint256 usdnSharesBefore = usdn.sharesOf(address(this));
-        protocol.validateDeposit(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(payable(address(this)), abi.encode(price), EMPTY_PREVIOUS_DATA);
         uint256 usdnBalanceAfter = usdn.balanceOf(address(this));
         uint256 usdnSharesAfter = usdn.sharesOf(address(this));
         uint256 mintedUsdn = usdnBalanceAfter - usdnBalanceBefore;
@@ -588,7 +588,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             payable(address(this)),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
@@ -630,7 +631,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             payable(address(this)),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
 
         action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));

@@ -1,5 +1,75 @@
 # Changelog
 
+## [0.22.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.21.0...v0.22.0) (2024-11-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* delegated transfer position ownership ([#661](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/661))
+* rebalancer delegated initiate close ([#640](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/640))
+* change roles and add script to transfer ownership of the protocol ([#650](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/650))
+* remove the rebase interval ([#653](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/653))
+
+### Features
+
+* add pUSDN token ([#668](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/668)) ([bce850b](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/bce850bd6a451d781bfba521e844b2706bc40412))
+* assert limits on setters ([#658](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/658)) ([f7c72d6](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/f7c72d6127313521193a54b5910a9defee8c6f47))
+* change roles and add script to transfer ownership of the protocol ([#650](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/650)) ([b65c6b2](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/b65c6b20ebd7dcf87a88a94991ff61f4d21f8968))
+* delegated transfer position ownership ([#661](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/661)) ([7dae4f3](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/7dae4f3d4441b4ed6ddacfb67c836523839d1e5e))
+* **protocol:** eip7201: Namespaced Storage Layout implementation ([#666](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/666)) ([0373c02](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/0373c02349bbee429430fb7c24b8b89f78240182))
+* rebalancer delegated initiate close ([#640](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/640)) ([79c93da](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/79c93da9aa9f7de09203eb6c16ba8cdf70dc610b))
+* **script:** calculate the deposit amount from the long one in the deployment script ([#671](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/671)) ([b2e5815](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/b2e5815e7997d78eab5788d4ff3d690fe7fbee5a))
+* **script:** refactor the protocol's deployment ([#673](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/673)) ([8e9125e](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/8e9125e9846e59117d5f3648b009e600a10b7a8d))
+* tenderly deploy ([#659](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/659)) ([ecb8bbd](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/ecb8bbd43ae503026e34156f2d331ebb7886f8b4))
+* version EIP712 doc ([#649](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/649)) ([d8180e0](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/d8180e095e07cf91c1f680578f38663e3d5aaad9))
+* **wusdn:** revert when trying to wrap zero token ([#660](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/660)) ([f8cfbb6](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/f8cfbb6bfcb08784150016a75a86773ba464e803))
+
+
+### Bug Fixes
+
+* **blocked-action:** send the value of the blocked action to the to address rather than the vault ([#672](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/672)) ([8a7b98c](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/8a7b98c7ba05851703660b448c99db9eeea799a9))
+* **deposit:** add the vault fee to the vault balance to calculate the amount of shares to mint ([#635](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/635)) ([8db4b48](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/8db4b485facb088874e96033b38b2a731e0fc634))
+* **long:** calculate leverage using the liquidation price, excluding penalty and funding in validate open position ([#665](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/665)) ([aaea6d6](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/aaea6d61afd99baeea84063eb541fa44fdf316f9))
+* **pyth-oracle:** add a check to revert if the expo of the unsafe price is positive ([#652](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/652)) ([a10bdb7](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a10bdb7bebd4f008c2780d73a8f31e97b11a7253))
+* **rebalancer:** notify the rebalancer when its tick has been liquidated ([#642](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/642)) ([6d96c8e](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/6d96c8e30739ee481d311455ff7ea7fccd72b8d2))
+* remove the rebase interval ([#653](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/653)) ([e5f0bce](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/e5f0bce12b320ef24104efc205e65962ffce2146))
+* **remove-blocked-action:** reset the tick penalty if the postiion was the last one in the tick ([#655](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/655)) ([7212efd](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/7212efd0e107f835379c125f5c10e01b34925c46))
+* **remove-blocked-pending-action:** account for the vault fees in the pending vault balance ([#657](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/657)) ([47d5709](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/47d57099aa2a5914ede2a7b420e042588446de2e))
+* **validate-open:** liquidate the position if the price at T+24 is below the liquidation price ([#639](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/639)) ([bb8825b](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/bb8825b9ef69e3586b48766b2e903ca331386313))
+* **validate-withdrawal:** avoid an underflow by sending what remains in the vault ([#674](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/674)) ([afc3c2e](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/afc3c2e72b7d5ac64bcfc9331f172e75fe013fd2))
+* **vault:** use current totalShares in validate withdrawal ([#638](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/638)) ([776c366](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/776c366de991720a1723b81c48133e74ea5fa33e))
+
+## [0.21.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.20.0...v0.21.0) (2024-10-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* delegated initiate close ([#629](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/629))
+* eip712 integration ([#624](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/624))
+
+### Features
+
+* delegated initiate close ([#629](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/629)) ([096404c](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/096404c0b365ede0e4771fdbbe08cf950f9635ea))
+* docker build ([#614](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/614)) ([59622c1](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/59622c1d65d3d219dc8ec704e82468f23040b9ed))
+* eip712 integration ([#624](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/624)) ([33a1e41](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/33a1e41e9ac5954d59d34481cfe32a1bedaac17e))
+* update build dependencies ([#623](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/623)) ([4e2bfcc](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/4e2bfcc22577b4e9242ad8d7d7862d29dc9b9953))
+
+
+### Bug Fixes
+
+* calculate the original liquidation price without penalty and funding from the initiate in validate open position ([#628](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/628)) ([7835be6](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/7835be65c1fdedc367648bbbb1218e3a9c1e5c5d))
+* **close:** extrapolate trading expo to block timestamp ([#608](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/608)) ([9a472ba](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/9a472badebed8646d160659f5a2716f2c2c95000))
+* compare slippage against the adjusted price ([#613](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/613)) ([b7789f0](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/b7789f043c6b1c329d19129e64d7e0ef5604f2af))
+* fee open imbalance check ([#616](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/616)) ([1ebcb5a](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/1ebcb5a120489e786d61ec3c76bbfad1730f543a))
+* **initiate-close:** apply the position fee to the price before checking it against the min price ([#630](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/630)) ([430a7a6](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/430a7a64c9b3b331c925445aeaec6306694336bc))
+* **liquidation-rewards:** convert the bonus in stEth ([#632](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/632)) ([91fdb61](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/91fdb6142fc5f13b0eb8b5514eba19f55975b619))
+* **long:** reset liquidation penalty in tick data on close ([#615](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/615)) ([079a405](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/079a40511e8cbbd47862a1433a3e686630328fe9))
+* **rebalancer:** forward liquidator rewards to the msg.sender ([#633](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/633)) ([7e28eeb](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/7e28eeb390a121765f5bd40cb45871f97d5a0020))
+* **rebalancer:** prevent a rebalancer trigger during a rebalancer initiateClosePosition call ([#627](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/627)) ([4e541ff](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/4e541ff8284a1fe896c31d0fd5b1d365a6618164))
+* runSlither in CI ([#626](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/626)) ([aba54db](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/aba54dbfed3ec8f54cac4af57f6b6205b7b23334))
+* slither error on MockWstETH receive function ([#620](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/620)) ([ffb8d5a](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/ffb8d5aefbcffb81e810f21900f46d0dfb5aed81))
+* **validate-open:** fix the liquidation price check to include the penalty ([#631](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/631)) ([4d6d383](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/4d6d383b0c3ac12fb81e8361480586171e45c3df))
+
 ## [0.20.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.19.1...v0.20.0) (2024-10-01)
 
 

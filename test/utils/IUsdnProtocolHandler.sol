@@ -34,6 +34,13 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function removePendingAction(uint128 rawIndex, address user) external;
 
+    function i_isActionable(
+        uint256 initiateTimestamp,
+        uint256 lowLatencyDeadline,
+        uint256 lowLatencyDelay,
+        uint256 onChainDeadline
+    ) external view returns (bool);
+
     function i_createWithdrawalPendingAction(
         address to,
         address validator,
@@ -78,9 +85,11 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function _calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256);
 
-    function i_initiateClosePosition(Types.InitiateClosePositionParams memory params, bytes calldata currentPriceData)
-        external
-        returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_);
+    function i_initiateClosePosition(
+        Types.InitiateClosePositionParams memory params,
+        bytes calldata currentPriceData,
+        bytes calldata delegationSignature
+    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_, bool liq_);
 
     function i_validateOpenPosition(address user, bytes calldata priceData)
         external
@@ -200,7 +209,11 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function i_checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) external view;
 
-    function i_checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) external view;
+    function i_checkImbalanceLimitOpen(
+        uint256 openTotalExpoValue,
+        uint256 collateralAmount,
+        uint256 collateralAmountAfterFees
+    ) external view;
 
     function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) external view;
 
@@ -223,7 +236,7 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function i_updateEMA(int256 fundingPerDay, uint128 secondsElapsed) external;
 
-    function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool, bytes memory);
+    function i_usdnRebase(uint128 assetPrice) external returns (bool, bytes memory);
 
     function i_calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)
         external
@@ -329,29 +342,19 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
         bytes memory priceData
     ) external;
 
-    function i_prepareClosePositionData(
-        address owner,
-        address to,
-        address validator,
-        PositionId memory posId,
-        uint128 amountToClose,
-        uint256 userMinPrice,
-        bytes calldata currentPriceData
-    ) external returns (ClosePositionData memory data_, bool liquidated_);
+    function i_prepareClosePositionData(Types.PrepareInitiateClosePositionParams calldata params)
+        external
+        returns (ClosePositionData memory data_, bool liquidated_);
 
     function i_prepareValidateOpenPositionData(PendingAction memory pending, bytes calldata priceData)
         external
         returns (ValidateOpenPositionData memory data_, bool liquidated_);
 
-    function i_checkInitiateClosePosition(
-        address owner,
-        address to,
-        address validator,
-        uint128 amountToClose,
-        Position memory pos
-    ) external view;
+    function i_checkInitiateClosePosition(Position memory pos, PrepareInitiateClosePositionParams calldata params)
+        external
+        view;
 
-    function i_calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
+    function i_calcAmountToWithdraw(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
         external
         pure
         returns (uint256 assetExpected_);
@@ -433,8 +436,6 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function i_fundingPerDay(int256 ema) external view returns (int256 fundingPerDay_, int256 oldLongExpo_);
 
-    function i_protocolFeeBps() external view returns (int256);
-
     function i_getTickFromDesiredLiqPrice(
         uint128 desiredLiqPriceWithoutPenalty,
         uint256 assetPrice,
@@ -452,4 +453,19 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
     ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_);
 
     function i_calcMaxLongBalance(uint256 totalExpo) external pure returns (uint256);
+
+    function i_verifyInitiateCloseDelegation(
+        Types.PrepareInitiateClosePositionParams calldata params,
+        address positionOwner
+    ) external;
+
+    function i_verifyTransferPositionOwnershipDelegation(
+        Types.PositionId calldata posId,
+        bytes calldata delegationSignature,
+        bytes32 domainSeparatorV4,
+        address positionOwner,
+        address newPositionOwner
+    ) external;
+
+    function i_setUsdnRebaseThreshold(uint128 threshold) external;
 }

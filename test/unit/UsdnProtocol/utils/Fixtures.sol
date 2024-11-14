@@ -3,21 +3,11 @@ pragma solidity 0.8.26;
 
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import {
-    ADMIN,
-    CRITICAL_FUNCTIONS_MANAGER,
-    DEPLOYER,
-    PAUSER_MANAGER,
-    PROXY_UPGRADE_MANAGER,
-    SET_EXTERNAL_MANAGER,
-    SET_OPTIONS_MANAGER,
-    SET_PROTOCOL_PARAMS_MANAGER,
-    SET_USDN_PARAMS_MANAGER,
-    UNPAUSER_MANAGER
-} from "../../../utils/Constants.sol";
+import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
+import { RolesUtils } from "../../../utils/RolesUtils.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
@@ -27,6 +17,10 @@ import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolActionsUtilsLibrary as ActionUtils } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -38,7 +32,7 @@ import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
  * @title UsdnProtocolBaseFixture
  * @dev Utils for testing the USDN Protocol
  */
-contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErrors, IUsdnProtocolEvents {
+contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors, IEventsErrors, IUsdnProtocolEvents {
     struct Flags {
         bool enablePositionFees;
         bool enableProtocolFees;
@@ -128,16 +122,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             liquidationRewardsManager.setRewardsParameters(0, 0, 0, 0, 0, 0, 0, 0, 0.1 ether);
         }
 
-        Managers memory managers = Managers({
-            setExternalManager: SET_EXTERNAL_MANAGER,
-            criticalFunctionsManager: CRITICAL_FUNCTIONS_MANAGER,
-            setProtocolParamsManager: SET_PROTOCOL_PARAMS_MANAGER,
-            setUsdnParamsManager: SET_USDN_PARAMS_MANAGER,
-            setOptionsManager: SET_OPTIONS_MANAGER,
-            proxyUpgradeManager: PROXY_UPGRADE_MANAGER,
-            pauserManager: PAUSER_MANAGER,
-            unpauserManager: UNPAUSER_MANAGER
-        });
         if (!testParams.flags.enableRoles) {
             managers = Managers({
                 setExternalManager: ADMIN,
@@ -165,7 +149,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                     liquidationRewardsManager,
                     _tickSpacing,
                     address(feeCollector),
-                    managers,
                     protocolFallback
                 )
             )
@@ -175,8 +158,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
-
         vm.stopPrank();
+
+        _giveRolesTo(managers, protocol);
+
         vm.startPrank(managers.setProtocolParamsManager);
         if (!testParams.flags.enablePositionFees) {
             protocol.setPositionFeeBps(0);
@@ -212,7 +197,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         vm.startPrank(managers.setUsdnParamsManager);
         if (!testParams.flags.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
-            protocol.setUsdnRebaseThreshold(type(uint128).max);
+            protocol.i_setUsdnRebaseThreshold(type(uint128).max);
             protocol.setTargetUsdnPrice(type(uint128).max);
         }
         vm.stopPrank();
@@ -290,7 +275,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         assertEq(firstPos.amount, params.initialLong, "first pos amount");
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
         assertEq(protocol.getFeeCollector(), address(feeCollector), "fee collector");
-        assertEq(protocol.owner(), ADMIN, "protocol owner");
+        assertEq(protocol.defaultAdmin(), ADMIN, "protocol owner");
     }
 
     /**
@@ -394,7 +379,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             payable(openParams.user),
             type(uint256).max,
             priceData,
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            ""
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (posId_);

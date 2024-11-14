@@ -39,7 +39,7 @@ contract TestUsdnProtocolPausable is UsdnProtocolBaseFixture {
         protocol.validateOpenPosition(ADDR_ZERO, "", EMPTY_PREVIOUS_DATA);
 
         vm.expectRevert(pausedErr);
-        protocol.initiateClosePosition(emptyPosId, 0, 0, ADDR_ZERO, ADDR_ZERO, 0, "", EMPTY_PREVIOUS_DATA);
+        protocol.initiateClosePosition(emptyPosId, 0, 0, ADDR_ZERO, ADDR_ZERO, 0, "", EMPTY_PREVIOUS_DATA, "");
 
         vm.expectRevert(pausedErr);
         protocol.validateClosePosition(ADDR_ZERO, "", EMPTY_PREVIOUS_DATA);
@@ -57,7 +57,7 @@ contract TestUsdnProtocolPausable is UsdnProtocolBaseFixture {
         protocol.refundSecurityDeposit(ADDR_ZERO);
 
         vm.expectRevert(pausedErr);
-        protocol.transferPositionOwnership(emptyPosId, ADDR_ZERO);
+        protocol.transferPositionOwnership(emptyPosId, "", ADDR_ZERO);
 
         vm.expectRevert(pausedErr);
         protocol.liquidate("");

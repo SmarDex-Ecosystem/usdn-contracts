@@ -41,16 +41,6 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                     liquidationRewardsManager,
                     100, // tick spacing 100 = ~1.005%
                     ADMIN, // Fee collector
-                    Managers({
-                        setExternalManager: address(this),
-                        criticalFunctionsManager: address(this),
-                        setProtocolParamsManager: address(this),
-                        setUsdnParamsManager: address(this),
-                        setOptionsManager: address(this),
-                        proxyUpgradeManager: address(this),
-                        pauserManager: address(this),
-                        unpauserManager: address(this)
-                    }),
                     protocolFallback
                 )
             )
@@ -65,6 +55,20 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         skip(1);
         protocol.acceptDefaultAdminTransfer();
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
+
+        _giveRolesTo(
+            Managers(
+                address(this),
+                address(this),
+                address(this),
+                address(this),
+                address(this),
+                address(this),
+                address(this),
+                address(this)
+            ),
+            protocol
+        );
     }
 
     /**

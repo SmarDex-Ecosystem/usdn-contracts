@@ -8,13 +8,47 @@ import { IBaseLiquidationRewardsManager } from "../LiquidationRewardsManager/IBa
 import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../Usdn/IUsdn.sol";
+import { IUsdnProtocolErrors } from "./IUsdnProtocolErrors.sol";
 import { IUsdnProtocolTypes as Types } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolFallback
  * @notice Interface for the USDN protocol fallback functions
  */
-interface IUsdnProtocolFallback {
+interface IUsdnProtocolFallback is IUsdnProtocolErrors {
+    /**
+     * @notice Retrieve a list of pending actions, one of which must be validated by the next user action in the
+     * protocol
+     * @dev If this function returns a non-empty list of pending actions, then the next user action MUST include the
+     * corresponding list of price update data and raw indices as the last parameter
+     * @param currentUser The address of the user that will submit the price signatures for third-party actions
+     * validations. This is used to filter out their actions from the returned list
+     * @return actions_ The pending actions if any, otherwise an empty array. Note that some items can be zero-valued
+     * and there is no need to provide price data for those (an empty `bytes` suffices)
+     * @return rawIndices_ The raw indices of the actionable pending actions in the queue if any, otherwise an empty
+     * array
+     */
+    function getActionablePendingActions(address currentUser)
+        external
+        view
+        returns (Types.PendingAction[] memory actions_, uint128[] memory rawIndices_);
+
+    /**
+     * @notice Retrieve a user pending action
+     * @param user The user's address
+     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and
+     * `ProtocolAction.None`
+     */
+    function getUserPendingAction(address user) external view returns (Types.PendingAction memory action_);
+
+    /**
+     * @notice Get the hash generated from the tick and a version
+     * @param tick The tick number
+     * @param version The tick version
+     * @return The hash of the tick and version
+     */
+    function tickHash(int24 tick, uint256 version) external pure returns (bytes32);
+
     /**
      * @notice Get the liquidation price corresponding to a given tick number
      * @dev Uses the values from storage for the various variables. Note that ticks that are
@@ -209,6 +243,18 @@ interface IUsdnProtocolFallback {
      * @return The minimum margin between the total expo and the balance for the long side (in basis points)
      */
     function MIN_LONG_TRADING_EXPO_BPS() external pure returns (uint256);
+
+    /**
+     * @notice Get The EIP712 typehash for the {initiateClosePosition} delegation
+     * @return The typehash
+     */
+    function INITIATE_CLOSE_TYPEHASH() external pure returns (bytes32);
+
+    /**
+     * @notice Get The EIP712 typehash for the {transferPositionOwnership} delegation
+     * @return The typehash
+     */
+    function TRANSFER_POSITION_OWNERSHIP_TYPEHASH() external pure returns (bytes32);
 
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables getters                         */
@@ -451,12 +497,6 @@ interface IUsdnProtocolFallback {
     function getUsdnRebaseThreshold() external view returns (uint128);
 
     /**
-     * @notice Get the interval between two automatic rebase checks
-     * @return The interval between 2 rebase checks (in seconds)
-     */
-    function getUsdnRebaseInterval() external view returns (uint256);
-
-    /**
      * @notice Get the minimum collateral amount when opening a long position
      * @return The minimum amount (with `_assetDecimals`)
      */
@@ -502,12 +542,6 @@ interface IUsdnProtocolFallback {
      * @return The unreflected balance change due to pending vault actions (in `_assetDecimals`)
      */
     function getPendingBalanceVault() external view returns (int256);
-
-    /**
-     * @notice Get the timestamp when the last USDN rebase check was performed
-     * @return The timestamp of the last USDN rebase check
-     */
-    function getLastRebaseCheck() external view returns (uint256);
 
     /**
      * @notice Get the exponential moving average of the funding
@@ -578,6 +612,14 @@ interface IUsdnProtocolFallback {
      * @return True if it's paused otherwise false
      */
     function isPaused() external view returns (bool);
+
+    /**
+     * @notice Get the nonce a user can use to generate a delegation signature
+     * @dev This is to prevent replay attacks when using an eip712 delegation signature
+     * @param owner The address of the position owner
+     * @return The user nonce
+     */
+    function getNonce(address owner) external view returns (uint256);
 
     /* -------------------------------------------------------------------------- */
     /*                                   Setters                                  */
@@ -694,6 +736,7 @@ interface IUsdnProtocolFallback {
      * @notice Set the security deposit value
      * @dev The maximum value of the security deposit is 2^64 - 1 = 18446744073709551615 = 18.4 ethers
      * @param securityDepositValue The security deposit value
+     * @dev This value cannot be greater than MAX_SECURITY_DEPOSIT
      */
     function setSecurityDepositValue(uint64 securityDepositValue) external;
 
@@ -748,17 +791,9 @@ interface IUsdnProtocolFallback {
      * @notice Set the USDN rebase threshold
      * @param newThreshold The new threshold value (with _priceFeedDecimals)
      * @dev When the price of USDN exceeds this value, a rebase might be triggered
-     * This value cannot be smaller than `_targetUsdnPrice`
+     * This value cannot be smaller than `_targetUsdnPrice` or greater than uint128(2 * 10 ** s._priceFeedDecimals)
      */
     function setUsdnRebaseThreshold(uint128 newThreshold) external;
-
-    /**
-     * @notice Set the USDN rebase interval
-     * @param newInterval The new interval duration
-     * @dev When the duration since the last rebase check exceeds this value, a rebase check will be performed
-     * When calling `liquidate`, this limit is ignored and the check is always performed
-     */
-    function setUsdnRebaseInterval(uint256 newInterval) external;
 
     /**
      * @notice Pauses related USDN protocol functions

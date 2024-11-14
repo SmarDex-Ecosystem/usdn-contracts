@@ -14,8 +14,7 @@ import { InitializableReentrancyGuard } from "../../../../src/utils/Initializabl
  * @custom:and A user with 10 wstETH in their wallet
  */
 contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture {
-    uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
-    uint256 internal constant LONG_AMOUNT = 1 ether;
+    uint128 internal constant LONG_AMOUNT = 1 ether;
     uint128 internal constant CURRENT_PRICE = 2000 ether;
 
     /// @notice Trigger a reentrancy after receiving ether
@@ -48,7 +47,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 10 ether, address(protocol), type(uint256).max);
     }
 
     /**
@@ -95,7 +94,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint128 liqPriceWithoutPenalty =
             protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(expected.expectedTick));
         expected.expectedPosTotalExpo =
-            protocol.i_calcPositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, liqPriceWithoutPenalty);
+            protocol.i_calcPositionTotalExpo(LONG_AMOUNT, CURRENT_PRICE, liqPriceWithoutPenalty);
         expected.expectedPosValue =
             expected.expectedPosTotalExpo * (CURRENT_PRICE - liqPriceWithoutPenalty) / CURRENT_PRICE;
 
@@ -115,12 +114,12 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             validator,
             uint40(block.timestamp),
             uint128(expected.expectedPosTotalExpo),
-            uint128(LONG_AMOUNT),
+            LONG_AMOUNT,
             CURRENT_PRICE,
             PositionId(expected.expectedTick, 0, 0)
         );
         (bool success, PositionId memory posId) = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT),
+            LONG_AMOUNT,
             desiredLiqPrice,
             type(uint128).max,
             protocol.getMaxLeverage(),
@@ -179,7 +178,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         assertFalse(position.validated, "pos validated");
         assertEq(position.user, to, "user position");
         assertEq(position.timestamp, action.timestamp, "timestamp position");
-        assertEq(position.amount, uint128(LONG_AMOUNT), "amount position");
+        assertEq(position.amount, LONG_AMOUNT, "amount position");
         assertEq(position.totalExpo, expected.expectedPosTotalExpo, "totalExpo position");
 
         vm.stopPrank();
@@ -204,7 +203,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
-                positionSize: uint128(LONG_AMOUNT),
+                positionSize: LONG_AMOUNT,
                 desiredLiqPrice: desiredLiqPrice,
                 price: CURRENT_PRICE
             })
@@ -220,12 +219,11 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
         uint128 expectedLiqPrice =
             protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick, storedLiqPenalty));
-        uint256 expectedTotalExpo =
-            protocol.i_calcPositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, expectedLiqPrice);
+        uint256 expectedTotalExpo = protocol.i_calcPositionTotalExpo(LONG_AMOUNT, CURRENT_PRICE, expectedLiqPrice);
 
         // create position which ends up in the same tick
         (, PositionId memory posId2) = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT),
+            LONG_AMOUNT,
             desiredLiqPrice,
             type(uint128).max,
             protocol.getMaxLeverage(),
@@ -255,7 +253,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
-                positionSize: uint128(LONG_AMOUNT),
+                positionSize: LONG_AMOUNT,
                 desiredLiqPrice: params.initialPrice - params.initialPrice / 5,
                 price: params.initialPrice
             })
@@ -266,7 +264,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
 
         (bool success, PositionId memory posId) = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT),
+            LONG_AMOUNT,
             params.initialPrice / 10,
             type(uint128).max,
             protocol.getMaxLeverage(),
@@ -301,7 +299,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
         protocol.initiateOpenPosition(
             0,
-            2000 ether,
+            CURRENT_PRICE,
             type(uint128).max,
             leverage,
             address(this),
@@ -322,8 +320,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint256 leverage = protocol.getMaxLeverage();
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
         protocol.initiateOpenPosition(
-            1 ether,
-            2000 ether,
+            LONG_AMOUNT,
+            CURRENT_PRICE,
             type(uint128).max,
             leverage,
             address(0),
@@ -344,8 +342,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint256 leverage = protocol.getMaxLeverage();
         vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
         protocol.initiateOpenPosition(
-            1 ether,
-            2000 ether,
+            LONG_AMOUNT,
+            CURRENT_PRICE,
             type(uint128).max,
             leverage,
             address(this),
@@ -365,12 +363,12 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint256 leverage = protocol.getMaxLeverage();
         vm.expectRevert(UsdnProtocolLeverageTooLow.selector);
         protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT),
+            LONG_AMOUNT,
             100_000,
             type(uint128).max,
             leverage,
             address(this),
-            payable(address(this)),
+            payable(this),
             type(uint256).max,
             abi.encode(CURRENT_PRICE),
             EMPTY_PREVIOUS_DATA
@@ -392,7 +390,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint256 leverage = protocol.getMaxLeverage();
         vm.expectRevert(UsdnProtocolLeverageTooHigh.selector);
         protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT),
+            LONG_AMOUNT,
             desiredLiqPrice,
             type(uint128).max,
             leverage,
@@ -431,7 +429,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             )
         );
         protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT),
+            LONG_AMOUNT,
             CURRENT_PRICE,
             type(uint128).max,
             leverage,
@@ -460,8 +458,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), posId);
         protocol.initiateOpenPosition(
-            1 ether,
-            1000 ether,
+            LONG_AMOUNT,
+            CURRENT_PRICE / 2,
             type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
@@ -481,11 +479,11 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     function test_initiateOpenPositionEtherRefund() public {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
         uint256 balanceBefore = address(this).balance;
-        bytes memory priceData = abi.encode(uint128(2000 ether));
+        bytes memory priceData = abi.encode(CURRENT_PRICE);
         uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition);
         protocol.initiateOpenPosition{ value: 0.5 ether }(
-            uint128(LONG_AMOUNT),
-            1000 ether,
+            LONG_AMOUNT,
+            CURRENT_PRICE / 2,
             type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
@@ -507,9 +505,37 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint256 leverage = protocol.getMaxLeverage();
         vm.expectRevert(UsdnProtocolSlippageMaxPriceExceeded.selector);
         protocol.initiateOpenPosition(
-            1 ether,
-            2000 ether,
+            LONG_AMOUNT,
+            CURRENT_PRICE,
             CURRENT_PRICE - 1,
+            leverage,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            abi.encode(CURRENT_PRICE),
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
+     * @custom:scenario The user initiates an open position action with an entry price between the last price and the
+     * user's max price, to be sure than the max price is compared to the adjusted price and not the last price
+     * @custom:given The current price is $2000 and position fees are enabled
+     * @custom:and The user's max price is $2000 and 1 wei
+     * @custom:and The adjusted price is greater than the user's max price ($2000.8)
+     * @custom:when The user initiates an open position with a userMaxPrice of $2000 and 1 wei
+     * @custom:then The protocol reverts with UsdnProtocolSlippageMaxPriceExceeded
+     */
+    function test_RevertWhen_adjustedPriceGreaterThanLastPrice_lowerThanMaxPrice() public {
+        vm.prank(ADMIN);
+        protocol.setPositionFeeBps(800);
+
+        uint256 leverage = protocol.getMaxLeverage();
+        vm.expectRevert(UsdnProtocolSlippageMaxPriceExceeded.selector);
+        protocol.initiateOpenPosition(
+            1 ether,
+            CURRENT_PRICE / 2,
+            CURRENT_PRICE + 1,
             leverage,
             address(this),
             payable(address(this)),
@@ -524,15 +550,15 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:given A user being a smart contract that calls initiateOpenPosition with too much ether
      * @custom:and A receive() function that calls initiateOpenPosition again
      * @custom:when The user calls initiateOpenPosition again from the callback
-     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:then The call reverts with {InitializableReentrancyGuardReentrantCall}
      */
     function test_RevertWhen_initiateOpenPositionCalledWithReentrancy() public {
         if (_reenter) {
             uint256 leverage = protocol.getMaxLeverage();
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
             protocol.initiateOpenPosition(
-                1 ether,
-                1500 ether,
+                LONG_AMOUNT,
+                CURRENT_PRICE * 3 / 4,
                 type(uint128).max,
                 leverage,
                 address(this),
@@ -549,8 +575,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateOpenPosition.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.initiateOpenPosition{ value: 1 }(
-            1 ether,
-            1500 ether,
+            LONG_AMOUNT,
+            CURRENT_PRICE * 3 / 4,
             type(uint128).max,
             protocol.getMaxLeverage(),
             address(this),
@@ -572,8 +598,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     function test_RevertWhen_initiateOpenPositionLeverageLowerThanExpected() public {
         vm.expectRevert(UsdnProtocolLeverageTooHigh.selector);
         protocol.initiateOpenPosition(
-            1 ether,
-            1500 ether,
+            LONG_AMOUNT,
+            CURRENT_PRICE * 3 / 4,
             type(uint128).max,
             2 * 10 ** Constants.LEVERAGE_DECIMALS,
             address(this),
@@ -595,8 +621,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint256 leverage = protocol.getMaxLeverage();
         vm.expectRevert(UsdnProtocolDeadlineExceeded.selector);
         protocol.initiateOpenPosition(
-            1 ether,
-            1500 ether,
+            LONG_AMOUNT,
+            CURRENT_PRICE * 3 / 4,
             type(uint128).max,
             leverage,
             address(this),

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /**
@@ -50,5 +51,73 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
         );
         // Long positions are inherently profitable due to the stETh/wstETH rebase and the vault positions are
         // inherently lossy due to the same rebase
+    }
+
+    /**
+     * @custom:scenario Check that no profit is made when withdrawing from the vault in multiple steps instead of one
+     * @custom:given A vault position
+     * @custom:when The user withdraws from the vault in multiple steps instead of one
+     * @custom:then The amount withdrawn should be the same as if the user withdrew in one step
+     */
+    function test_multipleWithdrawAgainstOne() public {
+        address USER_1_2ND_ADDR = USER_2;
+        bytes memory encodedPrice = abi.encode(params.initialPrice);
+
+        setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, 10 ether, params.initialPrice);
+        uint256 userUsdnShares = usdn.sharesOf(USER_1);
+        uint256 securityDeposit = protocol.getSecurityDepositValue();
+        vm.prank(USER_1);
+        usdn.approve(address(protocol), type(uint256).max);
+
+        uint256 id = vm.snapshot();
+
+        vm.startPrank(USER_1);
+        protocol.initiateWithdrawal{ value: securityDeposit }(
+            uint152(userUsdnShares),
+            DISABLE_AMOUNT_OUT_MIN,
+            USER_1,
+            payable(USER_1),
+            type(uint256).max,
+            encodedPrice,
+            EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+        protocol.validateWithdrawal(payable(USER_1), encodedPrice, EMPTY_PREVIOUS_DATA);
+        vm.stopPrank();
+
+        uint256 user1BalanceOneWithdraw = wstETH.balanceOf(USER_1);
+
+        vm.revertTo(id);
+
+        vm.startPrank(USER_1);
+        protocol.initiateWithdrawal{ value: securityDeposit }(
+            uint152(userUsdnShares / 2),
+            DISABLE_AMOUNT_OUT_MIN,
+            USER_1,
+            payable(USER_1),
+            type(uint256).max,
+            encodedPrice,
+            EMPTY_PREVIOUS_DATA
+        );
+        protocol.initiateWithdrawal{ value: securityDeposit }(
+            uint152(usdn.sharesOf(USER_1)),
+            DISABLE_AMOUNT_OUT_MIN,
+            USER_1,
+            payable(USER_1_2ND_ADDR),
+            type(uint256).max,
+            encodedPrice,
+            EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+        protocol.validateWithdrawal(payable(USER_1), encodedPrice, EMPTY_PREVIOUS_DATA);
+        vm.stopPrank();
+        vm.prank(USER_1_2ND_ADDR);
+        protocol.validateWithdrawal(payable(USER_1_2ND_ADDR), encodedPrice, EMPTY_PREVIOUS_DATA);
+
+        uint256 user1BalanceTwoWithdraw = wstETH.balanceOf(USER_1);
+
+        assertEq(user1BalanceOneWithdraw, user1BalanceTwoWithdraw, "Withdrawal amount is not the same");
     }
 }

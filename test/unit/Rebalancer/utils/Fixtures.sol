@@ -5,6 +5,7 @@ import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
+import { RolesUtils } from "../../../utils/RolesUtils.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import { MockOracleMiddleware } from "../../UsdnProtocol/utils/MockOracleMiddleware.sol";
@@ -24,7 +25,7 @@ import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProt
  * @title RebalancerFixture
  * @dev Utils for testing the rebalancer
  */
-contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, IRebalancerEvents {
+contract RebalancerFixture is BaseFixture, RolesUtils, IRebalancerTypes, IRebalancerErrors, IRebalancerEvents {
     Usdn public usdn;
     Sdex public sdex;
     WstETH public wstETH;
@@ -32,7 +33,6 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
     IUsdnProtocol public usdnProtocol;
-
     Types.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         Types.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
@@ -58,16 +58,6 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
                     liquidationRewardsManager,
                     100, // tick spacing 100 = ~1.005%
                     ADMIN, // Fee collector
-                    Types.Managers({
-                        setExternalManager: ADMIN,
-                        criticalFunctionsManager: ADMIN,
-                        setProtocolParamsManager: ADMIN,
-                        setUsdnParamsManager: ADMIN,
-                        setOptionsManager: ADMIN,
-                        proxyUpgradeManager: ADMIN,
-                        pauserManager: ADMIN,
-                        unpauserManager: ADMIN
-                    }),
                     protocolFallback
                 )
             )
@@ -83,6 +73,9 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
         usdnProtocol.beginDefaultAdminTransfer(ADMIN);
         rebalancer.transferOwnership(ADMIN);
         vm.stopPrank();
+
+        _giveRolesTo(Managers(ADMIN, ADMIN, ADMIN, ADMIN, ADMIN, ADMIN, ADMIN, ADMIN), usdnProtocol);
+
         vm.startPrank(ADMIN);
         skip(1);
         usdnProtocol.acceptDefaultAdminTransfer();

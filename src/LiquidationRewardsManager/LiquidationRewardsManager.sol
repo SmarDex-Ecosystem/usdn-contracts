@@ -55,10 +55,10 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
     constructor(IWstETH wstETH) Ownable(msg.sender) {
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
-            gasUsedPerTick: 52_589,
-            otherGasUsed: 248_720,
+            gasUsedPerTick: 44_666,
+            otherGasUsed: 245_021,
             rebaseGasUsed: 6955,
-            rebalancerGasUsed: 262_029,
+            rebalancerGasUsed: 252_471,
             baseFeeOffset: 2 gwei,
             gasMultiplierBps: 10_500, // 1.05
             positionBonusMultiplierBps: 200, // 0.02
@@ -97,13 +97,18 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
             gasUsed += rewardsParameters.rebalancerGasUsed;
         }
 
-        uint256 totalRewardETH =
-            _calcGasPrice(rewardsParameters.baseFeeOffset) * gasUsed * rewardsParameters.gasMultiplierBps / BPS_DIVISOR;
-        totalRewardETH += rewardsParameters.fixedReward
-            + _calcPositionSizeBonus(liquidatedTicks, currentPrice, rewardsParameters.positionBonusMultiplierBps);
+        uint256 totalRewardETH = rewardsParameters.fixedReward
+            + _calcGasPrice(rewardsParameters.baseFeeOffset) * gasUsed * rewardsParameters.gasMultiplierBps / BPS_DIVISOR;
+
+        uint256 wstEthBonus =
+            _calcPositionSizeBonus(liquidatedTicks, currentPrice, rewardsParameters.positionBonusMultiplierBps);
+
+        totalRewardETH += _wstEth.getStETHByWstETH(wstEthBonus);
+
         if (totalRewardETH > rewardsParameters.maxReward) {
             totalRewardETH = rewardsParameters.maxReward;
         }
+
         // convert to wstETH
         wstETHRewards_ = _wstEth.getWstETHByStETH(totalRewardETH);
     }
@@ -178,7 +183,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
      * @param liquidatedTicks Information about the liquidated ticks
      * @param currentPrice The current price of the asset
      * @param multiplier The bonus multiplier
-     * @return bonus_ The bonus for liquidated all the ticks (in native currency, will be converted to wstETH)
+     * @return bonus_ The bonus for liquidating all the ticks (in _wstEth)
      */
     function _calcPositionSizeBonus(
         Types.LiqTickInfo[] calldata liquidatedTicks,

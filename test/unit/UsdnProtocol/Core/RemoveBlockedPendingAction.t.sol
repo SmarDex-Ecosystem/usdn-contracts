@@ -135,6 +135,26 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario Remove a stuck withdrawal with cleanup and verify the pending vault balance
+     * @custom:given A user has initiated a withdrawal which gets stuck for any reason
+     * @custom:and The protocol has vault fees enabled
+     * @custom:when The admin removes the pending action with cleanup
+     * @custom:then The pending action is removed
+     * @custom:and The pending vault balance is the same as before
+     */
+    function test_removeBlockedWithdrawalCleanup_pendingVaultBalance() public {
+        params = DEFAULT_PARAMS;
+        params.flags.enablePositionFees = true;
+        super._setUp(params);
+
+        int256 balanceVaultBefore = protocol.getPendingBalanceVault();
+
+        _removeBlockedVaultScenario(ProtocolAction.InitiateWithdrawal, 10 ether, true, false);
+
+        assertEq(protocol.getPendingBalanceVault(), balanceVaultBefore, "pending vault balance");
+    }
+
+    /**
      * @custom:scenario Remove a stuck withdrawal without cleanup
      * @custom:given A user has initiated a withdrawal which gets stuck for any reason
      * @custom:when The admin removes the pending action without cleanup
@@ -234,6 +254,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         assertEq(tickDataAfter.totalExpo, tickDataBefore.totalExpo, "tick total expo");
         assertEq(tickDataAfter.totalPos, tickDataBefore.totalPos, "tick total pos");
         assertEq(tickDataAfter.totalPos, 0, "no more pos in tick");
+        assertEq(tickDataAfter.liquidationPenalty, 0, "liq penalty reset");
         assertFalse(protocol.tickBitmapStatus(posId.tick), "tick bitmap status");
 
         assertEq(protocol.getTotalLongPositions(), totalPosBefore, "total pos");
@@ -309,18 +330,17 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         uint256 balanceBefore = address(this).balance;
         uint256 balanceLongBefore = protocol.getBalanceLong();
         uint256 balanceVaultBefore = protocol.getBalanceVault();
+        uint256 balanceToBefore = wstETH.balanceOf(address(this));
 
         _removeBlockedLongScenario(ProtocolAction.InitiateClosePosition, 10 ether, true, false);
 
         assertApproxEqAbs(protocol.getBalanceLong(), balanceLongBefore, 1, "balance long");
-        assertApproxEqAbs(protocol.getBalanceVault(), balanceVaultBefore + 10 ether, 1, "balance vault");
-        assertEq(
-            protocol.getBalanceLong() + protocol.getBalanceVault(),
-            balanceLongBefore + balanceVaultBefore + 10 ether,
-            "total balance"
-        );
+        assertApproxEqAbs(protocol.getBalanceVault(), balanceVaultBefore, 1, "balance vault");
 
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
+
+        // -1 because of rounding
+        assertEq(wstETH.balanceOf(address(this)), balanceToBefore + 10 ether - 1, "asset balance after");
     }
 
     /**

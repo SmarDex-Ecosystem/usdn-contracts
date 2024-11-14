@@ -73,7 +73,8 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
             DEPLOYER,
             type(uint256).max,
             abi.encode(params.initialPrice),
-            data
+            data,
+            ""
         );
 
         // wait more than 2 blocks

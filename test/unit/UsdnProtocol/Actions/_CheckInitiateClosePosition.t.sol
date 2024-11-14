@@ -6,6 +6,7 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { MockRebalancer } from "../utils/MockRebalancer.sol";
 
 import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
+import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `_checkInitiateClosePosition` function
@@ -17,6 +18,7 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
     MockRebalancer mockedRebalancer;
     PositionId posId;
     Position pos;
+    IUsdnProtocolTypes.PrepareInitiateClosePositionParams prepareParams;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -33,6 +35,9 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
             )
         );
         (pos,) = protocol.getLongPosition(posId);
+        prepareParams = IUsdnProtocolTypes.PrepareInitiateClosePositionParams(
+            USER_1, USER_2, posId, AMOUNT, 0, type(uint256).max, "", "", ""
+        );
     }
 
     function test_setUpAmount() public view {
@@ -45,11 +50,12 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
      * @custom:when The user initiates a close position with valid parameters
      * @custom:then The function should not revert
      */
-    function test_checkInitiateClosePosition() public view {
-        uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition());
+    function test_checkInitiateClosePosition() public {
+        prepareParams.amountToClose = AMOUNT - uint128(protocol.getMinLongPosition());
+        protocol.i_checkInitiateClosePosition(pos, prepareParams);
 
-        protocol.i_checkInitiateClosePosition(address(this), USER_1, USER_2, amountToClose, pos);
-        protocol.i_checkInitiateClosePosition(address(this), USER_1, USER_2, AMOUNT, pos);
+        prepareParams.amountToClose = AMOUNT;
+        protocol.i_checkInitiateClosePosition(pos, prepareParams);
     }
 
     /**
@@ -58,8 +64,9 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
      * @custom:then The function should revert with `UsdnProtocolInvalidAddressTo`
      */
     function test_RevertWhen_checkInitiateClosePositionToZero() public {
+        prepareParams.to = address(0);
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
-        protocol.i_checkInitiateClosePosition(address(this), address(0), USER_2, AMOUNT, pos);
+        protocol.i_checkInitiateClosePosition(pos, prepareParams);
     }
 
     /**
@@ -68,8 +75,9 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
      * @custom:then The function should revert with `UsdnProtocolInvalidAddressValidator`
      */
     function test_RevertWhen_checkInitiateClosePositionValidatorZero() public {
+        prepareParams.validator = address(0);
         vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
-        protocol.i_checkInitiateClosePosition(address(this), USER_1, address(0), AMOUNT, pos);
+        protocol.i_checkInitiateClosePosition(pos, prepareParams);
     }
 
     /**
@@ -78,8 +86,9 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
      * @custom:then The function should revert with `UsdnProtocolUnauthorized`
      */
     function test_RevertWhen_checkInitiateClosePositionWrongOwner() public {
+        vm.prank(USER_1);
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
-        protocol.i_checkInitiateClosePosition(USER_1, USER_1, USER_2, AMOUNT, pos);
+        protocol.i_checkInitiateClosePosition(pos, prepareParams);
     }
 
     /**
@@ -89,14 +98,15 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
      * @custom:then The function should revert with `UsdnProtocolPositionNotValidated`
      */
     function test_RevertWhen_checkInitiateClosePositionPending() public {
-        posId = setUpUserPositionInLong(
+        prepareParams.posId = setUpUserPositionInLong(
             OpenParams(
                 address(this), ProtocolAction.InitiateOpenPosition, AMOUNT, params.initialPrice / 2, params.initialPrice
             )
         );
-        (pos,) = protocol.getLongPosition(posId);
+
+        (pos,) = protocol.getLongPosition(prepareParams.posId);
         vm.expectRevert(UsdnProtocolPositionNotValidated.selector);
-        protocol.i_checkInitiateClosePosition(address(this), USER_1, USER_2, AMOUNT, pos);
+        protocol.i_checkInitiateClosePosition(pos, prepareParams);
     }
 
     /**
@@ -105,11 +115,14 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
      * @custom:then The function should revert with `UsdnProtocolAmountToCloseHigherThanPositionAmount`
      */
     function test_RevertWhen_checkInitiateClosePositionAmountTooBig() public {
-        uint128 amountToClose = 2 * AMOUNT;
+        prepareParams.amountToClose = 2 * AMOUNT;
         vm.expectRevert(
-            abi.encodeWithSelector(UsdnProtocolAmountToCloseHigherThanPositionAmount.selector, amountToClose, AMOUNT)
+            abi.encodeWithSelector(
+                UsdnProtocolAmountToCloseHigherThanPositionAmount.selector, prepareParams.amountToClose, AMOUNT
+            )
         );
-        protocol.i_checkInitiateClosePosition(address(this), USER_1, USER_2, amountToClose, pos);
+
+        protocol.i_checkInitiateClosePosition(pos, prepareParams);
     }
 
     /**
@@ -118,8 +131,9 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
      * @custom:then The function should revert with `UsdnProtocolZeroAmount`
      */
     function test_RevertWhen_checkInitiateClosePositionAmountZero() public {
+        prepareParams.amountToClose = 0;
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.i_checkInitiateClosePosition(address(this), USER_1, USER_2, 0, pos);
+        protocol.i_checkInitiateClosePosition(pos, prepareParams);
     }
 
     /**
@@ -128,9 +142,9 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
      * @custom:then The function should revert with `UsdnProtocolLongPositionTooSmall`
      */
     function test_RevertWhen_checkInitiateClosePositionRemainingLow() public {
-        uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition()) + 1;
+        prepareParams.amountToClose = AMOUNT - uint128(protocol.getMinLongPosition()) + 1;
         vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
-        protocol.i_checkInitiateClosePosition(address(this), USER_1, USER_2, amountToClose, pos);
+        protocol.i_checkInitiateClosePosition(pos, prepareParams);
     }
 
     /**
@@ -142,40 +156,29 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
      * @custom:then The function should not revert
      */
     function test_checkInitiateClosePositionFromRebalancerBelowMin() public {
-        uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition()) + 1;
-        _setUpRebalancerPosition(uint88(amountToClose));
+        prepareParams.amountToClose = AMOUNT - uint128(protocol.getMinLongPosition()) + 1;
+        prepareParams.to = USER_2;
+        prepareParams.validator = USER_1;
+
+        _setUpRebalancerPosition(uint88(prepareParams.amountToClose));
+
+        vm.prank(address(mockedRebalancer));
         // note: the rebalancer always sets the rebalancer user as "validator" (USER_1)
-        protocol.i_checkInitiateClosePosition(address(mockedRebalancer), USER_2, USER_1, amountToClose, pos);
+        protocol.i_checkInitiateClosePosition(pos, prepareParams);
     }
 
     /**
      * @custom:scenario Check an initiate close of a position from the rebalancer (partial)
-     * @custom:given USER_1 has a position in the rebalancer with an amount that leaves the position above the min
-     * @custom:and The "validator" address is the rebalancer user
-     * @custom:when The rebalancer initiates a partial close position with a remaining amount that is above the min
+     * @custom:given The user has a position in the rebalancer with an amount that leaves the position above the min
+     * @custom:when The rebalancer initiates a partial close position with a remaining amount that is below the  min
      * @custom:then The function should not revert
      */
     function test_checkInitiateClosePositionFromRebalancer() public {
-        uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition());
-        _setUpRebalancerPosition(uint88(amountToClose + 1));
-        // note: the rebalancer always sets the rebalancer user as "validator" (USER_1)
-        protocol.i_checkInitiateClosePosition(address(mockedRebalancer), USER_2, USER_1, amountToClose, pos);
-    }
+        prepareParams.amountToClose = uint128(AMOUNT - protocol.getMinLongPosition() + 1);
+        _setUpRebalancerPosition(uint88(AMOUNT));
 
-    /**
-     * @custom:scenario Check an initiate close of a position from the rebalancer with a remaining amount that is too
-     * low
-     * @custom:given USER_1 has a position in the rebalancer with an amount that would leave the position below the min
-     * @custom:and The "validator" address is the rebalancer user
-     * @custom:when The rebalancer initiates a partial close position with an amount below their position amount
-     * @custom:then The function should revert with `UsdnProtocolLongPositionTooSmall`
-     */
-    function test_RevertWhen_checkInitiateClosePositionFromRebalancerTooSmall() public {
-        uint128 amountToClose = AMOUNT - uint128(protocol.getMinLongPosition()) + 1;
-        _setUpRebalancerPosition(uint88(amountToClose + 1));
-        // note: the rebalancer always sets the rebalancer user as "validator" (USER_1)
-        vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
-        protocol.i_checkInitiateClosePosition(address(mockedRebalancer), USER_2, USER_1, amountToClose, pos);
+        vm.prank(address(mockedRebalancer));
+        protocol.i_checkInitiateClosePosition(pos, prepareParams);
     }
 
     /**
