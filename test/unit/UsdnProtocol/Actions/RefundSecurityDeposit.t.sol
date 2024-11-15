@@ -74,7 +74,15 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
      * validator
      * @custom:then The protocol reverts with `InitializableReentrancyGuardReentrantCall`
      */
-    function test_RevertWhen_ReentrencyGriefing() public {
+    function test_RevertWhen_ReentrancyGriefing() public {
+        // this condition is for the 2nd call to the test, during the reentrancy
+        if (_reentrancy) {
+            _reentrancy = false;
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.refundSecurityDeposit(USER_2);
+            return;
+        }
+
         uint256 securityDepositValue = protocol.getSecurityDepositValue();
         wstETH.mintAndApprove(USER_1, 5 ether, address(protocol), 5 ether);
         wstETH.mintAndApprove(USER_2, 5 ether, address(protocol), 5 ether);
@@ -111,6 +119,7 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
 
         _reentrancy = true;
 
+        vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.refundSecurityDeposit.selector), 1);
         vm.prank(USER_1);
         protocol.initiateOpenPosition{ value: securityDepositValue }(
             5 ether,
@@ -148,9 +157,7 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
 
     receive() external payable {
         if (_reentrancy) {
-            _reentrancy = false;
-            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.refundSecurityDeposit(USER_2);
+            test_RevertWhen_ReentrancyGriefing();
         }
     }
 }
