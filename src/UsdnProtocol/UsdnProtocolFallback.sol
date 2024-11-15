@@ -25,9 +25,9 @@ import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVault
 contract UsdnProtocolFallback is
     IUsdnProtocolErrors,
     IUsdnProtocolFallback,
+    InitializableReentrancyGuard,
     PausableUpgradeable,
-    AccessControlDefaultAdminRulesUpgradeable,
-    InitializableReentrancyGuard
+    AccessControlDefaultAdminRulesUpgradeable
 {
     /// @inheritdoc IUsdnProtocolFallback
     function getActionablePendingActions(address currentUser)
