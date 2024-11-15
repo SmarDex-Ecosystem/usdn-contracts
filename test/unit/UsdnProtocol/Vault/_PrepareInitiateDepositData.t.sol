@@ -14,7 +14,8 @@ contract TestUsdnProtocolPrepareInitiateDepositData is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Check _prepareInitiateDepositData function revert when the vault balance is empty
-     * @custom:given An empty vault balance. This case can't happen so we need to force it by setting the balance to 0
+     * @custom:given An empty vault balance. This case is not supposed to happen so we need to force it by setting the
+     * balance to 0
      * @custom:when The function is called
      * @custom:then The function reverts with the UsdnProtocolEmptyVault error
      */
