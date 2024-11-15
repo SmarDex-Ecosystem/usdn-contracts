@@ -22,6 +22,7 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
         rebalancer.initiateDepositAssets(minAsset, address(this));
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
+        vm.warp(rebalancer.getCloseLockedUntil() + 1);
     }
 
     /**
@@ -93,6 +94,24 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
             minAsset, USER_1, USER_1, DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
         vm.stopPrank();
+    }
+
+    /**
+     * @custom:scenario Call {initiateClosePosition} function with a timestamp before the {closeLockedUntil}
+     * @custom:when The {initiateClosePosition} function is called
+     * @custom:then It should revert with {RebalancerCloseLockedUntil}
+     */
+    function test_RevertWhen_rebalancerBeforeCloseLockedUntil() public {
+        vm.warp(block.timestamp - 1);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IRebalancerErrors.RebalancerCloseLockedUntil.selector, rebalancer.getCloseLockedUntil()
+            )
+        );
+        rebalancer.initiateClosePosition(
+            minAsset, address(this), payable(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
+        );
     }
 
     receive() external payable { }
