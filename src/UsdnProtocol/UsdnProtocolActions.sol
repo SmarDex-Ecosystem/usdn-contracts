@@ -31,7 +31,14 @@ abstract contract UsdnProtocolActions is
         uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_, PositionId memory posId_) {
+    )
+        external
+        payable
+        whenNotPaused
+        initializedAndNonReentrant
+        nonReentrant
+        returns (bool success_, PositionId memory posId_)
+    {
         Storage storage s = Utils._getMainStorage();
 
         InitiateOpenPositionParams memory params = InitiateOpenPositionParams({
@@ -54,7 +61,7 @@ abstract contract UsdnProtocolActions is
         address payable validator,
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant nonReentrant returns (bool success_) {
         return ActionsLong.validateOpenPosition(validator, openPriceData, previousActionsData);
     }
 
@@ -69,7 +76,7 @@ abstract contract UsdnProtocolActions is
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
         bytes calldata delegationSignature
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant nonReentrant returns (bool success_) {
         Storage storage s = Utils._getMainStorage();
 
         InitiateClosePositionParams memory params = InitiateClosePositionParams({
@@ -91,7 +98,7 @@ abstract contract UsdnProtocolActions is
         address payable validator,
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant nonReentrant returns (bool success_) {
         return ActionsLong.validateClosePosition(validator, closePriceData, previousActionsData);
     }
 
@@ -104,7 +111,7 @@ abstract contract UsdnProtocolActions is
         uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant nonReentrant returns (bool success_) {
         return
             Vault.initiateDeposit(amount, sharesOutMin, to, validator, deadline, currentPriceData, previousActionsData);
     }
@@ -114,7 +121,7 @@ abstract contract UsdnProtocolActions is
         address payable validator,
         bytes calldata depositPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant nonReentrant returns (bool success_) {
         return Vault.validateDeposit(validator, depositPriceData, previousActionsData);
     }
 
@@ -127,7 +134,7 @@ abstract contract UsdnProtocolActions is
         uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant nonReentrant returns (bool success_) {
         return Vault.initiateWithdrawal(
             usdnShares, amountOutMin, to, validator, deadline, currentPriceData, previousActionsData
         );
@@ -138,7 +145,7 @@ abstract contract UsdnProtocolActions is
         address payable validator,
         bytes calldata withdrawalPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant nonReentrant returns (bool success_) {
         return Vault.validateWithdrawal(validator, withdrawalPriceData, previousActionsData);
     }
 
@@ -148,6 +155,7 @@ abstract contract UsdnProtocolActions is
         payable
         whenNotPaused
         initializedAndNonReentrant
+        nonReentrant
         returns (LiqTickInfo[] memory liquidatedTicks_)
     {
         return ActionsUtils.liquidate(currentPriceData);
@@ -159,6 +167,7 @@ abstract contract UsdnProtocolActions is
         payable
         whenNotPaused
         initializedAndNonReentrant
+        nonReentrant
         returns (uint256 validatedActions_)
     {
         return ActionsUtils.validateActionablePendingActions(previousActionsData, maxValidations);
@@ -169,6 +178,7 @@ abstract contract UsdnProtocolActions is
         external
         whenNotPaused
         initializedAndNonReentrant
+        nonReentrant
     {
         return ActionsUtils.transferPositionOwnership(posId, newOwner, delegationSignature, _domainSeparatorV4());
     }

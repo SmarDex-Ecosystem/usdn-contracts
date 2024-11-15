@@ -20,14 +20,14 @@ contract TestInitializableReentrancyGuardInitializer is
      */
     function test_initializeSetStatusToNotEntered() public {
         // Load the storage slot for the `_status` private storage variable
-        uint256 statusBefore = handler.i_getInitializableReentrancyGuardStorage()._status;
+        uint256 statusBefore = handler.i_getStorageStatus()._status;
 
         // sanity check
         assertEq(statusBefore, 0, "Status must be UNINITIALIZED");
 
         handler.initialize();
 
-        uint256 statusAfter = handler.i_getInitializableReentrancyGuardStorage()._status;
+        uint256 statusAfter = handler.i_getStorageStatus()._status;
         assertEq(statusAfter, 1, "Status should be NOT_ENTERED");
     }
 

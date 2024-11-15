@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { ReentrancyGuardTransientUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
+
 import { InitializableReentrancyGuardFixtures } from "./utils/Fixtures.sol";
 
 import { InitializableReentrancyGuard } from "../../../src/utils/InitializableReentrancyGuard.sol";
@@ -10,7 +13,8 @@ import { InitializableReentrancyGuard } from "../../../src/utils/InitializableRe
  */
 contract TestInitializableReentrancyGuardInitializedAndNonReentrant is
     InitializableReentrancyGuardFixtures,
-    InitializableReentrancyGuard
+    InitializableReentrancyGuard,
+    ReentrancyGuardTransientUpgradeable
 {
     bool internal _reenter;
 
@@ -34,17 +38,17 @@ contract TestInitializableReentrancyGuardInitializedAndNonReentrant is
      * @custom:then The call reverts with a InitializableReentrancyGuardReentrantCall error
      */
     function test_RevertWhen_reentrant() public {
-        uint256 status = handler.i_getTransientReentrancyStatus();
+        bool entered = handler.i_reentrancyGuardEntered();
         if (_reenter) {
-            assertEq(status, 2, "Status should be ENTERED");
+            assertTrue(entered, "Should be entered");
 
-            vm.expectRevert(InitializableReentrancyGuardReentrantCall.selector);
+            vm.expectRevert(ReentrancyGuardReentrantCall.selector);
             handler.func_initializedAndNonReentrant();
             return;
         }
 
         // Sanity check
-        assertEq(status, 0, "Status should be UNINITIALIZED");
+        assertFalse(entered, "Should not be entered");
         handler.initialize();
         _reenter = true;
 
@@ -52,8 +56,8 @@ contract TestInitializableReentrancyGuardInitializedAndNonReentrant is
         vm.expectCall(address(handler), abi.encodeWithSelector(handler.func_initializedAndNonReentrant.selector), 2);
         handler.func_initializedAndNonReentrant();
 
-        status = handler.i_getInitializableReentrancyGuardStorage()._status;
-        assertEq(status, 1, "Status should be NOT_ENTERED");
+        entered = handler.i_reentrancyGuardEntered();
+        assertFalse(entered, "Should not be entered");
     }
 
     /**

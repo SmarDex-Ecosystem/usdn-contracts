@@ -2,15 +2,17 @@
 pragma solidity 0.8.26;
 
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
+import { ReentrancyGuardTransientUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 
 /**
  * @title InitializableReentrancyGuardHandler
  * @dev Wrapper to help test InitializableReentrancyGuard
  */
-contract InitializableReentrancyGuardHandler is InitializableReentrancyGuard {
+contract InitializableReentrancyGuardHandler is InitializableReentrancyGuard, ReentrancyGuardTransientUpgradeable {
     function initialize() external protocolInitializer { }
 
-    function func_initializedAndNonReentrant() external initialized {
+    function func_initializedAndNonReentrant() external initializedAndNonReentrant nonReentrant {
         // gives a reentrancy opportunity
         (bool success,) = msg.sender.call{ value: 1 }("");
         require(success, "transfer failed");
@@ -20,15 +22,11 @@ contract InitializableReentrancyGuardHandler is InitializableReentrancyGuard {
         return _checkUninitialized();
     }
 
-    function i_getInitializableReentrancyGuardStorage()
-        external
-        pure
-        returns (InitializableReentrancyGuardStorage memory)
-    {
-        return _getInitializableReentrancyGuardStorage();
+    function i_getStorageStatus() external pure returns (StorageStatus memory) {
+        return _getStorageStatus();
     }
 
-    function i_getTransientReentrancyStatus() external view returns (uint256) {
-        return _getTransientReentrancyStatus();
+    function i_reentrancyGuardEntered() external view returns (bool) {
+        return _reentrancyGuardEntered();
     }
 }
