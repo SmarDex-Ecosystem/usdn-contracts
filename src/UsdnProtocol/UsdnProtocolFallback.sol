@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { AccessControlDefaultAdminRulesUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { ReentrancyGuardTransientUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -15,6 +17,7 @@ import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
+import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolSettersLibrary as Setters } from "./libraries/UsdnProtocolSettersLibrary.sol";
@@ -24,6 +27,8 @@ import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVault
 contract UsdnProtocolFallback is
     IUsdnProtocolErrors,
     IUsdnProtocolFallback,
+    InitializableReentrancyGuard,
+    ReentrancyGuardTransientUpgradeable,
     PausableUpgradeable,
     AccessControlDefaultAdminRulesUpgradeable
 {
@@ -93,7 +98,12 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function refundSecurityDeposit(address payable validator) external whenNotPaused {
+    function refundSecurityDeposit(address payable validator)
+        external
+        whenNotPaused
+        initializedAndNonReentrant
+        nonReentrant
+    {
         uint256 securityDepositValue = Core._removeStalePendingAction(validator);
         if (securityDepositValue > 0) {
             Utils._refundEther(securityDepositValue, validator);

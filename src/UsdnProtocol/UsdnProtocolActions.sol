@@ -16,9 +16,9 @@ import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVault
 abstract contract UsdnProtocolActions is
     IUsdnProtocolActions,
     InitializableReentrancyGuard,
+    ReentrancyGuardTransientUpgradeable,
     PausableUpgradeable,
-    EIP712Upgradeable,
-    ReentrancyGuardTransientUpgradeable
+    EIP712Upgradeable
 {
     /// @inheritdoc IUsdnProtocolActions
     function initiateOpenPosition(
