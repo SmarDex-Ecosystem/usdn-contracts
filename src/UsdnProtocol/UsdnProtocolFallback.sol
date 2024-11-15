@@ -108,6 +108,7 @@ contract UsdnProtocolFallback is
     function removeBlockedPendingAction(address validator, address payable to)
         external
         onlyRole(Constants.CRITICAL_FUNCTIONS_ROLE)
+        initializedAndNonReentrant
     {
         Core.removeBlockedPendingAction(validator, to);
     }
@@ -124,6 +125,7 @@ contract UsdnProtocolFallback is
     function removeBlockedPendingAction(uint128 rawIndex, address payable to)
         external
         onlyRole(Constants.CRITICAL_FUNCTIONS_ROLE)
+        initializedAndNonReentrant
     {
         Core._removeBlockedPendingAction(rawIndex, to, true);
     }
