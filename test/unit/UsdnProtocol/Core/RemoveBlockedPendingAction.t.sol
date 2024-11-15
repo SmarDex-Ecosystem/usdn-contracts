@@ -6,11 +6,16 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /// @custom:feature The `removeBlockedPendingAction` and `_removeBlockedPendingAction` admin functions of the protocol
 contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     /// @dev Whether to revert inside the receive function of this contract
-    bool revertOnReceive = false;
+    bool internal revertOnReceive;
+    /// @dev Whether to call again a function to test reentrancy
+    bool internal _reenter;
+    /// @dev The counter to know which function to call next when testing reentrancy
+    uint256 functionCounter;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -538,6 +543,80 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         protocol.removeBlockedPendingActionNoCleanup(payable(this), payable(this));
     }
 
+    /* ------------------------------- Reentrancy ------------------------------- */
+
+    /**
+     * @custom:scenario Reentrancy when removing a blocked pending action with address
+     * @custom:given The protocol has a pending action for the user
+     * @custom:when The admin tries to reenter the function
+     * @custom:then The transaction reverts with the {InitializableReentrancyGuardReentrantCall} error
+     */
+    function test_RevertWhen_removeBlockedPendingAction_Reentrancy() public {
+        functionCounter = 0;
+
+        if (_reenter) {
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            vm.prank(ADMIN);
+            protocol.removeBlockedPendingAction(payable(this), payable(this));
+            return;
+        }
+
+        _reenter = true;
+
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
+        );
+        _wait();
+
+        // If a reentrancy occurred, the function should have been called 2 times
+        vm.expectCall(address(protocol), abi.encodeWithSignature("removeBlockedPendingAction(address,address)"), 2);
+        vm.prank(ADMIN);
+        protocol.removeBlockedPendingAction(payable(this), payable(this));
+    }
+
+    /**
+     * @custom:scenario Reentrancy when removing a blocked pending action with the raw index
+     * @custom:given The protocol has a pending action for the user
+     * @custom:when The admin tries to reenter the function
+     * @custom:then The transaction reverts with the {InitializableReentrancyGuardReentrantCall} error
+     */
+    function test_RevertWhen_removeBlockedPendingActionRawIndex_Reentrancy() public {
+        uint128 rawIndex;
+        functionCounter = 1;
+
+        if (_reenter) {
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            vm.prank(ADMIN);
+            protocol.removeBlockedPendingAction(rawIndex, payable(this));
+            return;
+        }
+
+        _reenter = true;
+
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
+        );
+        _wait();
+        (, rawIndex) = protocol.i_getPendingAction(address(this));
+
+        // If a reentrancy occurred, the function should have been called 2 times
+        vm.expectCall(address(protocol), abi.encodeWithSignature("removeBlockedPendingAction(uint128,address)"), 2);
+        vm.prank(ADMIN);
+        protocol.removeBlockedPendingAction(rawIndex, payable(this));
+    }
+
     function _wait() internal {
         _waitBeforeActionablePendingAction();
         skip(1 hours);
@@ -546,6 +625,13 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     receive() external payable {
         if (revertOnReceive) {
             revert();
+        }
+        if (_reenter) {
+            if (functionCounter == 0) {
+                test_RevertWhen_removeBlockedPendingAction_Reentrancy();
+            } else if (functionCounter == 1) {
+                test_RevertWhen_removeBlockedPendingActionRawIndex_Reentrancy();
+            }
         }
     }
 }
