@@ -757,13 +757,14 @@ library UsdnProtocolVaultLibrary {
 
         // we calculate the amount of USDN to mint, either considering the vault balance at the time of the initiate
         // action, or the current balance with the new price. We will use the higher of the two to mint. Funding between
-        // the initiate and validate actions is ignored
+        // the initiate and validate actions is ignored. So any balance difference due to funding will be ignored when
+        // calculating the minted USDN
         uint128 fees = FixedPointMathLib.fullMulDiv(deposit.amount, deposit.feeBps, Constants.BPS_DIVISOR).toUint128();
         uint128 amountAfterFees = deposit.amount - fees;
 
         uint256 balanceVault = deposit.balanceVault;
         if (currentPrice.price < deposit.assetPrice) {
-            // price decreased: balance of the vault increased
+            // without considering the funding, when the price decreases, the balance of the vault increases
             int256 available = Utils._vaultAssetAvailable(
                 deposit.totalExpo,
                 deposit.balanceVault,
