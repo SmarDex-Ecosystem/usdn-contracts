@@ -8,14 +8,13 @@ import { IBaseLiquidationRewardsManager } from "../LiquidationRewardsManager/IBa
 import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../Usdn/IUsdn.sol";
-import { IUsdnProtocolErrors } from "./IUsdnProtocolErrors.sol";
-import { IUsdnProtocolTypes as Types } from "./IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolFallback
  * @notice Interface for the USDN protocol fallback functions
  */
-interface IUsdnProtocolFallback is IUsdnProtocolErrors {
+interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     /**
      * @notice Retrieve a list of pending actions, one of which must be validated by the next user action in the
      * protocol
@@ -31,7 +30,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolErrors {
     function getActionablePendingActions(address currentUser)
         external
         view
-        returns (Types.PendingAction[] memory actions_, uint128[] memory rawIndices_);
+        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_);
 
     /**
      * @notice Retrieve a user pending action
@@ -39,7 +38,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolErrors {
      * @return action_ The pending action if any, otherwise a struct with all fields set to zero and
      * `ProtocolAction.None`
      */
-    function getUserPendingAction(address user) external view returns (Types.PendingAction memory action_);
+    function getUserPendingAction(address user) external view returns (PendingAction memory action_);
 
     /**
      * @notice Get the hash generated from the tick and a version
@@ -579,7 +578,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolErrors {
      * @param tick The tick number
      * @return The tick data
      */
-    function getTickData(int24 tick) external view returns (Types.TickData memory);
+    function getTickData(int24 tick) external view returns (TickData memory);
 
     /**
      * @notice Get the long position at the provided tick, in the provided index
@@ -587,7 +586,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolErrors {
      * @param index The position index
      * @return The long position
      */
-    function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Types.Position memory);
+    function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory);
 
     /**
      * @notice Get the highest tick that has an open position
@@ -798,12 +797,31 @@ interface IUsdnProtocolFallback is IUsdnProtocolErrors {
     /**
      * @notice Pauses related USDN protocol functions
      * @dev Pauses simultaneously all initiate/validate, refundSecurityDeposit and transferPositionOwnership functions
+     * Before pausing, this function will call `_applyPnlAndFunding` with `_lastPrice` and the current timestamp
+     * This is done to stop the funding rate from accumulating while the protocol is paused, be sure to call {unpause}
+     * when unpausing
      */
     function pause() external;
 
     /**
+     * @notice Pauses related USDN protocol functions
+     * @dev Pauses simultaneously all initiate/validate, refundSecurityDeposit and transferPositionOwnership functions
+     * This safe version will not call `_applyPnlAndFunding` before pausing
+     */
+    function pauseSafe() external;
+
+    /**
      * @notice Unpauses related USDN protocol functions
      * @dev Unpauses simultaneously all initiate/validate, refundSecurityDeposit and transferPositionOwnership functions
+     * This function will set `_lastUpdateTimestamp` to the current timestamp to prevent any funding during the pause
+     * Only meant to be called after a {pause} call
      */
     function unpause() external;
+
+    /**
+     * @notice Unpauses related USDN protocol functions
+     * @dev Unpauses simultaneously all initiate/validate, refundSecurityDeposit and transferPositionOwnership functions
+     * This safe version will not set `_lastUpdateTimestamp` to the current timestamp
+     */
+    function unpauseSafe() external;
 }

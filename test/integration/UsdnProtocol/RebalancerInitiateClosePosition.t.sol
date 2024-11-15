@@ -283,11 +283,11 @@ contract TestRebalancerInitiateClosePosition is
         LiqTickInfo[] memory liqTickInfoArray;
 
         // snapshot and liquidate to get the liquidated ticks data
-        uint256 snapshotId = vm.snapshot();
+        uint256 snapshotId = vm.snapshotState();
         liqTickInfoArray = protocol.liquidate{
             value: oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation)
         }(MOCK_PYTH_DATA);
-        vm.revertTo(snapshotId);
+        vm.revertToState(snapshotId);
 
         uint256 liquidationRewards = liquidationRewardsManager.getLiquidationRewards(
             liqTickInfoArray, wstEthPrice, false, RebalancerAction.None, ProtocolAction.InitiateClosePosition, "", ""

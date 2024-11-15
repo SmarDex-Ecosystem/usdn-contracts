@@ -5,12 +5,12 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { ADMIN, DEPLOYER } from "../../utils/Constants.sol";
-import { IUsdnProtocolHandler } from "../../utils/IUsdnProtocolHandler.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "./utils/Handler.sol";
 
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { IUsdnProtocol } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { HugeUint } from "../../../src/libraries/HugeUint.sol";
 
 /**
@@ -45,7 +45,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                 )
             )
         );
-        protocol = IUsdnProtocolHandler(proxy);
+        protocol = UsdnProtocolHandler(proxy);
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
@@ -67,7 +67,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                 address(this),
                 address(this)
             ),
-            protocol
+            IUsdnProtocol(address(protocol))
         );
     }
 
