@@ -8,6 +8,7 @@ import { IBaseLiquidationRewardsManager } from
     "../interfaces/LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
+import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolImpl } from "../interfaces/UsdnProtocol/IUsdnProtocolImpl.sol";
 import { UsdnProtocolActions } from "./UsdnProtocolActions.sol";
@@ -18,11 +19,12 @@ import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProto
 import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 
 contract UsdnProtocolImpl is
+    IUsdnProtocolErrors,
     IUsdnProtocolImpl,
-    UsdnProtocolLong,
-    UsdnProtocolVault,
-    UsdnProtocolCore,
     UsdnProtocolActions,
+    UsdnProtocolCore,
+    UsdnProtocolVault,
+    UsdnProtocolLong,
     UUPSUpgradeable
 {
     /// @custom:oz-upgrades-unsafe-allow constructor

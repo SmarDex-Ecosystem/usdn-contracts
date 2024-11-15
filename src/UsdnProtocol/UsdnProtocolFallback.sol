@@ -12,8 +12,8 @@ import { IBaseLiquidationRewardsManager } from
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
+import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
-import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
@@ -23,6 +23,7 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtils
 import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVaultLibrary.sol";
 
 contract UsdnProtocolFallback is
+    IUsdnProtocolErrors,
     IUsdnProtocolFallback,
     PausableUpgradeable,
     AccessControlDefaultAdminRulesUpgradeable,
@@ -32,13 +33,13 @@ contract UsdnProtocolFallback is
     function getActionablePendingActions(address currentUser)
         external
         view
-        returns (Types.PendingAction[] memory actions_, uint128[] memory rawIndices_)
+        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
     {
         return Vault.getActionablePendingActions(currentUser);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getUserPendingAction(address user) external view returns (Types.PendingAction memory action_) {
+    function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
         return Core.getUserPendingAction(user);
     }
 
@@ -68,7 +69,7 @@ contract UsdnProtocolFallback is
         view
         returns (uint256 usdnSharesExpected_, uint256 sdexToBurn_)
     {
-        Types.Storage storage s = Utils._getMainStorage();
+        Storage storage s = Utils._getMainStorage();
 
         uint256 vaultBalance = Vault.vaultAssetAvailableWithFunding(price, timestamp);
         if (vaultBalance == 0) {
@@ -87,7 +88,7 @@ contract UsdnProtocolFallback is
         view
         returns (uint256 assetExpected_)
     {
-        Types.Storage storage s = Utils._getMainStorage();
+        Storage storage s = Utils._getMainStorage();
 
         uint256 available = Vault.vaultAssetAvailableWithFunding(price, timestamp);
         assetExpected_ = Utils._calcAmountToWithdraw(usdnShares, available, s._usdn.totalShares(), s._vaultFeeBps);
@@ -434,16 +435,16 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getTickData(int24 tick) external view returns (Types.TickData memory) {
-        Types.Storage storage s = Utils._getMainStorage();
+    function getTickData(int24 tick) external view returns (TickData memory) {
+        Storage storage s = Utils._getMainStorage();
 
         bytes32 cachedTickHash = Utils.tickHash(tick, s._tickVersion[tick]);
         return Utils._getMainStorage()._tickData[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Types.Position memory) {
-        Types.Storage storage s = Utils._getMainStorage();
+    function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory) {
+        Storage storage s = Utils._getMainStorage();
 
         uint256 version = s._tickVersion[tick];
         bytes32 cachedTickHash = Utils.tickHash(tick, version);
