@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
 
 env:
   FOUNDRY_PROFILE: ci
@@ -11,46 +10,43 @@ env:
 jobs:
   coverage:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    strategy:
-      fail-fast: false
-    # permissions:
-    #   contents: read
-    #   pull-requests: write
-    steps:
-      # - uses: actions/create-github-app-token@v1
-      #   id: app-token
-      #   with:
-      #     app-id: ${{ secrets.APP_ID }}
-      #     private-key: ${{ secrets.APP_PRIVATE_KEY }}
+    # # permissions:
+    # #   contents: read
+    # #   pull-requests: write
+    # steps:
+    #   # - uses: actions/create-github-app-token@v1
+    #   #   id: app-token
+    #   #   with:
+    #   #     app-id: ${{ secrets.APP_ID }}
+    #   #     private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+    #   - uses: actions/checkout@v4
+    #     with:
+    #       submodules: recursive
 
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
+    #   - name: Install Foundry
+    #     uses: foundry-rs/foundry-toolchain@v1
+    #     with:
+    #       version: nightly
 
-      - name: Install Node 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+    #   - name: Install Node 20
+    #     uses: actions/setup-node@v4
+    #     with:
+    #       node-version: 20
 
-      - name: Install deps
-        run: npm ci && forge soldeer install
+    #   - name: Install deps
+    #     run: npm ci && forge soldeer install
 
-      - name: Generate coverage report
-        run: npm run cov
+    #   - name: Generate coverage report
+    #     run: npm run cov
 
-      # - name: Setup LCOV
-      #   uses: hrishikesh-kadam/setup-lcov@v1
+    #   # - name: Setup LCOV
+    #   #   uses: hrishikesh-kadam/setup-lcov@v1
 
-      # - name: Report code coverage
-      #   uses: zgosalvez/github-actions-report-lcov@v4
-      #   with:
-      #     coverage-files: lcov.info
-      #     artifact-name: code-coverage-report
-      #     github-token: ${{ steps.app-token.outputs.token }}
-      #     update-comment: true
+    #   # - name: Report code coverage
+    #   #   uses: zgosalvez/github-actions-report-lcov@v4
+    #   #   with:
+    #   #     coverage-files: lcov.info
+    #   #     artifact-name: code-coverage-report
+    #   #     github-token: ${{ steps.app-token.outputs.token }}
+    #   #     update-comment: true
