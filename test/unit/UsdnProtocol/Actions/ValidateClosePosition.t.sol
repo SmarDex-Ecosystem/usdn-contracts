@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { ReentrancyGuardTransientUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { ADMIN, DEPLOYER, USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
-
-import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature The initiate close position functions of the USDN Protocol
@@ -793,11 +793,11 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a user being a smart contract that calls validateClosePosition with too much ether
      * @custom:and a receive() function that calls validateClosePosition again
      * @custom:when The user calls validateClosePosition again from the callback
-     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:then The call reverts with ReentrancyGuardReentrantCall
      */
     function test_RevertWhen_validateClosePositionCalledWithReentrancy() public {
         if (_reenter) {
-            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            vm.expectRevert(ReentrancyGuardTransientUpgradeable.ReentrancyGuardReentrantCall.selector);
             protocol.validateClosePosition(payable(address(this)), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
             return;
         }

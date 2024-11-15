@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { ReentrancyGuardTransientUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
+
 import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
-import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature The validateOpenPosition function of the UsdnProtocolActions contract
@@ -491,11 +493,11 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:given A user being a smart contract that calls validateOpenPosition when receiving ether
      * @custom:and A receive() function that calls validateOpenPosition again
      * @custom:when The user calls validateOpenPosition with some ether to trigger a refund
-     * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:then The protocol reverts with ReentrancyGuardReentrantCall
      */
     function test_RevertWhen_validateOpenPositionCalledWithReentrancy() public {
         if (_reenter) {
-            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            vm.expectRevert(ReentrancyGuardTransientUpgradeable.ReentrancyGuardReentrantCall.selector);
             protocol.validateOpenPosition(payable(this), abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
             return;
         }

@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { ReentrancyGuardTransientUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
+
 import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
-import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature The initiateOpenPosition function of the UsdnProtocolActions contract
@@ -550,12 +552,12 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:given A user being a smart contract that calls initiateOpenPosition with too much ether
      * @custom:and A receive() function that calls initiateOpenPosition again
      * @custom:when The user calls initiateOpenPosition again from the callback
-     * @custom:then The call reverts with {InitializableReentrancyGuardReentrantCall}
+     * @custom:then The call reverts with {ReentrancyGuardReentrantCall}
      */
     function test_RevertWhen_initiateOpenPositionCalledWithReentrancy() public {
         if (_reenter) {
             uint256 leverage = protocol.getMaxLeverage();
-            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            vm.expectRevert(ReentrancyGuardTransientUpgradeable.ReentrancyGuardReentrantCall.selector);
             protocol.initiateOpenPosition(
                 LONG_AMOUNT,
                 CURRENT_PRICE * 3 / 4,

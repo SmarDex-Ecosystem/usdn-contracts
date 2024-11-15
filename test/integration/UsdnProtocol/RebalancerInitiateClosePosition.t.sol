@@ -484,7 +484,7 @@ contract TestRebalancerInitiateClosePosition is
      * @custom:given The rebalancer has been triggered once already and has an open position
      * @custom:and An imbalance high enough after a liquidation to trigger the rebalancer
      * @custom:when A user calls initiateClosePosition from the rebalancer
-     * @custom:then The call reverts with a InitializableReentrancyGuardReentrantCall
+     * @custom:then The call reverts with a ReentrancyGuardReentrantCall
      */
     function test_RevertWhen_rebalancerTriggerDuringInitClose() public {
         vm.prank(SET_PROTOCOL_PARAMS_MANAGER);

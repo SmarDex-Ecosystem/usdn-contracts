@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { ReentrancyGuardTransientUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
+
 import { USER_1, USER_2, USER_3, USER_4 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
-
-import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature The validateActionablePendingActions function of the USDN Protocol
@@ -211,14 +212,14 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
      * @custom:given A user being a smart contract that calls validateActionablePendingActions with too much ether
      * @custom:and A receive() function that calls validateActionablePendingActions again
      * @custom:when The user calls validateActionablePendingActions again from the callback
-     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:then The call reverts with ReentrancyGuardReentrantCall
      */
     function test_RevertWhen_validateActionablePendingActionsCalledWithReentrancy() public {
         // If we are currently in a reentrancy
         PreviousActionsData memory previousActionsData;
         if (_reenter) {
             previousActionsData = PreviousActionsData({ priceData: new bytes[](1), rawIndices: new uint128[](1) });
-            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            vm.expectRevert(ReentrancyGuardTransientUpgradeable.ReentrancyGuardReentrantCall.selector);
             protocol.validateActionablePendingActions(previousActionsData, 2);
             return;
         }
