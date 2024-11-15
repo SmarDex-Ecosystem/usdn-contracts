@@ -9,6 +9,8 @@ import { Utils } from "./utils/Utils.s.sol";
 
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 contract Upgrade is Script {
@@ -22,7 +24,7 @@ contract Upgrade is Script {
 
         // Make sure the address used has the permission to upgrade the protocol
         require(
-            _usdnProtocol.hasRole(_usdnProtocol.PROXY_UPGRADE_ROLE(), _deployerAddress),
+            _usdnProtocol.hasRole(Constants.PROXY_UPGRADE_ROLE, _deployerAddress),
             "DEPLOYER_ADDRESS does not have the permission to upgrade the protocol"
         );
 

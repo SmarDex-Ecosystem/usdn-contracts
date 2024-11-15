@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 interface IRebalancerTypes {
@@ -44,10 +44,13 @@ interface IRebalancerTypes {
      * action
      * @param actionCooldown Duration from the initiate action during which the user can't interact with the Rebalancer
      * if the `validationDeadline` elapsed.
+     * @param closeDelay Duration from the last rebalancer long position opening during which the user can't perform a
+     * {initiateClosePosition}
      */
     struct TimeLimits {
-        uint80 validationDelay;
-        uint80 validationDeadline;
-        uint80 actionCooldown;
+        uint64 validationDelay;
+        uint64 validationDeadline;
+        uint64 actionCooldown;
+        uint64 closeDelay;
     }
 }

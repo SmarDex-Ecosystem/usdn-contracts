@@ -6,7 +6,6 @@ import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
-import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
 import { RolesUtils } from "../../../utils/RolesUtils.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
@@ -23,6 +22,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
+import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -92,7 +92,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors
     MockOracleMiddleware public oracleMiddleware;
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
-    IUsdnProtocolHandler public protocol;
+    UsdnProtocolHandler public protocol;
     FeeCollector public feeCollector;
     PositionId public initialPosition;
     uint256 public usdnInitialTotalSupply;
@@ -153,14 +153,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors
                 )
             )
         );
-        protocol = IUsdnProtocolHandler(proxy);
+        protocol = UsdnProtocolHandler(proxy);
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
         vm.stopPrank();
 
-        _giveRolesTo(managers, protocol);
+        _giveRolesTo(managers, IUsdnProtocol(address(protocol)));
 
         vm.startPrank(managers.setProtocolParamsManager);
         if (!testParams.flags.enablePositionFees) {
@@ -203,7 +203,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors
         vm.stopPrank();
 
         vm.prank(DEPLOYER);
-        rebalancer = new RebalancerHandler(protocol);
+        rebalancer = new RebalancerHandler(IUsdnProtocol(address(protocol)));
 
         if (testParams.flags.enableRebalancer) {
             vm.prank(managers.setExternalManager);
@@ -275,7 +275,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors
         assertEq(firstPos.amount, params.initialLong, "first pos amount");
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
         assertEq(protocol.getFeeCollector(), address(feeCollector), "fee collector");
-        assertEq(protocol.owner(), ADMIN, "protocol owner");
+        assertEq(protocol.defaultAdmin(), ADMIN, "protocol owner");
     }
 
     /**

@@ -20,7 +20,6 @@ import {
 } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
-import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
 import { RolesUtils } from "../../../utils/RolesUtils.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
@@ -37,6 +36,7 @@ import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -86,7 +86,7 @@ contract UsdnProtocolBaseIntegrationFixture is
 
     Usdn public usdn;
     Sdex public sdex;
-    IUsdnProtocolHandler public protocol;
+    UsdnProtocolHandler public protocol;
     UsdnProtocolHandler public implementation;
     UsdnProtocolFallback public protocolFallback;
     WstETH public wstETH;
@@ -186,9 +186,9 @@ contract UsdnProtocolBaseIntegrationFixture is
                 )
             )
         );
-        protocol = IUsdnProtocolHandler(proxy);
+        protocol = UsdnProtocolHandler(proxy);
 
-        rebalancer = new Rebalancer(protocol);
+        rebalancer = new Rebalancer(IUsdnProtocol(address(protocol)));
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
@@ -214,7 +214,7 @@ contract UsdnProtocolBaseIntegrationFixture is
         );
         vm.stopPrank();
 
-        _giveRolesTo(managers, protocol);
+        _giveRolesTo(managers, IUsdnProtocol(address(protocol)));
 
         vm.prank(managers.setExternalManager);
         protocol.setRebalancer(rebalancer);

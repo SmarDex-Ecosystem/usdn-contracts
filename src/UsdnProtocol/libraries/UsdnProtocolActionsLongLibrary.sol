@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -23,7 +22,6 @@ import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.so
 
 library UsdnProtocolActionsLongLibrary {
     using HugeUint for HugeUint.Uint512;
-    using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeTransferLib for address;
 
@@ -274,7 +272,7 @@ library UsdnProtocolActionsLongLibrary {
             data.pos.validated = true;
             // insert position into new tick
             (maxLeverageData.newPosId.tickVersion, maxLeverageData.newPosId.index,) =
-                _saveNewPosition(maxLeverageData.newPosId.tick, data.pos, maxLeverageData.liquidationPenalty);
+                Core._saveNewPosition(maxLeverageData.newPosId.tick, data.pos, maxLeverageData.liquidationPenalty);
 
             // adjust the balances to reflect the new value of the position
             uint256 updatedPosValue =
@@ -337,69 +335,10 @@ library UsdnProtocolActionsLongLibrary {
     }
 
     /**
-     * @notice Save a new position in the protocol, adjusting the tick data and global variables
-     * @dev Note: this method does not update the long balance
-     * @param tick The tick to hold the new position
-     * @param long The position to save
-     * @param liquidationPenalty The liquidation penalty for the tick
-     * @return tickVersion_ The version of the tick
-     * @return index_ The index of the position in the tick array
-     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
-     */
-    function _saveNewPosition(int24 tick, Types.Position memory long, uint24 liquidationPenalty)
-        public
-        returns (uint256 tickVersion_, uint256 index_, HugeUint.Uint512 memory liqMultiplierAccumulator_)
-    {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        bytes32 tickHash;
-        (tickHash, tickVersion_) = Utils._tickHash(tick);
-
-        // add to tick array
-        Types.Position[] storage tickArray = s._longPositions[tickHash];
-        index_ = tickArray.length;
-        if (tick > s._highestPopulatedTick) {
-            // keep track of the highest populated tick
-            s._highestPopulatedTick = tick;
-
-            emit IUsdnProtocolEvents.HighestPopulatedTickUpdated(tick);
-        }
-        tickArray.push(long);
-
-        // adjust state
-        s._totalExpo += long.totalExpo;
-        ++s._totalLongPositions;
-
-        // update tick data
-        Types.TickData storage tickData = s._tickData[tickHash];
-        // the unadjusted tick price for the accumulator might be different depending
-        // if we already have positions in the tick or not
-        uint256 unadjustedTickPrice;
-        if (tickData.totalPos == 0) {
-            // first position in this tick, we need to reflect that it is populated
-            s._tickBitmap.set(Utils._calcBitmapIndexFromTick(tick));
-            // we store the data for this tick
-            tickData.totalExpo = long.totalExpo;
-            tickData.totalPos = 1;
-            tickData.liquidationPenalty = liquidationPenalty;
-            unadjustedTickPrice = TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(tick, liquidationPenalty));
-        } else {
-            tickData.totalExpo += long.totalExpo;
-            tickData.totalPos += 1;
-            // we do not need to adjust the tick's `liquidationPenalty` since it remains constant
-            unadjustedTickPrice =
-                TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(tick, tickData.liquidationPenalty));
-        }
-        // update the accumulator with the correct tick price (depending on the liquidation penalty value)
-        liqMultiplierAccumulator_ = s._liqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));
-        s._liqMultiplierAccumulator = liqMultiplierAccumulator_;
-    }
-
-    /**
      * @notice Initiate an open position action
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `Types.ProtocolAction.InitiateOpenPosition` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * The price validation might require payment according to the return value of the {validationCost} function
      * of the middleware
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
      * leverage). The validation operation then updates the entry price and leverage with fresher data
@@ -455,7 +394,8 @@ library UsdnProtocolActionsLongLibrary {
             totalExpo: data.positionTotalExpo,
             timestamp: uint40(block.timestamp)
         });
-        (data.posId.tickVersion, data.posId.index,) = _saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
+        (data.posId.tickVersion, data.posId.index,) =
+            Core._saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
         // because of the position fee, the position value is smaller than the amount
         s._balanceLong += data.positionValue;
         // positionValue must be smaller than or equal to amount, because the adjustedPrice (with fee) is larger than
@@ -658,7 +598,7 @@ library UsdnProtocolActionsLongLibrary {
      * @notice Initiate a close position action
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `Types.ProtocolAction.InitiateClosePosition` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * The price validation might require payment according to the return value of the {validationCost} function
      * of the middleware
      * If the current tick version is greater than the tick version of the position (when it was opened), then the
      * position has been liquidated and this function will return 0
@@ -856,24 +796,24 @@ library UsdnProtocolActionsLongLibrary {
         uint256 assetToTransfer;
         if (data.positionValue > 0) {
             assetToTransfer = uint256(data.positionValue);
-            // normally, the position value should be smaller than `long.closeBoundedPositionValue` (due to the position
-            // fee)
+            // normally, the position value should be smaller than `long.closeBoundedPositionValue`
+            // (due to the position fee)
             // we can send the difference (any remaining collateral) to the vault
             // if the price increased since the initiation, it's possible that the position value is higher than the
             // `long.closeBoundedPositionValue`. In that case, we need to take the missing assets from the vault
             if (assetToTransfer < long.closeBoundedPositionValue) {
                 uint256 remainingCollateral;
                 unchecked {
-                    // since assetToTransfer is strictly smaller than closeBoundedPositionValue, this operation can't
-                    // underflow
+                    // since assetToTransfer is strictly smaller than closeBoundedPositionValue,
+                    // this operation can't underflow
                     remainingCollateral = long.closeBoundedPositionValue - assetToTransfer;
                 }
                 s._balanceVault += remainingCollateral;
             } else if (assetToTransfer > long.closeBoundedPositionValue) {
                 uint256 missingValue;
                 unchecked {
-                    // since assetToTransfer is strictly larger than closeBoundedPositionValue, this operation can't
-                    // underflow
+                    // since assetToTransfer is strictly larger than closeBoundedPositionValue,
+                    // this operation can't underflow
                     missingValue = assetToTransfer - long.closeBoundedPositionValue;
                 }
                 uint256 balanceVault = s._balanceVault;
@@ -881,12 +821,12 @@ library UsdnProtocolActionsLongLibrary {
                 if (missingValue > balanceVault) {
                     s._balanceVault = 0;
                     unchecked {
-                        // since `missingValue` is strictly larger than `balanceVault`, their subtraction can't
-                        // underflow
+                        // since `missingValue` is strictly larger than `balanceVault`,
+                        // their subtraction can't underflow
                         // moreover, since (missingValue - balanceVault) is smaller than or equal to `missingValue`,
                         // and since `missingValue` is smaller than or equal to `assetToTransfer`,
-                        // (missingValue - balanceVault) is smaller than or equal to `assetToTransfer`, and their
-                        // subtraction can't underflow
+                        // (missingValue - balanceVault) is smaller than or equal to `assetToTransfer`,
+                        // and their subtraction can't underflow
                         assetToTransfer -= missingValue - balanceVault;
                     }
                 } else {
@@ -896,18 +836,21 @@ library UsdnProtocolActionsLongLibrary {
                     }
                 }
             }
-        }
-        // in case the position value is zero or negative, we don't transfer any asset to the user
 
-        // send the asset to the user
-        if (assetToTransfer > 0) {
-            address(s._asset).safeTransfer(long.to, assetToTransfer);
+            if (assetToTransfer > 0) {
+                address(s._asset).safeTransfer(long.to, assetToTransfer);
+            }
+        } else {
+            // if the position value <= 0, including the fees and the Pyth confidence interval, no assets will be
+            // transferred. However, the `closeBoundedPositionValue` must still be credited to the vault
+
+            s._balanceVault += long.closeBoundedPositionValue;
         }
 
         isValidated_ = true;
 
         emit IUsdnProtocolEvents.ValidatedClosePosition(
-            long.validator, // not necessarily the position owner
+            long.validator,
             long.to,
             Types.PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
             assetToTransfer,

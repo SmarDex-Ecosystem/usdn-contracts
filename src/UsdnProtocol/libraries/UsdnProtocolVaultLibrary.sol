@@ -23,10 +23,8 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.so
 
 library UsdnProtocolVaultLibrary {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
-    using SafeCast for int256;
     using SafeCast for uint256;
     using SafeTransferLib for address;
-    using SignedMath for int256;
     using SignedMath for int256;
 
     /**
@@ -631,7 +629,7 @@ library UsdnProtocolVaultLibrary {
      * @notice Initiate a deposit of assets into the vault to mint USDN
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `Types.ProtocolAction.InitiateDeposit` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * The price validation might require payment according to the return value of the {validationCost} function
      * of the middleware
      * @param params The parameters for the deposit
      * @param currentPriceData The current price data
@@ -668,6 +666,8 @@ library UsdnProtocolVaultLibrary {
 
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             if (data.sdexToBurn > 0) {
+                // This logic must be modified if this protocol is deployed twice, as an attacker could burn SDEX once
+                // for both deposits by re-entering one protocol from the other.
                 Utils.transferCallback(s._sdex, data.sdexToBurn, Constants.DEAD_ADDRESS);
             }
             Utils.transferCallback(s._asset, params.amount, address(this));
@@ -835,7 +835,7 @@ library UsdnProtocolVaultLibrary {
         data_.usdnTotalShares = s._usdn.totalShares();
         data_.feeBps = s._vaultFeeBps;
         data_.withdrawalAmountAfterFees =
-            Utils._calcBurnUsdn(usdnShares, data_.balanceVault, data_.usdnTotalShares, data_.feeBps);
+            Utils._calcAmountToWithdraw(usdnShares, data_.balanceVault, data_.usdnTotalShares, data_.feeBps);
         if (data_.withdrawalAmountAfterFees < amountOutMin) {
             revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
         }
@@ -882,7 +882,7 @@ library UsdnProtocolVaultLibrary {
      * @notice Initiate a withdrawal of assets from the vault by providing USDN tokens
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `Types.ProtocolAction.InitiateWithdrawal` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * The price validation might require payment according to the return value of the {validationCost} function
      * of the middleware
      * @param params The parameters for the withdrawal
      * @param currentPriceData The current price data
@@ -1028,19 +1028,25 @@ library UsdnProtocolVaultLibrary {
 
         // we can add back the _pendingBalanceVault we subtracted in the initiate action
         uint256 tempWithdrawalAfterFees =
-            Utils._calcBurnUsdn(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps);
+            Utils._calcAmountToWithdraw(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps);
         s._pendingBalanceVault += tempWithdrawalAfterFees.toInt256();
 
         IUsdn usdn = s._usdn;
         // calculate the amount of asset to transfer with the same fees as recorded during the initiate action
         uint256 assetToTransferAfterFees =
-            Utils._calcBurnUsdn(shares, available, withdrawal.usdnTotalShares, withdrawal.feeBps);
+            Utils._calcAmountToWithdraw(shares, available, withdrawal.usdnTotalShares, withdrawal.feeBps);
 
         usdn.burnShares(shares);
 
         // send the asset to the user
         if (assetToTransferAfterFees > 0) {
-            s._balanceVault -= assetToTransferAfterFees;
+            uint256 balanceVault = s._balanceVault;
+            // if there aren't enough funds in the vault, send what remains
+            if (assetToTransferAfterFees > balanceVault) {
+                assetToTransferAfterFees = balanceVault;
+            }
+
+            s._balanceVault = balanceVault - assetToTransferAfterFees;
             address(s._asset).safeTransfer(withdrawal.to, assetToTransferAfterFees);
         }
 

@@ -78,7 +78,7 @@ contract TestUsdnProtocolProfitableDeposit is UsdnProtocolBaseIntegrationFixture
         mockPyth.setPrice(int64(PYTH_PRICE / 1e10));
         vm.stopPrank();
 
-        snapshotId = vm.snapshot();
+        snapshotId = vm.snapshotState();
     }
 
     /**
@@ -91,7 +91,7 @@ contract TestUsdnProtocolProfitableDeposit is UsdnProtocolBaseIntegrationFixture
     function test_ProfitableDeposit() public {
         uint256 usdnBalanceWithArbitrage = _testWithOracleArbitrage();
 
-        vm.revertTo(snapshotId);
+        vm.revertToState(snapshotId);
         uint256 usdnBalanceWithoutArbitrage = _testWithoutOracleArbitrage();
 
         assertLt(
