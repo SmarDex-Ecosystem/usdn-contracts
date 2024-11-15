@@ -6,7 +6,7 @@ import { InitializableReentrancyGuardFixtures } from "./utils/Fixtures.sol";
 import { InitializableReentrancyGuard } from "../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
- * @custom:feature Unit tests for the `initializedAndNonReentrant` modifier of the InitializableReentrancyGuard contract
+ * @custom:feature Unit tests for the `initialized` modifier of the InitializableReentrancyGuard contract
  */
 contract TestInitializableReentrancyGuardInitializedAndNonReentrant is
     InitializableReentrancyGuardFixtures,
@@ -15,10 +15,10 @@ contract TestInitializableReentrancyGuardInitializedAndNonReentrant is
     bool internal _reenter;
 
     /**
-     * @custom:scenario The user calls a function with the initializedAndNonReentrant modifier
+     * @custom:scenario The user calls a function with the initialized modifier
      * in an uninitialized contract
      * @custom:given An uninitialized contract
-     * @custom:when The user calls a function with the initializedAndNonReentrant modifier
+     * @custom:when The user calls a function with the initialized modifier
      * @custom:then The call reverts with a InitializableReentrancyGuardUninitialized error
      */
     function test_RevertWhen_notInitialized() public {
@@ -27,10 +27,10 @@ contract TestInitializableReentrancyGuardInitializedAndNonReentrant is
     }
 
     /**
-     * @custom:scenario The user reenters a function with the initializedAndNonReentrant modifier
+     * @custom:scenario The user reenters a function with the initialized modifier
      * @custom:given A user being a smart contract that calls the same function when receiving ether
      * @custom:and an initialized contract with a function that sends ether to the caller
-     * @custom:when The user calls a function with the initializedAndNonReentrant modifier
+     * @custom:when The user calls a function with the initialized modifier
      * @custom:then The call reverts with a InitializableReentrancyGuardReentrantCall error
      */
     function test_RevertWhen_reentrant() public {
@@ -57,7 +57,7 @@ contract TestInitializableReentrancyGuardInitializedAndNonReentrant is
     }
 
     /**
-     * @custom:scenario The user reenters a function with the initializedAndNonReentrant modifier
+     * @custom:scenario The user reenters a function with the initialized modifier
      * @custom:given A user being a smart contract that can receive ether
      * @custom:and an initialized contract with a function that sends ether to the caller
      * @custom:when The user calls a function with the modifier

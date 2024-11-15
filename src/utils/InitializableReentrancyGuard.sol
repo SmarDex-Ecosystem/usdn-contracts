@@ -16,59 +16,31 @@ abstract contract InitializableReentrancyGuard {
     uint256 private constant UNINITIALIZED = 0;
     /// @notice The initialized state of the contract
     uint256 private constant INITIALIZED = 1;
-    /// @notice The state of the contract before entering a function
-    uint256 private constant NOT_ENTERED = 1;
-    /// @notice The state of the contract after entering a function
-    uint256 private constant ENTERED = 2;
 
     /**
      * @custom:storage-location erc7201:InitializableReentrancyGuard.storage.status
      * @notice The storage structure of the contract
      * @param _status The state of the contract
      */
-    struct InitializableReentrancyGuardStorage {
+    struct StorageStatus {
         /// @notice The state of the contract
         uint256 _status;
     }
 
     /**
-     * @notice The storage slot of the {InitializableReentrancyGuardStorage} struct
+     * @notice The storage slot of the {StorageStatus} struct
      * @dev keccak256(abi.encode(uint256(keccak256("InitializableReentrancyGuard.storage.status")) - 1)) &
      * ~bytes32(uint256(0xff));
      */
-    bytes32 private constant STORAGE_STATUS = 0x6f33a3bc64034eea47937f56d5e165f09a61a6a995142939d6f3e40f101ea600;
+    bytes32 private constant STORAGE_SLOT_STATUS = 0x6f33a3bc64034eea47937f56d5e165f09a61a6a995142939d6f3e40f101ea600;
 
     /**
      * @notice Get the struct pointer of the contract storage
      * @return s_ The pointer to the struct
      */
-    function _getInitializableReentrancyGuardStorage()
-        internal
-        pure
-        returns (InitializableReentrancyGuardStorage storage s_)
-    {
+    function _getStorageStatus() internal pure returns (StorageStatus storage s_) {
         assembly {
-            s_.slot := STORAGE_STATUS
-        }
-    }
-
-    /**
-     * @notice Get the transient reentrancy status
-     * @return status_ The status used to check reentrancy
-     */
-    function _getTransientReentrancyStatus() internal view returns (uint256 status_) {
-        assembly {
-            status_ := tload(STORAGE_STATUS)
-        }
-    }
-
-    /**
-     * @notice Set the transient reentrancy status
-     * @param  status The transient status to set
-     */
-    function _setTransientReentrancyStatus(uint256 status) internal {
-        assembly {
-            tstore(STORAGE_STATUS, status)
+            s_.slot := STORAGE_SLOT_STATUS
         }
     }
 
@@ -82,8 +54,8 @@ abstract contract InitializableReentrancyGuard {
     error InitializableReentrancyGuardInvalidInitialization();
 
     /// @notice Initializes the contract in the uninitialized state
-    function __initializeReentrancyGuard_init() internal {
-        InitializableReentrancyGuardStorage storage s = _getInitializableReentrancyGuardStorage();
+    function __InitializeReentrancyGuard_init() internal {
+        StorageStatus storage s = _getStorageStatus();
 
         s._status = UNINITIALIZED;
     }
@@ -97,9 +69,7 @@ abstract contract InitializableReentrancyGuard {
      */
     modifier initializedAndNonReentrant() {
         _checkInitialized();
-        _nonReentrantBefore();
         _;
-        _nonReentrantAfter();
     }
 
     /// @notice Reverts if the contract is initialized, or set it as initialized
@@ -107,14 +77,14 @@ abstract contract InitializableReentrancyGuard {
         _checkUninitialized();
         _;
 
-        InitializableReentrancyGuardStorage storage s = _getInitializableReentrancyGuardStorage();
+        StorageStatus storage s = _getStorageStatus();
 
         s._status = INITIALIZED;
     }
 
     /// @notice Reverts if the contract is not initialized
     function _checkInitialized() private view {
-        InitializableReentrancyGuardStorage storage s = _getInitializableReentrancyGuardStorage();
+        StorageStatus storage s = _getStorageStatus();
 
         if (s._status == UNINITIALIZED) {
             revert InitializableReentrancyGuardUninitialized();
@@ -123,28 +93,10 @@ abstract contract InitializableReentrancyGuard {
 
     /// @notice Reverts if the contract is initialized
     function _checkUninitialized() internal view {
-        InitializableReentrancyGuardStorage storage s = _getInitializableReentrancyGuardStorage();
+        StorageStatus storage s = _getStorageStatus();
 
         if (s._status != UNINITIALIZED) {
             revert InitializableReentrancyGuardInvalidInitialization();
         }
-    }
-
-    /// @notice Reverts if `_status` is ENTERED``, or set `_status` to `ENTERED`
-    function _nonReentrantBefore() private {
-        uint256 status = _getTransientReentrancyStatus();
-
-        // on the first call to `nonReentrant`, `_status` will be `NOT_ENTERED`
-        if (status == ENTERED) {
-            revert InitializableReentrancyGuardReentrantCall();
-        }
-
-        // any calls to `nonReentrant` after this point will fail
-        _setTransientReentrancyStatus(ENTERED);
-    }
-
-    /// @notice Set `_status` to `NOT_ENTERED`
-    function _nonReentrantAfter() private {
-        _setTransientReentrancyStatus(NOT_ENTERED);
     }
 }

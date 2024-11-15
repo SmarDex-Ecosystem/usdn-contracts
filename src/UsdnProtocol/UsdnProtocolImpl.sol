@@ -46,7 +46,8 @@ contract UsdnProtocolImpl is
         Storage storage s = Utils._getMainStorage();
 
         __AccessControlDefaultAdminRules_init(0, msg.sender);
-        __initializeReentrancyGuard_init();
+        __InitializeReentrancyGuard_init();
+        __ReentrancyGuardTransient_init();
         __Pausable_init();
         __EIP712_init("UsdnProtocol", "1");
 

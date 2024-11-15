@@ -2,6 +2,8 @@
 pragma solidity 0.8.26;
 
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { ReentrancyGuardTransientUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 
 import { IUsdnProtocolActions } from "../interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
@@ -15,7 +17,8 @@ abstract contract UsdnProtocolActions is
     IUsdnProtocolActions,
     InitializableReentrancyGuard,
     PausableUpgradeable,
-    EIP712Upgradeable
+    EIP712Upgradeable,
+    ReentrancyGuardTransientUpgradeable
 {
     /// @inheritdoc IUsdnProtocolActions
     function initiateOpenPosition(

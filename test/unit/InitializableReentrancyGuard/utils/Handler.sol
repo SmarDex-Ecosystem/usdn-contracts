@@ -10,7 +10,7 @@ import { InitializableReentrancyGuard } from "../../../../src/utils/Initializabl
 contract InitializableReentrancyGuardHandler is InitializableReentrancyGuard {
     function initialize() external protocolInitializer { }
 
-    function func_initializedAndNonReentrant() external initializedAndNonReentrant {
+    function func_initializedAndNonReentrant() external initialized {
         // gives a reentrancy opportunity
         (bool success,) = msg.sender.call{ value: 1 }("");
         require(success, "transfer failed");
