@@ -35,7 +35,7 @@ forge script script/01_DeployProtocol.s.sol:DeployProtocol -f YOUR_RPC_URL --pri
 
 Required environment variables: `INIT_LONG_AMOUNT` and `DEPLOYER_ADDRESS`.
 
-If running on mainnet, remenber to deploy the USDN token first with the `00_DeployUSDN.s.sol` script and set the `USDN_ADDRESS` environment variable.
+If running on mainnet, remember to deploy the USDN token first with the `00_DeployUSDN.s.sol` script and set the `USDN_ADDRESS` environment variable.
 
 ### Environment variables:
 
@@ -140,13 +140,14 @@ npx tsx script/utils/functionClashes.ts UsdnProtocolImpl.sol UsdnProtocolFallbac
 
 ## Scan Roles
 
-This bash script will scan the roles of the UsdnProtocol / Usdn / OracleMiddleware and scan the owner of the LiquidationRewardsManager / Rebalancer
+This bash script will scan the blockchain to get the roles of the UsdnProtocol / Usdn / OracleMiddleware and the owner of the LiquidationRewardsManager / Rebalancer contracts.
+Then, it will generate files containing the addresses assigned to all the relevant roles and contracts.
 
 you need to run the script with the following arguments:
 
 - `rpc-url`: the RPC URL of the network you want to scan
 - `protocol`: the address of the deployed USDN protocol
-- `block-number`: the blockNumber to start the scan from (optional)
+- `block-number`: the block number to start the scan from (optional)
 
 - example:
 

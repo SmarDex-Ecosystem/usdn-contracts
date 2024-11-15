@@ -78,7 +78,7 @@ declare -a events=(
 declare -A abi_roles_map=()
 abi_roles_map["0x0000000000000000000000000000000000000000000000000000000000000000"]="DEFAULT_ADMIN_ROLE"
 
-# Varaiables use to store informations at the end of the process logs
+# Variables used to store informations at the end of the process logs
 declare -A roles
 declare -A admin_role
 declare -A addresses
@@ -133,7 +133,7 @@ function sortByBlockNumberAndLogIndex(){
     mapfile -t sorted_logs <<< "$(printf "$sorted_logs" | jq -c '.[]')"
 }
 
-function saveJsonandCsv(){
+function saveJsonAndCsv(){
     json_output_processed=$(printf "%s" "$json_output" | jq .)
     echo "$json_output_processed" > "${contract_name}_roles.json"
     printf "${green}${contract_name} roles JSON saved to ${contract_name}_roles.json${nc}\n"
@@ -236,7 +236,7 @@ function updateLogAddress() {
 
 # ------------------------------------ Run ----------------------------------- #
 
-# Loop through each contract and scan for roles. After scanning, the end result will be saved in a JSON and CSV file
+# Loop through each contract and scan for roles. After scanning, the end result will be saved in a JSON and CSV files
 for contract_name in "${!contracts[@]}"; do
     printf "\n${blue}Scanning roles for contract:${nc} $contract_name\n"
 
