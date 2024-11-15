@@ -270,7 +270,7 @@ for contract_name in "${!contracts[@]}"; do
     processLogs
     createJson
     sortJson
-    saveJsonandCsv
+    saveJsonAndCsv
 
 done
 
