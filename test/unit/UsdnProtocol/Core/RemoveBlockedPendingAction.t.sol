@@ -15,7 +15,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     /// @dev Whether to call again a function to test reentrancy
     bool internal _reenter;
     /// @dev The counter to know which function to call next when testing reentrancy
-    uint256 functionCounter;
+    uint256 internal functionCounter;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
