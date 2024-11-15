@@ -502,7 +502,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function test_initiateClosePositionLiquidated() public {
         _waitMockMiddlewarePriceDelay();
 
-        protocol.initiateClosePosition(
+        bool success = protocol.initiateClosePosition(
             posId,
             POSITION_AMOUNT,
             DISABLE_MIN_PRICE,
@@ -513,6 +513,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             EMPTY_PREVIOUS_DATA,
             ""
         );
+
+        assertFalse(success, "The action should not have succeeded");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(uint256(pending.action), uint256(ProtocolAction.None), "action should not be initiated");

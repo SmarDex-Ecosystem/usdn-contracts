@@ -638,7 +638,7 @@ library UsdnProtocolActionsLongLibrary {
 
         if (liquidated_ || data.isLiquidationPending) {
             // position was liquidated in this transaction or liquidations are pending
-            return (params.securityDepositValue, !data.isLiquidationPending, liquidated_);
+            return (params.securityDepositValue, false, liquidated_);
         }
 
         amountToRefund_ = _createClosePendingAction(
