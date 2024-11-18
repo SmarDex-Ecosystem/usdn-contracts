@@ -231,7 +231,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         return ActionsLong._initiateClosePosition(params, currentPriceData, delegationSignature);
     }
 
-    function _calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
+    function i_calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
         Storage storage s = Utils._getMainStorage();
 
         return Core._calcEMA(lastFundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
