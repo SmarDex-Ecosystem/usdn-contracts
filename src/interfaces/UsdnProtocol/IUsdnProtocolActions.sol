@@ -13,7 +13,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
      * leverage). The validation operation then updates the entry price and leverage with fresher data
      * The transaction must have `_securityDepositValue` in value
-     * In case liquidations are pending, this function might not initiate the position (and `success_` would be false)
+     * In case liquidations are pending, this function will not initiate the position (`isInitiated_` would be false)
      * @param amount The amount of assets to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
      * @param userMaxPrice The maximum price at which the position can be opened (with _priceFeedDecimals). Note that
@@ -27,7 +27,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions
-     * @return success_ Whether the position was initiated
+     * @return isInitiated_ Whether the position was initiated. If false, the security deposit was refunded
      * @return posId_ The unique position identifier. In case the position cannot be initiated, the tick number will
      * be `NO_POSITION_TICK`
      */
@@ -41,7 +41,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
         uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_, PositionId memory posId_);
+    ) external payable returns (bool isInitiated_, PositionId memory posId_);
 
     /**
      * @notice Validate a pending open position action
@@ -58,18 +58,21 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * if the validation deadline has passed
      * Users wanting to validate an actionable pending action must use another function such as
      * `validateActionablePendingActions` to earn the corresponding security deposit
-     * In case liquidations are pending or the position was liquidated, this function might not validate the position
-     * (and `success_` would be false)
+     * In case liquidations are pending (`outcome_` == LongActionOutcome.PendingLiquidations),
+     * the pending action will not be removed from the queue, and the user will have to try again
+     * In case the position was liquidated by this call (`outcome_` == LongActionOutcome.Liquidated),
+     * this function will refund the security deposit and remove the pending action from the queue
      * @param validator The address that has the pending open position action to validate
      * @param openPriceData The price data corresponding to the sender's pending open position action
      * @param previousActionsData The data needed to validate actionable pending actions
-     * @return success_ Whether the position was validated
+     * @return outcome_ Which effect did the call had on the pending action
+     * (processed, liquidated, pending liquidations)
      */
     function validateOpenPosition(
         address payable validator,
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_);
+    ) external payable returns (LongActionOutcome outcome_);
 
     /**
      * @notice Initiate a close position action
@@ -84,8 +87,10 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * Thus, calculations don't consider those anymore. The exit price (and thus profit) is not yet set definitively,
      * and will be done during the `validate` action
      * The transaction must have `_securityDepositValue` in value
-     * In case liquidations are pending or the position was liquidated, this function might not initiate the closing
-     * (and `success_` would be false)
+     * In case liquidations are pending (`outcome_` == LongActionOutcome.PendingLiquidations),
+     * the pending action will not be removed from the queue, and the user will have to try again
+     * In case the position was liquidated by this call (`outcome_` == LongActionOutcome.Liquidated),
+     * this function will refund the security deposit and remove the pending action from the queue
      * @param posId The unique identifier of the position to close
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param userMinPrice The minimum price at which the position can be closed (with _priceFeedDecimals). Note that
@@ -99,7 +104,8 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @param previousActionsData The data needed to validate actionable pending actions
      * @param delegationSignature An optional EIP712 signature to provide when closing a position on the owner's behalf
      * If used, it needs to be encoded with `abi.encodePacked(r, s, v)`
-     * @return success_ Whether the closing was initiated
+     * @return outcome_ Which effect did the call had on the pending action
+     * (processed, liquidated, pending liquidations)
      */
     function initiateClosePosition(
         PositionId calldata posId,
@@ -111,7 +117,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
         bytes calldata delegationSignature
-    ) external payable returns (bool success_);
+    ) external payable returns (LongActionOutcome outcome_);
 
     /**
      * @notice Validate a pending close position action
@@ -126,18 +132,21 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * if the validation deadline has passed
      * Users wanting to validate an actionable pending action must use another function such as
      * `validateActionablePendingActions` to earn the corresponding security deposit
-     * In case liquidations are pending or the position was liquidated, this function might not validate the closing
-     * (and `success_` would be false)
+     * In case liquidations are pending (`outcome_` == LongActionOutcome.PendingLiquidations),
+     * the pending action will not be removed from the queue, and the user will have to try again
+     * In case the position was liquidated by this call (`outcome_` == LongActionOutcome.Liquidated),
+     * this function will refund the security deposit and remove the pending action from the queue
      * @param validator The validator of the close pending action, not necessarily the position owner
      * @param closePriceData The price data corresponding to the sender's pending close position action
      * @param previousActionsData The data needed to validate actionable pending actions
-     * @return success_ Whether the closing was validated
+     * @return outcome_ Which effect did the call had on the pending action
+     * (processed, liquidated, pending liquidations)
      */
     function validateClosePosition(
         address payable validator,
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_);
+    ) external payable returns (LongActionOutcome outcome_);
 
     /**
      * @notice Initiate a deposit of assets into the vault to mint USDN

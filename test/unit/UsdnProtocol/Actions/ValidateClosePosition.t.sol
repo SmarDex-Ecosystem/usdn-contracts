@@ -216,8 +216,48 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit(true, true, false, false);
         emit ValidatedClosePosition(address(this), address(this), posId, POSITION_AMOUNT, -1);
-        bool success = protocol.validateClosePosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
-        assertTrue(success, "success");
+        LongActionOutcome outcome =
+            protocol.validateClosePosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
+        assertTrue(outcome == LongActionOutcome.Processed, "outcome");
+        assertEq(oracleMiddleware.lastActionId(), actionId, "middleware action ID");
+    }
+
+    /**
+     * @custom:scenario A user liquidates the position it wanted to validate
+     * @custom:given A validated long position
+     * @custom:when User calls validateClosePosition with a price lower than its liquidation price
+     * @custom:then The user gets back its security deposit and liquidate its position
+     */
+    function test_validateClosePositionLiquidatingPosition() public {
+        bytes memory priceData = abi.encode(params.initialPrice);
+        protocol.initiateClosePosition(
+            posId,
+            POSITION_AMOUNT,
+            DISABLE_MIN_PRICE,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA,
+            ""
+        );
+        bytes32 actionId = oracleMiddleware.lastActionId();
+
+        _waitDelay();
+
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        (, uint24 liquidationPenalty) = protocol.getLongPosition(posId);
+        uint128 tickPrice = protocol.i_getEffectivePriceForTick(
+            protocol.i_calcTickWithoutPenalty(posId.tick, liquidationPenalty), action.liqMultiplier
+        );
+
+        uint128 price = params.initialPrice - (params.initialPrice / 4);
+        priceData = abi.encode(price);
+        vm.expectEmit(true, true, true, true);
+        emit LiquidatedPosition(address(this), posId, price, tickPrice);
+        LongActionOutcome outcome =
+            protocol.validateClosePosition(payable(address(this)), priceData, EMPTY_PREVIOUS_DATA);
+        assertEq(uint8(outcome), uint8(LongActionOutcome.Liquidated), "outcome");
         assertEq(oracleMiddleware.lastActionId(), actionId, "middleware action ID");
     }
 
@@ -775,8 +815,9 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         _waitMockMiddlewarePriceDelay();
 
         vm.prank(USER_1);
-        bool success = protocol.validateClosePosition(USER_1, abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
-        assertFalse(success, "success");
+        LongActionOutcome outcome =
+            protocol.validateClosePosition(USER_1, abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
+        assertTrue(outcome == LongActionOutcome.PendingLiquidations, "outcome");
 
         PendingAction memory pending = protocol.getUserPendingAction(USER_1);
         assertEq(

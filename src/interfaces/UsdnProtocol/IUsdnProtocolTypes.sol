@@ -210,6 +210,20 @@ interface IUsdnProtocolTypes {
     }
 
     /**
+     * @notice The outcome of the call targeting a long position
+     * @param Processed The call did what it was supposed to do
+     * An initiate close has been completed / a pending action was validated
+     * @param Liquidated The position has been liquidated by this call
+     * @param PendingLiquidations The call cannot be completed because of pending liquidations
+     * Try calling the `liquidate` function with a fresh price to unblock the situation
+     */
+    enum LongActionOutcome {
+        Processed,
+        Liquidated,
+        PendingLiquidations
+    }
+
+    /**
      * @notice The data allowing to validate an actionable pending action
      * @param priceData An array of bytes, each representing the data to be forwarded to the oracle middleware to
      * validate

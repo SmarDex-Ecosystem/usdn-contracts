@@ -115,9 +115,9 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         _waitMockMiddlewarePriceDelay();
 
-        bool success =
+        LongActionOutcome outcome =
             protocol.validateOpenPosition(payable(this), abi.encode(params.initialPrice / 4), EMPTY_PREVIOUS_DATA);
-        assertFalse(success, "success");
+        assertTrue(outcome == LongActionOutcome.PendingLiquidations, "outcome");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(
@@ -153,7 +153,10 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         _waitMockMiddlewarePriceDelay();
 
-        protocol.validateOpenPosition(payable(this), abi.encode(params.initialPrice * 2 / 3), EMPTY_PREVIOUS_DATA);
+        LongActionOutcome outcome =
+            protocol.validateOpenPosition(payable(this), abi.encode(params.initialPrice * 2 / 3), EMPTY_PREVIOUS_DATA);
+
+        assertTrue(outcome == LongActionOutcome.Liquidated, "outcome");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(
@@ -207,8 +210,9 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         vm.expectEmit();
         emit ValidatedOpenPosition(to, validator, expected.expectedPosTotalExpo, newPrice, posId);
-        bool success = protocol.validateOpenPosition(payable(validator), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
-        assertTrue(success, "success");
+        LongActionOutcome outcome =
+            protocol.validateOpenPosition(payable(validator), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        assertTrue(outcome == LongActionOutcome.Processed, "outcome");
         int256 posValue = protocol.getPositionValue(posId, newPrice, uint128(block.timestamp));
         assertEq(uint256(posValue), expected.expectedPosValue, "pos value");
 

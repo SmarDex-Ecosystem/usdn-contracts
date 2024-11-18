@@ -126,11 +126,11 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit ClosePositionInitiated(user, amount, amountToClose, amountInRebalancer - amount);
         vm.prank(user);
-        (bool success) = rebalancer.initiateClosePosition{ value: securityDeposit }(
+        LongActionOutcome outcome = rebalancer.initiateClosePosition{ value: securityDeposit }(
             amount, address(this), payable(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
         );
 
-        assertTrue(success, "The rebalancer close should be successful");
+        assertTrue(outcome == LongActionOutcome.Processed, "The rebalancer close should be successful");
 
         amountInRebalancer -= amount;
 
@@ -199,7 +199,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.prank(user);
         vm.expectEmit();
         emit ClosePositionInitiated(user, amountInRebalancer, amountToClose, 0);
-        (bool success) = rebalancer.initiateClosePosition{ value: securityDeposit }(
+        LongActionOutcome outcome = rebalancer.initiateClosePosition{ value: securityDeposit }(
             amountInRebalancer,
             address(this),
             payable(this),
@@ -212,7 +212,7 @@ contract TestRebalancerInitiateClosePosition is
 
         UserDeposit memory depositData = rebalancer.getUserDepositData(user);
 
-        assertTrue(success, "The rebalancer close should be successful");
+        assertTrue(outcome == LongActionOutcome.Processed, "The rebalancer close should be successful");
         assertEq(depositData.amount, 0, "The user's deposited amount in rebalancer should be zero");
         assertEq(depositData.entryPositionVersion, 0, "The user's entry position version should be zero");
 
@@ -298,7 +298,7 @@ contract TestRebalancerInitiateClosePosition is
         vm.expectEmit();
         emit Transfer(address(rebalancer), user, liquidationRewards);
         vm.prank(user);
-        (bool success) = rebalancer.initiateClosePosition{ value: securityDeposit }(
+        LongActionOutcome outcome = rebalancer.initiateClosePosition{ value: securityDeposit }(
             amountInRebalancer,
             address(this),
             payable(this),
@@ -311,7 +311,7 @@ contract TestRebalancerInitiateClosePosition is
 
         UserDeposit memory depositData = rebalancer.getUserDepositData(user);
 
-        assertTrue(success, "The rebalancer close should be successful");
+        assertTrue(outcome == LongActionOutcome.Processed, "The rebalancer close should be successful");
         assertEq(depositData.amount, 0, "The user's deposited amount in rebalancer should be zero");
         assertEq(depositData.entryPositionVersion, 0, "The user's entry position version should be zero");
 
@@ -601,7 +601,7 @@ contract TestRebalancerInitiateClosePosition is
         bytes memory delegationData = abi.encode(user, signature);
         vm.expectEmit();
         emit ClosePositionInitiated(delegation.depositOwner, delegation.amount, amountToClose, 0);
-        (bool success) = rebalancer.initiateClosePosition{ value: securityDeposit }(
+        LongActionOutcome outcome = rebalancer.initiateClosePosition{ value: securityDeposit }(
             delegation.amount,
             delegation.to,
             payable(this),
@@ -614,7 +614,7 @@ contract TestRebalancerInitiateClosePosition is
 
         UserDeposit memory depositData = rebalancer.getUserDepositData(user);
 
-        assertTrue(success, "The rebalancer close should be successful");
+        assertTrue(outcome == LongActionOutcome.Processed, "The rebalancer close should be successful");
         assertEq(depositData.amount, 0, "The user's deposited amount in rebalancer should be zero");
         assertEq(depositData.entryPositionVersion, 0, "The user's entry position version should be zero");
 

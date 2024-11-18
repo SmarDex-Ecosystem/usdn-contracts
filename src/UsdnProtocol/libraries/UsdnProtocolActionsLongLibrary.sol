@@ -60,7 +60,7 @@ library UsdnProtocolActionsLongLibrary {
         Types.InitiateOpenPositionParams memory params,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData
-    ) external returns (bool success_, Types.PositionId memory posId_) {
+    ) external returns (bool isInitiated_, Types.PositionId memory posId_) {
         Types.Storage storage s = Utils._getMainStorage();
 
         if (params.deadline < block.timestamp) {
@@ -74,10 +74,10 @@ library UsdnProtocolActionsLongLibrary {
         uint256 balanceBefore = address(this).balance;
         params.securityDepositValue = securityDepositValue;
         uint256 validatorAmount;
-        (posId_, validatorAmount, success_) = _initiateOpenPosition(params, currentPriceData);
+        (posId_, validatorAmount, isInitiated_) = _initiateOpenPosition(params, currentPriceData);
 
         uint256 amountToRefund;
-        if (success_) {
+        if (isInitiated_) {
             unchecked {
                 amountToRefund += Vault._executePendingActionOrRevert(previousActionsData);
             }
@@ -102,16 +102,21 @@ library UsdnProtocolActionsLongLibrary {
         address payable validator,
         bytes calldata openPriceData,
         Types.PreviousActionsData calldata previousActionsData
-    ) external returns (bool success_) {
+    ) external returns (Types.LongActionOutcome outcome_) {
         uint256 balanceBefore = address(this).balance;
 
-        uint256 amountToRefund;
-        bool liquidated;
-        (amountToRefund, success_, liquidated) = _validateOpenPosition(validator, openPriceData);
+        (uint256 amountToRefund, bool isValidated, bool isLiquidated) = _validateOpenPosition(validator, openPriceData);
         uint256 securityDeposit;
-        if (success_ || liquidated) {
+        if (isValidated || isLiquidated) {
             securityDeposit = Vault._executePendingActionOrRevert(previousActionsData);
         }
+
+        if (isLiquidated) {
+            outcome_ = Types.LongActionOutcome.Liquidated;
+        } else if (!isValidated) {
+            outcome_ = Types.LongActionOutcome.PendingLiquidations;
+        }
+
         if (msg.sender != validator) {
             Utils._refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
@@ -129,7 +134,7 @@ library UsdnProtocolActionsLongLibrary {
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData,
         bytes calldata delegationSignature
-    ) external returns (bool success_) {
+    ) external returns (Types.LongActionOutcome outcome_) {
         if (params.deadline < block.timestamp) {
             revert IUsdnProtocolErrors.UsdnProtocolDeadlineExceeded();
         }
@@ -138,16 +143,20 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         uint256 balanceBefore = address(this).balance;
-        bool liq;
-        uint256 validatorAmount;
-
-        (validatorAmount, success_, liq) = _initiateClosePosition(params, currentPriceData, delegationSignature);
+        (uint256 validatorAmount, bool isInitiated, bool isLiquidated) =
+            _initiateClosePosition(params, currentPriceData, delegationSignature);
 
         uint256 amountToRefund;
-        if (success_ || liq) {
+        if (isInitiated || isLiquidated) {
             unchecked {
                 amountToRefund += Vault._executePendingActionOrRevert(previousActionsData);
             }
+        }
+
+        if (isLiquidated) {
+            outcome_ = Types.LongActionOutcome.Liquidated;
+        } else if (!isInitiated) {
+            outcome_ = Types.LongActionOutcome.PendingLiquidations;
         }
 
         // refund any securityDeposit from a stale pending action to the validator
@@ -169,16 +178,22 @@ library UsdnProtocolActionsLongLibrary {
         address payable validator,
         bytes calldata closePriceData,
         Types.PreviousActionsData calldata previousActionsData
-    ) external returns (bool success_) {
+    ) external returns (Types.LongActionOutcome outcome_) {
         uint256 balanceBefore = address(this).balance;
 
-        uint256 amountToRefund;
-        bool liq;
-        (amountToRefund, success_, liq) = _validateClosePosition(validator, closePriceData);
+        (uint256 amountToRefund, bool isValidated, bool isLiquidated) =
+            _validateClosePosition(validator, closePriceData);
         uint256 securityDeposit;
-        if (success_ || liq) {
+        if (isValidated || isLiquidated) {
             securityDeposit = Vault._executePendingActionOrRevert(previousActionsData);
         }
+
+        if (isLiquidated) {
+            outcome_ = Types.LongActionOutcome.Liquidated;
+        } else if (!isValidated) {
+            outcome_ = Types.LongActionOutcome.PendingLiquidations;
+        }
+
         if (msg.sender != validator) {
             Utils._refundEther(amountToRefund, validator);
             balanceBefore -= amountToRefund;
@@ -200,11 +215,11 @@ library UsdnProtocolActionsLongLibrary {
      * @param pending The pending action data
      * @param priceData The current price data
      * @return isValidated_ Whether the action is validated
-     * @return liquidated_ Whether the pending action has been liquidated
+     * @return isLiquidated_ Whether the pending action has been liquidated
      */
     function _validateOpenPositionWithAction(Types.PendingAction memory pending, bytes calldata priceData)
         public
-        returns (bool isValidated_, bool liquidated_)
+        returns (bool isValidated_, bool isLiquidated_)
     {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -430,11 +445,11 @@ library UsdnProtocolActionsLongLibrary {
      * @param priceData The current price data
      * @return securityDepositValue_ The value of the security deposit
      * @return isValidated_ Whether the action is validated
-     * @return liquidated_ Whether the pending action has been liquidated
+     * @return isLiquidated_ Whether the pending action has been liquidated
      */
     function _validateOpenPosition(address validator, bytes calldata priceData)
         internal
-        returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
+        returns (uint256 securityDepositValue_, bool isValidated_, bool isLiquidated_)
     {
         (Types.PendingAction memory pending, uint128 rawIndex) = Core._getPendingActionOrRevert(validator);
 
@@ -446,9 +461,9 @@ library UsdnProtocolActionsLongLibrary {
         if (pending.validator != validator) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
-        (isValidated_, liquidated_) = _validateOpenPositionWithAction(pending, priceData);
+        (isValidated_, isLiquidated_) = _validateOpenPositionWithAction(pending, priceData);
 
-        if (isValidated_ || liquidated_) {
+        if (isValidated_ || isLiquidated_) {
             Utils._clearPendingAction(validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
         }
@@ -486,11 +501,11 @@ library UsdnProtocolActionsLongLibrary {
      * @param pending The pending action data
      * @param priceData The current price data
      * @return data_ The {ValidateOpenPosition} data struct
-     * @return liquidated_ Whether the position was liquidated
+     * @return isLiquidated_ Whether the position was liquidated
      */
     function _prepareValidateOpenPositionData(Types.PendingAction memory pending, bytes calldata priceData)
         internal
-        returns (Types.ValidateOpenPositionData memory data_, bool liquidated_)
+        returns (Types.ValidateOpenPositionData memory data_, bool isLiquidated_)
     {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -612,17 +627,17 @@ library UsdnProtocolActionsLongLibrary {
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
      * else we'll only refund the security deposit value of the stale pending action
      * @return isInitiated_ Whether the action is initiated
-     * @return liquidated_ Whether the position was liquidated
+     * @return isLiquidated_ Whether the position got liquidated by this call
      */
     function _initiateClosePosition(
         Types.InitiateClosePositionParams memory params,
         bytes calldata currentPriceData,
         bytes calldata delegationSignature
-    ) internal returns (uint256 amountToRefund_, bool isInitiated_, bool liquidated_) {
+    ) internal returns (uint256 amountToRefund_, bool isInitiated_, bool isLiquidated_) {
         Types.Storage storage s = Utils._getMainStorage();
 
         Types.ClosePositionData memory data;
-        (data, liquidated_) = ActionsUtils._prepareClosePositionData(
+        (data, isLiquidated_) = ActionsUtils._prepareClosePositionData(
             Types.PrepareInitiateClosePositionParams({
                 to: params.to,
                 validator: params.validator,
@@ -636,9 +651,9 @@ library UsdnProtocolActionsLongLibrary {
             })
         );
 
-        if (liquidated_ || data.isLiquidationPending) {
+        if (isLiquidated_ || data.isLiquidationPending) {
             // position was liquidated in this transaction or liquidations are pending
-            return (params.securityDepositValue, false, liquidated_);
+            return (params.securityDepositValue, false, isLiquidated_);
         }
 
         amountToRefund_ = _createClosePendingAction(
@@ -669,11 +684,11 @@ library UsdnProtocolActionsLongLibrary {
      * @param priceData The current price data
      * @return securityDepositValue_ The value of the security deposit of the pending action
      * @return isValidated_ Whether the action is validated
-     * @return liquidated_ Whether the pending action has been liquidated
+     * @return isLiquidated_ Whether the pending action has been liquidated
      */
     function _validateClosePosition(address validator, bytes calldata priceData)
         internal
-        returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
+        returns (uint256 securityDepositValue_, bool isValidated_, bool isLiquidated_)
     {
         (Types.PendingAction memory pending, uint128 rawIndex) = Core._getPendingActionOrRevert(validator);
 
@@ -686,9 +701,9 @@ library UsdnProtocolActionsLongLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
 
-        (isValidated_, liquidated_) = _validateClosePositionWithAction(pending, priceData);
+        (isValidated_, isLiquidated_) = _validateClosePositionWithAction(pending, priceData);
 
-        if (isValidated_ || liquidated_) {
+        if (isValidated_ || isLiquidated_) {
             Utils._clearPendingAction(validator, rawIndex);
             securityDepositValue_ = pending.securityDepositValue;
         }
@@ -735,11 +750,11 @@ library UsdnProtocolActionsLongLibrary {
      * @param pending The pending action data
      * @param priceData The current price data
      * @return isValidated_ Whether the action is validated
-     * @return liquidated_ Whether the pending action has been liquidated
+     * @return isLiquidated_ Whether the pending action has been liquidated
      */
     function _validateClosePositionWithAction(Types.PendingAction memory pending, bytes calldata priceData)
         internal
-        returns (bool isValidated_, bool liquidated_)
+        returns (bool isValidated_, bool isLiquidated_)
     {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -779,7 +794,7 @@ library UsdnProtocolActionsLongLibrary {
                 currentPrice.neutralPrice,
                 data.liquidationPrice
             );
-            return (!data.isLiquidationPending, true);
+            return (false, true);
         }
 
         if (data.isLiquidationPending) {
