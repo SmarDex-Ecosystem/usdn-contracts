@@ -41,7 +41,9 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
      * @dev There should be sufficient allowance for the spender. Be mindful of the rebase logic. The allowance is in
      * tokens. So, after a rebase, the same amount of shares will be worth a higher amount of tokens. In that case,
      * the allowance of the initial approval will not be enough to transfer the new amount of tokens. This can
-     * also happen when your transaction is in the mempool and the rebase happen before your transaction
+     * also happen when your transaction is in the mempool and the rebase happens before your transaction. Also note
+     * that the amount of tokens deduced from the allowance is rounded up, so the `convertToTokensRoundUp` function
+     * should be used when converting shares into an allowance value.
      * @param from The owner of the shares
      * @param to Recipient of the shares
      * @param value Number of shares to transfer
@@ -90,7 +92,9 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
      * @dev There should be sufficient allowance for the spender. Be mindful of the rebase logic. The allowance is in
      * tokens. So, after a rebase, the same amount of shares will be worth a higher amount of tokens. In that case,
      * the allowance of the initial approval will not be enough to transfer the new amount of tokens. This can
-     * also happen when your transaction is in the mempool and the rebase happen before your transaction
+     * also happen when your transaction is in the mempool and the rebase happens before your transaction. Also note
+     * that the amount of tokens deduced from the allowance is rounded up, so the `convertToTokensRoundUp` function
+     * should be used when converting shares into an allowance value.
      * @param account Account to burn shares from
      * @param value Amount of shares to burn
      */
