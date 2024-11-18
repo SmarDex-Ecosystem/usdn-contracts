@@ -1131,6 +1131,35 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The user initiates a `open` with a stale pending action
+     * @custom:given The validator is equal to the user
+     * @custom:when The action is initiated
+     * @custom:then The protocol takes the security deposit from the user
+     * @custom:and The protocol returns the security deposit of the stale pending action to the user
+     */
+    function test_refoundToValidatorIsMsgSenderInOpen() public {
+        PositionId memory posId = _createStalePendingActionHelper();
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
+        wstETH.mintAndApprove(address(this), 1000 ether, address(protocol), type(uint256).max);
+
+        vm.expectEmit();
+        emit StalePendingActionRemoved(address(this), posId);
+        protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether,
+            params.initialPrice / 2,
+            type(uint128).max,
+            protocol.getMaxLeverage(),
+            USER_1,
+            payable(this),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
+        );
+
+        assertStaleRefundValuesMsgSender();
+    }
+
+    /**
      * @custom:scenario The user initiates a `withdrawal` with a stale pending action
      * @custom:given The validator is different than the user
      * @custom:when The action is initiated
@@ -1267,6 +1296,54 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         vm.stopPrank();
 
         assertStaleRefundValues();
+    }
+
+    /**
+     * @custom:scenario The user initiates a `close` with a stale pending action
+     * @custom:given The validator is equal to the user
+     * @custom:when The action is initiated
+     * @custom:then The protocol takes the security deposit from the user
+     * @custom:and The protocol returns the security deposit of the stale pending action to the user
+     */
+    function test_refundStaleToValidatorIsMsgSenderInClose() public {
+        PositionId memory posId = _createStalePendingActionHelper();
+        wstETH.mintAndApprove(address(this), 1000 ether, address(protocol), type(uint256).max);
+
+        (, PositionId memory user1PosId) = protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether,
+            params.initialPrice / 2,
+            type(uint128).max,
+            protocol.getMaxLeverage(),
+            address(this),
+            USER_1,
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+
+        protocol.validateOpenPosition(payable(USER_1), priceData, EMPTY_PREVIOUS_DATA);
+
+        _waitDelay();
+
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
+
+        vm.expectEmit();
+        emit StalePendingActionRemoved(address(this), posId);
+        protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
+            user1PosId,
+            1 ether,
+            DISABLE_MIN_PRICE,
+            USER_1,
+            payable(this),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA,
+            ""
+        );
+
+        assertStaleRefundValuesMsgSender();
     }
 
     /* -------------------------------------------------------------------------- */
@@ -1498,6 +1575,17 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             USER_1.balance,
             balanceUser1Before - SECURITY_DEPOSIT_VALUE,
             "the user 1 shouldn't have retrieved the security deposit from the stale pending action"
+        );
+        assertEq(
+            address(protocol).balance,
+            balanceProtocolBefore,
+            "the balance of the protocol after the second initialization should be equal"
+        );
+    }
+
+    function assertStaleRefundValuesMsgSender() public view {
+        assertEq(
+            address(this).balance, balanceUser0Before, "the user 0 should have the same balance than before all actions"
         );
         assertEq(
             address(protocol).balance,
