@@ -1101,7 +1101,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates a `open` with a stale pending action
+     * @custom:scenario The user initiates an `open` with a stale pending action
      * @custom:given The validator is different than the user
      * @custom:when The action is initiated
      * @custom:then The protocol takes the security deposit from the user
@@ -1131,13 +1131,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates a `open` with a stale pending action
-     * @custom:given The validator is equal to the user
+     * @custom:scenario The user initiates an `open` with a stale pending action
+     * @custom:given The validator is the msg.sender
      * @custom:when The action is initiated
      * @custom:then The protocol takes the security deposit from the user
      * @custom:and The protocol returns the security deposit of the stale pending action to the user
      */
-    function test_refoundToValidatorIsMsgSenderInOpen() public {
+    function test_refundStaleToValidatorIsMsgSenderInOpen() public {
         PositionId memory posId = _createStalePendingActionHelper();
         (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
         wstETH.mintAndApprove(address(this), 1000 ether, address(protocol), type(uint256).max);
@@ -1300,7 +1300,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The user initiates a `close` with a stale pending action
-     * @custom:given The validator is equal to the user
+     * @custom:given The validator is the msg.sender
      * @custom:when The action is initiated
      * @custom:then The protocol takes the security deposit from the user
      * @custom:and The protocol returns the security deposit of the stale pending action to the user
