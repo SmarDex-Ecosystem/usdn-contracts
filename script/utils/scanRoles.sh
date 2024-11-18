@@ -56,7 +56,7 @@ function getContracts() {
 getContracts
 
 # Load ABI files
-abiUsdnProtocolStorage=$(cat "out/UsdnProtocolStorage.sol/UsdnProtocolStorage.json")
+abiUsdnProtocolStorage=$(cat "out/UsdnProtocolConstantsLibrary.sol/UsdnProtocolConstantsLibrary.json")
 abiUsdn=$(cat "out/Usdn.sol/Usdn.json")
 abiOracleMiddleware=$(cat "out/OracleMiddleware.sol/OracleMiddleware.json")
 
