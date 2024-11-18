@@ -222,8 +222,13 @@ library UsdnProtocolUtilsLibrary {
         pure
         returns (uint256 posValue_)
     {
-        // the multiplication cannot overflow because both operands are uint128
-        posValue_ = uint256(posTotalExpo) * (currentPrice - liqPriceWithoutPenalty) / currentPrice;
+        // posValue_ = uint256(posTotalExpo) * (currentPrice - liqPriceWithoutPenalty) / currentPrice;
+        posValue_ = currentPrice - liqPriceWithoutPenalty;
+        unchecked {
+            // the multiplication cannot overflow because both operands are uint128
+            posValue_ *= posTotalExpo;
+        }
+        posValue_ /= currentPrice;
     }
 
     /**
