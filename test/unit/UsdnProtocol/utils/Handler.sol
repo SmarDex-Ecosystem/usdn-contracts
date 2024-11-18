@@ -848,4 +848,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
 
         s._usdnRebaseThreshold = threshold;
     }
+
+    function i_validateClosePositionWithAction(PendingAction memory pending, bytes calldata priceData)
+        external
+        returns (bool isValidated_, bool liquidated_)
+    {
+        return ActionsLong._validateClosePositionWithAction(pending, priceData);
+    }
 }
