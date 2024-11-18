@@ -580,12 +580,9 @@ library UsdnProtocolCoreLibrary {
     function _createInitialDeposit(uint128 amount, uint128 price) internal {
         Types.Storage storage s = Utils._getMainStorage();
 
-        if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
-            Utils.transferCallback(s._asset, amount, address(this));
-        } else {
-            // transfer the assets for the deposit
-            address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
-        }
+        // transfer the assets for the deposit
+        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
+
         s._balanceVault += amount;
         emit IUsdnProtocolEvents.InitiatedDeposit(msg.sender, msg.sender, amount, 0, block.timestamp, 0);
 
@@ -623,12 +620,8 @@ library UsdnProtocolCoreLibrary {
     function _createInitialPosition(uint128 amount, uint128 price, int24 tick, uint128 totalExpo) internal {
         Types.Storage storage s = Utils._getMainStorage();
 
-        if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
-            Utils.transferCallback(s._asset, amount, address(this));
-        } else {
-            // transfer the assets for the long
-            address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
-        }
+        // transfer the assets for the long
+        address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
 
         Types.PositionId memory posId;
         posId.tick = tick;
