@@ -173,7 +173,7 @@ library UsdnProtocolUtilsLibrary {
         Types.Storage storage s = _getMainStorage();
 
         version_ = s._tickVersion[tick];
-        hash_ = tickHash(tick, version_);
+        hash_ = _tickHash(tick, version_);
     }
 
     /**
@@ -188,15 +188,15 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /// @notice See {IUsdnProtocolFallback}
-    function getEffectivePriceForTick(int24 tick) internal view returns (uint128 price_) {
+    function _getEffectivePriceForTick(int24 tick) internal view returns (uint128 price_) {
         Types.Storage storage s = _getMainStorage();
 
         price_ =
-            getEffectivePriceForTick(tick, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator);
+            _getEffectivePriceForTick(tick, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator);
     }
 
     /// @notice See {IUsdnProtocolFallback}
-    function tickHash(int24 tick, uint256 version) internal pure returns (bytes32) {
+    function _tickHash(int24 tick, uint256 version) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(tick, version));
     }
 
@@ -205,7 +205,7 @@ library UsdnProtocolUtilsLibrary {
      * @param x The value to convert
      * @return The converted value
      */
-    function toInt256(uint128 x) internal pure returns (int256) {
+    function _toInt256(uint128 x) internal pure returns (int256) {
         return int256(uint256(x));
     }
 
@@ -217,7 +217,7 @@ library UsdnProtocolUtilsLibrary {
      * @param liqPriceWithoutPenalty The liquidation price without penalty
      * @return posValue_ The value of the position, which must be positive
      */
-    function positionValue(uint128 posTotalExpo, uint128 currentPrice, uint128 liqPriceWithoutPenalty)
+    function _positionValueOptimized(uint128 posTotalExpo, uint128 currentPrice, uint128 liqPriceWithoutPenalty)
         internal
         pure
         returns (uint256 posValue_)
@@ -232,7 +232,7 @@ library UsdnProtocolUtilsLibrary {
      * @param liquidationPenalty The liquidation penalty of the tick, in number of ticks
      * @return tick_ The tick corresponding to the liquidation price without penalty
      */
-    function calcTickWithoutPenalty(int24 tick, uint24 liquidationPenalty) internal pure returns (int24 tick_) {
+    function _calcTickWithoutPenalty(int24 tick, uint24 liquidationPenalty) internal pure returns (int24 tick_) {
         tick_ = tick - int24(liquidationPenalty);
     }
 
@@ -393,10 +393,10 @@ library UsdnProtocolUtilsLibrary {
         pure
         returns (int256 available_)
     {
-        int256 priceDiff = toInt256(newPrice) - toInt256(oldPrice);
+        int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
         uint256 tradingExpo = totalExpo - balanceLong;
 
-        int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(toInt256(newPrice));
+        int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(_toInt256(newPrice));
 
         available_ = balanceLong.toInt256().safeAdd(pnl);
     }
@@ -446,13 +446,13 @@ library UsdnProtocolUtilsLibrary {
 
     /**
      * @notice Calculate the value of a position, knowing its liquidation price and the current asset price
+     * @param positionTotalExpo The total expo of the position
      * @param currentPrice The current price of the asset
      * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
-     * @param positionTotalExpo The total expo of the position
      * @return value_ The value of the position. If the current price is smaller than the liquidation price without
      * penalty, then the position value is negative (bad debt)
      */
-    function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
+    function _positionValue(uint128 positionTotalExpo, uint128 currentPrice, uint128 liqPriceWithoutPenalty)
         internal
         pure
         returns (int256 value_)
@@ -641,7 +641,7 @@ library UsdnProtocolUtilsLibrary {
      * @param amount The amount to transfer
      * @param to The address of the recipient
      */
-    function transferCallback(IERC20Metadata token, uint256 amount, address to) internal {
+    function _transferCallback(IERC20Metadata token, uint256 amount, address to) internal {
         uint256 balanceBefore = token.balanceOf(to);
         IPaymentCallback(msg.sender).transferCallback(token, amount, to);
         uint256 balanceAfter = token.balanceOf(to);
@@ -655,7 +655,7 @@ library UsdnProtocolUtilsLibrary {
      * @param usdn The USDN token address
      * @param shares The amount of shares to transfer
      */
-    function usdnTransferCallback(IUsdn usdn, uint256 shares) internal {
+    function _usdnTransferCallback(IUsdn usdn, uint256 shares) internal {
         uint256 balanceBefore = usdn.sharesOf(address(this));
         IPaymentCallback(msg.sender).usdnTransferCallback(usdn, shares);
         uint256 balanceAfter = usdn.sharesOf(address(this));
@@ -665,7 +665,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /// @notice See {IUsdnProtocolFallback}
-    function getEffectivePriceForTick(
+    function _getEffectivePriceForTick(
         int24 tick,
         uint256 assetPrice,
         uint256 longTradingExpo,

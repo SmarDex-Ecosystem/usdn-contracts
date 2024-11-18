@@ -45,12 +45,12 @@ contract UsdnProtocolFallback is
 
     /// @inheritdoc IUsdnProtocolFallback
     function tickHash(int24 tick, uint256 version) external pure returns (bytes32) {
-        return Utils.tickHash(tick, version);
+        return Utils._tickHash(tick, version);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
     function getEffectivePriceForTick(int24 tick) external view returns (uint128 price_) {
-        return Utils.getEffectivePriceForTick(tick);
+        return Utils._getEffectivePriceForTick(tick);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -60,7 +60,7 @@ contract UsdnProtocolFallback is
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
     ) external pure returns (uint128 price_) {
-        return Utils.getEffectivePriceForTick(tick, assetPrice, longTradingExpo, accumulator);
+        return Utils._getEffectivePriceForTick(tick, assetPrice, longTradingExpo, accumulator);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -440,7 +440,7 @@ contract UsdnProtocolFallback is
     function getTickData(int24 tick) external view returns (TickData memory) {
         Storage storage s = Utils._getMainStorage();
 
-        bytes32 cachedTickHash = Utils.tickHash(tick, s._tickVersion[tick]);
+        bytes32 cachedTickHash = Utils._tickHash(tick, s._tickVersion[tick]);
         return Utils._getMainStorage()._tickData[cachedTickHash];
     }
 
@@ -449,7 +449,7 @@ contract UsdnProtocolFallback is
         Storage storage s = Utils._getMainStorage();
 
         uint256 version = s._tickVersion[tick];
-        bytes32 cachedTickHash = Utils.tickHash(tick, version);
+        bytes32 cachedTickHash = Utils._tickHash(tick, version);
         return Utils._getMainStorage()._longPositions[cachedTickHash][index];
     }
 

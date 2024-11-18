@@ -59,7 +59,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         (Position memory firstPos,) = protocol.getLongPosition(PositionId(tick, 0, 0));
 
-        int256 longPosValue = protocol.i_positionValue(params.initialPrice, longLiqPrice, firstPos.totalExpo);
+        int256 longPosValue = protocol.i_positionValue(firstPos.totalExpo, params.initialPrice, longLiqPrice);
 
         // there are rounding errors when calculating the value of a position, here we have up to 1 wei of error for
         // each position, but always in favor of the protocol.

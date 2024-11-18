@@ -139,7 +139,7 @@ library UsdnProtocolCoreLibrary {
         if (fundAsset > 0) {
             tempAvailable = Utils._longAssetAvailable(currentPrice).safeSub(fundAsset);
         } else {
-            int256 fee = fundAsset * Utils.toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
+            int256 fee = fundAsset * Utils._toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             // fees have the same sign as fundAsset (negative here), so we need to sub them
             tempAvailable = Utils._longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
         }
@@ -360,7 +360,7 @@ library UsdnProtocolCoreLibrary {
         if (pending.action == Types.ProtocolAction.ValidateDeposit && cleanup) {
             // for pending deposits, we send back the locked assets
             Types.DepositPendingAction memory deposit = Utils._toDepositPendingAction(pending);
-            s._pendingBalanceVault -= Utils.toInt256(deposit.amount);
+            s._pendingBalanceVault -= Utils._toInt256(deposit.amount);
             address(s._asset).safeTransfer(to, deposit.amount);
         } else if (pending.action == Types.ProtocolAction.ValidateWithdrawal && cleanup) {
             // for pending withdrawals, we send the locked USDN
@@ -397,7 +397,7 @@ library UsdnProtocolCoreLibrary {
                     --s._totalLongPositions;
                     tickData.totalPos -= 1;
                     uint256 unadjustedTickPrice =
-                        TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(open.tick, tickData.liquidationPenalty));
+                        TickMath.getPriceAtTick(Utils._calcTickWithoutPenalty(open.tick, tickData.liquidationPenalty));
                     if (tickData.totalPos == 0) {
                         // we removed the last position in the tick
                         s._tickBitmap.unset(Utils._calcBitmapIndexFromTick(open.tick));
@@ -481,13 +481,13 @@ library UsdnProtocolCoreLibrary {
             tickData.totalExpo = long.totalExpo;
             tickData.totalPos = 1;
             tickData.liquidationPenalty = liquidationPenalty;
-            unadjustedTickPrice = TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(tick, liquidationPenalty));
+            unadjustedTickPrice = TickMath.getPriceAtTick(Utils._calcTickWithoutPenalty(tick, liquidationPenalty));
         } else {
             tickData.totalExpo += long.totalExpo;
             tickData.totalPos += 1;
             // we do not need to adjust the tick's `liquidationPenalty` since it remains constant
             unadjustedTickPrice =
-                TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(tick, tickData.liquidationPenalty));
+                TickMath.getPriceAtTick(Utils._calcTickWithoutPenalty(tick, tickData.liquidationPenalty));
         }
         // update the accumulator with the correct tick price (depending on the liquidation penalty value)
         liqMultiplierAccumulator_ = s._liqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));
@@ -558,7 +558,7 @@ library UsdnProtocolCoreLibrary {
     function _calculateFee(int256 fundAsset) internal returns (int256 fee_, int256 fundAssetWithFee_) {
         Types.Storage storage s = Utils._getMainStorage();
 
-        int256 protocolFeeBps = Utils.toInt256(s._protocolFeeBps);
+        int256 protocolFeeBps = Utils._toInt256(s._protocolFeeBps);
         fee_ = fundAsset * protocolFeeBps / int256(Constants.BPS_DIVISOR);
         // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
         fundAssetWithFee_ = fundAsset - fee_;
@@ -581,7 +581,7 @@ library UsdnProtocolCoreLibrary {
         Types.Storage storage s = Utils._getMainStorage();
 
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
-            Utils.transferCallback(s._asset, amount, address(this));
+            Utils._transferCallback(s._asset, amount, address(this));
         } else {
             // transfer the assets for the deposit
             address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
@@ -624,7 +624,7 @@ library UsdnProtocolCoreLibrary {
         Types.Storage storage s = Utils._getMainStorage();
 
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
-            Utils.transferCallback(s._asset, amount, address(this));
+            Utils._transferCallback(s._asset, amount, address(this));
         } else {
             // transfer the assets for the long
             address(s._asset).safeTransferFrom(msg.sender, address(this), amount);
@@ -683,7 +683,7 @@ library UsdnProtocolCoreLibrary {
     function _checkInitImbalance(uint128 positionTotalExpo, uint128 longAmount, uint128 depositAmount) internal view {
         Types.Storage storage s = Utils._getMainStorage();
 
-        int256 longTradingExpo = Utils.toInt256(positionTotalExpo - longAmount);
+        int256 longTradingExpo = Utils._toInt256(positionTotalExpo - longAmount);
         int256 depositLimit = s._depositExpoImbalanceLimitBps;
         // users should be able to open positions after initialization
         // with at least 2 times the minimum amount required for a position without exceeding imbalance limits
@@ -691,14 +691,14 @@ library UsdnProtocolCoreLibrary {
 
         if (depositLimit != 0) {
             int256 imbalanceBps =
-                (Utils.toInt256(depositAmount) - longTradingExpo) * int256(Constants.BPS_DIVISOR) / longTradingExpo;
+                (Utils._toInt256(depositAmount) - longTradingExpo) * int256(Constants.BPS_DIVISOR) / longTradingExpo;
             if (imbalanceBps > depositLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
             }
 
             // make sure that the minAmount can be added as vault balance without imbalancing the protocol
-            imbalanceBps = (Utils.toInt256(depositAmount) + minAmount - longTradingExpo) * int256(Constants.BPS_DIVISOR)
-                / longTradingExpo;
+            imbalanceBps = (Utils._toInt256(depositAmount) + minAmount - longTradingExpo)
+                * int256(Constants.BPS_DIVISOR) / longTradingExpo;
             if (imbalanceBps > depositLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount();
             }
@@ -706,15 +706,15 @@ library UsdnProtocolCoreLibrary {
 
         int256 openLimit = s._openExpoImbalanceLimitBps;
         if (openLimit != 0) {
-            int256 imbalanceBps = (longTradingExpo - Utils.toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
-                / Utils.toInt256(depositAmount);
+            int256 imbalanceBps = (longTradingExpo - Utils._toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
+                / Utils._toInt256(depositAmount);
             if (imbalanceBps > openLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
             }
 
             // make sure that the minAmount can be added as trading expo without imbalancing the protocol
-            imbalanceBps = (longTradingExpo + minAmount - Utils.toInt256(depositAmount)) * int256(Constants.BPS_DIVISOR)
-                / Utils.toInt256(depositAmount);
+            imbalanceBps = (longTradingExpo + minAmount - Utils._toInt256(depositAmount))
+                * int256(Constants.BPS_DIVISOR) / Utils._toInt256(depositAmount);
             if (imbalanceBps > openLimit) {
                 revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount();
             }
@@ -811,7 +811,7 @@ library UsdnProtocolCoreLibrary {
         // conversion from uint128 to int256 is always safe
         int256 elapsedSeconds;
         unchecked {
-            elapsedSeconds = Utils.toInt256(timestamp - lastUpdateTimestamp);
+            elapsedSeconds = Utils._toInt256(timestamp - lastUpdateTimestamp);
         }
         if (elapsedSeconds == 0) {
             return (0, fundingPerDay_, oldLongExpo_);
@@ -831,9 +831,9 @@ library UsdnProtocolCoreLibrary {
         }
 
         return (
-            lastFundingPerDay * Utils.toInt256(secondsElapsed)
-                + previousEMA * Utils.toInt256(emaPeriod - secondsElapsed)
-        ) / Utils.toInt256(emaPeriod);
+            lastFundingPerDay * Utils._toInt256(secondsElapsed)
+                + previousEMA * Utils._toInt256(emaPeriod - secondsElapsed)
+        ) / Utils._toInt256(emaPeriod);
     }
 
     /**

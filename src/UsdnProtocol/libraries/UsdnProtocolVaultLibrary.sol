@@ -668,9 +668,9 @@ library UsdnProtocolVaultLibrary {
             if (data.sdexToBurn > 0) {
                 // This logic must be modified if this protocol is deployed twice, as an attacker could burn SDEX once
                 // for both deposits by re-entering one protocol from the other.
-                Utils.transferCallback(s._sdex, data.sdexToBurn, Constants.DEAD_ADDRESS);
+                Utils._transferCallback(s._sdex, data.sdexToBurn, Constants.DEAD_ADDRESS);
             }
-            Utils.transferCallback(s._asset, params.amount, address(this));
+            Utils._transferCallback(s._asset, params.amount, address(this));
         } else {
             if (data.sdexToBurn > 0) {
                 // slither-disable-next-line arbitrary-send-erc20
@@ -679,7 +679,7 @@ library UsdnProtocolVaultLibrary {
             // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(params.user, address(this), params.amount);
         }
-        s._pendingBalanceVault += Utils.toInt256(params.amount);
+        s._pendingBalanceVault += Utils._toInt256(params.amount);
 
         isInitiated_ = true;
 
@@ -781,7 +781,7 @@ library UsdnProtocolVaultLibrary {
         }
 
         s._balanceVault += deposit.amount; // we credit the full deposit amount
-        s._pendingBalanceVault -= Utils.toInt256(deposit.amount);
+        s._pendingBalanceVault -= Utils._toInt256(deposit.amount);
 
         uint256 mintedTokens = s._usdn.mintShares(
             deposit.to, Utils._calcMintUsdnShares(amountAfterFees, balanceVault + fees, deposit.usdnTotalShares)
@@ -924,7 +924,7 @@ library UsdnProtocolVaultLibrary {
         IUsdn usdn = s._usdn;
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             // ask the msg.sender to send USDN shares and check the balance
-            Utils.usdnTransferCallback(usdn, params.usdnShares);
+            Utils._usdnTransferCallback(usdn, params.usdnShares);
         } else {
             // retrieve the USDN shares, check that the balance is sufficient
             usdn.transferSharesFrom(params.user, address(this), params.usdnShares);

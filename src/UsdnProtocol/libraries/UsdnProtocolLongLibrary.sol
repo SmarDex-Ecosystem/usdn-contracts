@@ -105,13 +105,13 @@ library UsdnProtocolLongLibrary {
 
         (Types.Position memory pos, uint24 liquidationPenalty) = ActionsUtils.getLongPosition(posId);
         uint256 longTradingExpo = Core.longTradingExpoWithFunding(price, timestamp);
-        uint128 liqPrice = Utils.getEffectivePriceForTick(
-            Utils.calcTickWithoutPenalty(posId.tick, liquidationPenalty),
+        uint128 liqPrice = Utils._getEffectivePriceForTick(
+            Utils._calcTickWithoutPenalty(posId.tick, liquidationPenalty),
             price,
             longTradingExpo,
             s._liqMultiplierAccumulator
         );
-        value_ = Utils._positionValue(price, liqPrice, pos.totalExpo);
+        value_ = Utils._positionValue(pos.totalExpo, price, liqPrice);
     }
 
     /// @notice See {IUsdnProtocolLong}
@@ -286,7 +286,7 @@ library UsdnProtocolLongLibrary {
         data_.liquidationPenalty = getTickLiquidationPenalty(data_.posId.tick);
 
         // calculate effective liquidation price
-        uint128 liqPrice = Utils.getEffectivePriceForTick(
+        uint128 liqPrice = Utils._getEffectivePriceForTick(
             data_.posId.tick, lastPrice, conversionData.tradingExpo, conversionData.accumulator
         );
 
@@ -294,8 +294,8 @@ library UsdnProtocolLongLibrary {
         _checkSafetyMargin(lastPrice, liqPrice);
 
         // remove liquidation penalty for leverage and total expo calculations
-        uint128 liqPriceWithoutPenalty = Utils.getEffectivePriceForTick(
-            Utils.calcTickWithoutPenalty(data_.posId.tick, data_.liquidationPenalty),
+        uint128 liqPriceWithoutPenalty = Utils._getEffectivePriceForTick(
+            Utils._calcTickWithoutPenalty(data_.posId.tick, data_.liquidationPenalty),
             lastPrice,
             conversionData.tradingExpo,
             conversionData.accumulator
@@ -305,7 +305,7 @@ library UsdnProtocolLongLibrary {
         data_.positionTotalExpo =
             Utils._calcPositionTotalExpo(params.amount, data_.adjustedPrice, liqPriceWithoutPenalty);
         // the current price is known to be above the liquidation price because we checked the safety margin
-        data_.positionValue = Utils.positionValue(data_.positionTotalExpo, lastPrice, liqPriceWithoutPenalty);
+        data_.positionValue = Utils._positionValueOptimized(data_.positionTotalExpo, lastPrice, liqPriceWithoutPenalty);
         _checkImbalanceLimitOpen(data_.positionTotalExpo, params.amount, data_.positionValue);
 
         data_.liqMultiplier =
@@ -335,7 +335,7 @@ library UsdnProtocolLongLibrary {
         (bytes32 tickHash,) = Utils._tickHash(tick);
         Types.TickData storage tickData = s._tickData[tickHash];
         uint256 unadjustedTickPrice =
-            TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(tick, tickData.liquidationPenalty));
+            TickMath.getPriceAtTick(Utils._calcTickWithoutPenalty(tick, tickData.liquidationPenalty));
         if (amountToRemove < pos.amount) {
             Types.Position storage position = s._longPositions[tickHash][index];
             position.totalExpo = pos.totalExpo - totalExpoToRemove;
@@ -420,8 +420,11 @@ library UsdnProtocolLongLibrary {
         // add the penalty to the tick and round down to the nearest multiple of tickSpacing
         tickWithPenalty_ = tempTickWithoutPenalty + int24(liquidationPenalty);
         tickWithPenalty_ = _roundTickDownWithPenalty(tickWithPenalty_, tickSpacing, liquidationPenalty);
-        liqPriceWithoutPenalty_ = Utils.getEffectivePriceForTick(
-            Utils.calcTickWithoutPenalty(tickWithPenalty_, liquidationPenalty), assetPrice, longTradingExpo, accumulator
+        liqPriceWithoutPenalty_ = Utils._getEffectivePriceForTick(
+            Utils._calcTickWithoutPenalty(tickWithPenalty_, liquidationPenalty),
+            assetPrice,
+            longTradingExpo,
+            accumulator
         );
     }
 
@@ -449,7 +452,7 @@ library UsdnProtocolLongLibrary {
         tickWithPenalty_ = tempTickWithoutPenalty + int24(liquidationPenalty);
         tickWithPenalty_ = _roundTickDownWithPenalty(tickWithPenalty_, tickSpacing, liquidationPenalty);
         liqPriceWithoutPenalty_ = Utils._getEffectivePriceForTick(
-            Utils.calcTickWithoutPenalty(tickWithPenalty_, liquidationPenalty), liqMultiplier
+            Utils._calcTickWithoutPenalty(tickWithPenalty_, liquidationPenalty), liqMultiplier
         );
     }
 
@@ -735,14 +738,14 @@ library UsdnProtocolLongLibrary {
         Types.Position memory pos = s._longPositions[tickHash][posId.index];
 
         positionValue_ = Utils._positionValue(
+            pos.totalExpo,
             lastPrice,
-            Utils.getEffectivePriceForTick(
-                Utils.calcTickWithoutPenalty(posId.tick, liquidationPenalty),
+            Utils._getEffectivePriceForTick(
+                Utils._calcTickWithoutPenalty(posId.tick, liquidationPenalty),
                 lastPrice,
                 cache.tradingExpo,
                 cache.liqMultiplierAccumulator
-            ),
-            pos.totalExpo
+            )
         );
 
         // if positionValue is lower than 0, return
@@ -764,7 +767,7 @@ library UsdnProtocolLongLibrary {
         // so the position is considered the same as other positions by event indexers
         emit IUsdnProtocolEvents.InitiatedClosePosition(pos.user, pos.user, pos.user, posId, pos.amount, pos.amount, 0);
         emit IUsdnProtocolEvents.ValidatedClosePosition(
-            pos.user, pos.user, posId, uint256(positionValue_), positionValue_ - Utils.toInt256(pos.amount)
+            pos.user, pos.user, posId, uint256(positionValue_), positionValue_ - Utils._toInt256(pos.amount)
         );
     }
 
@@ -828,7 +831,7 @@ library UsdnProtocolLongLibrary {
             // update transient data
             data.totalExpoToRemove += tickData.totalExpo;
             uint256 unadjustedTickPrice =
-                TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(data.iTick, tickData.liquidationPenalty));
+                TickMath.getPriceAtTick(Utils._calcTickWithoutPenalty(data.iTick, tickData.liquidationPenalty));
             data.accumulatorValueToRemove += unadjustedTickPrice * tickData.totalExpo;
             // update return values
             effects_.liquidatedTicks[i] = Types.LiqTickInfo({
@@ -837,11 +840,11 @@ library UsdnProtocolLongLibrary {
                 remainingCollateral: _tickValue(
                     data.iTick, data.currentPrice, data.longTradingExpo, data.accumulator, tickData
                 ),
-                tickPrice: Utils.getEffectivePriceForTick(
+                tickPrice: Utils._getEffectivePriceForTick(
                     data.iTick, data.currentPrice, data.longTradingExpo, data.accumulator
                 ),
-                priceWithoutPenalty: Utils.getEffectivePriceForTick(
-                    Utils.calcTickWithoutPenalty(data.iTick, tickData.liquidationPenalty),
+                priceWithoutPenalty: Utils._getEffectivePriceForTick(
+                    Utils._calcTickWithoutPenalty(data.iTick, tickData.liquidationPenalty),
                     data.currentPrice,
                     data.longTradingExpo,
                     data.accumulator
@@ -1047,8 +1050,8 @@ library UsdnProtocolLongLibrary {
 
         posData_.liquidationPenalty = getTickLiquidationPenalty(posData_.tick);
         if (posData_.liquidationPenalty != data.currentLiqPenalty) {
-            data.liqPriceWithoutPenalty = Utils.getEffectivePriceForTick(
-                Utils.calcTickWithoutPenalty(posData_.tick, posData_.liquidationPenalty),
+            data.liqPriceWithoutPenalty = Utils._getEffectivePriceForTick(
+                Utils._calcTickWithoutPenalty(posData_.tick, posData_.liquidationPenalty),
                 lastPrice,
                 cache.tradingExpo,
                 cache.liqMultiplierAccumulator
@@ -1068,8 +1071,8 @@ library UsdnProtocolLongLibrary {
         ) {
             posData_.tick += s._tickSpacing;
             posData_.liquidationPenalty = getTickLiquidationPenalty(posData_.tick);
-            data.liqPriceWithoutPenalty = Utils.getEffectivePriceForTick(
-                Utils.calcTickWithoutPenalty(posData_.tick, posData_.liquidationPenalty),
+            data.liqPriceWithoutPenalty = Utils._getEffectivePriceForTick(
+                Utils._calcTickWithoutPenalty(posData_.tick, posData_.liquidationPenalty),
                 lastPrice,
                 cache.tradingExpo,
                 cache.liqMultiplierAccumulator
@@ -1195,8 +1198,8 @@ library UsdnProtocolLongLibrary {
         HugeUint.Uint512 memory accumulator,
         Types.TickData memory tickData
     ) internal pure returns (int256 value_) {
-        uint128 liqPriceWithoutPenalty = Utils.getEffectivePriceForTick(
-            Utils.calcTickWithoutPenalty(tick, tickData.liquidationPenalty), currentPrice, longTradingExpo, accumulator
+        uint128 liqPriceWithoutPenalty = Utils._getEffectivePriceForTick(
+            Utils._calcTickWithoutPenalty(tick, tickData.liquidationPenalty), currentPrice, longTradingExpo, accumulator
         );
 
         // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
