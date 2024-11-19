@@ -272,7 +272,7 @@ library UsdnProtocolVaultLibrary {
     }
 
     /// @notice See {IUsdnProtocolVault}
-    function getActionablePendingActions(address currentUser, uint256 lookAhead)
+    function getActionablePendingActions(address currentUser, uint256 lookAhead, uint256 maxIter)
         external
         view
         returns (Types.PendingAction[] memory actions_, uint128[] memory rawIndices_)
@@ -284,9 +284,11 @@ library UsdnProtocolVaultLibrary {
             // empty queue, early return
             return (actions_, rawIndices_);
         }
-        actions_ = new Types.PendingAction[](Constants.MAX_ACTIONABLE_PENDING_ACTIONS);
-        rawIndices_ = new uint128[](Constants.MAX_ACTIONABLE_PENDING_ACTIONS);
-        uint256 maxIter = Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
+        if (maxIter < Constants.MIN_ACTIONABLE_PENDING_ACTIONS_ITER) {
+            maxIter = Constants.MIN_ACTIONABLE_PENDING_ACTIONS_ITER;
+        }
+        actions_ = new Types.PendingAction[](maxIter);
+        rawIndices_ = new uint128[](maxIter);
         if (queueLength < maxIter) {
             maxIter = queueLength;
         }
@@ -494,7 +496,7 @@ library UsdnProtocolVaultLibrary {
             // empty queue, early return
             return (action_, rawIndex_);
         }
-        uint256 maxIter = Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
+        uint256 maxIter = Constants.MIN_ACTIONABLE_PENDING_ACTIONS_ITER;
         if (queueLength < maxIter) {
             maxIter = queueLength;
         }

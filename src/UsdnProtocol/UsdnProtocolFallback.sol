@@ -30,12 +30,12 @@ contract UsdnProtocolFallback is
     AccessControlDefaultAdminRulesUpgradeable
 {
     /// @inheritdoc IUsdnProtocolFallback
-    function getActionablePendingActions(address currentUser, uint256 lookAhead)
+    function getActionablePendingActions(address currentUser, uint256 lookAhead, uint256 maxIter)
         external
         view
         returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
     {
-        return Vault.getActionablePendingActions(currentUser, lookAhead);
+        return Vault.getActionablePendingActions(currentUser, lookAhead, maxIter);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -199,8 +199,8 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256) {
-        return Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
+    function MIN_ACTIONABLE_PENDING_ACTIONS_ITER() external pure returns (uint256) {
+        return Constants.MIN_ACTIONABLE_PENDING_ACTIONS_ITER;
     }
 
     /// @inheritdoc IUsdnProtocolFallback

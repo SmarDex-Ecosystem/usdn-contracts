@@ -60,7 +60,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
             previousData
         );
         // check that one pending action was validated, only one should remain
-        (Types.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this), 0);
+        (Types.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this), 0, 0);
         assertEq(actions.length, 1, "actions length after");
     }
 
@@ -78,7 +78,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         assertEq(validationCost, 1, "validation cost");
         protocol.validateActionablePendingActions{ value: validationCost }(previousData, 10);
         // check that both pending actions were validated
-        (Types.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this), 0);
+        (Types.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this), 0, 0);
         assertEq(actions.length, 0, "actions length after");
     }
 
@@ -96,7 +96,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         _pendingActionsHelper();
         // at this moment, only 2 are actionable
         (Types.PendingAction[] memory actions, uint128[] memory rawIndices) =
-            protocol.getActionablePendingActions(address(0), 0);
+            protocol.getActionablePendingActions(address(0), 0, 0);
         assertEq(rawIndices.length, 3, "zero lookahead length"); // 3 but second one is empty
         assertTrue(actions[0].action == Types.ProtocolAction.ValidateDeposit, "zero lookahead first action");
         assertTrue(actions[1].action == Types.ProtocolAction.None, "zero lookahead second action");
@@ -104,13 +104,13 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         // in 35 minutes, the second action should be actionable
         // the call below will add this one on top of the existing list thanks to the lookahead, so we should get all 3
         // actions
-        (actions, rawIndices) = protocol.getActionablePendingActions(address(0), 35 minutes);
+        (actions, rawIndices) = protocol.getActionablePendingActions(address(0), 35 minutes, 0);
         assertEq(rawIndices.length, 3, "raw indices length");
         assertTrue(actions[0].action == Types.ProtocolAction.ValidateDeposit, "first action");
         assertTrue(actions[1].action == Types.ProtocolAction.ValidateOpenPosition, "second action");
         assertTrue(actions[2].action == Types.ProtocolAction.ValidateDeposit, "third action");
         // check a very high value to make sure everything works
-        (actions, rawIndices) = protocol.getActionablePendingActions(address(0), 1e9);
+        (actions, rawIndices) = protocol.getActionablePendingActions(address(0), 1e9, 0);
         assertEq(rawIndices.length, 3, "raw indices length");
     }
 
@@ -161,7 +161,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         mockChainlinkOnChain.setRoundData(9, ethPrice, nextRoundTimestamp, nextRoundTimestamp, 9);
 
         (Types.PendingAction[] memory actions, uint128[] memory rawIndices) =
-            protocol.getActionablePendingActions(address(this), 0);
+            protocol.getActionablePendingActions(address(this), 0, 0);
         assertEq(actions.length, 3, "actions length before");
         bytes[] memory priceData = new bytes[](3);
         priceData[0] = abi.encode(9); // round ID after the first initiate

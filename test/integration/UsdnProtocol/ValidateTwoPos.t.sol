@@ -85,7 +85,7 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
             USER_2, data2, PreviousActionsData(previousData, rawIndices)
         );
         // no more pending action
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0), 0);
+        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0), 0, 0);
         assertEq(actions.length, 0, "pending actions length");
         vm.stopPrank();
     }

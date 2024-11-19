@@ -203,7 +203,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             "the user2 should have paid the security deposit"
         );
 
-        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(this), 0);
+        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(this), 0, 0);
         bytes[] memory previousPriceData = new bytes[](rawIndices.length);
         previousPriceData[0] = priceData;
         previousPriceData[1] = priceData;
@@ -1651,7 +1651,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         returns (PreviousActionsData memory prevActionsData_)
     {
         (PendingAction[] memory pendingAction, uint128[] memory rawIndices) =
-            protocol.getActionablePendingActions(user, 0);
+            protocol.getActionablePendingActions(user, 0, 0);
         bytes[] memory prevPriceData = new bytes[](rawIndices.length);
         prevPriceData[0] = priceData;
 

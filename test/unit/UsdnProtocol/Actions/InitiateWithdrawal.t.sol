@@ -144,7 +144,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply + initialUsdnBalance, "usdn total supply");
         // the pending action should not yet be actionable by a third party
         (PendingAction[] memory actions, uint128[] memory rawIndices) =
-            protocol.getActionablePendingActions(address(0), 0);
+            protocol.getActionablePendingActions(address(0), 0, 0);
         assertEq(actions.length, 0, "no pending action");
 
         WithdrawalPendingAction memory action =
@@ -158,7 +158,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
 
         // the pending action should be actionable after the validation deadline
         _waitBeforeActionablePendingAction();
-        (actions, rawIndices) = protocol.getActionablePendingActions(address(0), 0);
+        (actions, rawIndices) = protocol.getActionablePendingActions(address(0), 0, 0);
         assertEq(actions[0].to, to, "pending action user");
         assertEq(actions[0].validator, address(this), "pending action validator");
         assertEq(rawIndices[0], 1, "raw index");

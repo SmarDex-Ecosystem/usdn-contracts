@@ -154,7 +154,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         assertEq(protocol.getBalanceLong(), before.balanceLong + uint256(posValue), "balance long");
 
         // the pending action should not yet be actionable by a third party
-        (PendingAction[] memory pendingActions,) = protocol.getActionablePendingActions(address(0), 0);
+        (PendingAction[] memory pendingActions,) = protocol.getActionablePendingActions(address(0), 0, 0);
         assertEq(pendingActions.length, 0, "no pending action");
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(validator));
@@ -168,7 +168,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
         // the pending action should be actionable after the validation deadline
         _waitBeforeActionablePendingAction();
-        (pendingActions,) = protocol.getActionablePendingActions(address(0), 0);
+        (pendingActions,) = protocol.getActionablePendingActions(address(0), 0, 0);
         action = protocol.i_toLongPendingAction(pendingActions[0]);
         assertEq(action.to, to, "pending action to");
         assertEq(action.validator, validator, "pending action validator");
