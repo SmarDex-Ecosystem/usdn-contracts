@@ -9,16 +9,15 @@ green='\033[0;32m'
 blue='\033[0;34m'
 nc='\033[0m'
 
+# Function to display error message and exit
+errorAndExit() {
+    printf "${red}$1${nc}\n"
+    exit 1
+}
+
 # ---------------------------------------------------------------------------- #
 #                                    Inputs                                    #
 # ---------------------------------------------------------------------------- #
-
-# Function to display usage message
-usage() {
-    printf "${red}Error: Missing required arguments.${nc}\n"
-    printf "Usage: $0 --protocol <UsdnProtocolAddress> --rpc-url <RPC_URL> [--block-number <BlockNumber>]\n"
-    exit 1
-}
 
 # Parse options
 while [[ "$#" -gt 0 ]]; do
@@ -26,14 +25,14 @@ while [[ "$#" -gt 0 ]]; do
         --protocol) contractAddressUsdnProtocol="$2"; shift ;;
         --rpc-url) rpcUrl="$2"; shift ;;
         --block-number) usdnProtocolBirthBlock="$2"; shift ;;
-        *) usage ;; # Display usage if unexpected argument is found
+        *) errorAndExit "Error: Unexpected arguments.";; # Display usage if unexpected argument is found
     esac
     shift
 done
 
 # Verify that all required arguments are provided
 if [[ -z "$contractAddressUsdnProtocol" || -z "$rpcUrl" ]]; then
-    usage
+    errorAndExit "Error: Missing required arguments."
 fi
 
 # ---------------------------------------------------------------------------- #
@@ -44,8 +43,7 @@ printf "${blue}Compiling contracts...${nc}\n"
 if forge build src; then
     printf "${green}Contracts compiled successfully.${nc}\n"
 else
-    printf "${red}Error: Contract compilation failed.${nc}\n"
-    exit 1
+    errorAndExit "Error: Contract compilation failed."
 fi
 
 # ---------------------------------------------------------------------------- #
