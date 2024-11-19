@@ -10,7 +10,7 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 contract TestUsdnProtocolValidateOpenPositionUpdateBalances is UsdnProtocolBaseFixture {
     uint256 _initialBalanceVault;
     uint256 _initialBalanceLong;
-    uint256 _allBalances;
+    uint256 _initialBalances;
     uint256 _newPosValue;
     uint256 _oldPosValue;
 
@@ -21,7 +21,7 @@ contract TestUsdnProtocolValidateOpenPositionUpdateBalances is UsdnProtocolBaseF
 
         _initialBalanceVault = protocol.getBalanceVault();
         _initialBalanceLong = protocol.getBalanceLong();
-        _allBalances = _initialBalanceVault + _initialBalanceLong;
+        _initialBalances = _initialBalanceVault + _initialBalanceLong;
         assertTrue(_initialBalanceVault > 0 && _initialBalanceLong > 0, "Initial balances should not be 0");
     }
 
@@ -53,7 +53,7 @@ contract TestUsdnProtocolValidateOpenPositionUpdateBalances is UsdnProtocolBaseF
     function test_validateOpenPositionUpdateBalanceNewPosValueGtVaultBalance() external {
         _newPosValue = _initialBalanceVault + ONE_WEI;
         protocol.i_validateOpenPositionUpdateBalances(_newPosValue, 0);
-        assertEq(protocol.getBalanceLong(), _allBalances, "should be clamped with the sum of initial balances");
+        assertEq(protocol.getBalanceLong(), _initialBalances, "should be clamped with the sum of initial balances");
         assertEq(protocol.getBalanceVault(), 0, "should be equal 0");
     }
 
@@ -84,8 +84,8 @@ contract TestUsdnProtocolValidateOpenPositionUpdateBalances is UsdnProtocolBaseF
      */
     function test_validateOpenPositionUpdateBalanceOldPosValueGtLongBalance() external {
         _oldPosValue = _initialBalanceLong + ONE_WEI;
-        protocol.i_validateOpenPositionUpdateBalances(_newPosValue, _oldPosValue);
-        assertEq(protocol.getBalanceVault(), _allBalances, "should be clamped with the sum of initial balances");
+        protocol.i_validateOpenPositionUpdateBalances(0, _oldPosValue);
+        assertEq(protocol.getBalanceVault(), _initialBalances, "should be clamped with the sum of initial balances");
         assertEq(protocol.getBalanceLong(), 0, "should be equal 0");
     }
 }
