@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /**
- * @custom:feature Test the getHighestPopulatedTick function
+ * @custom:feature Test the {getHighestPopulatedTick} function
  * @custom:background Given an initialized USDN Protocol with default parameters
  */
 contract TestUsdnProtocolGetHighestPopulatedTick is UsdnProtocolBaseFixture {
@@ -15,7 +15,7 @@ contract TestUsdnProtocolGetHighestPopulatedTick is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario There are no populated ticks below the tick to search from
      * @custom:given The initialization position
-     * @custom:when we call _getHighestPopulatedTick from a tick below its liquidation price
+     * @custom:when we call {getHighestPopulatedTick} from a tick below its liquidation price
      * @custom:then the minimum usable tick is returned
      */
     function test_getHighestPopulatedTick() public view {
@@ -27,7 +27,7 @@ contract TestUsdnProtocolGetHighestPopulatedTick is UsdnProtocolBaseFixture {
      * @custom:scenario Get the highest populated tick but the value in storage is out of date
      * @custom:given The initial position
      * @custom:and A position opened at a higher tick and closed
-     * @custom:when we call getHighestPopulatedTick
+     * @custom:when we call {getHighestPopulatedTick}
      * @custom:then the tick of the initial position is returned
      */
     function test_getHighestPopulatedTickWhenStorageOutOfDate() public {
@@ -64,11 +64,11 @@ contract TestUsdnProtocolGetHighestPopulatedTick is UsdnProtocolBaseFixture {
             payable(address(this)), abi.encode(DEFAULT_PARAMS.initialPrice), EMPTY_PREVIOUS_DATA
         );
 
-        // check the storage slot of _highestPopulatedTick to make sure it was not updated after closing the position
+        // check the storage slot of `_highestPopulatedTick` to make sure it was not updated after closing the position
         // (which is intended)
         bytes32 storageMainSlot =
             keccak256(abi.encode(uint256(keccak256("UsdnProtocol.storage.main")) - 1)) & ~bytes32(uint256(0xff));
-        // _highestPopulatedTick is the 40th slot in the storage struct
+        // `_highestPopulatedTick` is the 40th slot in the storage struct
         bytes32 storageSlot = storageMainSlot | bytes32(uint256(40));
         int24 highestPopulatedTickInStorage = int24(int256(uint256(vm.load(address(protocol), storageSlot))));
         assertEq(
