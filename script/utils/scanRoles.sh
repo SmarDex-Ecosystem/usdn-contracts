@@ -108,18 +108,15 @@ function createAbiRolesMap(){
       ) |
       .name
     ')
-    printf "abi_roles: $abi_roles\n"
     
     # Create a map of bytes32 to associated role
     for abi_role in $abi_roles; do
         if [[ "$abi_role" != "DEFAULT_ADMIN_ROLE" ]]; then
             hash=$(cast keccak "$abi_role")
             abi_roles_map["$hash"]="$abi_role"
+            # Initialize roles array with roles found in ABI
+            roles["$abi_role"]=1
         fi
-    done
-
-    for abi_role in "${!abi_roles_map[@]}"; do
-        printf "abi_role: $abi_role\n"
     done
 }
 
@@ -194,15 +191,6 @@ function processLogs(){
             admin_role["$role"]="$admin_role"
         elif [[ "$event" == "RoleRevoked(bytes32,address,address)" ]]; then
             addresses["$role"]="${addresses[$role]//"$address "/}"
-        fi
-    done
-}
-
-function completeRoleNotFoundByEvent() {
-    for role_hash in "${!abi_roles_map[@]}"; do
-            role_name="${abi_roles_map[$role_hash]}"
-        if [[ ! -v roles["${role_name}"] ]]; then
-            roles["$role_name"]=1
         fi
     done
 }
@@ -297,7 +285,6 @@ for contract_name in "${!contracts[@]}"; do
 
     sortByBlockNumberAndLogIndex
     processLogs
-    completeRoleNotFoundByEvent
     createJson
     sortJson
     saveJsonAndCsv
