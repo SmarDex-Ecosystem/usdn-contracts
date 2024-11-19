@@ -491,7 +491,6 @@ library UsdnProtocolActionsLongLibrary {
                 }
                 s._balanceLong += diff;
             } else {
-                // bad dept case
                 s._balanceLong += s._balanceVault;
                 s._balanceVault = 0;
             }
