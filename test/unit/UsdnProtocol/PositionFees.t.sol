@@ -206,9 +206,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         uint256 expectedTransfer = uint256(
             protocol.i_positionValue(
+                action.closePosTotalExpo,
                 uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
-                protocol.i_getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick), action.liqMultiplier),
-                action.closePosTotalExpo
+                protocol.i_getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick), action.liqMultiplier)
             )
         );
 

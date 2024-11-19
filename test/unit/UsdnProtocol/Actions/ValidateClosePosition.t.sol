@@ -648,7 +648,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             protocol.i_calcTickWithoutPenalty(data.action.tick, data.liquidationPenalty)
         );
         data.remainingValue = protocol.i_positionValue(
-            data.liquidationPrice, data.liqPriceWithoutPenalty, data.pos.totalExpo - data.action.closePosTotalExpo
+            data.pos.totalExpo - data.action.closePosTotalExpo, data.liquidationPrice, data.liqPriceWithoutPenalty
         );
         data.remainingToTransfer = protocol.i_assetToRemove(
             protocol.getBalanceLong(),

@@ -114,11 +114,11 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
         uint128 priceWithFees = uint128(pythPrice - pythPrice * protocol.getPositionFeeBps() / BPS_DIVISOR);
         uint256 assetToTransfer = uint256(
             protocol.i_positionValue(
+                action.closePosTotalExpo,
                 priceWithFees,
                 protocol.i_getEffectivePriceForTick(
                     protocol.i_calcTickWithoutPenalty(posIdToClose.tick, liquidationPenalty), action.liqMultiplier
-                ),
-                action.closePosTotalExpo
+                )
             )
         );
 

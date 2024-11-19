@@ -107,7 +107,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         Storage storage s = Utils._getMainStorage();
 
         uint256 longTradingExpo = this.longTradingExpoWithFunding(uint128(currentPrice), uint128(block.timestamp));
-        bytes32 tickHash = Utils.tickHash(tick, s._tickVersion[tick]);
+        bytes32 tickHash = Utils._tickHash(tick, s._tickVersion[tick]);
         return Long._tickValue(tick, currentPrice, longTradingExpo, s._liqMultiplierAccumulator, s._tickData[tickHash]);
     }
 
@@ -231,7 +231,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         return ActionsLong._initiateClosePosition(params, currentPriceData, delegationSignature);
     }
 
-    function _calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
+    function i_calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed) external view returns (int256) {
         Storage storage s = Utils._getMainStorage();
 
         return Core._calcEMA(lastFundingPerDay, secondsElapsed, s._EMAPeriod, s._EMA);
@@ -275,12 +275,12 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         liqMultiplierAccumulator_ = Long._removeAmountFromPosition(tick, index, pos, amountToRemove, totalExpoToRemove);
     }
 
-    function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
+    function i_positionValue(uint128 positionTotalExpo, uint128 currentPrice, uint128 liqPriceWithoutPenalty)
         external
         pure
         returns (int256 value_)
     {
-        return Utils._positionValue(currentPrice, liqPriceWithoutPenalty, positionTotalExpo);
+        return Utils._positionValue(positionTotalExpo, currentPrice, liqPriceWithoutPenalty);
     }
 
     function i_calcPositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
@@ -581,13 +581,13 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     }
 
     function i_calcTickWithoutPenalty(int24 tick, uint24 liquidationPenalty) external pure returns (int24) {
-        return Utils.calcTickWithoutPenalty(tick, liquidationPenalty);
+        return Utils._calcTickWithoutPenalty(tick, liquidationPenalty);
     }
 
     function i_calcTickWithoutPenalty(int24 tick) external view returns (int24) {
         Storage storage s = Utils._getMainStorage();
 
-        return Utils.calcTickWithoutPenalty(tick, s._liquidationPenalty);
+        return Utils._calcTickWithoutPenalty(tick, s._liquidationPenalty);
     }
 
     function i_unadjustPrice(

@@ -203,9 +203,9 @@ library UsdnProtocolActionsUtilsLibrary {
 
         // to have maximum precision, we do not pre-compute the liquidation multiplier with a fixed
         // precision just now, we will store it in the pending action later, to be used in the validate action
-        int24 tick = Utils.calcTickWithoutPenalty(params.posId.tick, data_.liquidationPenalty);
+        int24 tick = Utils._calcTickWithoutPenalty(params.posId.tick, data_.liquidationPenalty);
         uint128 liqPriceWithoutPenalty =
-            Utils.getEffectivePriceForTick(tick, data_.lastPrice, data_.longTradingExpo, data_.liqMulAcc);
+            Utils._getEffectivePriceForTick(tick, data_.lastPrice, data_.longTradingExpo, data_.liqMulAcc);
 
         uint256 balanceLong = s._balanceLong;
 
@@ -432,7 +432,7 @@ library UsdnProtocolActionsUtilsLibrary {
         returns (uint256 boundedPosValue_)
     {
         // calculate position value
-        int256 positionValue = Utils._positionValue(price, liqPriceWithoutPenalty, posExpo);
+        int256 positionValue = Utils._positionValue(posExpo, price, liqPriceWithoutPenalty);
 
         if (positionValue <= 0) {
             // should not happen, unless we did not manage to liquidate all ticks that needed to be liquidated during

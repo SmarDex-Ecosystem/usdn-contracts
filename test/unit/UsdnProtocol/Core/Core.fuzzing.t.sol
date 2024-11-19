@@ -103,7 +103,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         // calculate the value of the deployer's long position
         uint128 liqPrice = protocol.getEffectivePriceForTick(data.firstPosTick);
 
-        longPosValue += uint256(protocol.i_positionValue(finalPrice, liqPrice, data.firstPos.totalExpo));
+        longPosValue += uint256(protocol.i_positionValue(data.firstPos.totalExpo, finalPrice, liqPrice));
         uint256 maxLongBalance = protocol.i_calcMaxLongBalance(protocol.getTotalExpo());
 
         uint256 longAssetAvailable = uint256(protocol.i_longAssetAvailable(finalPrice));

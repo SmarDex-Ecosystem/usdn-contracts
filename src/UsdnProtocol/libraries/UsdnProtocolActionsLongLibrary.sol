@@ -255,7 +255,7 @@ library UsdnProtocolActionsLongLibrary {
                 // we consider the liquidation multiplier as it was during the initiation, to account for any funding
                 // that was due between the initiation and the validation
                 data.liqPriceWithoutPenalty = Utils._getEffectivePriceForTick(
-                    Utils.calcTickWithoutPenalty(maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty),
+                    Utils._calcTickWithoutPenalty(maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty),
                     data.action.liqMultiplier
                 );
             }
@@ -276,7 +276,7 @@ library UsdnProtocolActionsLongLibrary {
 
             // adjust the balances to reflect the new value of the position
             uint256 updatedPosValue =
-                Utils.positionValue(data.pos.totalExpo, data.lastPrice, data.liqPriceWithoutPenalty);
+                Utils._positionValueOptimized(data.pos.totalExpo, data.lastPrice, data.liqPriceWithoutPenalty);
             _validateOpenPositionUpdateBalances(updatedPosValue, data.oldPosValue);
 
             emit IUsdnProtocolEvents.LiquidationPriceUpdated(
@@ -313,7 +313,7 @@ library UsdnProtocolActionsLongLibrary {
         {
             Types.TickData storage tickData = s._tickData[data.tickHash];
             uint256 unadjustedTickPrice =
-                TickMath.getPriceAtTick(Utils.calcTickWithoutPenalty(data.action.tick, data.liquidationPenalty));
+                TickMath.getPriceAtTick(Utils._calcTickWithoutPenalty(data.action.tick, data.liquidationPenalty));
             tickData.totalExpo = tickData.totalExpo + expoAfter - expoBefore;
             s._liqMultiplierAccumulator = s._liqMultiplierAccumulator.add(
                 HugeUint.wrap(expoAfter * unadjustedTickPrice)
@@ -321,7 +321,7 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         // adjust the balances to reflect the new value of the position
-        uint256 newPosValue = Utils.positionValue(expoAfter, data.lastPrice, data.liqPriceWithoutPenalty);
+        uint256 newPosValue = Utils._positionValueOptimized(expoAfter, data.lastPrice, data.liqPriceWithoutPenalty);
         _validateOpenPositionUpdateBalances(newPosValue, data.oldPosValue);
 
         isValidated_ = true;
@@ -406,7 +406,7 @@ library UsdnProtocolActionsLongLibrary {
         amountToRefund_ = Core._createOpenPendingAction(params.to, params.validator, params.securityDepositValue, data);
 
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
-            Utils.transferCallback(s._asset, params.amount, address(this));
+            Utils._transferCallback(s._asset, params.amount, address(this));
         } else {
             // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(params.user, address(this), params.amount);
@@ -534,7 +534,7 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         data_.lastPrice = s._lastPrice;
-        uint128 liqPriceWithPenalty = Utils.getEffectivePriceForTick(data_.action.tick);
+        uint128 liqPriceWithPenalty = Utils._getEffectivePriceForTick(data_.action.tick);
         // A user that triggers this condition will be stuck in a validation loop. The price it provided is not fresh,
         // therefore liquidations cannot be triggered, but at the same time, the latest price known by the protocol
         // indicates that the position should be liquidated. So the owner of this position needs to wait for another
@@ -551,12 +551,13 @@ library UsdnProtocolActionsLongLibrary {
         // re-calculate leverage
         data_.liquidationPenalty = s._tickData[data_.tickHash].liquidationPenalty;
         data_.liqPriceWithoutPenalty =
-            Utils.getEffectivePriceForTick(Utils.calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty));
+            Utils._getEffectivePriceForTick(Utils._calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty));
 
         // calculate how much the position that was opened in the initiate is now worth (it might be too large or too
         // small considering the new leverage and lastPrice). We will adjust the long and vault balances accordingly
         // lastPrice is larger than or equal to liqPriceWithoutPenalty so the calc below does not underflow
-        data_.oldPosValue = Utils.positionValue(data_.pos.totalExpo, data_.lastPrice, data_.liqPriceWithoutPenalty);
+        data_.oldPosValue =
+            Utils._positionValueOptimized(data_.pos.totalExpo, data_.lastPrice, data_.liqPriceWithoutPenalty);
 
         // if lastPrice > liqPriceWithPenalty but startPrice <= liqPriceWithPenalty then the user dodged liquidations
         // we still can't let the position open, because we can't calculate the leverage with a start price that is
@@ -586,7 +587,7 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         data_.liqPriceWithoutPenaltyNorFunding = Utils._getEffectivePriceForTick(
-            Utils.calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty), data_.action.liqMultiplier
+            Utils._calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty), data_.action.liqMultiplier
         );
         // calculate the leverage of the position without considering the penalty nor the funding by using the
         // multiplier state at T+24
@@ -786,11 +787,11 @@ library UsdnProtocolActionsLongLibrary {
             return (false, false);
         }
 
-        int24 tickWithoutPenalty = Utils.calcTickWithoutPenalty(long.tick, long.closeLiqPenalty);
+        int24 tickWithoutPenalty = Utils._calcTickWithoutPenalty(long.tick, long.closeLiqPenalty);
         data.positionValue = Utils._positionValue(
+            long.closePosTotalExpo,
             data.priceWithFees,
-            Utils._getEffectivePriceForTick(tickWithoutPenalty, long.liqMultiplier),
-            long.closePosTotalExpo
+            Utils._getEffectivePriceForTick(tickWithoutPenalty, long.liqMultiplier)
         );
 
         uint256 assetToTransfer;
@@ -854,7 +855,7 @@ library UsdnProtocolActionsLongLibrary {
             long.to,
             Types.PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
             assetToTransfer,
-            assetToTransfer.toInt256() - Utils.toInt256(long.closeAmount)
+            assetToTransfer.toInt256() - Utils._toInt256(long.closeAmount)
         );
     }
 }
