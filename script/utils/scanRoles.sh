@@ -135,7 +135,7 @@ function sortByBlockNumberAndLogIndex(){
 
 function saveJsonAndCsv(){
     json_output_processed=$(printf "%s" "$json_output" | jq .)
-    echo "$json_output_processed" > "${contract_name}_roles.json"
+    printf "$json_output_processed" > "${contract_name}_roles.json"
     printf "${green}${contract_name} roles JSON saved to ${contract_name}_roles.json${nc}\n"
     csv_output=$(printf "%s" "$json_output" | jq -r '.[] | [.Role, .Role_admin, (.Addresses | join(","))] | @csv')
     printf "Role,Role_admin,Addresses\n$csv_output" > "${contract_name}_roles.csv"
@@ -304,7 +304,7 @@ function saveJson(){
     done
     json_output="${json_output%,}]"
     json_output=$(printf "%s" "$json_output" | jq .)
-    echo "$json_output" > "owners.json"
+    printf "$json_output" > "owners.json"
     printf "${green}Owners JSON saved to owners.json${nc}\n"
 }
 
