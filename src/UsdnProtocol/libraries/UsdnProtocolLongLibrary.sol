@@ -457,6 +457,23 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
+     * @notice Find the highest tick that contains at least one position
+     * @dev If there are no ticks with a position left, returns minTick()
+     * @param searchStart The tick from which to start searching
+     * @return tick_ The next highest tick below `searchStart`
+     */
+    function _findHighestPopulatedTick(int24 searchStart) public view returns (int24 tick_) {
+        Types.Storage storage s = Utils._getMainStorage();
+
+        uint256 index = s._tickBitmap.findLastSet(Utils._calcBitmapIndexFromTick(searchStart));
+        if (index == LibBitmap.NOT_FOUND) {
+            tick_ = minTick();
+        } else {
+            tick_ = _calcTickFromBitmapIndex(index);
+        }
+    }
+
+    /**
      * @notice Check if a USDN rebase is required and adjust the divisor if needed
      * @dev Note: only call this function after `_applyPnlAndFunding` has been called to update the balances
      * @param assetPrice The current price of the underlying asset
@@ -1078,23 +1095,6 @@ library UsdnProtocolLongLibrary {
                 cache.liqMultiplierAccumulator
             );
             posData_.totalExpo = Utils._calcPositionTotalExpo(positionAmount, lastPrice, data.liqPriceWithoutPenalty);
-        }
-    }
-
-    /**
-     * @notice Find the highest tick that contains at least one position
-     * @dev If there are no ticks with a position left, returns minTick()
-     * @param searchStart The tick from which to start searching
-     * @return tick_ The next highest tick below `searchStart`
-     */
-    function _findHighestPopulatedTick(int24 searchStart) internal view returns (int24 tick_) {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        uint256 index = s._tickBitmap.findLastSet(Utils._calcBitmapIndexFromTick(searchStart));
-        if (index == LibBitmap.NOT_FOUND) {
-            tick_ = minTick();
-        } else {
-            tick_ = _calcTickFromBitmapIndex(index);
         }
     }
 
