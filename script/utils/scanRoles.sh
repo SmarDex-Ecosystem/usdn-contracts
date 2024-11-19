@@ -37,6 +37,18 @@ if [[ -z "$contractAddressUsdnProtocol" || -z "$rpcUrl" ]]; then
 fi
 
 # ---------------------------------------------------------------------------- #
+#                             Compilation Step                                 #
+# ---------------------------------------------------------------------------- #
+
+printf "${blue}Compiling contracts...${nc}\n"
+if forge build src; then
+    printf "${green}Contracts compiled successfully.${nc}\n"
+else
+    printf "${red}Error: Contract compilation failed.${nc}\n"
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------- #
 #                                   Variables                                  #
 # ---------------------------------------------------------------------------- #
 
