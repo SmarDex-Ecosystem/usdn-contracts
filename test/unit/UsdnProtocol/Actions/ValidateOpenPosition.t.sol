@@ -115,7 +115,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         _waitMockMiddlewarePriceDelay();
 
-        LongActionOutcome outcome =
+        (LongActionOutcome outcome,) =
             protocol.validateOpenPosition(payable(this), abi.encode(params.initialPrice / 4), EMPTY_PREVIOUS_DATA);
         assertTrue(outcome == LongActionOutcome.PendingLiquidations, "outcome");
 
@@ -153,10 +153,11 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         _waitMockMiddlewarePriceDelay();
 
-        LongActionOutcome outcome =
+        (LongActionOutcome outcome, PositionId memory updatedPosId) =
             protocol.validateOpenPosition(payable(this), abi.encode(params.initialPrice * 2 / 3), EMPTY_PREVIOUS_DATA);
 
         assertTrue(outcome == LongActionOutcome.Liquidated, "outcome");
+        assertEq(updatedPosId.tick, Constants.NO_POSITION_TICK, "new posId");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(
@@ -210,9 +211,10 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         vm.expectEmit();
         emit ValidatedOpenPosition(to, validator, expected.expectedPosTotalExpo, newPrice, posId);
-        LongActionOutcome outcome =
+        (LongActionOutcome outcome, PositionId memory updatedPosId) =
             protocol.validateOpenPosition(payable(validator), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
         assertTrue(outcome == LongActionOutcome.Processed, "outcome");
+        assertEq(keccak256(abi.encode(updatedPosId)), keccak256(abi.encode(posId)), "posId");
         int256 posValue = protocol.getPositionValue(posId, newPrice, uint128(block.timestamp));
         assertEq(uint256(posValue), expected.expectedPosValue, "pos value");
 
@@ -305,10 +307,16 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             testData.validatePrice,
             PositionId(testData.validateTick, testData.validateTickVersion, testData.validateIndex)
         );
-        protocol.validateOpenPosition(payable(this), abi.encode(testData.validatePrice), EMPTY_PREVIOUS_DATA);
+        (, PositionId memory newPosId) =
+            protocol.validateOpenPosition(payable(this), abi.encode(testData.validatePrice), EMPTY_PREVIOUS_DATA);
 
-        PositionId memory newPosId =
-            PositionId(testData.validateTick, testData.validateTickVersion, testData.validateIndex);
+        assertEq(
+            keccak256(abi.encode(newPosId)),
+            keccak256(
+                abi.encode(PositionId(testData.validateTick, testData.validateTickVersion, testData.validateIndex))
+            ),
+            "returned posId"
+        );
         int256 posValue = protocol.getPositionValue(newPosId, testData.validatePrice, uint128(block.timestamp));
         assertEq(uint256(posValue), testData.expectedPosValue, "pos value");
         (Position memory pos,) = protocol.getLongPosition(newPosId);

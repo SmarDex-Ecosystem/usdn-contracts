@@ -271,7 +271,7 @@ library UsdnProtocolActionsUtilsLibrary {
                 } else if (data.pending.action == Types.ProtocolAction.ValidateWithdrawal) {
                     data.executed = Vault._validateWithdrawalWithAction(data.pending, previousActionsData.priceData[i]);
                 } else if (data.pending.action == Types.ProtocolAction.ValidateOpenPosition) {
-                    (data.executed, data.liq) =
+                    (data.executed, data.liq,) =
                         ActionsLong._validateOpenPositionWithAction(data.pending, previousActionsData.priceData[i]);
                 } else if (data.pending.action == Types.ProtocolAction.ValidateClosePosition) {
                     (data.executed, data.liq) =
