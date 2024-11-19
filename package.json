@@ -1,6 +1,6 @@
 {
   "name": "@smardex/usdn-contracts",
-  "version": "0.22.0",
+  "version": "test-0.22.0",
   "description": "Contracts for the USDN token and derivatives protocol",
   "repository": "git@github.com:SmarDex-Ecosystem/usdn-contracts.git",
   "author": "RA2 Tech",
