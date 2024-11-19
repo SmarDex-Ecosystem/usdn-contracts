@@ -298,7 +298,9 @@ library UsdnProtocolVaultLibrary {
         if (lookAhead > lowLatencyDeadline) {
             lowLatencyDeadline = 0; // avoid underflow
         } else {
-            lowLatencyDeadline -= lookAhead;
+            unchecked {
+                lowLatencyDeadline -= lookAhead; // checked above
+            }
         }
         uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
         uint256 onChainDeadline = s._onChainValidatorDeadline;
@@ -307,7 +309,9 @@ library UsdnProtocolVaultLibrary {
         if (lookAhead > onChainDeadline) {
             onChainDeadline = 0; // avoid underflow
         } else {
-            onChainDeadline -= lookAhead;
+            unchecked {
+                onChainDeadline -= lookAhead;
+            }
         }
         uint256 i;
         uint256 j;

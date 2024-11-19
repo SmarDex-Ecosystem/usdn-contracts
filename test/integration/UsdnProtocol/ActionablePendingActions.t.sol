@@ -109,6 +109,9 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         assertTrue(actions[0].action == Types.ProtocolAction.ValidateDeposit, "first action");
         assertTrue(actions[1].action == Types.ProtocolAction.ValidateOpenPosition, "second action");
         assertTrue(actions[2].action == Types.ProtocolAction.ValidateDeposit, "third action");
+        // check a very high value to make sure everything works
+        (actions, rawIndices) = protocol.getActionablePendingActions(address(0), 1e9);
+        assertEq(rawIndices.length, 3, "raw indices length");
     }
 
     /**
