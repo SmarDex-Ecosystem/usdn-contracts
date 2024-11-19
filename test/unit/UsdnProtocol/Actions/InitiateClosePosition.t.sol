@@ -315,7 +315,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         emit InitiatedClosePosition(
             address(this), address(this), address(this), posId, POSITION_AMOUNT, POSITION_AMOUNT, 0
         );
-        bool success = protocol.initiateClosePosition(
+        LongActionOutcome outcome = protocol.initiateClosePosition(
             posId,
             POSITION_AMOUNT,
             DISABLE_MIN_PRICE,
@@ -326,7 +326,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             EMPTY_PREVIOUS_DATA,
             ""
         );
-        assertTrue(success, "success");
+        assertTrue(outcome == LongActionOutcome.Processed, "The action should have been validated");
     }
 
     /**
@@ -502,7 +502,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function test_initiateClosePositionLiquidated() public {
         _waitMockMiddlewarePriceDelay();
 
-        protocol.initiateClosePosition(
+        LongActionOutcome outcome = protocol.initiateClosePosition(
             posId,
             POSITION_AMOUNT,
             DISABLE_MIN_PRICE,
@@ -513,6 +513,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             EMPTY_PREVIOUS_DATA,
             ""
         );
+
+        assertTrue(outcome == LongActionOutcome.Liquidated, "The position should have been liquidated");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(uint256(pending.action), uint256(ProtocolAction.None), "action should not be initiated");
@@ -534,7 +536,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         _waitMockMiddlewarePriceDelay();
 
         vm.prank(DEPLOYER);
-        bool success = protocol.initiateClosePosition(
+        LongActionOutcome outcome = protocol.initiateClosePosition(
             initialPosition,
             POSITION_AMOUNT,
             DISABLE_MIN_PRICE,
@@ -545,7 +547,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             EMPTY_PREVIOUS_DATA,
             ""
         );
-        assertFalse(success, "success");
+        assertTrue(outcome == LongActionOutcome.PendingLiquidations, "outcome");
 
         PendingAction memory pending = protocol.getUserPendingAction(DEPLOYER);
         assertEq(uint256(pending.action), uint256(ProtocolAction.None), "pending action should not exist");
@@ -870,7 +872,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             nonce: initialNonce
         });
 
-        bool success = protocol.initiateClosePosition(
+        LongActionOutcome outcome = protocol.initiateClosePosition(
             posId,
             POSITION_AMOUNT,
             DISABLE_MIN_PRICE,
@@ -882,7 +884,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             _getDelegationSignature(pk, protocol.domainSeparatorV4(), delegation)
         );
 
-        assertTrue(success, "success");
+        assertTrue(outcome == LongActionOutcome.Processed, "outcome");
         assertEq(protocol.getNonce(user), initialNonce + 1, "User nonce should be incremented");
     }
 

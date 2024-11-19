@@ -492,7 +492,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData,
         bytes calldata delegationData
-    ) external payable nonReentrant returns (bool success_) {
+    ) external payable nonReentrant returns (Types.LongActionOutcome outcome_) {
         InitiateCloseData memory data;
         data.amount = amount;
         data.to = to;
@@ -714,14 +714,14 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
      * @param previousActionsData The data needed to validate actionable pending actions
      * @param delegationData An optional delegation data that include the depositOwner and an EIP712 signature to
      * provide when closing a position on the owner's behalf
-     * @return success_ If the UsdnProtocol's `initiateClosePosition` was successful
+     * @return outcome_ The outcome of the `initiateClosePosition` call to the USDN protocol
      */
     function _initiateClosePosition(
         InitiateCloseData memory data,
         bytes calldata currentPriceData,
         Types.PreviousActionsData calldata previousActionsData,
         bytes calldata delegationData
-    ) internal returns (bool success_) {
+    ) internal returns (Types.LongActionOutcome outcome_) {
         if (block.timestamp <= data.closeLockedUntil) {
             revert RebalancerCloseLockedUntil(data.closeLockedUntil);
         }
@@ -791,7 +791,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         data.balanceOfAssetBefore = _asset.balanceOf(address(this));
 
         // slither-disable-next-line reentrancy-eth
-        success_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
+        outcome_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
             Types.PositionId({
                 tick: data.currentPositionData.tick,
                 tickVersion: data.currentPositionData.tickVersion,
@@ -808,7 +808,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         );
         data.balanceOfAssetAfter = _asset.balanceOf(address(this));
 
-        if (success_) {
+        if (outcome_ == Types.LongActionOutcome.Processed) {
             if (data.remainingAssets == 0) {
                 delete _userDeposit[data.user];
             } else {

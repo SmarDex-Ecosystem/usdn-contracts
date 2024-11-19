@@ -13,23 +13,6 @@ import { IUsdn } from "../Usdn/IUsdn.sol";
 
 interface IUsdnProtocolTypes {
     /**
-     * @notice Information about a long user position
-     * @param validated Whether the position was validated
-     * @param timestamp The timestamp of the position start
-     * @param user The user's address
-     * @param totalExpo The total exposition of the position (0 for vault deposits). The product of the initial
-     * collateral and the initial leverage
-     * @param amount The amount of initial collateral in the position
-     */
-    struct Position {
-        bool validated; // 1 byte
-        uint40 timestamp; // 5 bytes. Max 1_099_511_627_775 (36812-02-20 01:36:15)
-        address user; // 20 bytes
-        uint128 totalExpo; // 16 bytes. Max 340_282_366_920_938_463_463.374_607_431_768_211_455 ether
-        uint128 amount; // 16 bytes
-    }
-
-    /**
      * @notice All possible action types for the protocol
      * @dev This is used for pending actions and to interact with the oracle middleware
      * @param None No particular action
@@ -59,6 +42,20 @@ interface IUsdnProtocolTypes {
     }
 
     /**
+     * @notice The outcome of the call targeting a long position
+     * @param Processed The call did what it was supposed to do
+     * An initiate close has been completed / a pending action was validated
+     * @param Liquidated The position has been liquidated by this call
+     * @param PendingLiquidations The call cannot be completed because of pending liquidations
+     * Try calling the `liquidate` function with a fresh price to unblock the situation
+     */
+    enum LongActionOutcome {
+        Processed,
+        Liquidated,
+        PendingLiquidations
+    }
+
+    /**
      * @notice Classifies how far in its logic the `_triggerRebalancer` function made it to
      * @dev Used to estimate the gas spent by the function call to more accurately calculate liquidation rewards
      * @param None The rebalancer is not set
@@ -77,6 +74,23 @@ interface IUsdnProtocolTypes {
         Closed,
         Opened,
         ClosedOpened
+    }
+
+    /**
+     * @notice Information about a long user position
+     * @param validated Whether the position was validated
+     * @param timestamp The timestamp of the position start
+     * @param user The user's address
+     * @param totalExpo The total exposition of the position (0 for vault deposits). The product of the initial
+     * collateral and the initial leverage
+     * @param amount The amount of initial collateral in the position
+     */
+    struct Position {
+        bool validated; // 1 byte
+        uint40 timestamp; // 5 bytes. Max 1_099_511_627_775 (36812-02-20 01:36:15)
+        address user; // 20 bytes
+        uint128 totalExpo; // 16 bytes. Max 340_282_366_920_938_463_463.374_607_431_768_211_455 ether
+        uint128 amount; // 16 bytes
     }
 
     /**

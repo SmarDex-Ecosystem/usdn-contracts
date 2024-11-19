@@ -28,7 +28,7 @@ abstract contract UsdnProtocolActions is
         uint256 deadline,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_, PositionId memory posId_) {
+    ) external payable whenNotPaused initializedAndNonReentrant returns (bool isInitiated_, PositionId memory posId_) {
         Storage storage s = Utils._getMainStorage();
 
         InitiateOpenPositionParams memory params = InitiateOpenPositionParams({
@@ -51,7 +51,7 @@ abstract contract UsdnProtocolActions is
         address payable validator,
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant returns (LongActionOutcome outcome_) {
         return ActionsLong.validateOpenPosition(validator, openPriceData, previousActionsData);
     }
 
@@ -66,7 +66,7 @@ abstract contract UsdnProtocolActions is
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
         bytes calldata delegationSignature
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant returns (LongActionOutcome outcome_) {
         Storage storage s = Utils._getMainStorage();
 
         InitiateClosePositionParams memory params = InitiateClosePositionParams({
@@ -88,7 +88,7 @@ abstract contract UsdnProtocolActions is
         address payable validator,
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable whenNotPaused initializedAndNonReentrant returns (bool success_) {
+    ) external payable whenNotPaused initializedAndNonReentrant returns (LongActionOutcome outcome_) {
         return ActionsLong.validateClosePosition(validator, closePriceData, previousActionsData);
     }
 
