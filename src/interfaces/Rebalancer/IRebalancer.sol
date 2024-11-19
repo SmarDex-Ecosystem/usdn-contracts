@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -31,6 +31,13 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @return The EIP712 {initiateClosePosition} typehash
      */
     function INITIATE_CLOSE_TYPEHASH() external view returns (bytes32);
+
+    /**
+     * @notice The maximum amount in seconds to wait to execute a {initiateClosePosition} since a new rebalancer
+     * long position has been created
+     * @return The max close delay value
+     */
+    function MAX_CLOSE_DELAY() external view returns (uint256);
 
     /**
      * @notice Returns the address of the asset used by the USDN protocol
@@ -102,6 +109,12 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @return The domain separator v4
      */
     function domainSeparatorV4() external view returns (bytes32);
+
+    /**
+     * @notice Get the timestamp by which a user must wait to perform a {initiateClosePosition}
+     * @return The timestamp value
+     */
+    function getCloseLockedUntil() external view returns (uint256);
 
     /**
      * @notice Deposit assets into this contract to be included in the next position after validation
@@ -193,6 +206,8 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @param validationDelay The validation delay
      * @param validationDeadline The validation deadline
      * @param actionCooldown The cooldown period duration
+     * @param closeDelay The close delay that will be applied to the next long position opening
      */
-    function setTimeLimits(uint80 validationDelay, uint80 validationDeadline, uint80 actionCooldown) external;
+    function setTimeLimits(uint64 validationDelay, uint64 validationDeadline, uint64 actionCooldown, uint64 closeDelay)
+        external;
 }

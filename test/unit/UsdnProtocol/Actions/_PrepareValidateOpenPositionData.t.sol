@@ -252,7 +252,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
         );
         assertEq(
             data.oldPosValue,
-            uint256(protocol.i_positionValue(data.lastPrice, data.liqPriceWithoutPenalty, data.pos.totalExpo)),
+            uint256(protocol.i_positionValue(data.pos.totalExpo, data.lastPrice, data.liqPriceWithoutPenalty)),
             "The oldPosValue should match the expected value"
         );
         assertEq(data.leverage, 0, "The leverage should not have been calculated");

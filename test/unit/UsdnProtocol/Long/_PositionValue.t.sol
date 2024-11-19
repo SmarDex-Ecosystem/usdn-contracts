@@ -31,24 +31,24 @@ contract TestUsdnProtocolLongPositionValue is UsdnProtocolBaseFixture {
      */
     function test_positionValue() public view {
         uint128 positionTotalExpo = 2 ether;
-        int256 value = protocol.i_positionValue(2000 ether, 500 ether, positionTotalExpo);
+        int256 value = protocol.i_positionValue(positionTotalExpo, 2000 ether, 500 ether);
         assertEq(value, 1.5 ether, "Position value should be 1.5 ether");
 
-        value = protocol.i_positionValue(1000 ether, 500 ether, positionTotalExpo);
+        value = protocol.i_positionValue(positionTotalExpo, 1000 ether, 500 ether);
         assertEq(value, 1 ether, "Position value should be 1 ether");
 
-        value = protocol.i_positionValue(500 ether, 500 ether, positionTotalExpo);
+        value = protocol.i_positionValue(positionTotalExpo, 500 ether, 500 ether);
         assertEq(value, 0 ether, "Position value should be 0");
 
-        value = protocol.i_positionValue(200 ether, 500 ether, positionTotalExpo);
+        value = protocol.i_positionValue(positionTotalExpo, 200 ether, 500 ether);
         assertEq(value, -3 ether, "Position value should be negative");
 
         positionTotalExpo = 4 ether;
-        value = protocol.i_positionValue(2000 ether, 750 ether, positionTotalExpo);
+        value = protocol.i_positionValue(positionTotalExpo, 2000 ether, 750 ether);
         assertEq(value, 2.5 ether, "Position with 4x leverage should have a 2.5 ether value");
 
         positionTotalExpo = 5 ether;
-        value = protocol.i_positionValue(2000 ether, 0, positionTotalExpo);
+        value = protocol.i_positionValue(positionTotalExpo, 2000 ether, 0);
         assertEq(
             value,
             int128(positionTotalExpo),

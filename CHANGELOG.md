@@ -12,7 +12,6 @@
 
 ### Features
 
-* add pUSDN token ([#668](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/668)) ([bce850b](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/bce850bd6a451d781bfba521e844b2706bc40412))
 * assert limits on setters ([#658](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/658)) ([f7c72d6](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/f7c72d6127313521193a54b5910a9defee8c6f47))
 * change roles and add script to transfer ownership of the protocol ([#650](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/650)) ([b65c6b2](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/b65c6b20ebd7dcf87a88a94991ff61f4d21f8968))
 * delegated transfer position ownership ([#661](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/661)) ([7dae4f3](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/7dae4f3d4441b4ed6ddacfb67c836523839d1e5e))

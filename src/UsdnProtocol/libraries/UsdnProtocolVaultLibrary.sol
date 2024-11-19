@@ -629,7 +629,7 @@ library UsdnProtocolVaultLibrary {
      * @notice Initiate a deposit of assets into the vault to mint USDN
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `Types.ProtocolAction.InitiateDeposit` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * The price validation might require payment according to the return value of the {validationCost} function
      * of the middleware
      * @param params The parameters for the deposit
      * @param currentPriceData The current price data
@@ -666,9 +666,11 @@ library UsdnProtocolVaultLibrary {
 
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             if (data.sdexToBurn > 0) {
-                Utils.transferCallback(s._sdex, data.sdexToBurn, Constants.DEAD_ADDRESS);
+                // This logic must be modified if this protocol is deployed twice, as an attacker could burn SDEX once
+                // for both deposits by re-entering one protocol from the other.
+                Utils._transferCallback(s._sdex, data.sdexToBurn, Constants.DEAD_ADDRESS);
             }
-            Utils.transferCallback(s._asset, params.amount, address(this));
+            Utils._transferCallback(s._asset, params.amount, address(this));
         } else {
             if (data.sdexToBurn > 0) {
                 // slither-disable-next-line arbitrary-send-erc20
@@ -677,7 +679,7 @@ library UsdnProtocolVaultLibrary {
             // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(params.user, address(this), params.amount);
         }
-        s._pendingBalanceVault += Utils.toInt256(params.amount);
+        s._pendingBalanceVault += Utils._toInt256(params.amount);
 
         isInitiated_ = true;
 
@@ -755,13 +757,14 @@ library UsdnProtocolVaultLibrary {
 
         // we calculate the amount of USDN to mint, either considering the vault balance at the time of the initiate
         // action, or the current balance with the new price. We will use the higher of the two to mint. Funding between
-        // the initiate and validate actions is ignored
+        // the initiate and validate actions is ignored. So any balance difference due to funding will be ignored when
+        // calculating the minted USDN
         uint128 fees = FixedPointMathLib.fullMulDiv(deposit.amount, deposit.feeBps, Constants.BPS_DIVISOR).toUint128();
         uint128 amountAfterFees = deposit.amount - fees;
 
         uint256 balanceVault = deposit.balanceVault;
         if (currentPrice.price < deposit.assetPrice) {
-            // price decreased: balance of the vault increased
+            // without considering the funding, when the price decreases, the balance of the vault increases
             int256 available = Utils._vaultAssetAvailable(
                 deposit.totalExpo,
                 deposit.balanceVault,
@@ -778,7 +781,7 @@ library UsdnProtocolVaultLibrary {
         }
 
         s._balanceVault += deposit.amount; // we credit the full deposit amount
-        s._pendingBalanceVault -= Utils.toInt256(deposit.amount);
+        s._pendingBalanceVault -= Utils._toInt256(deposit.amount);
 
         uint256 mintedTokens = s._usdn.mintShares(
             deposit.to, Utils._calcMintUsdnShares(amountAfterFees, balanceVault + fees, deposit.usdnTotalShares)
@@ -880,7 +883,7 @@ library UsdnProtocolVaultLibrary {
      * @notice Initiate a withdrawal of assets from the vault by providing USDN tokens
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `Types.ProtocolAction.InitiateWithdrawal` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * The price validation might require payment according to the return value of the {validationCost} function
      * of the middleware
      * @param params The parameters for the withdrawal
      * @param currentPriceData The current price data
@@ -921,7 +924,7 @@ library UsdnProtocolVaultLibrary {
         IUsdn usdn = s._usdn;
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             // ask the msg.sender to send USDN shares and check the balance
-            Utils.usdnTransferCallback(usdn, params.usdnShares);
+            Utils._usdnTransferCallback(usdn, params.usdnShares);
         } else {
             // retrieve the USDN shares, check that the balance is sufficient
             usdn.transferSharesFrom(params.user, address(this), params.usdnShares);

@@ -83,9 +83,9 @@ library UsdnProtocolActionsUtilsLibrary {
     /// @notice See {IUsdnProtocolActions}
     function transferPositionOwnership(
         Types.PositionId calldata posId,
+        address newOwner,
         bytes calldata delegationSignature,
-        bytes32 domainSeparatorV4,
-        address newOwner
+        bytes32 domainSeparatorV4
     ) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -104,7 +104,7 @@ library UsdnProtocolActionsUtilsLibrary {
                 revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
             } else {
                 _verifyTransferPositionOwnershipDelegation(
-                    posId, delegationSignature, domainSeparatorV4, pos.user, newOwner
+                    posId, pos.user, newOwner, delegationSignature, domainSeparatorV4
                 );
             }
         }
@@ -203,9 +203,9 @@ library UsdnProtocolActionsUtilsLibrary {
 
         // to have maximum precision, we do not pre-compute the liquidation multiplier with a fixed
         // precision just now, we will store it in the pending action later, to be used in the validate action
-        int24 tick = Utils.calcTickWithoutPenalty(params.posId.tick, data_.liquidationPenalty);
+        int24 tick = Utils._calcTickWithoutPenalty(params.posId.tick, data_.liquidationPenalty);
         uint128 liqPriceWithoutPenalty =
-            Utils.getEffectivePriceForTick(tick, data_.lastPrice, data_.longTradingExpo, data_.liqMulAcc);
+            Utils._getEffectivePriceForTick(tick, data_.lastPrice, data_.longTradingExpo, data_.liqMulAcc);
 
         uint256 balanceLong = s._balanceLong;
 
@@ -432,7 +432,7 @@ library UsdnProtocolActionsUtilsLibrary {
         returns (uint256 boundedPosValue_)
     {
         // calculate position value
-        int256 positionValue = Utils._positionValue(price, liqPriceWithoutPenalty, posExpo);
+        int256 positionValue = Utils._positionValue(posExpo, price, liqPriceWithoutPenalty);
 
         if (positionValue <= 0) {
             // should not happen, unless we did not manage to liquidate all ticks that needed to be liquidated during
@@ -488,18 +488,18 @@ library UsdnProtocolActionsUtilsLibrary {
      * @dev Reverts if the function arguments don't match those included in the signature
      * and if the signer isn't the owner of the position
      * @param posId The unique identifier of the position
+     * @param positionOwner The current position owner
+     * @param newPositionOwner The new position owner
      * @param delegationSignature An EIP712 signature that proves the caller is authorized by the owner of the position
      * to transfer the ownership to a different address on his behalf
      * @param domainSeparatorV4 The domain separator v4
-     * @param positionOwner The current position owner
-     * @param newPositionOwner The new position owner
      */
     function _verifyTransferPositionOwnershipDelegation(
         Types.PositionId calldata posId,
-        bytes calldata delegationSignature,
-        bytes32 domainSeparatorV4,
         address positionOwner,
-        address newPositionOwner
+        address newPositionOwner,
+        bytes calldata delegationSignature,
+        bytes32 domainSeparatorV4
     ) internal {
         Types.Storage storage s = Utils._getMainStorage();
 

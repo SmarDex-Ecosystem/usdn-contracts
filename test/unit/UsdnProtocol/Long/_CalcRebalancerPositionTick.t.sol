@@ -42,7 +42,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
         );
         expectedTick += _tickSpacing;
 
-        int24 tick = protocol.i_calcRebalancerPositionTick(
+        (int24 tick,,) = protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
             amount,
             maxLeverage,
@@ -79,7 +79,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             protocol.getLiquidationPenalty()
         );
 
-        int24 tick = protocol.i_calcRebalancerPositionTick(
+        (int24 tick,,) = protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
             amount,
             rebalancerMaxLeverage,
@@ -116,7 +116,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             protocol.getLiquidationPenalty()
         );
 
-        int24 tick = protocol.i_calcRebalancerPositionTick(
+        (int24 tick,,) = protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
             amount,
             rebalancerMaxLeverage,
@@ -153,7 +153,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             protocol.getLiquidationPenalty()
         );
 
-        int24 tick = protocol.i_calcRebalancerPositionTick(
+        (int24 tick,,) = protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
             amount,
             rebalancerMaxLeverage,
@@ -178,7 +178,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
         uint128 amount = 1 ether;
 
         int24 expectedTick = protocol.NO_POSITION_TICK();
-        int24 tick = protocol.i_calcRebalancerPositionTick(
+        (int24 tick,,) = protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
             amount,
             rebalancerMaxLeverage,

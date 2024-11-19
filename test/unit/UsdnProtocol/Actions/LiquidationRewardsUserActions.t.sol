@@ -362,9 +362,9 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             liquidationPrice - (liquidationPrice * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
 
         int256 positionValue = protocol.i_positionValue(
+            longAction.closePosTotalExpo,
             uint128(priceWithFees),
-            protocol.i_getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick), longAction.liqMultiplier),
-            longAction.closePosTotalExpo
+            protocol.i_getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick), longAction.liqMultiplier)
         );
 
         uint256 vaultProfit = depositAmount - uint256(positionValue);

@@ -162,12 +162,12 @@ abstract contract UsdnProtocolActions is
     }
 
     /// @inheritdoc IUsdnProtocolActions
-    function transferPositionOwnership(PositionId calldata posId, bytes calldata delegationSignature, address newOwner)
+    function transferPositionOwnership(PositionId calldata posId, address newOwner, bytes calldata delegationSignature)
         external
         whenNotPaused
         initializedAndNonReentrant
     {
-        return ActionsUtils.transferPositionOwnership(posId, delegationSignature, _domainSeparatorV4(), newOwner);
+        return ActionsUtils.transferPositionOwnership(posId, newOwner, delegationSignature, _domainSeparatorV4());
     }
 
     /// @inheritdoc IUsdnProtocolActions

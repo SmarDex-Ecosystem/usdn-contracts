@@ -46,7 +46,7 @@ contract TestUsdnProtocolVerifyTransferPositionOwnershipDelegation is
      */
     function test_verifyTransferPositionOwnershipDelegation() public {
         protocol.i_verifyTransferPositionOwnershipDelegation(
-            _posId, _delegationSignature, _domainSeparatorV4, _positionOwner, USER_1
+            _posId, _positionOwner, USER_1, _delegationSignature, _domainSeparatorV4
         );
 
         assertEq(protocol.getNonce(_positionOwner), _initialNonce + 1, "position owner nonce should be incremented");
@@ -61,7 +61,7 @@ contract TestUsdnProtocolVerifyTransferPositionOwnershipDelegation is
     function test_RevertWhen_verifyTransferPositionOwnershipDelegationChangeParam() public {
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegationSignature.selector);
         protocol.i_verifyTransferPositionOwnershipDelegation(
-            _posId, _delegationSignature, _domainSeparatorV4, _positionOwner, address(this)
+            _posId, _positionOwner, address(this), _delegationSignature, _domainSeparatorV4
         );
     }
 
@@ -76,7 +76,7 @@ contract TestUsdnProtocolVerifyTransferPositionOwnershipDelegation is
 
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidDelegationSignature.selector);
         protocol.i_verifyTransferPositionOwnershipDelegation(
-            _posId, _delegationSignature, _domainSeparatorV4, _positionOwner, USER_1
+            _posId, _positionOwner, USER_1, _delegationSignature, _domainSeparatorV4
         );
     }
 }
