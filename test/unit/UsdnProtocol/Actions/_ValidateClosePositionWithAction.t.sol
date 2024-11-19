@@ -35,7 +35,7 @@ contract TestUsdnProtocolValidateClosePositionWithAction is UsdnProtocolBaseFixt
     /**
      * @custom:scenario Validate a close position action with enough funds in the vault
      * @custom:given A pending close position action
-     * @custom:when The function _validateClosePositionWithAction is called with the correct values
+     * @custom:when The function {_validateClosePositionWithAction} is called with the correct values
      * @custom:then The action should be validated
      * @custom:and The position should not be liquidated
      * @custom:and The vault balance should be 0
