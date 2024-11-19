@@ -86,18 +86,6 @@ declare -a events=(
     "RoleAdminChanged(bytes32,bytes32,bytes32)"
 )
 
-# Map of bytes32 to associated role
-declare -A abi_roles_map=()
-abi_roles_map["0x0000000000000000000000000000000000000000000000000000000000000000"]="DEFAULT_ADMIN_ROLE"
-
-# Variables used to store informations at the end of the process logs
-declare -A roles
-declare -A admin_role
-declare -A addresses
-
-# Define an array to store owner information
-declare -A owners
-
 
 # ---------------------------------------------------------------------------- #
 #                                Roles scanning                                #
@@ -120,11 +108,18 @@ function createAbiRolesMap(){
       ) |
       .name
     ')
+    printf "abi_roles: $abi_roles\n"
     
     # Create a map of bytes32 to associated role
     for abi_role in $abi_roles; do
-        hash=$(cast keccak "$abi_role")
-        abi_roles_map["$hash"]="$abi_role"
+        if [[ "$abi_role" != "DEFAULT_ADMIN_ROLE" ]]; then
+            hash=$(cast keccak "$abi_role")
+            abi_roles_map["$hash"]="$abi_role"
+        fi
+    done
+
+    for abi_role in "${!abi_roles_map[@]}"; do
+        printf "abi_role: $abi_role\n"
     done
 }
 
@@ -203,6 +198,15 @@ function processLogs(){
     done
 }
 
+function completeRoleNotFoundByEvent() {
+    for role_hash in "${!abi_roles_map[@]}"; do
+            role_name="${abi_roles_map[$role_hash]}"
+        if [[ ! -v roles["${role_name}"] ]]; then
+            roles["$role_name"]=1
+        fi
+    done
+}
+
 function processLog() {
     local log="$1"
     local event="$2"
@@ -252,6 +256,19 @@ function updateLogAddress() {
 for contract_name in "${!contracts[@]}"; do
     printf "\n${blue}Scanning roles for contract:${nc} $contract_name\n"
 
+    # Variables used to store informations at the end of the process logs
+    declare -A roles=()
+    declare -A admin_role=()
+    declare -A addresses=()
+
+    # Define an array to store owner information
+    declare -A owners=()
+
+    # Map of bytes32 to associated role
+    declare -A abi_roles_map=(
+        ["0x0000000000000000000000000000000000000000000000000000000000000000"]="DEFAULT_ADMIN_ROLE"
+    )
+
     createAbiRolesMap "$contract_name"
 
     declare -a logs=()
@@ -280,6 +297,7 @@ for contract_name in "${!contracts[@]}"; do
 
     sortByBlockNumberAndLogIndex
     processLogs
+    completeRoleNotFoundByEvent
     createJson
     sortJson
     saveJsonAndCsv
