@@ -1169,6 +1169,56 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The user initiates a `withdrawal` with a stale pending action
+     * @custom:given The validator is equal to the user
+     * @custom:when The action is initiated
+     * @custom:then The protocol takes the security deposit from the user
+     * @custom:and The protocol returns the security deposit of the stale pending action to the user
+     */
+    function test_refoundStaleToMsgSenderInWithdrawal() public {
+        protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether,
+            DISABLE_SHARES_OUT_MIN,
+            address(this),
+            payable(this),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+        protocol.validateDeposit(payable(this), priceData, EMPTY_PREVIOUS_DATA);
+        _waitDelay();
+
+        PositionId memory posId = _createStalePendingActionHelper();
+
+        (balanceUser0Before, balanceProtocolBefore, balanceUser1Before,) = _getBalances();
+
+        usdn.approve(address(protocol), type(uint256).max);
+        vm.expectEmit();
+        emit StalePendingActionRemoved(address(this), posId);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
+            uint128(usdn.balanceOf(address(this))),
+            DISABLE_AMOUNT_OUT_MIN,
+            USER_1,
+            payable(this),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
+        );
+
+        assertEq(
+            address(this).balance,
+            balanceUser0Before + SECURITY_DEPOSIT_VALUE - SECURITY_DEPOSIT_VALUE,
+            "the user 0 should have received the first security deposit and paid the second"
+        );
+        assertEq(
+            address(protocol).balance,
+            balanceProtocolBefore,
+            "the balance of the protocol after the second initialization should be equal"
+        );
+    }
+
+    /**
      * @custom:scenario The user initiates a `close` with a stale pending action
      * @custom:given The validator is different than the user
      * @custom:when The action is initiated

@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { USER_1 } from "../../../utils/Constants.sol";
+import { USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature Refund of the security deposit for a stale pending action
@@ -12,6 +13,7 @@ import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUs
  */
 contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
     uint64 internal _securityDepositValue;
+    bool internal _reentrancy;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -64,6 +66,74 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.refundSecurityDeposit(USER_1);
     }
 
+    /**
+     * @custom:scenario A malicious user attempts to attack the protocol via reentrancy on {refundSecurityDeposit}
+     * @custom:given A malicious user (address(this)) with a stale pending action
+     * @custom:and Another user (USER_2) also has a stale pending action
+     * @custom:when A different user (USER_1) tries to initiate a position using the malicious user's address as the
+     * validator
+     * @custom:then The protocol reverts with `InitializableReentrancyGuardReentrantCall`
+     */
+    function test_RevertWhen_ReentrancyGriefing() public {
+        // this condition is for the 2nd call to the test, during the reentrancy
+        if (_reentrancy) {
+            _reentrancy = false;
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.refundSecurityDeposit(USER_2);
+            return;
+        }
+
+        uint256 securityDepositValue = protocol.getSecurityDepositValue();
+        wstETH.mintAndApprove(USER_1, 5 ether, address(protocol), 5 ether);
+        wstETH.mintAndApprove(USER_2, 5 ether, address(protocol), 5 ether);
+        wstETH.mintAndApprove(address(this), 5 ether, address(protocol), 5 ether);
+        uint256 maxLeverage = protocol.getMaxLeverage();
+        bytes memory priceData = abi.encode(params.initialPrice);
+
+        protocol.initiateOpenPosition{ value: securityDepositValue }(
+            5 ether,
+            params.initialPrice * 9 / 10,
+            type(uint128).max,
+            maxLeverage,
+            address(this),
+            payable(this),
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
+        );
+        vm.prank(USER_2);
+        protocol.initiateOpenPosition{ value: securityDepositValue }(
+            5 ether,
+            params.initialPrice * 9 / 10,
+            type(uint128).max,
+            maxLeverage,
+            USER_2,
+            USER_2,
+            type(uint256).max,
+            priceData,
+            EMPTY_PREVIOUS_DATA
+        );
+        skip(1 minutes);
+        // liquidate both initiated positions to put them in a stale state
+        protocol.liquidate(abi.encode(params.initialPrice * 8 / 10));
+
+        _reentrancy = true;
+
+        vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.refundSecurityDeposit.selector), 1);
+        vm.prank(USER_1);
+        protocol.initiateOpenPosition{ value: securityDepositValue }(
+            5 ether,
+            params.initialPrice * 7 / 10,
+            type(uint128).max,
+            maxLeverage,
+            USER_1,
+            payable(this),
+            type(uint256).max,
+            abi.encode(params.initialPrice * 8 / 10),
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
     /// @notice Helper function to initiate a long position and liquidate it before it gets validated
     function _initiateAndLiquidate() internal {
         // initiate a long position
@@ -77,13 +147,17 @@ contract TestUsdnProtocolRefundSecurityDeposit is UsdnProtocolBaseFixture {
             })
         );
 
-        // make sure the liquidation below uses a fresh price (mock oracle middleware gives price a few seconds in the
-        // past)
+        // make sure the liquidation below uses a fresh price
+        // (mock oracle middleware gives price a few seconds in the past)
         skip(1 minutes);
 
         // liquidate the position with a price drop to $1000
         protocol.liquidate(abi.encode(1000 ether));
     }
 
-    receive() external payable { }
+    receive() external payable {
+        if (_reentrancy) {
+            test_RevertWhen_ReentrancyGriefing();
+        }
+    }
 }

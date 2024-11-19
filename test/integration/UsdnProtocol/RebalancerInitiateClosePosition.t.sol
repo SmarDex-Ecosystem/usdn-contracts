@@ -69,6 +69,8 @@ contract TestRebalancerInitiateClosePosition is
         });
         (protocolPosition,) = protocol.getLongPosition(prevPosId);
         securityDeposit = protocol.getSecurityDepositValue();
+        skip(rebalancer.getTimeLimits().closeDelay + 1);
+        mockChainlinkOnChain.setLastPublishTime(block.timestamp);
     }
 
     function test_setUp() public view {
@@ -462,6 +464,9 @@ contract TestRebalancerInitiateClosePosition is
 
         // wait 1 minute to provide a fresh price
         skip(1 minutes);
+
+        vm.warp(rebalancer.getCloseLockedUntil() + 1);
+        mockChainlinkOnChain.setLastPublishTime(block.timestamp);
 
         // try to withdraw from the rebalancer again
         vm.expectRevert(IRebalancerErrors.RebalancerUserLiquidated.selector);
