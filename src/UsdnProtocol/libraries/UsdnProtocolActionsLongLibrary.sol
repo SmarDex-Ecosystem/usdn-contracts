@@ -489,19 +489,22 @@ library UsdnProtocolActionsLongLibrary {
                 unchecked {
                     s._balanceVault -= diff;
                 }
+                s._balanceLong += diff;
             } else {
+                // bad dept case
+                s._balanceLong += s._balanceVault;
                 s._balanceVault = 0;
             }
-            s._balanceLong += diff;
         } else if (newPosValue < oldPosValue) {
             // the long side has too much value, we need to give it to the vault side
             uint256 diff = oldPosValue - newPosValue;
-            s._balanceVault += diff;
             if (diff < s._balanceLong) {
                 unchecked {
                     s._balanceLong -= diff;
                 }
+                s._balanceVault += diff;
             } else {
+                s._balanceVault += s._balanceLong;
                 s._balanceLong = 0;
             }
         }
