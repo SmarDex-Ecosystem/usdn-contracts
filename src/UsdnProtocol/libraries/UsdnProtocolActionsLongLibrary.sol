@@ -102,10 +102,13 @@ library UsdnProtocolActionsLongLibrary {
         address payable validator,
         bytes calldata openPriceData,
         Types.PreviousActionsData calldata previousActionsData
-    ) external returns (Types.LongActionOutcome outcome_) {
+    ) external returns (Types.LongActionOutcome outcome_, Types.PositionId memory posId_) {
         uint256 balanceBefore = address(this).balance;
 
-        (uint256 amountToRefund, bool isValidated, bool isLiquidated) = _validateOpenPosition(validator, openPriceData);
+        uint256 amountToRefund;
+        bool isValidated;
+        bool isLiquidated;
+        (amountToRefund, isValidated, isLiquidated, posId_) = _validateOpenPosition(validator, openPriceData);
         uint256 securityDeposit;
         if (isValidated || isLiquidated) {
             securityDeposit = Vault._executePendingActionOrRevert(previousActionsData);
@@ -216,10 +219,12 @@ library UsdnProtocolActionsLongLibrary {
      * @param priceData The current price data
      * @return isValidated_ Whether the action is validated
      * @return isLiquidated_ Whether the pending action has been liquidated
+     * @return posId_ The (potentially updated) position ID, or `NO_POSITION_TICK` in the `tick` field if the position
+     * was liquidated
      */
     function _validateOpenPositionWithAction(Types.PendingAction memory pending, bytes calldata priceData)
         public
-        returns (bool isValidated_, bool isLiquidated_)
+        returns (bool isValidated_, bool isLiquidated_, Types.PositionId memory posId_)
     {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -227,11 +232,14 @@ library UsdnProtocolActionsLongLibrary {
             _prepareValidateOpenPositionData(pending, priceData);
 
         if (liquidated) {
-            return (false, true);
+            posId_.tick = Constants.NO_POSITION_TICK;
+            return (false, true, posId_);
         }
 
+        posId_ =
+            Types.PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index });
         if (data.isLiquidationPending) {
-            return (false, false);
+            return (false, false, posId_);
         }
 
         // leverage is always greater than one (`liquidationPrice` is positive)
@@ -306,7 +314,7 @@ library UsdnProtocolActionsLongLibrary {
                 data.action.to, data.action.validator, data.pos.totalExpo, data.startPrice, maxLeverageData.newPosId
             );
 
-            return (true, false);
+            return (true, false, maxLeverageData.newPosId);
         }
 
         // calculate the new total expo
@@ -341,11 +349,7 @@ library UsdnProtocolActionsLongLibrary {
 
         isValidated_ = true;
         emit IUsdnProtocolEvents.ValidatedOpenPosition(
-            data.action.to,
-            data.action.validator,
-            expoAfter,
-            data.startPrice,
-            Types.PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index })
+            data.action.to, data.action.validator, expoAfter, data.startPrice, posId_
         );
     }
 
@@ -446,10 +450,12 @@ library UsdnProtocolActionsLongLibrary {
      * @return securityDepositValue_ The value of the security deposit
      * @return isValidated_ Whether the action is validated
      * @return isLiquidated_ Whether the pending action has been liquidated
+     * @return posId_ The (potentially updated) position ID, or `NO_POSITION_TICK` in the `tick` field if the position
+     * was liquidated
      */
     function _validateOpenPosition(address validator, bytes calldata priceData)
         internal
-        returns (uint256 securityDepositValue_, bool isValidated_, bool isLiquidated_)
+        returns (uint256 securityDepositValue_, bool isValidated_, bool isLiquidated_, Types.PositionId memory posId_)
     {
         (Types.PendingAction memory pending, uint128 rawIndex) = Core._getPendingActionOrRevert(validator);
 
@@ -461,7 +467,7 @@ library UsdnProtocolActionsLongLibrary {
         if (pending.validator != validator) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
-        (isValidated_, isLiquidated_) = _validateOpenPositionWithAction(pending, priceData);
+        (isValidated_, isLiquidated_, posId_) = _validateOpenPositionWithAction(pending, priceData);
 
         if (isValidated_ || isLiquidated_) {
             Utils._clearPendingAction(validator, rawIndex);

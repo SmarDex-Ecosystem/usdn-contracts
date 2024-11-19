@@ -51,7 +51,13 @@ abstract contract UsdnProtocolActions is
         address payable validator,
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable whenNotPaused initializedAndNonReentrant returns (LongActionOutcome outcome_) {
+    )
+        external
+        payable
+        whenNotPaused
+        initializedAndNonReentrant
+        returns (LongActionOutcome outcome_, PositionId memory posId_)
+    {
         return ActionsLong.validateOpenPosition(validator, openPriceData, previousActionsData);
     }
 

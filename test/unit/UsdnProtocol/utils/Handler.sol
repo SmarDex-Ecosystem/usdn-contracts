@@ -239,7 +239,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
 
     function i_validateOpenPosition(address user, bytes calldata priceData)
         external
-        returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
+        returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_, PositionId memory posId_)
     {
         return ActionsLong._validateOpenPosition(user, priceData);
     }

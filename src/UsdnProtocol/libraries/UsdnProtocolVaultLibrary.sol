@@ -446,7 +446,7 @@ library UsdnProtocolVaultLibrary {
         } else if (pending.action == Types.ProtocolAction.ValidateWithdrawal) {
             executed_ = _validateWithdrawalWithAction(pending, priceData);
         } else if (pending.action == Types.ProtocolAction.ValidateOpenPosition) {
-            (executed_, liquidated_) = ActionsLong._validateOpenPositionWithAction(pending, priceData);
+            (executed_, liquidated_,) = ActionsLong._validateOpenPositionWithAction(pending, priceData);
         } else if (pending.action == Types.ProtocolAction.ValidateClosePosition) {
             (executed_, liquidated_) = ActionsLong._validateClosePositionWithAction(pending, priceData);
         }
