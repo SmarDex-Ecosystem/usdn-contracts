@@ -272,7 +272,7 @@ library UsdnProtocolVaultLibrary {
     }
 
     /// @notice See {IUsdnProtocolVault}
-    function getActionablePendingActions(address currentUser)
+    function getActionablePendingActions(address currentUser, uint256 lookAhead)
         external
         view
         returns (Types.PendingAction[] memory actions_, uint128[] memory rawIndices_)
@@ -291,9 +291,24 @@ library UsdnProtocolVaultLibrary {
             maxIter = queueLength;
         }
 
-        uint128 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
+        uint256 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
+        // the lookAhead allows to retrieve pending actions which will be actionable some time after block.timestamp. By
+        // subtracting this value to `lowLatencyDeadline`, the range where actions are considered actionable with the
+        // low-latency oracle is increased
+        if (lookAhead > lowLatencyDeadline) {
+            lowLatencyDeadline = 0; // avoid underflow
+        } else {
+            lowLatencyDeadline -= lookAhead;
+        }
         uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
-        uint128 onChainDeadline = s._onChainValidatorDeadline;
+        uint256 onChainDeadline = s._onChainValidatorDeadline;
+        // same comment as above, changing this value increases the range where actions are considered actionable
+        // with the on-chain oracle
+        if (lookAhead > onChainDeadline) {
+            onChainDeadline = 0; // avoid underflow
+        } else {
+            onChainDeadline -= lookAhead;
+        }
         uint256 i;
         uint256 j;
         uint256 arrayLen;

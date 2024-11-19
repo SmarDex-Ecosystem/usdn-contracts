@@ -60,7 +60,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
             previousData
         );
         // check that one pending action was validated, only one should remain
-        (Types.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
+        (Types.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this), 0);
         assertEq(actions.length, 1, "actions length after");
     }
 
@@ -78,8 +78,37 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         assertEq(validationCost, 1, "validation cost");
         protocol.validateActionablePendingActions{ value: validationCost }(previousData, 10);
         // check that both pending actions were validated
-        (Types.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
+        (Types.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this), 0);
         assertEq(actions.length, 0, "actions length after");
+    }
+
+    /**
+     * @custom:scenario The lookahead feature is used to get actionable pending actions which will become actionable
+     * @custom:given Three pending actions, the first and third being actionable at block.timestamp
+     * @custom:and The second pending action being actionable in 35 minutes
+     * @custom:when The `getActionablePendingActions` function is called without a lookahead
+     * @custom:then Only the first and third pending actions are returned
+     * @custom:when The `getActionablePendingActions` function is called with a lookahead of 35 minutes
+     * @custom:then All three pending actions are returned
+     */
+    function test_getActionablePendingActionsLookAhead() public {
+        // create 3 positions with 2 being actionable at block.timestamp
+        _pendingActionsHelper();
+        // at this moment, only 2 are actionable
+        (Types.PendingAction[] memory actions, uint128[] memory rawIndices) =
+            protocol.getActionablePendingActions(address(0), 0);
+        assertEq(rawIndices.length, 3, "zero lookahead length"); // 3 but second one is empty
+        assertTrue(actions[0].action == Types.ProtocolAction.ValidateDeposit, "zero lookahead first action");
+        assertTrue(actions[1].action == Types.ProtocolAction.None, "zero lookahead second action");
+        assertTrue(actions[2].action == Types.ProtocolAction.ValidateDeposit, "zero lookahead third action");
+        // in 35 minutes, the second action should be actionable
+        // the call below will add this one on top of the existing list thanks to the lookahead, so we should get all 3
+        // actions
+        (actions, rawIndices) = protocol.getActionablePendingActions(address(0), 35 minutes);
+        assertEq(rawIndices.length, 3, "raw indices length");
+        assertTrue(actions[0].action == Types.ProtocolAction.ValidateDeposit, "first action");
+        assertTrue(actions[1].action == Types.ProtocolAction.ValidateOpenPosition, "second action");
+        assertTrue(actions[2].action == Types.ProtocolAction.ValidateDeposit, "third action");
     }
 
     /**
@@ -129,7 +158,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         mockChainlinkOnChain.setRoundData(9, ethPrice, nextRoundTimestamp, nextRoundTimestamp, 9);
 
         (Types.PendingAction[] memory actions, uint128[] memory rawIndices) =
-            protocol.getActionablePendingActions(address(this));
+            protocol.getActionablePendingActions(address(this), 0);
         assertEq(actions.length, 3, "actions length before");
         bytes[] memory priceData = new bytes[](3);
         priceData[0] = abi.encode(9); // round ID after the first initiate

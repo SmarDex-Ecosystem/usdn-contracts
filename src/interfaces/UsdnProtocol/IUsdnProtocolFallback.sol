@@ -22,12 +22,17 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
      * corresponding list of price update data and raw indices as the last parameter
      * @param currentUser The address of the user that will submit the price signatures for third-party actions
      * validations. This is used to filter out their actions from the returned list
+     * @param lookAhead Additionally to pending actions which are actionable at this moment `block.timestamp`, the
+     * function will also return pending actions which will be actionable `lookAhead` seconds later. It is recommended
+     * to use a non-zero value in order to account for the interval where the validation transaction will be pending. A
+     * value of 30 seconds should already account for most situations and avoid reverts in case an action becomes
+     * actionable after a user submits their transaction
      * @return actions_ The pending actions if any, otherwise an empty array. Note that some items can be zero-valued
      * and there is no need to provide price data for those (an empty `bytes` suffices)
      * @return rawIndices_ The raw indices of the actionable pending actions in the queue if any, otherwise an empty
      * array
      */
-    function getActionablePendingActions(address currentUser)
+    function getActionablePendingActions(address currentUser, uint256 lookAhead)
         external
         view
         returns (PendingAction[] memory actions_, uint128[] memory rawIndices_);
