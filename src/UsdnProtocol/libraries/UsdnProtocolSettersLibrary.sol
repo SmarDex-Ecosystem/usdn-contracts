@@ -282,9 +282,10 @@ library UsdnProtocolSettersLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLongImbalanceTarget();
         }
 
-        // `newRebalancerCloseLimit` should be lower than `newLongImbalanceTarget`, if not user could instantly close
-        // his position. If `newLongImbalanceTargetBps` is deactivated, `newRebalancerCloseLimitBps` can have any value
-        if (newLongImbalanceTargetBps != 0 && newLongImbalanceTargetBps <= int256(newRebalancerCloseLimitBps)) {
+        // `newRebalancerCloseLimit` should be lower than `newLongImbalanceTarget` to prevent users from instantly
+        // closing their positions. If `newRebalancerCloseLimitBps` is deactivated (set to 0),
+        // `newLongImbalanceTargetBps` can take any value
+        if (newRebalancerCloseLimitBps != 0 && int256(newRebalancerCloseLimitBps) < newLongImbalanceTargetBps) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLongImbalanceTarget();
         }
 
