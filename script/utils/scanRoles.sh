@@ -69,6 +69,9 @@ getContracts
 abiUsdnProtocolStorage=$(cat "out/UsdnProtocolConstantsLibrary.sol/UsdnProtocolConstantsLibrary.json")
 abiUsdn=$(cat "out/Usdn.sol/Usdn.json")
 abiOracleMiddleware=$(cat "out/OracleMiddleware.sol/OracleMiddleware.json")
+if [[ -z "$abiUsdnProtocolStorage" || -z "$abiUsdn" || -z "$abiOracleMiddleware" ]]; then
+    errorAndExit "Error: One or more ABI files are empty or missing."
+fi
 
 # Array of contracts to scan
 declare -A contracts=(
