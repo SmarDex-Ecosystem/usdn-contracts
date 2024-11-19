@@ -8,13 +8,8 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
  * @custom:background Given an initialized USDN Protocol with default parameters
  */
 contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture {
-    int24 _initialTick;
-
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-
-        // Tick of the position created by the initialization of the protocol
-        _initialTick = protocol.i_findHighestPopulatedTick(type(int24).max);
     }
 
     /**
@@ -42,7 +37,9 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
         // Search from lower than the higher tick previously populated
         highestPopulatedTick = protocol.i_findHighestPopulatedTick(posId.tick - protocol.getTickSpacing());
         assertEq(
-            highestPopulatedTick, _initialTick, "The tick lower than the newly created position should have been found"
+            highestPopulatedTick,
+            initialPosition.tick,
+            "The tick lower than the newly created position should have been found"
         );
     }
 
@@ -53,7 +50,7 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
      * @custom:then the minimum usable tick is returned
      */
     function test_findHighestPopulatedTickWhenNothingFound() public view {
-        int24 result = protocol.i_findHighestPopulatedTick(_initialTick - protocol.getTickSpacing());
+        int24 result = protocol.i_findHighestPopulatedTick(initialPosition.tick - protocol.getTickSpacing());
         assertEq(result, protocol.minTick(), "No tick should have been found (min usable tick returned)");
     }
 }
