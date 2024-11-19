@@ -460,7 +460,7 @@ library UsdnProtocolLongLibrary {
      * @notice Find the highest tick that contains at least one position
      * @dev If there are no ticks with a position left, returns minTick()
      * @param searchStart The tick from which to start searching
-     * @return tick_ The next highest tick below `searchStart`
+     * @return tick_ The next highest tick at or below `searchStart`
      */
     function _findHighestPopulatedTick(int24 searchStart) public view returns (int24 tick_) {
         Types.Storage storage s = Utils._getMainStorage();
