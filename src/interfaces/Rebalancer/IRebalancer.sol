@@ -175,7 +175,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * provide when closing a position on the owner's behalf
      * If used, it needs to be encoded with `abi.encode(depositOwner, abi.encodePacked(r, s, v))`
      * @return outcome_ The outcome of the UsdnProtocol's `initiateClosePosition` call
-     * check IUsdnProtocolActions:initiateClosePosition for more details
+     * check {IUsdnProtocolActions:initiateClosePosition} for more details
      */
     function initiateClosePosition(
         uint88 amount,

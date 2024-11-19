@@ -736,7 +736,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:given A validated open position where the initiate close was already done at opening price
      * @custom:and The long balance was decreased by the value of the position that is being closed
      * @custom:when The price dips below the liquidation price
-     * @custom:and The `validateClosePosition` is called with a price below liquidation
+     * @custom:and The {validateClosePosition} is called with a price below liquidation
      * @custom:then The position is liquidated
      * @custom:and The user doesn't receive their funds back
      * @custom:and The vault receives any remaining collateral at the time of `initiateClosePosition`
@@ -795,7 +795,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:scenario A validate close position action liquidates a tick but is not validated because another tick
      * still needs to be liquidated
      * @custom:given Three positions with different ticks, the lowest of which was initiated for close
-     * @custom:when The user with the lowest liq price position calls `validateClosePosition` function with a price
+     * @custom:when The user with the lowest liq price position calls {validateClosePosition} function with a price
      * below the liquidation price of the two other positions
      * @custom:then One position is liquidated
      * @custom:and The user's close position action is not validated
@@ -834,10 +834,10 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario The user validates a close position action with a reentrancy attempt
      * @custom:given A validated open position with an initiated close action done
-     * @custom:and A user being a smart contract that calls validateClosePosition with too much ether
-     * @custom:and A receive() function that calls validateClosePosition again
-     * @custom:when The user calls validateClosePosition again from the callback
-     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:and A user being a smart contract that calls {validateClosePosition} with too much ether
+     * @custom:and A receive() function that calls {validateClosePosition} again
+     * @custom:when The user calls {validateClosePosition} again from the callback
+     * @custom:then The call reverts with {InitializableReentrancyGuardReentrantCall}
      */
     function test_RevertWhen_validateClosePositionCalledWithReentrancy() public {
         if (_reenter) {
