@@ -75,6 +75,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
 
     /**
      * @notice Calculate an estimation of assets received when withdrawing
+     * @dev The result is a rough estimation and do not take into account rebases, liquidations and price adjustments
      * @param usdnShares The amount of USDN shares
      * @param price The price of the asset
      * @param timestamp The timestamp of the operation
@@ -87,6 +88,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
 
     /**
      * @notice Calculate an estimation of USDN tokens to be minted and SDEX tokens to be burned for a deposit
+     * @dev The result is a rough estimation and do not take into account rebases, liquidations and price adjustments
      * @param amount The amount of assets of the pending deposit
      * @param price The price of the asset at the time of the last update
      * @param timestamp The timestamp of the operation
