@@ -67,7 +67,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         (, uint256 withdrawalValueToLimit) = _getWithdrawalLimitValues();
 
         // disable withdrawal limit
-        protocol.setExpoImbalanceLimits(200, 200, 0, 600, 500, 300);
+        protocol.setExpoImbalanceLimits(200, 200, 0, 600, 300, 500);
 
         protocol.i_checkImbalanceLimitWithdrawal(withdrawalValueToLimit + 1, protocol.getTotalExpo());
     }

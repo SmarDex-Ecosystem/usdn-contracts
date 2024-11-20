@@ -23,6 +23,8 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @param userMaxLeverage The maximum leverage for the newly created position
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
+     * Be aware that if the validator is not an EOA, it must be a contract that implements a receive function to accept
+     * the returned Ether
      * @param deadline The deadline of the open position to be initiated
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
@@ -65,14 +67,15 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @param validator The address that has the pending open position action to validate
      * @param openPriceData The price data corresponding to the sender's pending open position action
      * @param previousActionsData The data needed to validate actionable pending actions
-     * @return outcome_ The effect that the call had on the pending action
-     * (processed, liquidated, pending liquidations)
+     * @return outcome_ The effect that the call had on the pending action (processed, liquidated, pending liquidations)
+     * @return posId_ The position ID, which might have changed due to the new entry price moving the position to a new
+     * liquidation tick. If the position was liquidated, then `NO_POSITION_TICK` is returned for the `tick` field
      */
     function validateOpenPosition(
         address payable validator,
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable returns (LongActionOutcome outcome_);
+    ) external payable returns (LongActionOutcome outcome_, PositionId memory posId_);
 
     /**
      * @notice Initiate a close position action
@@ -99,6 +102,8 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * temporary entry price is below this threshold, the initiate action will revert
      * @param to The address that will receive the assets
      * @param validator The address that will validate the close action
+     * Be aware that if the validator is not an EOA, it must be a contract that implements a receive function to accept
+     * the returned Ether
      * @param deadline The deadline of the close position to be initiated
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -163,6 +168,8 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * revert
      * @param to The address that will receive the USDN tokens
      * @param validator The address that will validate the deposit
+     * Be aware that if the validator is not an EOA, it must be a contract that implements a receive function to accept
+     * the returned Ether
      * @param deadline The deadline of the deposit to be initiated
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -218,6 +225,8 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * action will revert
      * @param to The address that will receive the assets
      * @param validator The address that will validate the withdrawal
+     * Be aware that if the validator is not an EOA, it must be a contract that implements a receive function to accept
+     * the returned Ether
      * @param deadline The deadline of the withdrawal to be initiated
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions

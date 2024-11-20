@@ -272,7 +272,7 @@ library UsdnProtocolVaultLibrary {
     }
 
     /// @notice See {IUsdnProtocolVault}
-    function getActionablePendingActions(address currentUser)
+    function getActionablePendingActions(address currentUser, uint256 lookAhead, uint256 maxIter)
         external
         view
         returns (Types.PendingAction[] memory actions_, uint128[] memory rawIndices_)
@@ -284,16 +284,37 @@ library UsdnProtocolVaultLibrary {
             // empty queue, early return
             return (actions_, rawIndices_);
         }
-        actions_ = new Types.PendingAction[](Constants.MAX_ACTIONABLE_PENDING_ACTIONS);
-        rawIndices_ = new uint128[](Constants.MAX_ACTIONABLE_PENDING_ACTIONS);
-        uint256 maxIter = Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
+        if (maxIter < Constants.MIN_ACTIONABLE_PENDING_ACTIONS_ITER) {
+            maxIter = Constants.MIN_ACTIONABLE_PENDING_ACTIONS_ITER;
+        }
+        actions_ = new Types.PendingAction[](maxIter);
+        rawIndices_ = new uint128[](maxIter);
         if (queueLength < maxIter) {
             maxIter = queueLength;
         }
 
-        uint128 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
+        uint256 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
+        // the lookAhead allows to retrieve pending actions which will be actionable some time after block.timestamp. By
+        // subtracting this value to `lowLatencyDeadline`, the range where actions are considered actionable with the
+        // low-latency oracle is increased
+        if (lookAhead > lowLatencyDeadline) {
+            lowLatencyDeadline = 0; // avoid underflow
+        } else {
+            unchecked {
+                lowLatencyDeadline -= lookAhead; // checked above
+            }
+        }
         uint16 middlewareLowLatencyDelay = s._oracleMiddleware.getLowLatencyDelay();
-        uint128 onChainDeadline = s._onChainValidatorDeadline;
+        uint256 onChainDeadline = s._onChainValidatorDeadline;
+        // same comment as above, changing this value increases the range where actions are considered actionable
+        // with the on-chain oracle
+        if (lookAhead > onChainDeadline) {
+            onChainDeadline = 0; // avoid underflow
+        } else {
+            unchecked {
+                onChainDeadline -= lookAhead;
+            }
+        }
         uint256 i;
         uint256 j;
         uint256 arrayLen;
@@ -446,7 +467,7 @@ library UsdnProtocolVaultLibrary {
         } else if (pending.action == Types.ProtocolAction.ValidateWithdrawal) {
             executed_ = _validateWithdrawalWithAction(pending, priceData);
         } else if (pending.action == Types.ProtocolAction.ValidateOpenPosition) {
-            (executed_, liquidated_) = ActionsLong._validateOpenPositionWithAction(pending, priceData);
+            (executed_, liquidated_,) = ActionsLong._validateOpenPositionWithAction(pending, priceData);
         } else if (pending.action == Types.ProtocolAction.ValidateClosePosition) {
             (executed_, liquidated_) = ActionsLong._validateClosePositionWithAction(pending, priceData);
         }
@@ -475,7 +496,7 @@ library UsdnProtocolVaultLibrary {
             // empty queue, early return
             return (action_, rawIndex_);
         }
-        uint256 maxIter = Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
+        uint256 maxIter = Constants.MIN_ACTIONABLE_PENDING_ACTIONS_ITER;
         if (queueLength < maxIter) {
             maxIter = queueLength;
         }

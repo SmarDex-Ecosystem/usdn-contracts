@@ -18,6 +18,7 @@ import { HugeUint } from "../libraries/HugeUint.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./libraries/UsdnProtocolCoreLibrary.sol";
+import { UsdnProtocolLongLibrary as Long } from "./libraries/UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolSettersLibrary as Setters } from "./libraries/UsdnProtocolSettersLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVaultLibrary.sol";
@@ -30,12 +31,12 @@ contract UsdnProtocolFallback is
     AccessControlDefaultAdminRulesUpgradeable
 {
     /// @inheritdoc IUsdnProtocolFallback
-    function getActionablePendingActions(address currentUser)
+    function getActionablePendingActions(address currentUser, uint256 lookAhead, uint256 maxIter)
         external
         view
         returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
     {
-        return Vault.getActionablePendingActions(currentUser);
+        return Vault.getActionablePendingActions(currentUser, lookAhead, maxIter);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -199,8 +200,8 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256) {
-        return Constants.MAX_ACTIONABLE_PENDING_ACTIONS;
+    function MIN_ACTIONABLE_PENDING_ACTIONS_ITER() external pure returns (uint256) {
+        return Constants.MIN_ACTIONABLE_PENDING_ACTIONS_ITER;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -455,7 +456,9 @@ contract UsdnProtocolFallback is
 
     /// @inheritdoc IUsdnProtocolFallback
     function getHighestPopulatedTick() external view returns (int24) {
-        return Utils._getMainStorage()._highestPopulatedTick;
+        Storage storage s = Utils._getMainStorage();
+
+        return Long._findHighestPopulatedTick(s._highestPopulatedTick);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
