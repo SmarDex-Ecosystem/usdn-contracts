@@ -21,6 +21,8 @@ import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
 
+import { console } from "forge-std/Test.sol";
+
 library UsdnProtocolVaultLibrary {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using SafeCast for uint256;
@@ -1144,8 +1146,9 @@ library UsdnProtocolVaultLibrary {
         int256 newVaultExpo =
             s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeSub(withdrawalValue.toInt256());
 
+        console.log("newVaultExpo:", newVaultExpo);
         // cannot be calculated if equal to zero
-        if (newVaultExpo == 0) {
+        if (newVaultExpo <= 0) {
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
 

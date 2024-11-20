@@ -134,6 +134,17 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         protocol.i_checkImbalanceLimitWithdrawal(withdrawalValueToLimit, totalExpo);
     }
 
+    function test_RevertWhen_checkImbalanceLimitNewVaultExpoLtZero() public {
+        uint256 vaultBalance = protocol.getBalanceVault();
+        uint256 withdrawalValue = vaultBalance + 1;
+        int256 pendingBalanceVault = protocol.getPendingBalanceVault();
+
+        assertLt(int256(vaultBalance) + pendingBalanceVault - int256(withdrawalValue), 0);
+
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEmptyVault.selector);
+        protocol.i_checkImbalanceLimitWithdrawal(withdrawalValue, 0);
+    }
+
     /**
      * @notice Get withdrawal limit values at with the protocol revert
      * @return withdrawalLimitBps_ The withdrawal limit in bps
