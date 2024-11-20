@@ -119,7 +119,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         // no USDN should be minted yet
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply, "usdn total supply");
         // the pending action should not yet be actionable by a third party
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
+        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0), 0, 0);
         assertEq(actions.length, 0, "no pending action");
 
         PendingAction memory action = protocol.getUserPendingAction(validator);
@@ -131,7 +131,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         // the pending action should be actionable after the validation deadline
         _waitBeforeActionablePendingAction();
-        (actions,) = protocol.getActionablePendingActions(address(0));
+        (actions,) = protocol.getActionablePendingActions(address(0), 0, 0);
         assertEq(actions[0].to, to, "pending action to");
         assertEq(actions[0].validator, validator, "pending action validator");
     }

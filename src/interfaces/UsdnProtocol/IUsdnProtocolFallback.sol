@@ -22,12 +22,20 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
      * corresponding list of price update data and raw indices as the last parameter
      * @param currentUser The address of the user that will submit the price signatures for third-party actions
      * validations. This is used to filter out their actions from the returned list
+     * @param lookAhead Additionally to pending actions which are actionable at this moment `block.timestamp`, the
+     * function will also return pending actions which will be actionable `lookAhead` seconds later. It is recommended
+     * to use a non-zero value in order to account for the interval where the validation transaction will be pending. A
+     * value of 30 seconds should already account for most situations and avoid reverts in case an action becomes
+     * actionable after a user submits their transaction
+     * @param maxIter The maximum number of iterations when looking through the queue to find actionable pending
+     * actions. Values below MIN_ACTIONABLE_PENDING_ACTIONS_ITER will be clamped to that value, but this parameter can
+     * be used to increase the limit
      * @return actions_ The pending actions if any, otherwise an empty array. Note that some items can be zero-valued
      * and there is no need to provide price data for those (an empty `bytes` suffices)
      * @return rawIndices_ The raw indices of the actionable pending actions in the queue if any, otherwise an empty
      * array
      */
-    function getActionablePendingActions(address currentUser)
+    function getActionablePendingActions(address currentUser, uint256 lookAhead, uint256 maxIter)
         external
         view
         returns (PendingAction[] memory actions_, uint128[] memory rawIndices_);
@@ -232,10 +240,11 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function DEAD_ADDRESS() external view returns (address);
 
     /**
-     * @notice The maximum number of actionable pending action items returned by `getActionablePendingActions`
-     * @return The maximum value
+     * @notice The minimum number of iterations when searching for actionable pending actions in
+     * `getActionablePendingActions`
+     * @return The minimum number of iterations
      */
-    function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256);
+    function MIN_ACTIONABLE_PENDING_ACTIONS_ITER() external pure returns (uint256);
 
     /**
      * @notice The lowest margin between the total expo and the balance long
