@@ -752,6 +752,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
      * @param newRebalancerCloseLimitBps The new rebalancer close limit
      * @param newLongImbalanceTargetBps The new target imbalance limit for the long side
      * A positive value will target below equilibrium, a negative one will target above equilibrium
+     * If negative, the rebalancerCloseLimit will be useless since the minimum value is 1
      */
     function setExpoImbalanceLimits(
         uint256 newOpenLimitBps,

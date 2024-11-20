@@ -103,7 +103,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         (, uint256 vaultExpoValueToLimit) = _getDepositLimitValues();
 
         // disable deposit limit
-        protocol.setExpoImbalanceLimits(200, 0, 600, 600, 500, 300);
+        protocol.setExpoImbalanceLimits(200, 0, 600, 600, 300, 500);
 
         protocol.i_checkImbalanceLimitDeposit(vaultExpoValueToLimit);
     }
