@@ -990,9 +990,23 @@ library UsdnProtocolLongLibrary {
         int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(
             (collateralAmount - collateralAmountAfterFees).toInt256()
         );
-        int256 imbalanceBps = _calcImbalanceOpenBps(
-            currentVaultExpo, (s._balanceLong + collateralAmountAfterFees).toInt256(), s._totalExpo + openTotalExpoValue
-        );
+        // int256 imbalanceBps = _calcImbalanceOpenBps(
+        //     currentVaultExpo, (s._balanceLong + collateralAmountAfterFees).toInt256(), s._totalExpo +
+        // openTotalExpoValue
+        // );
+
+        // avoid division by zero // todo change me
+        if (currentVaultExpo <= 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
+        }
+
+        // imbalanceBps = (longTradingExpo - currentVaultExpo) * currentVaultExpo
+        //              = ((totalExpo - longBalance) - currentVaultExpo) * currentVaultExpo
+        // with totalExpo = _totalExpo + openTotalExpoValue, longBalance = _balanceLong + collateralAmountAfterFees
+        int256 longTradingExpo =
+            (s._totalExpo + openTotalExpoValue).toInt256() - (s._balanceLong + collateralAmountAfterFees).toInt256();
+        int256 imbalanceBps =
+            longTradingExpo.safeSub(currentVaultExpo).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(currentVaultExpo);
 
         if (imbalanceBps > openExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
@@ -1304,8 +1318,8 @@ library UsdnProtocolLongLibrary {
         returns (int256 imbalanceBps_)
     {
         // avoid division by zero
-        if (vaultBalance == 0) {
-            return type(int256).max;
+        if (vaultBalance <= 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
         // imbalanceBps_ = ((totalExpo - longBalance) - vaultBalance) *s. vaultBalance;
         int256 longTradingExpo = totalExpo.toInt256() - longBalance;
