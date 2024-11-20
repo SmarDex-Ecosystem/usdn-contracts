@@ -5,6 +5,7 @@
 ### Production mode:
 
 For a mainnet deployment, you have to use the shell script. It will prompt you to enter the required environment variables :
+
 - the rpc url
 - the initial long amount
 - the get wstETH flag
@@ -19,6 +20,7 @@ The script can be run with the following command with `-t` or `--test` flag to d
 ### Fork mode:
 
 The deployment script for the fork mode does not require any input:
+
 ```shell
 deployFork.sh
 ```
@@ -26,13 +28,14 @@ deployFork.sh
 ### Standalone mode:
 
 You can run the forge script directly with the following command:
+
 ```shell
 forge script script/01_DeployProtocol.s.sol:DeployProtocol -f YOUR_RPC_URL --private-key YOUR_PRIVATE_KEY --broadcast
 ```
 
 Required environment variables: `INIT_LONG_AMOUNT` and `DEPLOYER_ADDRESS`.
 
-If running on mainnet, remenber to deploy the USDN token first with the `00_DeployUSDN.s.sol` script and set the `USDN_ADDRESS` environment variable. 
+If running on mainnet, remember to deploy the USDN token first with the `00_DeployUSDN.s.sol` script and set the `USDN_ADDRESS` environment variable.
 
 ### Environment variables:
 
@@ -55,7 +58,6 @@ Environment variables can be used to control the script execution:
 - `REBALANCER_ADDRESS`: if provided, skips deployment of the rebalancer
 - `CHAINLINK_GAS_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
 
-
 Example using the real wstETH and depositing 10 ETH for both vault side and long side for mainnet deployment:
 
 ```
@@ -64,21 +66,21 @@ export DEPLOYER_ADDRESS=0x1234567890123456789012345678901234567890
 export GET_WSTETH=true
 ```
 
-
 ## Upgrade protocol
 
 Before you launch the upgrade script, there are a few things you need to do:
-* Implement the reinitialization function (ex: `initializeStorageV2`) with the required parameters
-  * Make sure it is only callable by the PROXY_UPGRADE_ROLE addresses
-  * Make sure it has the `reinitialize` modifier with the correct version
-* Add the previous tag of the contract as a dependency in the `foundry.toml` file as well as in the remapping
-  * Example: If we deployed tag 0.17.2 and released a new tag 0.17.3, we would need to add 0.17.2 in the `[dependencies]` section, 
+
+- Implement the reinitialization function (ex: `initializeStorageV2`) with the required parameters
+  - Make sure it is only callable by the PROXY_UPGRADE_ROLE addresses
+  - Make sure it has the `reinitialize` modifier with the correct version
+- Add the previous tag of the contract as a dependency in the `foundry.toml` file as well as in the remapping
+  - Example: If we deployed tag 0.17.2 and released a new tag 0.17.3, we would need to add 0.17.2 in the `[dependencies]` section,
     like so: `usdn-protocol-previous = { version = "0.17.2", git = "git@github.com:SmarDex-Ecosystem/usdn-contracts.git", tag = "v0.17.2" }`
     and `"usdn-protocol-previous/=dependencies/usdn-protocol-previous-0.17.2/src/"` in the `remappings` variable
-  * By doing so, the previous version will be compiled and available for the upgrade script to do a proper validation. You can find the `UsdnProtocolImpl.sol` file at `out/UsdnProtocol/UsdnProtocolImpl.sol/UsdnProtocolImpl.json`
-* Change the artifacts' names in `50_Upgrade.s.sol`
-  * If needed, change the `opts.referenceContract` option with the correct previous implementation's path
-  * If needed, comment the line that re-deploy the fallback contract
+  - By doing so, the previous version will be compiled and available for the upgrade script to do a proper validation. You can find the `UsdnProtocolImpl.sol` file at `out/UsdnProtocol/UsdnProtocolImpl.sol/UsdnProtocolImpl.json`
+- Change the artifacts' names in `50_Upgrade.s.sol`
+  - If needed, change the `opts.referenceContract` option with the correct previous implementation's path
+  - If needed, comment the line that re-deploy the fallback contract
 
 If you are ready to upgrade the protocol, then you can launch the bash script `script/upgrade.sh`. It will prompt you to enter a RPC url, the address of the deployed USDN protocol, and a private key. The address derived from the private key must have the `PROXY_UPGRADE_ROLE` role.
 
@@ -91,8 +93,9 @@ This bash script will prompt you to enter an RPC url, the protocol address, the 
 ```
 
 If you want to run the script with foundry directly, in a standalone mode, you need to make sure that required environment variable is set:
-* `NEW_OWNER_ADDRESS`: the address of the new owner
-* `USDN_PROTOCOL_ADDRESS`: the address of the deployed USDN protocol
+
+- `NEW_OWNER_ADDRESS`: the address of the new owner
+- `USDN_PROTOCOL_ADDRESS`: the address of the deployed USDN protocol
 
 ```solidity
 forge script script/03_TransferProtocolOwnership.s.sol -f YOUR_RPC_URL --private-key YOUR_PRIVATE_KEY --broadcast
@@ -134,3 +137,22 @@ It can be used like so:
 ```
 npx tsx script/utils/functionClashes.ts UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
 ```
+
+## Scan Roles
+
+This bash script will scan the blockchain to get the roles of the UsdnProtocol / Usdn / OracleMiddleware and the owner of the LiquidationRewardsManager / Rebalancer contracts.
+Then, it will generate files containing the addresses assigned to all the relevant roles and contracts.
+
+you need to run the script with the following arguments:
+
+- `rpc-url`: the RPC URL of the network you want to scan
+- `protocol`: the address of the deployed USDN protocol
+- `block-number`: the block number to start the scan from (optional)
+
+- example:
+
+```bash
+./script/utils/scanRoles.sh --protocol 0x0Fd23cC6c13681ddB9ECE2ae0EEAFaf7a534208f --rpc-url https://sepolia.gateway.tenderly.co --block-number 0
+```
+
+You need to provide just the protocol address because the script will automatically fetch the other addresses from the protocol. The script will save the results in 1 csv and json file per contract with access control, and 1 csv and json file total for all the contracts with simple ownership.

@@ -331,8 +331,8 @@ contract DeployProtocol is Script {
 
         usdnProtocol.setRebalancer(rebalancer);
 
-        usdn.revokeRole(SET_EXTERNAL_ROLE, _deployerAddress);
-        usdn.revokeRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
+        usdnProtocol.revokeRole(SET_EXTERNAL_ROLE, _deployerAddress);
+        usdnProtocol.revokeRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
 
         // grant the minter and rebaser roles to the protocol and then renounce the admin role of the deployer
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));

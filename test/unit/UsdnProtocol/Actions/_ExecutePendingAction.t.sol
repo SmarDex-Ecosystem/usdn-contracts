@@ -30,7 +30,7 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
         assertTrue(executed, "executed");
         assertFalse(liq, "liq");
 
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
+        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this), 0, 0);
         assertEq(actions.length, 0, "remaining pending actions");
 
         PendingAction memory action = protocol.getUserPendingAction(USER_1);
@@ -116,7 +116,7 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
         _waitBeforeActionablePendingAction();
 
         (PendingAction[] memory actions, uint128[] memory rawIndices) =
-            protocol.getActionablePendingActions(address(this));
+            protocol.getActionablePendingActions(address(this), 0, 0);
 
         assertEq(actions.length, 1, "actions length");
 

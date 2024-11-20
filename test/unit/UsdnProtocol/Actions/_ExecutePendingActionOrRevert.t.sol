@@ -97,7 +97,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
 
         protocol.i_executePendingActionOrRevert(data); // should validate `pending` for USER_1
 
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
+        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0), 0, 0);
         assertEq(actions.length, 1, "one pending action left");
         assertEq(actions[0].to, address(this), "pending action to");
         assertEq(actions[0].validator, address(this), "pending action validator");
