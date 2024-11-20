@@ -855,4 +855,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     {
         return ActionsLong._validateClosePositionWithAction(pending, priceData);
     }
+
+    function i_initiateDeposit(Vault.InitiateDepositParams memory params, bytes calldata currentPriceData) external {
+        Vault._initiateDeposit(params, currentPriceData);
+    }
 }
