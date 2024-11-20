@@ -7,7 +7,7 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
- * @custom:feature Test of the protocol expo limit for `_checkImbalanceLimitWithdrawal` function in balanced state
+ * @custom:feature Test of the protocol expo limit for {_checkImbalanceLimitWithdrawal} function in balanced state
  */
 contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     function setUp() public {
@@ -19,10 +19,10 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitWithdrawal` function should not revert when contract is balanced
+     * @custom:scenario The {_checkImbalanceLimitWithdrawal} function should not revert when contract is balanced
      * and the wanted withdrawal does not imbalance the protocol
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `_checkImbalanceLimitWithdrawal` function is called with a value below the withdrawal limit
+     * @custom:when The {_checkImbalanceLimitWithdrawal} function is called with a value below the withdrawal limit
      * @custom:then The transaction should not revert
      */
     function test_checkImbalanceLimitWithdrawal() public view {
@@ -31,10 +31,10 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitWithdrawal` function should not revert when the imballance is equal to
+     * @custom:scenario The {_checkImbalanceLimitWithdrawal} function should not revert when the imballance is equal to
      * the limit
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `_checkImbalanceLimitWithdrawal` function is called with values on the withdrawal limit
+     * @custom:when The {_checkImbalanceLimitWithdrawal} function is called with values on the withdrawal limit
      * @custom:then The transaction should not revert
      */
     function test_checkImbalanceLimitWithdrawalOnLimit() public view {
@@ -43,9 +43,9 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitWithdrawal` function should revert when vault expo equal 0
+     * @custom:scenario The {_checkImbalanceLimitWithdrawal} function should revert when vault expo equal 0
      * @custom:given The protocol has a zero vault balance / expo
-     * @custom:when The `_checkImbalanceLimitWithdrawal` function is called
+     * @custom:when The {_checkImbalanceLimitWithdrawal} function is called
      * @custom:then The transaction should revert
      */
     function test_RevertWhen_checkImbalanceLimitWithdrawalZeroVaultExpo() public {
@@ -58,9 +58,9 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitWithdrawal` function should not revert when limit is disabled
+     * @custom:scenario The {_checkImbalanceLimitWithdrawal} function should not revert when limit is disabled
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `_checkImbalanceLimitWithdrawal` function is called
+     * @custom:when The {_checkImbalanceLimitWithdrawal} function is called
      * @custom:then The transaction should not revert
      */
     function test_checkImbalanceLimitWithdrawalDisabled() public adminPrank {
@@ -73,10 +73,10 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitWithdrawal` function should revert when contract is balanced
+     * @custom:scenario The {_checkImbalanceLimitWithdrawal} function should revert when contract is balanced
      * and position value imbalance it
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `_checkImbalanceLimitWithdrawal` function is called with a value above the withdrawal limit
+     * @custom:when The {_checkImbalanceLimitWithdrawal} function is called with a value above the withdrawal limit
      * @custom:then The transaction should revert
      */
     function test_RevertWhen_checkImbalanceLimitWithdrawalOutLimit() public {
@@ -92,7 +92,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check withdrawal imbalance when there are pending withdrawals
      * @custom:given The protocol is in an unbalanced state due to pending withdrawals
-     * @custom:when The `_checkImbalanceLimitWithdrawal` function is called
+     * @custom:when The {_checkImbalanceLimitWithdrawal} function is called
      * @custom:then The transaction should revert with the expected imbalance
      */
     function test_RevertWhen_checkImbalanceLimitWithdrawalPendingVaultActions() public {
@@ -134,11 +134,20 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         protocol.i_checkImbalanceLimitWithdrawal(withdrawalValueToLimit, totalExpo);
     }
 
+    /**
+     * @custom:scenario The {_checkImbalanceLimitWithdrawal} function should revert when the new vault balance is less
+     * than zero
+     * @custom:given A protocol in a balanced state
+     * @custom:when The function is called with a withdrawal value exceeding the vault balance
+     * @custom:and The new vault balance calculation results in a value less than zero
+     * @custom:then The transaction should revert with the {UsdnProtocolEmptyVault} error
+     */
     function test_RevertWhen_checkImbalanceLimitNewVaultExpoLtZero() public {
         uint256 vaultBalance = protocol.getBalanceVault();
         uint256 withdrawalValue = vaultBalance + 1;
         int256 pendingBalanceVault = protocol.getPendingBalanceVault();
 
+        // we check that the result of the new vault balance is less than zero
         assertLt(int256(vaultBalance) + pendingBalanceVault - int256(withdrawalValue), 0);
 
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEmptyVault.selector);
