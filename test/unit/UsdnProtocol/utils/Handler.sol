@@ -855,4 +855,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     {
         return ActionsLong._validateClosePositionWithAction(pending, priceData);
     }
+
+    function i_validateOpenPositionUpdateBalances(uint256 newPosValue, uint256 oldPosValue) external {
+        ActionsLong._validateOpenPositionUpdateBalances(newPosValue, oldPosValue);
+    }
 }
