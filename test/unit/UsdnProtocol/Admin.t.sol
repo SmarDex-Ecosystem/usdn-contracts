@@ -7,6 +7,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
+import { MockInvalidOracleMiddleware } from "./utils/MockInvalidOracleMiddleware.sol";
 
 import { ILiquidationRewardsManager } from
     "../../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManager.sol";
@@ -127,6 +128,34 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         protocol.setOracleMiddleware(IOracleMiddleware(address(this)));
         // assert new middleware equal randAddress
         assertEq(address(protocol.getOracleMiddleware()), address(this));
+    }
+
+    /**
+     * @custom:scenario Call "setOracleMiddleware" from admin by passing a middleware with a too low {_lowLatencyDelay}
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then The call should revert with {UsdnProtocolInvalidMiddlewareLowLatencyDelay}
+     */
+    function test_RevertWhen_setOracleMiddlewareLowLatencyDelayTooLow() public adminPrank {
+        MockInvalidOracleMiddleware mockInvalidOracleMiddleware = new MockInvalidOracleMiddleware();
+        uint16 invalidValue = uint16(protocol.getLowLatencyValidatorDeadline() - 1);
+        mockInvalidOracleMiddleware.setLowLatencyDelay(invalidValue);
+        vm.expectRevert(UsdnProtocolInvalidMiddlewareLowLatencyDelay.selector);
+        protocol.setOracleMiddleware(IOracleMiddleware(address(mockInvalidOracleMiddleware)));
+    }
+
+    /**
+     * @custom:scenario Call "setOracleMiddleware" from admin by passing a middleware with a too high {_lowLatencyDelay}
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then The call should revert with {UsdnProtocolInvalidMiddlewareLowLatencyDelay}
+     */
+    function test_RevertWhen_setOracleMiddlewareLowLatencyDelayTooHigh() public adminPrank {
+        MockInvalidOracleMiddleware mockInvalidOracleMiddleware = new MockInvalidOracleMiddleware();
+        uint16 invalidValue = 90 minutes + 1;
+        mockInvalidOracleMiddleware.setLowLatencyDelay(invalidValue);
+        vm.expectRevert(UsdnProtocolInvalidMiddlewareLowLatencyDelay.selector);
+        protocol.setOracleMiddleware(IOracleMiddleware(address(mockInvalidOracleMiddleware)));
     }
 
     /**
