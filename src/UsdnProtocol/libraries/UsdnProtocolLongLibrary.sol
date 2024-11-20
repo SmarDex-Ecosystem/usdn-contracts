@@ -1002,9 +1002,10 @@ library UsdnProtocolLongLibrary {
 
         // imbalanceBps = (longTradingExpo - currentVaultExpo) * currentVaultExpo
         //              = ((totalExpo - longBalance) - currentVaultExpo) * currentVaultExpo
-        // with totalExpo = _totalExpo + openTotalExpoValue, longBalance = _balanceLong + collateralAmountAfterFees
+        // with totalExpo = _totalExpo + openTotalExpoValue and longBalance = _balanceLong + collateralAmountAfterFees
         int256 longTradingExpo =
             (s._totalExpo + openTotalExpoValue).toInt256() - (s._balanceLong + collateralAmountAfterFees).toInt256();
+
         int256 imbalanceBps =
             longTradingExpo.safeSub(currentVaultExpo).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(currentVaultExpo);
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /**
@@ -20,12 +21,12 @@ contract TestUsdnProtocolLongCalcImbalanceOpenBps is UsdnProtocolBaseFixture {
      * @custom:then The imbalance is infinite
      * @custom:and int256.max is returned
      */
-    function test_calcImbalanceOpenBpsWith0VaultBalance() public view {
+    function test_calcImbalanceOpenBpsWith0VaultBalance() public {
         int256 vaultBalance = 0;
         int256 longBalance = 100 ether;
         uint256 totalExpo = 200 ether;
-        int256 imbalanceBps = protocol.i_calcImbalanceOpenBps(vaultBalance, longBalance, totalExpo);
-        assertEq(imbalanceBps, type(int256).max, "The imbalance should be infinite (int256.max)");
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEmptyVault.selector);
+        protocol.i_calcImbalanceOpenBps(vaultBalance, longBalance, totalExpo);
     }
 
     /**

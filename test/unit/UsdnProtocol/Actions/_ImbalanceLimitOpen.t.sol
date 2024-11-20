@@ -85,9 +85,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         protocol.emptyVault();
 
         // should revert
-        vm.expectRevert(
-            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, type(int256).max)
-        );
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEmptyVault.selector);
         protocol.i_checkImbalanceLimitOpen(0, 0, 0);
     }
 
