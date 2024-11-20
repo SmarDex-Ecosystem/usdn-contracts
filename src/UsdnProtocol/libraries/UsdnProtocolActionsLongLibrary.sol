@@ -484,28 +484,28 @@ library UsdnProtocolActionsLongLibrary {
 
         if (newPosValue > oldPosValue) {
             // the long side is missing some value, we need to take it from the vault
-            uint256 diff = newPosValue - oldPosValue;
-            if (diff < s._balanceVault) {
-                unchecked {
-                    s._balanceVault -= diff;
+            uint256 diff;
+            unchecked {
+                diff = newPosValue - oldPosValue;
+                uint256 balanceVault = s._balanceVault;
+                if (diff > balanceVault) {
+                    diff = balanceVault;
                 }
-                s._balanceLong += diff;
-            } else {
-                s._balanceLong += s._balanceVault;
-                s._balanceVault = 0;
+                s._balanceVault = balanceVault - diff;
             }
+            s._balanceLong += diff;
         } else if (newPosValue < oldPosValue) {
             // the long side has too much value, we need to give it to the vault side
-            uint256 diff = oldPosValue - newPosValue;
-            if (diff < s._balanceLong) {
-                unchecked {
-                    s._balanceLong -= diff;
+            uint256 diff;
+            unchecked {
+                diff = oldPosValue - newPosValue;
+                uint256 balanceLong = s._balanceLong;
+                if (diff > balanceLong) {
+                    diff = balanceLong;
                 }
-                s._balanceVault += diff;
-            } else {
-                s._balanceVault += s._balanceLong;
-                s._balanceLong = 0;
+                s._balanceLong = balanceLong - diff;
             }
+            s._balanceVault += diff;
         }
         // if both are equal, no action is needed
     }
