@@ -146,12 +146,13 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         uint256 vaultBalance = protocol.getBalanceVault();
         uint256 withdrawalValue = vaultBalance + 1;
         int256 pendingBalanceVault = protocol.getPendingBalanceVault();
+        uint256 totalExpo = protocol.getTotalExpo();
 
         // we check that the result of the new vault expo is less than zero
         assertLt(int256(vaultBalance) + pendingBalanceVault - int256(withdrawalValue), 0);
 
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEmptyVault.selector);
-        protocol.i_checkImbalanceLimitWithdrawal(withdrawalValue, 0);
+        protocol.i_checkImbalanceLimitWithdrawal(withdrawalValue, totalExpo);
     }
 
     /**
