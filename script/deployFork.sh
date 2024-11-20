@@ -80,10 +80,9 @@ for role in "${roles[@]}"; do
         --from $DEPLOYER_ADDRESS \
         "grantRole(bytes32 role, address account)" \
         $encodedRole $DEPLOYER_ADDRESS \
-        --private-key $deployerPrivateKey
-
+        --private-key $deployerPrivateKey \
+        --async
     echo "Role $role granted successfully."
 done
-
 
 popd >/dev/null
