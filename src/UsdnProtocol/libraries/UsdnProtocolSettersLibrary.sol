@@ -28,6 +28,14 @@ library UsdnProtocolSettersLibrary {
         if (address(newOracleMiddleware) == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareAddress();
         }
+
+        uint16 newLowLatencyDelay = newOracleMiddleware.getLowLatencyDelay();
+        if (newLowLatencyDelay < s._lowLatencyValidatorDeadline) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareLowLatencyDelay();
+        }
+        if (newLowLatencyDelay > 90 minutes) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareLowLatencyDelay();
+        }
         s._oracleMiddleware = newOracleMiddleware;
         emit IUsdnProtocolEvents.OracleMiddlewareUpdated(address(newOracleMiddleware));
     }

@@ -225,4 +225,7 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided minimum long position is invalid
     error UsdnProtocolInvalidMinLongPosition();
+
+    /// @dev Indicates that the new middleware have an invalid low latency delay
+    error UsdnProtocolInvalidMiddlewareLowLatencyDelay();
 }
