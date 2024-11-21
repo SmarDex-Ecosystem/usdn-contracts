@@ -15,7 +15,10 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function will not initiate the position (`isInitiated_` would be false)
      * @param amount The amount of assets to deposit
-     * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty. Note: the position's
+     * leverage is the result of a calculation involving the liquidation price without the penalty. As such, if the
+     * penalty is changed before this position is recorded, the position's leverage might not match the user's
+     * expectations.
      * @param userMaxPrice The maximum price at which the position can be opened (with _priceFeedDecimals). Note that
      * there is no guarantee that the effective price during validation will be below this value. The userMinPrice is
      * compared with the price after confidence interval, penalty, etc... However, if the
