@@ -1165,8 +1165,8 @@ library UsdnProtocolVaultLibrary {
         int256 newVaultExpo =
             s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeSub(withdrawalValue.toInt256());
 
-        // cannot be calculated if equal to zero
-        if (newVaultExpo == 0) {
+        // an imbalance cannot be calculated if the new vault expo is zero or negative
+        if (newVaultExpo <= 0) {
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
 
