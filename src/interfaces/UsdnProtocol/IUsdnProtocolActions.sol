@@ -14,7 +14,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * leverage). The validation operation then updates the entry price and leverage with fresher data
      * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function will not initiate the position (`isInitiated_` would be false)
-     * If the estimated effect of this action would lead to an protocol imbalance exceeding
+     * If the estimated effect of this action would lead to a protocol imbalance exceeding
      * `s._openExpoImbalanceLimitBps`, the transaction will revert. Note that due to the validation price not being
      * known and other factors like liquidations, it's possible that the imbalance slightly exceeds this value at times
      * @param amount The amount of assets to deposit
@@ -97,7 +97,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * the pending action will not be removed from the queue, and the user will have to try again
      * In case the position was liquidated by this call (`outcome_ == LongActionOutcome.Liquidated`),
      * this function will refund the security deposit and remove the pending action from the queue
-     * If the estimated effect of this action would lead to an protocol imbalance exceeding
+     * If the estimated effect of this action would lead to a protocol imbalance exceeding
      * `s._closeExpoImbalanceLimitBps`, the transaction will revert. Note that due to the validation price not being
      * known and other factors like liquidations, it's possible that the imbalance slightly exceeds this value at times
      * @param posId The unique identifier of the position to close
@@ -167,7 +167,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * of the middleware
      * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function might not initiate the deposit (and `success_` would be false)
-     * If the estimated effect of this action would lead to an protocol imbalance exceeding
+     * If the estimated effect of this action would lead to a protocol imbalance exceeding
      * `s._depositExpoImbalanceLimitBps`, the transaction will revert. Note that due to the validation price not being
      * known and other factors like liquidations, it's possible that the imbalance slightly exceeds this value at times
      * @param amount The amount of assets to deposit
@@ -225,7 +225,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * The price validation might require payment according to the return value of the {validationCost} function
      * of the middleware
      * The transaction must have `_securityDepositValue` in value
-     * If the estimated effect of this action would lead to an protocol imbalance exceeding
+     * If the estimated effect of this action would lead to a protocol imbalance exceeding
      * `s._withdrawalExpoImbalanceLimitBps`, the transaction will revert. Note that due to the validation price not
      * being known and other factors like liquidations, it's possible that the imbalance slightly exceeds this value at
      * times
