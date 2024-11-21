@@ -14,12 +14,13 @@ contract TestUsdnProtocolLongCalcImbalanceOpenBps is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Calculate the imbalance with no trading expo
-     * @custom:when The vault balance is 0
-     * @custom:and The long balance is 100 ether
-     * @custom:and The total expo is 200 ether
-     * @custom:then The imbalance is infinite
-     * @custom:and int256.max is returned
+     * @custom:scenario The `_calcImbalanceOpenBps` function should revert when vault expo is zero
+     * @custom:given An initialized usdn protocol contract with default parameters
+     * @custom:when The function is called with:
+     * - vault balance = 0
+     * - long balance = 100 ether
+     * - total expo = 200 ether
+     * @custom:then The transaction reverts with `UsdnProtocolEmptyVault` error
      */
     function test_calcImbalanceOpenBpsWith0VaultBalance() public {
         int256 vaultBalance = 0;

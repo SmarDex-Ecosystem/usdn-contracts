@@ -1304,7 +1304,7 @@ library UsdnProtocolLongLibrary {
         pure
         returns (int256 imbalanceBps_)
     {
-        // avoid division by zero
+        // an imbalance cannot be calculated if the new vault expo is zero or negative
         if (vaultExpo <= 0) {
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }

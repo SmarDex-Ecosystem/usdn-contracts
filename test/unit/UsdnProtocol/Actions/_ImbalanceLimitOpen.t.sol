@@ -79,12 +79,11 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      * @custom:scenario The `_checkImbalanceLimitOpen` function should revert when vault expo equal 0
      * @custom:given The vault has zero balance / expo
      * @custom:when The `_checkImbalanceLimitOpen` function is called
-     * @custom:then The transaction should revert
+     * @custom:then The transaction should revert with `UsdnProtocolEmptyVault` error
      */
     function test_RevertWhen_checkImbalanceLimitOpenZeroVaultExpo() public {
         protocol.emptyVault();
 
-        // should revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEmptyVault.selector);
         protocol.i_checkImbalanceLimitOpen(0, 0, 0);
     }
