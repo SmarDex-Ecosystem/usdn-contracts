@@ -859,4 +859,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     function i_validateOpenPositionUpdateBalances(uint256 newPosValue, uint256 oldPosValue) external {
         ActionsLong._validateOpenPositionUpdateBalances(newPosValue, oldPosValue);
     }
+
+    function i_initiateDeposit(Vault.InitiateDepositParams memory params, bytes calldata currentPriceData) external {
+        Vault._initiateDeposit(params, currentPriceData);
+    }
 }

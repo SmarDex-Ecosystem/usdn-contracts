@@ -682,6 +682,8 @@ library UsdnProtocolVaultLibrary {
             return (params.securityDepositValue, false);
         }
 
+        s._pendingBalanceVault += Utils._toInt256(params.amount);
+
         amountToRefund_ =
             _createDepositPendingAction(params.to, params.validator, params.securityDepositValue, params.amount, data);
 
@@ -700,7 +702,6 @@ library UsdnProtocolVaultLibrary {
             // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(params.user, address(this), params.amount);
         }
-        s._pendingBalanceVault += Utils._toInt256(params.amount);
 
         isInitiated_ = true;
 
