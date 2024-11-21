@@ -14,6 +14,9 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * leverage). The validation operation then updates the entry price and leverage with fresher data
      * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function will not initiate the position (`isInitiated_` would be false)
+     * If the estimated effect of this action would lead to an protocol imbalance exceeding
+     * `s._openExpoImbalanceLimitBps`, the transaction will revert. Note that due to the validation price not being
+     * known and other factors like liquidations, it's possible that the imbalance slightly exceeds this value at times
      * @param amount The amount of assets to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
      * @param userMaxPrice The maximum price at which the position can be opened (with _priceFeedDecimals). Note that
@@ -94,6 +97,9 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * the pending action will not be removed from the queue, and the user will have to try again
      * In case the position was liquidated by this call (`outcome_ == LongActionOutcome.Liquidated`),
      * this function will refund the security deposit and remove the pending action from the queue
+     * If the estimated effect of this action would lead to an protocol imbalance exceeding
+     * `s._closeExpoImbalanceLimitBps`, the transaction will revert. Note that due to the validation price not being
+     * known and other factors like liquidations, it's possible that the imbalance slightly exceeds this value at times
      * @param posId The unique identifier of the position to close
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param userMinPrice The minimum price at which the position can be closed (with _priceFeedDecimals). Note that
@@ -161,6 +167,9 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * of the middleware
      * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function might not initiate the deposit (and `success_` would be false)
+     * If the estimated effect of this action would lead to an protocol imbalance exceeding
+     * `s._depositExpoImbalanceLimitBps`, the transaction will revert. Note that due to the validation price not being
+     * known and other factors like liquidations, it's possible that the imbalance slightly exceeds this value at times
      * @param amount The amount of assets to deposit
      * @param sharesOutMin The minimum amount of USDN shares to receive. Note that there is no guarantee that the
      * effective minted amount at validation will exceed this value. Price changes during the interval could negatively
@@ -216,6 +225,10 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * The price validation might require payment according to the return value of the {validationCost} function
      * of the middleware
      * The transaction must have `_securityDepositValue` in value
+     * If the estimated effect of this action would lead to an protocol imbalance exceeding
+     * `s._withdrawalExpoImbalanceLimitBps`, the transaction will revert. Note that due to the validation price not
+     * being known and other factors like liquidations, it's possible that the imbalance slightly exceeds this value at
+     * times
      * @param usdnShares The amount of USDN shares to burn (Max 5708990770823839524233143877797980545530986495 which is
      * equivalent to 5.7B USDN token before any rebase. The token amount limit increases with each rebase)
      * In case liquidations are pending, this function might not initiate the withdrawal (and `success_` would be false)
