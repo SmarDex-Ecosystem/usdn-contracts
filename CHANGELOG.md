@@ -1,5 +1,48 @@
 # Changelog
 
+## [0.23.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.22.0...v0.23.0) (2024-11-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* the `IUsdnProtocol.getActionablePendingActions` function takes two additional parameters `lookAhead` and `maxIter`, the `MAX_ACTIONABLE_PENDING_ACTIONS` constant has been replaced with `MIN_ACTIONABLE_PENDING_ACTIONS_ITER`.
+* `IUsdnProtocol.validateOpenPosition` has a new return value `posId_` with the position ID which could have changed during execution.
+* initiateClose/validateClose/validateOpen now outputs an enum with 3 different values
+* the `TimeLimitsUpdated` event now have a new `closeDelay` parameter, the `TimeLimits` struct now have a new `closeDelay` parameter, all `TimeLimits` struct parameters are now of type `uint64`
+* the order of arguments for `IUsdnProtocol.transferPositionOwnership` was changed
+
+### Features
+
+* add `lookAhead` and `maxIter` parameters to `getActionablePendingActions` ([#701](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/701)) ([179f31e](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/179f31e684270e79dc69ad206976bb4f26fe4c3c))
+* add reentrancy guard on `removeBlockedPendingAction` ([#694](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/694)) ([e00de48](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/e00de48409f5c6c4f86b8ebafa2f3f81aa35def9))
+* change the return value of the initiateClose/validateClose/validateOpen functions ([#692](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/692)) ([3689a02](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/3689a02614121dceec201354f85f5cc09d31efca))
+* delete pUSDN ([#697](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/697)) ([81e23fa](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/81e23faa57587cca7b0a5f0aa1555416e9c9189e))
+* **protcol:** stop fundings during pause period ([#678](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/678)) ([dd6fbd7](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/dd6fbd78a0f72b6c93b1bb1151c02b0bf687ff6e))
+* **protocol:** add a condition on limits setter ([#703](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/703)) ([386e67f](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/386e67f4c4216315a3aef1d3033ae6d0e7229677))
+* rebalancer close delay ([#677](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/677)) ([b8685f2](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/b8685f2e0be789ba4e718c4a952a8b6f1e4fe7ba))
+* remove the callbacks in the initialize function ([#669](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/669)) ([dee780a](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/dee780a2dea76dc2a3ed6d404350764670ba46e7))
+* return potentially updated posId in `validateOpenPosition` ([#706](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/706)) ([cd3a0e1](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/cd3a0e1e040c8ef0104e87c590c9f27363bfec10))
+* **validate-close:** add remaining collateral to the vault when data.positionValue &lt; 0 ([#679](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/679)) ([b70c6ce](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/b70c6ce0ccc95604604808a6366ad437d3e44ff2))
+
+
+### Bug Fixes
+
+* bad debt handling in open ([#708](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/708)) ([972a700](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/972a70097fdf66d2ed232aeec7a0cf4eb2eca314))
+* change typo ([#707](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/707)) ([a2691aa](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a2691aa9031cb3fe2ebef843d51ded23f57eb2c4))
+* getHighestPopulatedTick now always return the highest populated tick ([#705](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/705)) ([ceba279](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/ceba279ebe3324ffa9aade440f8d657772cdb911))
+* **refund-security-deposit:** add reentrency guard ([#689](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/689)) ([a0cea30](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a0cea303b7adc95364eb9eaf303e1b8d35bfb4b3))
+* **trigger-rebalancer:** clamp the vault balance to 0 when it's added to the pending balance vault ([#711](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/711)) ([c4a4635](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/c4a4635151afc3c06b5cd345f5f6bad975b2c3d3))
+
+
+### Performance Improvements
+
+* **protocol:** unchecked mul in `positionValue` ([#696](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/696)) ([aeb5b47](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/aeb5b473289639e5c3fa01fbd2a2fda22da88e2a))
+
+
+### Code Refactoring
+
+* consistent ordering of arguments for `transferPositionOwnership` ([#680](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/680)) ([e000f1b](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/e000f1bf70324b7b8dad2c3abfc71042f8709d08))
+
 ## [0.22.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.21.0...v0.22.0) (2024-11-11)
 
 
