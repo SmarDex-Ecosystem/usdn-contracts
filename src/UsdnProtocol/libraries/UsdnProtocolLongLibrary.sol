@@ -583,13 +583,23 @@ library UsdnProtocolLongLibrary {
             return (longBalance_, vaultBalance_, Types.RebalancerAction.None);
         }
 
-        Types.CachedProtocolState memory cache = Types.CachedProtocolState({
-            totalExpo: s._totalExpo,
-            longBalance: longBalance,
-            vaultBalance: (vaultBalance.toInt256() + s._pendingBalanceVault).toUint256(),
-            tradingExpo: 0,
-            liqMultiplierAccumulator: s._liqMultiplierAccumulator
-        });
+        Types.CachedProtocolState memory cache;
+        {
+            int256 tempVaultBalance = vaultBalance.toInt256() + s._pendingBalanceVault;
+            // clamp the vault balance to 0 to avoid underflows
+            if (tempVaultBalance < 0) {
+                tempVaultBalance = 0;
+            }
+
+            cache = Types.CachedProtocolState({
+                totalExpo: s._totalExpo,
+                longBalance: longBalance,
+                // cast is safe as value cannot be negative
+                vaultBalance: uint256(tempVaultBalance),
+                tradingExpo: 0,
+                liqMultiplierAccumulator: s._liqMultiplierAccumulator
+            });
+        }
 
         if (cache.totalExpo < cache.longBalance) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo();
@@ -602,6 +612,10 @@ library UsdnProtocolLongLibrary {
         uint128 bonus;
         if (remainingCollateral > 0) {
             bonus = (uint256(remainingCollateral) * s._rebalancerBonusBps / Constants.BPS_DIVISOR).toUint128();
+            if (bonus > cache.vaultBalance) {
+                bonus = cache.vaultBalance.toUint128();
+            }
+
             cache.vaultBalance -= bonus;
         }
 
@@ -656,6 +670,8 @@ library UsdnProtocolLongLibrary {
 
         // add the bonus to the new rebalancer position and remove it from the vault
         if (bonus > 0) {
+            // those operations will not underflow because the bonus is capped by `remainingCollateral`
+            // which was given to the vault before the trigger, so vaultBalance is always greater than or equal to bonus
             vaultBalance_ -= bonus;
             data.positionAmount += bonus;
         }
