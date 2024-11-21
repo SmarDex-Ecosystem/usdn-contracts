@@ -70,7 +70,7 @@ rolesArr=(
     "UNPAUSER_ROLE"
 )
 
-for rolesArr in "${rolesArr[@]}"; do
+for role in "${rolesArr[@]}"; do
     # Encode role
     encodedRole=$(cast keccak "$role")
     
