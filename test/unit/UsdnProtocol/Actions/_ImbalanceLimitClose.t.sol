@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { ADMIN, DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+import { MockRebalancer } from "../utils/MockRebalancer.sol";
 
 import { IBaseRebalancer } from "../../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -10,7 +11,7 @@ import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUs
 /**
  * @custom:feature Test of the protocol expo limit for {_checkImbalanceLimitClose} function in a balanced state
  */
-contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
+contract TestImbalanceLimitClose is UsdnProtocolBaseFixture, MockRebalancer {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
 

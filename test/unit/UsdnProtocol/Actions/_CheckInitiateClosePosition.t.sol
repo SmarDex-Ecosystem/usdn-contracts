@@ -26,6 +26,7 @@ contract TestUsdnProtocolCheckInitiateClosePosition is UsdnProtocolBaseFixture, 
         super._setUp(params);
 
         mockedRebalancer = new MockRebalancer();
+        mockedRebalancer.setMinAssetDeposit(protocol.getMinLongPosition());
         vm.prank(ADMIN);
         protocol.setRebalancer(mockedRebalancer);
 

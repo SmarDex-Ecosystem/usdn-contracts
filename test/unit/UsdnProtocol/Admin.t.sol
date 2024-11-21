@@ -123,36 +123,22 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     function test_setOracleMiddleware() public adminPrank {
         // expected event
         vm.expectEmit();
-        emit OracleMiddlewareUpdated(address(this));
+        emit OracleMiddlewareUpdated(address(oracleMiddleware));
         // set middleware
-        protocol.setOracleMiddleware(IOracleMiddleware(address(this)));
+        protocol.setOracleMiddleware(oracleMiddleware);
         // assert new middleware equal randAddress
-        assertEq(address(protocol.getOracleMiddleware()), address(this));
+        assertEq(address(protocol.getOracleMiddleware()), address(oracleMiddleware));
     }
 
     /**
-     * @custom:scenario Call "setOracleMiddleware" from admin by passing a middleware with a too low {_lowLatencyDelay}
+     * @custom:scenario Call "setOracleMiddleware" from admin by passing a middleware with an invalid {_lowLatencyDelay}
      * @custom:given The initial usdnProtocol state from admin wallet
      * @custom:when Admin wallet triggers admin contract function
      * @custom:then The call should revert with {UsdnProtocolInvalidMiddlewareLowLatencyDelay}
      */
-    function test_RevertWhen_setOracleMiddlewareLowLatencyDelayTooLow() public adminPrank {
+    function test_RevertWhen_setOracleMiddlewareLowLatencyInvalidDelay() public adminPrank {
         MockInvalidOracleMiddleware mockInvalidOracleMiddleware = new MockInvalidOracleMiddleware();
         uint16 invalidValue = uint16(protocol.getLowLatencyValidatorDeadline() - 1);
-        mockInvalidOracleMiddleware.setLowLatencyDelay(invalidValue);
-        vm.expectRevert(UsdnProtocolInvalidMiddlewareLowLatencyDelay.selector);
-        protocol.setOracleMiddleware(IOracleMiddleware(address(mockInvalidOracleMiddleware)));
-    }
-
-    /**
-     * @custom:scenario Call "setOracleMiddleware" from admin by passing a middleware with a too high {_lowLatencyDelay}
-     * @custom:given The initial usdnProtocol state from admin wallet
-     * @custom:when Admin wallet triggers admin contract function
-     * @custom:then The call should revert with {UsdnProtocolInvalidMiddlewareLowLatencyDelay}
-     */
-    function test_RevertWhen_setOracleMiddlewareLowLatencyDelayTooHigh() public adminPrank {
-        MockInvalidOracleMiddleware mockInvalidOracleMiddleware = new MockInvalidOracleMiddleware();
-        uint16 invalidValue = 90 minutes + 1;
         mockInvalidOracleMiddleware.setLowLatencyDelay(invalidValue);
         vm.expectRevert(UsdnProtocolInvalidMiddlewareLowLatencyDelay.selector);
         protocol.setOracleMiddleware(IOracleMiddleware(address(mockInvalidOracleMiddleware)));
@@ -614,13 +600,11 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then The value should be updated
      */
     function test_setRebalancer() public adminPrank {
-        IRebalancer expectedNewValue = IRebalancer(address(this));
-
         vm.expectEmit();
-        emit RebalancerUpdated(address(this));
-        protocol.setRebalancer(expectedNewValue);
+        emit RebalancerUpdated(address(rebalancer));
+        protocol.setRebalancer(rebalancer);
 
-        assertEq(address(protocol.getRebalancer()), address(expectedNewValue));
+        assertEq(address(protocol.getRebalancer()), address(rebalancer));
     }
 
     /**

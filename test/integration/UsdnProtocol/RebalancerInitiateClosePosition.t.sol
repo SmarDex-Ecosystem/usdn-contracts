@@ -639,45 +639,6 @@ contract TestRebalancerInitiateClosePosition is
     }
 
     /**
-     * @custom:scenario A rebalancer user closes their position partially when
-     * the protocol position is below the minimum
-     * @custom:given The user has deposited in the rebalancer
-     * @custom:and The rebalancer's position is initiated
-     * @custom:and The rebalancer is set to the address zero
-     * @custom:and The minimum long position in the protocol is changed to a large amount
-     * @custom:and The rebalancer is set again
-     * @custom:when The user closes their position partially with a remaining deposit above the minimum deposit
-     * @custom:then The partial close reverts with {RebalancerInvalidAmount}
-     */
-    function test_RevertWhen_closePartialFromRebalancerBelowProtocolMin() public {
-        vm.prank(SET_EXTERNAL_MANAGER);
-        protocol.setRebalancer(IRebalancer(address(0)));
-
-        vm.startPrank(SET_PROTOCOL_PARAMS_MANAGER);
-        protocol.setMinLongPosition(Constants.MAX_MIN_LONG_POSITION);
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
-        vm.stopPrank();
-
-        vm.prank(SET_EXTERNAL_MANAGER);
-        protocol.setRebalancer(rebalancer);
-
-        uint88 amountToRemove = uint88(amountInRebalancer - rebalancer.getMinAssetDeposit() + 1);
-
-        vm.prank(user);
-        vm.expectRevert(IRebalancerErrors.RebalancerInvalidAmount.selector);
-        rebalancer.initiateClosePosition{ value: securityDeposit }(
-            amountToRemove,
-            address(this),
-            payable(this),
-            DISABLE_MIN_PRICE,
-            type(uint256).max,
-            "",
-            EMPTY_PREVIOUS_DATA,
-            ""
-        );
-    }
-
-    /**
      * @notice Get the delegation signature
      * @param privateKey The signer private key
      * @param delegationToSign The delegation struct to sign

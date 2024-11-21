@@ -33,9 +33,6 @@ library UsdnProtocolSettersLibrary {
         if (newLowLatencyDelay < s._lowLatencyValidatorDeadline) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareLowLatencyDelay();
         }
-        if (newLowLatencyDelay > 90 minutes) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareLowLatencyDelay();
-        }
         s._oracleMiddleware = newOracleMiddleware;
         emit IUsdnProtocolEvents.OracleMiddlewareUpdated(address(newOracleMiddleware));
     }
@@ -56,6 +53,10 @@ library UsdnProtocolSettersLibrary {
     /// @notice See {IUsdnProtocolFallback}
     function setRebalancer(IBaseRebalancer newRebalancer) external {
         Types.Storage storage s = Utils._getMainStorage();
+
+        if (address(newRebalancer) != address(0) && s._minLongPosition > newRebalancer.getMinAssetDeposit()) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidMinAssetDeposit();
+        }
 
         s._rebalancer = newRebalancer;
 
