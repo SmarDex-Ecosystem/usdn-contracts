@@ -990,24 +990,10 @@ library UsdnProtocolLongLibrary {
         int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(
             (collateralAmount - collateralAmountAfterFees).toInt256()
         );
-        // int256 imbalanceBps = _calcImbalanceOpenBps(
-        //     currentVaultExpo, (s._balanceLong + collateralAmountAfterFees).toInt256(), s._totalExpo +
-        // openTotalExpoValue
-        // );
 
-        // avoid division by zero // todo change me
-        if (currentVaultExpo <= 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
-        }
-
-        // imbalanceBps = (longTradingExpo - currentVaultExpo) / currentVaultExpo
-        //              = ((totalExpo - longBalance) - currentVaultExpo) / currentVaultExpo
-        // with totalExpo = _totalExpo + openTotalExpoValue and longBalance = _balanceLong + collateralAmountAfterFees
-        int256 longTradingExpo =
-            (s._totalExpo + openTotalExpoValue).toInt256() - (s._balanceLong + collateralAmountAfterFees).toInt256();
-
-        int256 imbalanceBps =
-            longTradingExpo.safeSub(currentVaultExpo).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(currentVaultExpo);
+        int256 imbalanceBps = _calcImbalanceOpenBps(
+            currentVaultExpo, (s._balanceLong + collateralAmountAfterFees).toInt256(), s._totalExpo + openTotalExpoValue
+        );
 
         if (imbalanceBps > openExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
@@ -1308,24 +1294,25 @@ library UsdnProtocolLongLibrary {
      * @notice Calculates the current imbalance for the open action checks
      * @dev If the value is positive, the long trading expo is larger than the vault trading expo
      * In case of zero vault balance, the function returns `int256.max` since the resulting imbalance would be infinity
-     * @param vaultBalance The balance of the vault
+     * @param vaultExpo The vault expo (including the pending vault balance and the fees of the wanted open position)
      * @param longBalance The balance of the long side (including the long position to open)
      * @param totalExpo The total expo of the long side (including the long position to open)
      * @return imbalanceBps_ The imbalance in basis points
      */
-    function _calcImbalanceOpenBps(int256 vaultBalance, int256 longBalance, uint256 totalExpo)
+    function _calcImbalanceOpenBps(int256 vaultExpo, int256 longBalance, uint256 totalExpo)
         internal
         pure
         returns (int256 imbalanceBps_)
     {
         // avoid division by zero
-        if (vaultBalance <= 0) {
+        if (vaultExpo <= 0) {
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
-        // imbalanceBps_ = ((totalExpo - longBalance) - vaultBalance) *s. vaultBalance;
-        int256 longTradingExpo = totalExpo.toInt256() - longBalance;
-        imbalanceBps_ =
-            longTradingExpo.safeSub(vaultBalance).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(vaultBalance);
+
+        // imbalanceBps = (longTradingExpo - vaultExpo) / vaultExpo
+        // imbalanceBps = ((totalExpo - longBalance) - vaultExpo) / vaultExpo;
+        imbalanceBps_ = (totalExpo.toInt256() - longBalance).safeSub(vaultExpo).safeMul(int256(Constants.BPS_DIVISOR))
+            .safeDiv(vaultExpo);
     }
 
     /**

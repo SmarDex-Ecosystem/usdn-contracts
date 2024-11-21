@@ -31,7 +31,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The {_checkImbalanceLimitWithdrawal} function should not revert when the imballance is equal to
+     * @custom:scenario The {_checkImbalanceLimitWithdrawal} function should not revert when the imbalance is equal to
      * the limit
      * @custom:given The protocol is in a balanced state
      * @custom:when The {_checkImbalanceLimitWithdrawal} function is called with values on the withdrawal limit
