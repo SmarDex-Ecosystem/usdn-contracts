@@ -67,6 +67,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * the pending action will not be removed from the queue, and the user will have to try again
      * In case the position was liquidated by this call (`outcome_ == LongActionOutcome.Liquidated`),
      * this function will refund the security deposit and remove the pending action from the queue
+     * Note that this action could imbalance the protocol past the set limits, which is expected and unavoidable
      * @param validator The address that has the pending open position action to validate
      * @param openPriceData The price data corresponding to the sender's pending open position action
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -147,6 +148,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * the pending action will not be removed from the queue, and the user will have to try again
      * In case the position was liquidated by this call (`outcome_ == LongActionOutcome.Liquidated`),
      * this function will refund the security deposit and remove the pending action from the queue
+     * Note that this action could imbalance the protocol past the set limits, which is expected and unavoidable
      * @param validator The validator of the close pending action, not necessarily the position owner
      * @param closePriceData The price data corresponding to the sender's pending close position action
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -207,6 +209,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * Users wanting to validate an actionable pending action must use another function such as
      * `validateActionablePendingActions` to earn the corresponding security deposit
      * In case liquidations are pending, this function might not validate the deposit (and `success_` would be false)
+     * Note that this action could imbalance the protocol past the set limits, which is expected and unavoidable
      * @param validator The address that has the pending deposit action to validate
      * @param depositPriceData The price data corresponding to the sender's pending deposit action
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -266,6 +269,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * if the validation deadline has passed Users wanting to validate an actionable pending action must use another
      * function such as `validateActionablePendingActions` to earn the corresponding security deposit
      * In case liquidations are pending, this function might not validate the withdrawal (and `success_` would be false)
+     * Note that this action could imbalance the protocol past the set limits, which is expected and unavoidable
      * @param validator The address that has the pending withdrawal action to validate
      * @param withdrawalPriceData The price data corresponding to the sender's pending withdrawal action
      * @param previousActionsData The data needed to validate actionable pending actions
