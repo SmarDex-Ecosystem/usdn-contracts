@@ -670,7 +670,8 @@ library UsdnProtocolLongLibrary {
 
         // add the bonus to the new rebalancer position and remove it from the vault
         if (bonus > 0) {
-            // those operations will not underflow because the bonus is capped by the cache's vault balance
+            // those operations will not underflow because the bonus is capped by `remainingCollateral`
+            // which was given to the vault before the trigger, so vaultBalance is always greater than or equal to bonus
             vaultBalance_ -= bonus;
             data.positionAmount += bonus;
         }
