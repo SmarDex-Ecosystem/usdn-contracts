@@ -140,7 +140,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
      * @custom:given A protocol in a balanced state
      * @custom:when The function is called with a withdrawal value exceeding the vault balance
      * @custom:and The new vault expo calculation results in a value less than zero
-     * @custom:then The transaction should revert with the {UsdnProtocolEmptyVault} error
+     * @custom:then The transaction should revert with the `UsdnProtocolEmptyVault` error
      */
     function test_RevertWhen_checkImbalanceLimitNewVaultExpoLtZero() public {
         uint256 vaultBalance = protocol.getBalanceVault();
