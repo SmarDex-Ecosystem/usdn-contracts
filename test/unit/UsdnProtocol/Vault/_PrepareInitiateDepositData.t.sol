@@ -32,8 +32,8 @@ contract TestUsdnProtocolPrepareInitiateDepositData is UsdnProtocolBaseFixture {
 
         bytes32 storageMainSlot =
             keccak256(abi.encode(uint256(keccak256("UsdnProtocol.storage.main")) - 1)) & ~bytes32(uint256(0xff));
-        // _balanceVault is the 30th slot in the storage struct
-        bytes32 storageSlot = storageMainSlot | bytes32(uint256(30));
+        // _balanceVault is the 31th slot in the storage struct
+        bytes32 storageSlot = storageMainSlot | bytes32(uint256(31));
         vm.store(address(protocol), storageSlot, 0);
 
         vm.expectPartialRevert(UsdnProtocolEmptyVault.selector);

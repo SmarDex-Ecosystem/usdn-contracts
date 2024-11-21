@@ -553,6 +553,7 @@ interface IUsdnProtocolTypes {
      * @param _oracleMiddleware The oracle middleware contract
      * @param _liquidationRewardsManager The liquidation rewards manager contract
      * @param _rebalancer The rebalancer contract
+     * @param _isRebalancer Mapping to check if an address is or has been a rebalancer
      * @param _minLeverage The minimum leverage for a position
      * @param _maxLeverage The maximum leverage for a position
      * @param _lowLatencyValidatorDeadline The deadline for a user to confirm their action with a low-latency oracle
@@ -641,6 +642,7 @@ interface IUsdnProtocolTypes {
         IBaseOracleMiddleware _oracleMiddleware;
         IBaseLiquidationRewardsManager _liquidationRewardsManager;
         IBaseRebalancer _rebalancer;
+        mapping(address => bool) _isRebalancer;
         uint256 _minLeverage;
         uint256 _maxLeverage;
         uint128 _lowLatencyValidatorDeadline;
