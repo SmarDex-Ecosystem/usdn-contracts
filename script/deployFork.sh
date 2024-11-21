@@ -71,10 +71,8 @@ rolesArr=(
 )
 
 for role in "${rolesArr[@]}"; do
-
-    echo "Encode role: $role"
-    
     # Encode role
+    echo "Encode role: $role"
     encodedRole=$(cast keccak "$role")
     echo "Encoded role: $encodedRole"
     
