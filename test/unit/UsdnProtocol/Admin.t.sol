@@ -6,8 +6,11 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { ADMIN } from "../../utils/Constants.sol";
+
+import { RebalancerHandler } from "../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 import { MockInvalidOracleMiddleware } from "./utils/MockInvalidOracleMiddleware.sol";
+import { MockInvalidRebalancer } from "./utils/MockInvalidRebalancer.sol";
 
 import { ILiquidationRewardsManager } from
     "../../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManager.sol";
@@ -214,7 +217,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         uint256 aboveLimit = 100 * 10 ** protocol.LEVERAGE_DECIMALS() + 1;
         // maxLeverage greater than max disallowed
         vm.expectRevert(UsdnProtocolInvalidMaxLeverage.selector);
-        // set maxLeverage
+        // set maxLeveragehttps://app.timelyapp.com/1073475/superreports/dashboard
         protocol.setMaxLeverage(aboveLimit);
     }
 
@@ -605,6 +608,21 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         protocol.setRebalancer(rebalancer);
 
         assertEq(address(protocol.getRebalancer()), address(rebalancer));
+    }
+
+    /**
+     * @custom:scenario Call "setRebalancer" from admin with a rebalancer that contains an invalid {_minAssetDeposit}
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then The transaction should revert with {}
+     */
+    function test_RevertWhen_setRebalancerInvalidMinAssetDeposit() public adminPrank {
+        uint256 minLongPosition = 1 ether;
+        protocol.setMinLongPosition(minLongPosition);
+        MockInvalidRebalancer invalidRebalancer = new MockInvalidRebalancer();
+        invalidRebalancer.setMinAssetDeposit(minLongPosition - 1);
+        vm.expectRevert(UsdnProtocolInvalidMinAssetDeposit.selector);
+        protocol.setRebalancer(RebalancerHandler(payable(invalidRebalancer)));
     }
 
     /**
