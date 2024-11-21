@@ -70,17 +70,17 @@ rolesArr=(
     UNPAUSER_ROLE
 )
 
-for role in "${roles[@]}"; do
+for rolesArr in "${rolesArr[@]}"; do
     # Encode role
     encodedRole=$(cast keccak "$role")
     
     # Send transaction
-    echo "Granting role $role to $DEPLOYER_ADDRESS..."
+    echo -e "\nGranting role $role to $DEPLOYER_ADDRESS..."
     cast send $USDN_PROTOCOL_ADDRESS \
         --from $DEPLOYER_ADDRESS \
         "grantRole(bytes32 role, address account)" \
         $encodedRole $DEPLOYER_ADDRESS \
-        --private-key $deployerPrivateKey \
+        --private-key $deployerPrivateKey
     echo "Role $role granted successfully."
 done
 
