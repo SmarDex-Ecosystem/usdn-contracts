@@ -28,11 +28,10 @@ library UsdnProtocolSettersLibrary {
         if (address(newOracleMiddleware) == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareAddress();
         }
-
-        uint16 newLowLatencyDelay = newOracleMiddleware.getLowLatencyDelay();
-        if (newLowLatencyDelay < s._lowLatencyValidatorDeadline) {
+        if (newOracleMiddleware.getLowLatencyDelay() < s._lowLatencyValidatorDeadline) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareLowLatencyDelay();
         }
+
         s._oracleMiddleware = newOracleMiddleware;
         emit IUsdnProtocolEvents.OracleMiddlewareUpdated(address(newOracleMiddleware));
     }
@@ -55,7 +54,7 @@ library UsdnProtocolSettersLibrary {
         Types.Storage storage s = Utils._getMainStorage();
 
         if (address(newRebalancer) != address(0) && s._minLongPosition > newRebalancer.getMinAssetDeposit()) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidMinAssetDeposit();
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidRebalancerMinAssetDeposit();
         }
 
         s._rebalancer = newRebalancer;

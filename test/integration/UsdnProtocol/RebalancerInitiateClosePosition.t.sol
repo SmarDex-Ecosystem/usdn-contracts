@@ -12,7 +12,6 @@ import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IBaseRebalancer } from "../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
-import { IRebalancer } from "../../../src/interfaces/Rebalancer/IRebalancer.sol";
 import { IRebalancerErrors } from "../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";

@@ -230,5 +230,5 @@ interface IUsdnProtocolErrors {
     error UsdnProtocolInvalidMiddlewareLowLatencyDelay();
 
     /// @dev Indicates that the new rebalancer contains an invalid minimum asset deposit
-    error UsdnProtocolInvalidMinAssetDeposit();
+    error UsdnProtocolInvalidRebalancerMinAssetDeposit();
 }

@@ -6,7 +6,6 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { ADMIN } from "../../utils/Constants.sol";
-
 import { RebalancerHandler } from "../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 import { MockInvalidOracleMiddleware } from "./utils/MockInvalidOracleMiddleware.sol";
@@ -134,12 +133,13 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
-     * @custom:scenario Call "setOracleMiddleware" from admin by passing a middleware with an invalid {_lowLatencyDelay}
+     * @custom:scenario Call "setOracleMiddleware" from admin by passing a new middleware contract
+     * that contains an invalid {_lowLatencyDelay}
      * @custom:given The initial usdnProtocol state from admin wallet
      * @custom:when Admin wallet triggers admin contract function
      * @custom:then The call should revert with {UsdnProtocolInvalidMiddlewareLowLatencyDelay}
      */
-    function test_RevertWhen_setOracleMiddlewareLowLatencyInvalidDelay() public adminPrank {
+    function test_RevertWhen_setOracleMiddlewareInvalidLowLatencyDelay() public adminPrank {
         MockInvalidOracleMiddleware mockInvalidOracleMiddleware = new MockInvalidOracleMiddleware();
         uint16 invalidValue = uint16(protocol.getLowLatencyValidatorDeadline() - 1);
         mockInvalidOracleMiddleware.setLowLatencyDelay(invalidValue);
@@ -217,7 +217,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         uint256 aboveLimit = 100 * 10 ** protocol.LEVERAGE_DECIMALS() + 1;
         // maxLeverage greater than max disallowed
         vm.expectRevert(UsdnProtocolInvalidMaxLeverage.selector);
-        // set maxLeveragehttps://app.timelyapp.com/1073475/superreports/dashboard
+        // set maxLeverage
         protocol.setMaxLeverage(aboveLimit);
     }
 
@@ -611,17 +611,18 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
-     * @custom:scenario Call "setRebalancer" from admin with a rebalancer that contains an invalid {_minAssetDeposit}
+     * @custom:scenario Call "setRebalancer" from admin by passing
+     * a new rebalancer contract that contains an invalid {_minAssetDeposit}
      * @custom:given The initial usdnProtocol state from admin wallet
      * @custom:when Admin wallet triggers admin contract function
-     * @custom:then The transaction should revert with {}
+     * @custom:then The transaction should revert with {UsdnProtocolInvalidRebalancerMinAssetDeposit}
      */
     function test_RevertWhen_setRebalancerInvalidMinAssetDeposit() public adminPrank {
         uint256 minLongPosition = 1 ether;
         protocol.setMinLongPosition(minLongPosition);
         MockInvalidRebalancer invalidRebalancer = new MockInvalidRebalancer();
         invalidRebalancer.setMinAssetDeposit(minLongPosition - 1);
-        vm.expectRevert(UsdnProtocolInvalidMinAssetDeposit.selector);
+        vm.expectRevert(UsdnProtocolInvalidRebalancerMinAssetDeposit.selector);
         protocol.setRebalancer(RebalancerHandler(payable(invalidRebalancer)));
     }
 
@@ -660,7 +661,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:when Admin wallet triggers the function with a value above the limit
      * @custom:then The transaction should revert
      */
-    function test_RevertWhen_invalidSetSecuriyDepositValue() public adminPrank {
+    function test_RevertWhen_invalidSetSecurityDepositValue() public adminPrank {
         vm.expectRevert(UsdnProtocolInvalidSecurityDeposit.selector);
         protocol.setSecurityDepositValue(5 ether + 1);
     }
