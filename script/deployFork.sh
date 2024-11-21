@@ -71,8 +71,12 @@ rolesArr=(
 )
 
 for role in "${rolesArr[@]}"; do
+
+    echo "Encode role: $role"
+    
     # Encode role
     encodedRole=$(cast keccak "$role")
+    echo "Encoded role: $encodedRole"
     
     # Send transaction
     echo -e "\nGranting role $role to $DEPLOYER_ADDRESS..."
