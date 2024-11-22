@@ -631,6 +631,12 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
      */
     function getNonce(address owner) external view returns (uint256);
 
+    /**
+     * @notice Get the delay before a pending action can be removed
+     * @return The delay (in seconds)
+     */
+    function getRemoveBlockedPendingActionsDelay() external view returns (uint256);
+
     /* -------------------------------------------------------------------------- */
     /*                                   Setters                                  */
     /* -------------------------------------------------------------------------- */

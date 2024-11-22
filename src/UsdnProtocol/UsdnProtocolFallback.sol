@@ -515,6 +515,11 @@ contract UsdnProtocolFallback is
         return Utils._getMainStorage()._nonce[owner];
     }
 
+    /// @inheritdoc IUsdnProtocolFallback
+    function getRemoveBlockedPendingActionsDelay() external view returns (uint256) {
+        return Utils._getMainStorage()._removeBlockedPendingActionsDelay;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                              SET_EXTERNAL_ROLE                             */
     /* -------------------------------------------------------------------------- */

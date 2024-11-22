@@ -355,6 +355,12 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     event HighestPopulatedTickUpdated(int24 tick);
 
     /**
+     * @notice Emitted when the delay for removing blocked pending actions is updated
+     * @param newDelay The new delay for removing blocked pending actions
+     */
+    event RemoveBlockedPendingActionsDelayUpdated(uint256 newDelay);
+
+    /**
      * @notice Emitted when a security deposit is refunded
      * @param pendingActionValidator Address of the validator
      * @param receivedBy Address of the user who received the security deposit

@@ -241,7 +241,7 @@ library UsdnProtocolSettersLibrary {
     function setRemoveBlockedPendingActionsDelay(uint256 delay) external {
         Types.Storage storage s = Utils._getMainStorage();
 
-        if (delay > 1 hours) {
+        if (delay > 1 hours || delay < 1 seconds) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidRemoveBlockedPendingActionsDelay();
         }
         s._removeBlockedPendingActionsDelay = delay;
