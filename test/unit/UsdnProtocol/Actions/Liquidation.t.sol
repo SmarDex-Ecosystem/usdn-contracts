@@ -584,6 +584,103 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario A USDN holder tries to frontrun a liquidation to shield themselves from bad debt
+     * @custom:given A user has a long position that is underwater
+     * @custom:when The depositor tries to withdraw after the liquidation
+     * @custom:then The depositor receives a given amount
+     * @custom:when The depositor tries to frontrun the liquidation to initiate a withdrawal
+     * @custom:then The depositor receives the same amount as before when they validate
+     * @custom:when The depositor tries to frontrun the liquidation with an old high price
+     * @custom:then The depositor receives less than before when they validate
+     */
+    function test_frontrunLiquidationWithBadDebt() public {
+        // open position to liquidate
+        PositionId memory posId = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 2 ether,
+                desiredLiqPrice: params.initialPrice * 9 / 10,
+                price: params.initialPrice
+            })
+        );
+
+        skip(40 minutes);
+
+        uint128 liqPrice = 1600 ether;
+        uint152 withdrawalShares = uint152(usdn.sharesOf(DEPLOYER) / 10);
+        // pos should have a negative value with the liq price
+        int256 posValue = protocol.getPositionValue(posId, liqPrice, uint128(block.timestamp));
+        assertLt(posValue, 0, "negative pos value");
+
+        uint256 snapshot = vm.snapshotState();
+
+        // first case, withdraw after liquidation
+        protocol.liquidate(abi.encode(liqPrice)); // this sets the lastPrice to $1600 and lastUpdateTimestamp to t-30s
+        vm.startPrank(DEPLOYER);
+        usdn.approve(address(protocol), type(uint256).max);
+        protocol.initiateWithdrawal(
+            withdrawalShares,
+            0,
+            address(this),
+            payable(this),
+            type(uint256).max,
+            abi.encode(params.initialPrice), // use old chainlink price
+            EMPTY_PREVIOUS_DATA
+        );
+        vm.stopPrank();
+        _waitDelay();
+        uint256 balanceBefore = wstETH.balanceOf(address(this));
+        protocol.validateWithdrawal(payable(this), abi.encode(liqPrice), EMPTY_PREVIOUS_DATA);
+        uint256 withdrawnPost = wstETH.balanceOf(address(this)) - balanceBefore;
+        emit log_named_decimal_uint("withdrawn post liq", withdrawnPost, 18);
+
+        // second case, frontrun liquidation with low price
+        vm.revertToState(snapshot);
+        vm.startPrank(DEPLOYER);
+        usdn.approve(address(protocol), type(uint256).max);
+        protocol.initiateWithdrawal(
+            withdrawalShares,
+            0,
+            address(this),
+            payable(this),
+            type(uint256).max,
+            abi.encode(liqPrice), // use recent price, should liquidate the position
+            EMPTY_PREVIOUS_DATA
+        );
+        vm.stopPrank();
+        protocol.liquidate(abi.encode(liqPrice)); // this should not liquidate anything
+        _waitDelay();
+        balanceBefore = wstETH.balanceOf(address(this));
+        protocol.validateWithdrawal(payable(this), abi.encode(liqPrice), EMPTY_PREVIOUS_DATA);
+        uint256 withdrawnPreLowPrice = wstETH.balanceOf(address(this)) - balanceBefore;
+        emit log_named_decimal_uint("withdrawn with frontrun / low price", withdrawnPreLowPrice, 18);
+        assertEq(withdrawnPreLowPrice, withdrawnPost, "same as post");
+
+        // third case, frontrun liquidation with old high price
+        vm.revertToState(snapshot);
+        vm.startPrank(DEPLOYER);
+        usdn.approve(address(protocol), type(uint256).max);
+        protocol.initiateWithdrawal(
+            withdrawalShares,
+            0,
+            address(this),
+            payable(this),
+            type(uint256).max,
+            abi.encode(params.initialPrice), // use old price, no liq
+            EMPTY_PREVIOUS_DATA
+        );
+        vm.stopPrank();
+        protocol.liquidate(abi.encode(liqPrice)); // this should liquidate
+        _waitDelay();
+        balanceBefore = wstETH.balanceOf(address(this));
+        protocol.validateWithdrawal(payable(this), abi.encode(liqPrice), EMPTY_PREVIOUS_DATA);
+        uint256 withdrawnPreHighPrice = wstETH.balanceOf(address(this)) - balanceBefore;
+        emit log_named_decimal_uint("withdrawn with frontrun / high price", withdrawnPreHighPrice, 18);
+        assertLe(withdrawnPreHighPrice, withdrawnPost, "less than post");
+    }
+
+    /**
      * @custom:scenario The user sends too much ether when liquidating positions
      * @custom:given The user performs a liquidation
      * @custom:when The user sends 0.5 ether as value in the `liquidate` call
