@@ -757,6 +757,13 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function setSecurityDepositValue(uint64 securityDepositValue) external;
 
     /**
+     * @notice Set the delay before a pending action can be removed
+     * @dev This minimum value is 1 second, and the maximum value is 1 hour
+     * @param delay The delay (in seconds)
+     */
+    function setRemoveBlockedPendingActionsDelay(uint256 delay) external;
+
+    /**
      * @notice Set imbalance limits basis point
      * @dev `newLongImbalanceTargetBps` needs to be lower than newCloseLimitBps and
      * higher than `- newWithdrawalLimitBps`

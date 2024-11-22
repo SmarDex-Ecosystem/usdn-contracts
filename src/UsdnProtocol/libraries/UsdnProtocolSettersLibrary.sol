@@ -238,6 +238,7 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.SecurityDepositValueUpdated(securityDepositValue);
     }
 
+    /// @notice See {IUsdnProtocolFallback}
     function setRemoveBlockedPendingActionsDelay(uint256 delay) external {
         Types.Storage storage s = Utils._getMainStorage();
 

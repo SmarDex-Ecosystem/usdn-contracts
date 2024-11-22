@@ -628,6 +628,11 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
+    function setRemoveBlockedPendingActionsDelay(uint256 delay) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Setters.setRemoveBlockedPendingActionsDelay(delay);
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
     function setExpoImbalanceLimits(
         uint256 newOpenLimitBps,
         uint256 newDepositLimitBps,

@@ -620,7 +620,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     function _wait() internal {
         skip(protocol.getLowLatencyValidatorDeadline());
         skip(protocol.getOnChainValidatorDeadline());
-        skip(10 minutes);
+        skip(protocol.getRemoveBlockedPendingActionsDelay());
     }
 
     receive() external payable {
