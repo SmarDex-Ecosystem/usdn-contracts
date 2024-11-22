@@ -72,9 +72,7 @@ rolesArr=(
 
 for role in "${rolesArr[@]}"; do
     # Encode role
-    echo "Encode role: $role"
     encodedRole=$(cast keccak "$role")
-    echo "Encoded role: $encodedRole"
     
     # Send transaction
     echo -e "\nGranting role $role to $DEPLOYER_ADDRESS..."
@@ -83,7 +81,6 @@ for role in "${rolesArr[@]}"; do
         "grantRole(bytes32 role, address account)" \
         $encodedRole $DEPLOYER_ADDRESS \
         --private-key $deployerPrivateKey
-    echo "Role $role granted successfully."
 done
 
 popd >/dev/null
