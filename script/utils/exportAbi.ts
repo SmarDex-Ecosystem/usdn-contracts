@@ -5,7 +5,8 @@ import { Command } from 'commander';
 import { globSync } from 'glob';
 import { toEventSelector, toEventSignature, toFunctionSelector, toFunctionSignature } from 'viem';
 
-const ABI_EXPORT_PATH = './dist/abi';
+const DIST_PATH = './dist'
+const ABI_EXPORT_PATH = `${DIST_PATH}/abi`;
 
 type EnumMember = {
   name: string;
@@ -73,7 +74,7 @@ for (const [i, file] of solFiles.entries()) {
   solFiles[i] = basename(file, '.sol');
 }
 
-if (existsSync(ABI_EXPORT_PATH)) rmSync(ABI_EXPORT_PATH, { recursive: true, force: true });
+if (existsSync(DIST_PATH)) rmSync(DIST_PATH, { recursive: true, force: true });
 mkdirSync(ABI_EXPORT_PATH, { recursive: true });
 
 let indexContent = '';

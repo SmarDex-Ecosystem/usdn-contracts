@@ -14,7 +14,7 @@
     "cov:html": "npm run coverage && genhtml --ignore-errors corrupt,inconsistent -o .coverage lcov.info && open .coverage/index.html",
     "cov": "forge build --skip .sol && forge coverage --no-match-coverage \"(script|mock|test)\" --no-match-test \"(FFI|Fork|Fuzz|invariant)\" --no-match-contract Fork -vvv --offline",
     "coverage": "npm run cov -- --report lcov",
-    "exportAbi": "forge build --skip \"test/**/*\" --skip script && tsx ./script/utils/exportAbi.ts -g '{interfaces/**/*.sol,**/*[mM]ock*.sol}' && tsx ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
+    "exportAbi": "forge build --skip \"test/**/*\" --skip script && tsx ./script/utils/exportAbi.ts -g '{interfaces/**/*.sol,**/*[mM]ock*.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
     "format:js": "npx @biomejs/biome format . --write",
     "format": "forge fmt",
     "installDeps": "npm i && forge soldeer install",
@@ -46,6 +46,7 @@
     "luxon": "^3.4.4",
     "picocolors": "^1.0.1",
     "solhint": "^5.0.2",
+    "tsup": "^8.3.5",
     "tsx": "^4.19.1",
     "viem": "^2.18.5"
   }
