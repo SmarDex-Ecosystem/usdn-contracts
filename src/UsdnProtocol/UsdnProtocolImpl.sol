@@ -82,6 +82,7 @@ contract UsdnProtocolImpl is
         s._vaultFeeBps = 4; // 0.04%
         s._sdexBurnOnDepositRatio = 1e6; // 1%
         s._securityDepositValue = 0.5 ether;
+        s._removeBlockedPendingActionsDelay = 10 minutes;
 
         s._EMA = int256(3 * 10 ** (Constants.FUNDING_RATE_DECIMALS - 4));
 

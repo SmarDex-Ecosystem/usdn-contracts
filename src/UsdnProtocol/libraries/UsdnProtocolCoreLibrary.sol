@@ -352,7 +352,8 @@ library UsdnProtocolCoreLibrary {
         Types.PendingAction memory pending = s._pendingActionsQueue.atRaw(rawIndex);
         if (
             block.timestamp
-                < pending.timestamp + s._lowLatencyValidatorDeadline + s._onChainValidatorDeadline + 10 minutes
+                < pending.timestamp + s._lowLatencyValidatorDeadline + s._onChainValidatorDeadline
+                    + s._removeBlockedPendingActionsDelay
         ) {
             revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
         }

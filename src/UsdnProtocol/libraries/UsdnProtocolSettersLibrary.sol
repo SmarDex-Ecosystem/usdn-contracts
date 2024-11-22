@@ -238,6 +238,16 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.SecurityDepositValueUpdated(securityDepositValue);
     }
 
+    function setRemoveBlockedPendingActionsDelay(uint256 delay) external {
+        Types.Storage storage s = Utils._getMainStorage();
+
+        if (delay > 1 hours) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidRemoveBlockedPendingActionsDelay();
+        }
+        s._removeBlockedPendingActionsDelay = delay;
+        emit IUsdnProtocolEvents.RemoveBlockedPendingActionsDelayUpdated(delay);
+    }
+
     /// @notice See {IUsdnProtocolFallback}
     function setExpoImbalanceLimits(
         uint256 newOpenLimitBps,

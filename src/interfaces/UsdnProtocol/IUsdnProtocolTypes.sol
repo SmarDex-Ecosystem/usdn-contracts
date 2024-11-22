@@ -667,6 +667,7 @@ interface IUsdnProtocolTypes {
         uint128 _targetUsdnPrice;
         uint128 _usdnRebaseThreshold;
         uint256 _minLongPosition;
+        uint256 _removeBlockedPendingActionsDelay;
         // state
         int256 _lastFundingPerDay;
         uint128 _lastPrice;
