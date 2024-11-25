@@ -334,6 +334,62 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The user initiates a deposit with an old chainlink price, and validates with a different price
+     * @custom:given The user initiated a deposit of 1 wstETH
+     * @custom:and The price of the asset is $2000 at the moment of initiation
+     * @custom:when The user validates the deposit with a price that is higher than the initial price
+     * @custom:and The user withdraws the full amount of the deposit at the same price
+     * @custom:then The user receives less than the initial deposit amount
+     * @custom:when The user validates the deposit with a price that is lower than the initial price
+     * @custom:and The user withdraws the full amount of the deposit at the same price
+     * @custom:then The user receives the full amount of the deposit
+     */
+    function test_depositWithOldPrice() public {
+        usdn.approve(address(protocol), type(uint256).max);
+        skip(1 hours); // making sure we set a new update timestamp
+        // sets the lastPrice to $2000, 30 minutes ago
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, DEPOSIT_AMOUNT, 2000 ether);
+        _waitDelay();
+
+        uint256 snapshot = vm.snapshotState();
+
+        // the current price is higher
+        protocol.validateDeposit(payable(address(this)), abi.encode(2100 ether), EMPTY_PREVIOUS_DATA);
+        uint256 balanceBefore = wstETH.balanceOf(address(this));
+        protocol.initiateWithdrawal(
+            uint152(usdn.sharesOf(address(this))),
+            0,
+            address(this),
+            payable(this),
+            type(uint256).max,
+            abi.encode(2100 ether),
+            EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+        protocol.validateWithdrawal(payable(this), abi.encode(2100 ether), EMPTY_PREVIOUS_DATA);
+        uint256 withdrawn = wstETH.balanceOf(address(this)) - balanceBefore;
+        assertLt(withdrawn, DEPOSIT_AMOUNT, "withdrawn when price increased");
+
+        // the current price is lower
+        vm.revertToState(snapshot);
+        protocol.validateDeposit(payable(address(this)), abi.encode(1900 ether), EMPTY_PREVIOUS_DATA);
+        balanceBefore = wstETH.balanceOf(address(this));
+        protocol.initiateWithdrawal(
+            uint152(usdn.sharesOf(address(this))),
+            0,
+            address(this),
+            payable(this),
+            type(uint256).max,
+            abi.encode(1900 ether),
+            EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+        protocol.validateWithdrawal(payable(this), abi.encode(1900 ether), EMPTY_PREVIOUS_DATA);
+        withdrawn = wstETH.balanceOf(address(this)) - balanceBefore;
+        assertEq(withdrawn, DEPOSIT_AMOUNT, "withdrawn when price decreased");
+    }
+
+    /**
      * @custom:scenario The user initiates and validates (after the validator deadline)
      * a deposit with another validator
      * @custom:given The user initiated a deposit of 1 wstETH
