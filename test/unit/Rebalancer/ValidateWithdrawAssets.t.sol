@@ -301,7 +301,7 @@ contract TestRebalancerValidateWithdrawAssets is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario The token tries to re-enter the rebalancer during a validate withdrawal
+     * @custom:scenario Reentrancy guard prevents reentrant calls
      * @custom:when The token tries to re-enter the rebalancer during a withdrawal
      * @custom:then The call reverts with a {ReentrancyGuardReentrantCall} error
      */

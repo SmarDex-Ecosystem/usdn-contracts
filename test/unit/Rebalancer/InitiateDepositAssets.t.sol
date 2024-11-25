@@ -296,7 +296,7 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario The token tries to re-enter the rebalancer during a deposit
+     * @custom:scenario Reentrancy guard prevents reentrant calls
      * @custom:when The token tries to re-enter the rebalancer during a deposit
      * @custom:then The call reverts with a {ReentrancyGuardReentrantCall} error
      */
