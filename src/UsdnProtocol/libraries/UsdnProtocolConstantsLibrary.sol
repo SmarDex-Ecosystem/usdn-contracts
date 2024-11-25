@@ -13,6 +13,7 @@ library UsdnProtocolConstantsLibrary {
     uint16 internal constant MAX_LIQUIDATION_ITERATION = 10;
     int24 internal constant NO_POSITION_TICK = type(int24).min;
     address internal constant DEAD_ADDRESS = address(0xdead);
+    uint16 internal constant REMOVE_BLOCKED_PENDING_ACTIONS_DELAY = 5 minutes;
     uint256 internal constant MIN_USDN_SUPPLY = 1000;
     uint256 internal constant MIN_ACTIONABLE_PENDING_ACTIONS_ITER = 20;
     uint256 internal constant MIN_VALIDATION_DEADLINE = 60;
@@ -26,7 +27,6 @@ library UsdnProtocolConstantsLibrary {
     uint256 internal constant MAX_SECURITY_DEPOSIT = 5 ether;
     uint256 internal constant MAX_MIN_LONG_POSITION = 10 ether;
     uint16 internal constant MAX_PROTOCOL_FEE_BPS = 3000;
-    uint16 internal constant REMOVE_BLOCKED_PENDING_ACTIONS_DELAY = 5 minutes;
 
     // After some checks, 1% would mean a user with a position with 10x leverage needs the price to 900x before it
     // limits the position's PnL. We think it's unlikely enough so we don't consider it a problem

@@ -353,7 +353,7 @@ library UsdnProtocolCoreLibrary {
         if (
             block.timestamp
                 < pending.timestamp + s._lowLatencyValidatorDeadline + s._onChainValidatorDeadline
-                    + s._removeBlockedPendingActionsDelay
+                    + Constants.REMOVE_BLOCKED_PENDING_ACTIONS_DELAY
         ) {
             revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
         }

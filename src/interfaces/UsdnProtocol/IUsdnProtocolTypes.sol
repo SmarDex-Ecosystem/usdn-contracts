@@ -603,7 +603,6 @@ interface IUsdnProtocolTypes {
      * @param _targetUsdnPrice The nominal (target) price of USDN (with _priceFeedDecimals)
      * @param _usdnRebaseThreshold The USDN price threshold to trigger a rebase (with _priceFeedDecimals)
      * @param _minLongPosition The minimum long position size (with `_assetDecimals`)
-     * @param _removeBlockedPendingActionsDelay The delay to remove blocked pending actions
      * @param _lastFundingPerDay The funding rate calculated at the last update timestamp
      * @param _lastPrice The price of the asset during the last balances update (with price feed decimals)
      * @param _lastUpdateTimestamp The timestamp of the last balances update
@@ -670,7 +669,6 @@ interface IUsdnProtocolTypes {
         uint128 _targetUsdnPrice;
         uint128 _usdnRebaseThreshold;
         uint256 _minLongPosition;
-        uint256 _removeBlockedPendingActionsDelay;
         // state
         int256 _lastFundingPerDay;
         uint128 _lastPrice;
