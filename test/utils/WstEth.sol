@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
+import { console } from "forge-std/console.sol";
+
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -11,6 +13,7 @@ import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 contract WstETH is ERC20, ERC20Permit, IWstETH {
     uint8 private testDecimals;
     uint256 private _stEthPerToken = 1.15 ether;
+    bool private _reentrant;
 
     constructor() ERC20("Wrapped liquid staked Ether 2.0", "wstETH") ERC20Permit("Wrapped liquid staked Ether 2.0") {
         uint8 tokenDecimals = super.decimals();
@@ -87,6 +90,27 @@ contract WstETH is ERC20, ERC20Permit, IWstETH {
         return testDecimals;
     }
 
+    /// @dev Whether to try to perform a reentrant call during transfers
+    function setReentrant(bool reentrant) external {
+        _reentrant = reentrant;
+    }
+
     /// @dev Needed for interface compatibility
     function stETH() external pure returns (address) { }
+
+    function _update(address from, address to, uint256 value) internal override {
+        super._update(from, to, value);
+        if (_reentrant) {
+            (bool success,) = msg.sender.call(abi.encodeWithSignature("resetDepositAssets()"));
+            if (!success) {
+                // forward revert reason to the caller
+                assembly {
+                    let ptr := mload(0x40)
+                    let size := returndatasize()
+                    returndatacopy(ptr, 0, size)
+                    revert(ptr, size)
+                }
+            }
+        }
+    }
 }

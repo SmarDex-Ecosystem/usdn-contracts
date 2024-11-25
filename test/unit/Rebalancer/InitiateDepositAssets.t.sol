@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
 import { USER_1 } from "../../utils/Constants.sol";
 import { RebalancerFixture } from "./utils/Fixtures.sol";
 import { RebalancerHandler } from "./utils/Handler.sol";
@@ -290,6 +292,17 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
         skip(rebalancer.getTimeLimits().actionCooldown);
 
         vm.expectRevert(RebalancerDepositUnauthorized.selector);
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
+    }
+
+    /**
+     * @custom:scenario The token tries to re-enter the rebalancer during a deposit
+     * @custom:when The token tries to re-enter the rebalancer during a deposit
+     * @custom:then The call reverts with a {ReentrancyGuardReentrantCall} error
+     */
+    function test_RevertWhen_depositWithReentrancy() public {
+        wstETH.setReentrant(true);
+        vm.expectRevert(ReentrancyGuard.ReentrancyGuardReentrantCall.selector);
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
     }
 }
