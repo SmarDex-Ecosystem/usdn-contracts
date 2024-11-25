@@ -185,7 +185,7 @@ library UsdnProtocolLongLibrary {
             }
         }
 
-        // liquidate if the price was updated or was already the most recent
+        // liquidate with `_lastPrice` if there are pending liquidations, up to `iterations` ticks
         Types.LiquidationsEffects memory liquidationEffects =
             _liquidatePositions(data.lastPrice, iterations, data.tempLongBalance, data.tempVaultBalance);
 
