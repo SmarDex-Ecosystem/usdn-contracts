@@ -5,6 +5,7 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { UsdnProtocolConstantsLibrary as Constant } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
 /**
  * @custom:feature Test the {_calcRebalancerPositionTick} internal function of the long layer
@@ -12,6 +13,8 @@ import { UsdnProtocolConstantsLibrary as Constant } from
  * @custom:and 100 ether in the long side
  */
 contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixture {
+    using HugeUint for HugeUint.Uint512;
+
     uint256 vaultBalance = 200 ether;
     uint256 longBalance = 100 ether;
 
@@ -166,27 +169,28 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
     }
 
     /**
-     * @custom:scenario The sentinel value is returned if there is no trading expo to fill
+     * @custom:scenario Revert when there is no trading expo to fill
      * @custom:given The trading expo is equal to the vault balance
      * @custom:and An amount of 1 ether
      * @custom:when _calcRebalancerPositionTick is called with no trading expo to fill
-     * @custom:then The result is NO_POSITION_TICK sentinel value
+     * @custom:then The function reverts with UsdnProtocolInvalidRebalancerTick
      */
-    function test_calcRebalancerPositionTickWithNoTradingExpoToFill() public view {
+    function test_RevertWhen_calcRebalancerPositionTickWithNoTradingExpoToFill() public {
         uint256 rebalancerMaxLeverage = protocol.getMaxLeverage() + 1;
         uint256 totalExpo = vaultBalance + longBalance;
         uint128 amount = 1 ether;
 
-        int24 expectedTick = protocol.NO_POSITION_TICK();
-        (int24 tick,,) = protocol.i_calcRebalancerPositionTick(
+        HugeUint.Uint512 memory accumulator = protocol.getLiqMultiplierAccumulator();
+
+        vm.expectRevert(UsdnProtocolInvalidRebalancerTick.selector);
+        protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
             amount,
             rebalancerMaxLeverage,
             totalExpo,
             longBalance,
             vaultBalance,
-            protocol.getLiqMultiplierAccumulator()
+            accumulator
         );
-        assertEq(tick, expectedTick, "The result should be equal to the expected tick");
     }
 }
