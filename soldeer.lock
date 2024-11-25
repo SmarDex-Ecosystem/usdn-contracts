@@ -3,7 +3,7 @@ name = "@chainlink"
 version = "1.2.0"
 url = "https://github.com/smartcontractkit/chainlink/archive/c3dc764bba9e1c57b3f7933bcb804a1740fab695.zip"
 checksum = "7050515ce90fd3dbac7cb958e960dd22ac85f6d0093bfdec87acc12560edbe3a"
-integrity = "015a826e4ca21760bfad5f746ade4e2eff65d2a92d1706ed5f09caa3911102ce"
+integrity = "327026361885672b88abd3145dc028d1dc549595b6a091cdf37ee67d0c6258f4"
 
 [[dependencies]]
 name = "@openzeppelin-contracts"
@@ -31,14 +31,14 @@ name = "@redstone-finance-evm-connector"
 version = "0.6.2"
 url = "https://soldeer-revisions.s3.amazonaws.com/@redstone-finance-evm-connector/0_6_2_16-09-2024_12:52:33_evm-connector.zip"
 checksum = "2c65c8850894b2e6420827cc1c03ab755d832230679be1bf0835c05aaefbc2bc"
-integrity = "d237d5a10651db7bba806144ff6a0418cac2d56bb33c8348371c5471b5d55f31"
+integrity = "91b013140e1099e6e5d92ef741bcffe7ba5642bc412e616b1dca9801cf3acd6e"
 
 [[dependencies]]
 name = "@uniswap-permit2"
 version = "1.0.0"
 url = "https://github.com/Uniswap/permit2/archive/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219.zip"
 checksum = "180e009e8abfc5ed43383418f2593ac790655b58ec18ae52a92a636d5f298ad4"
-integrity = "d7750a8f2fe466be9d01016b09377e2d42b686d6e3eecb779d70ad75ff24b1f2"
+integrity = "393047bfd13476671149d98263cf25e3ba7d301ef3f9e83f073c0183ea6b6586"
 
 [[dependencies]]
 name = "forge-std"
@@ -52,7 +52,7 @@ name = "openzeppelin-foundry-upgrades"
 version = "0.3.6"
 url = "https://soldeer-revisions.s3.amazonaws.com/openzeppelin-foundry-upgrades/0_3_6_24-09-2024_19:23:05_openzeppelin-foundry-upgrades.zip"
 checksum = "b1d80d9d925e1ac56dfaba7ec59fc6223073c846e71510e963ab1756ccc49ca7"
-integrity = "69389547d11a6726c75068d9d1539eb18ae52421054e366c86c53591be0ba4d7"
+integrity = "4c86e7d43ff517365dfb29362a1abc41f9556b65b97b753b1d2a1e0c6e63f513"
 
 [[dependencies]]
 name = "solady"
