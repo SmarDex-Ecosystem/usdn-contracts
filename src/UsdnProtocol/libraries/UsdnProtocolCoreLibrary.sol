@@ -225,7 +225,6 @@ library UsdnProtocolCoreLibrary {
             // if the price is not fresh, do nothing
             if (timestamp <= lastUpdateTimestamp) {
                 return Types.ApplyPnlAndFundingData({
-                    isPriceRecent: timestamp == lastUpdateTimestamp,
                     tempLongBalance: s._balanceLong.toInt256(),
                     tempVaultBalance: s._balanceVault.toInt256(),
                     lastPrice: s._lastPrice
@@ -273,8 +272,6 @@ library UsdnProtocolCoreLibrary {
         s._lastPrice = currentPrice;
         data_.lastPrice = currentPrice;
         s._lastUpdateTimestamp = timestamp;
-
-        data_.isPriceRecent = true;
     }
 
     /**

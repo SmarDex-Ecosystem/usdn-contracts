@@ -59,7 +59,6 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Data structure for the `_applyPnlAndFundingAndLiquidate` function
-     * @param isPriceRecent A boolean indicating if the price is recent
      * @param tempLongBalance The temporary long balance
      * @param tempVaultBalance The temporary vault balance
      * @param lastPrice The last price used to update the protocol
@@ -68,7 +67,6 @@ library UsdnProtocolLongLibrary {
      * @param rebalancerAction The `_triggerRebalancer` action
      */
     struct ApplyPnlAndFundingAndLiquidateData {
-        bool isPriceRecent;
         int256 tempLongBalance;
         int256 tempVaultBalance;
         uint128 lastPrice;
@@ -187,43 +185,41 @@ library UsdnProtocolLongLibrary {
             }
         }
 
-        // liquidate if the price was updated or was already the most recent
-        if (data.isPriceRecent) {
-            Types.LiquidationsEffects memory liquidationEffects =
-                _liquidatePositions(data.lastPrice, iterations, data.tempLongBalance, data.tempVaultBalance);
+        // liquidate with `_lastPrice` if there are pending liquidations, up to `iterations` ticks
+        Types.LiquidationsEffects memory liquidationEffects =
+            _liquidatePositions(data.lastPrice, iterations, data.tempLongBalance, data.tempVaultBalance);
 
-            isLiquidationPending_ = liquidationEffects.isLiquidationPending;
-            if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks.length > 0) {
-                if (s._closeExpoImbalanceLimitBps > 0) {
-                    (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance, data.rebalancerAction) =
-                    _triggerRebalancer(
-                        data.lastPrice,
-                        liquidationEffects.newLongBalance,
-                        liquidationEffects.newVaultBalance,
-                        liquidationEffects.remainingCollateral
-                    );
-                }
-            }
-
-            s._balanceLong = liquidationEffects.newLongBalance;
-            s._balanceVault = liquidationEffects.newVaultBalance;
-
-            (data.rebased, data.callbackResult) = _usdnRebase(data.lastPrice);
-
-            if (liquidationEffects.liquidatedTicks.length > 0) {
-                _sendRewardsToLiquidator(
-                    liquidationEffects.liquidatedTicks,
+        isLiquidationPending_ = liquidationEffects.isLiquidationPending;
+        if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks.length > 0) {
+            if (s._closeExpoImbalanceLimitBps > 0) {
+                (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance, data.rebalancerAction) =
+                _triggerRebalancer(
                     data.lastPrice,
-                    data.rebased,
-                    data.rebalancerAction,
-                    action,
-                    data.callbackResult,
-                    priceData
+                    liquidationEffects.newLongBalance,
+                    liquidationEffects.newVaultBalance,
+                    liquidationEffects.remainingCollateral
                 );
             }
-
-            liquidatedTicks_ = liquidationEffects.liquidatedTicks;
         }
+
+        s._balanceLong = liquidationEffects.newLongBalance;
+        s._balanceVault = liquidationEffects.newVaultBalance;
+
+        (data.rebased, data.callbackResult) = _usdnRebase(data.lastPrice);
+
+        if (liquidationEffects.liquidatedTicks.length > 0) {
+            _sendRewardsToLiquidator(
+                liquidationEffects.liquidatedTicks,
+                data.lastPrice,
+                data.rebased,
+                data.rebalancerAction,
+                action,
+                data.callbackResult,
+                priceData
+            );
+        }
+
+        liquidatedTicks_ = liquidationEffects.liquidatedTicks;
     }
 
     /**

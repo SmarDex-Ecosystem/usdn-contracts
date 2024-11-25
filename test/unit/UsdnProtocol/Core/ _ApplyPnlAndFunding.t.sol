@@ -42,7 +42,6 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
 
         // Testing returned values
         assertEq(data.lastPrice, oldPrice, "PriceOld: last price should not be updated");
-        assertEq(data.isPriceRecent, false, "PriceOld: price is not recent");
         assertEq(data.tempLongBalance, longBalanceBefore, "PriceOld: long balance should not be updated");
         assertEq(data.tempVaultBalance, vaultBalanceBefore, "PriceOld: vault balance should not be updated");
     }
@@ -174,7 +173,6 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
 
         // Testing returned values
         assertEq(data.lastPrice, newPrice, "last price should be updated to newPrice");
-        assertEq(data.isPriceRecent, true, "price is recent");
 
         if (expectedFundingAsset > 0) {
             assertEq(

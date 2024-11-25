@@ -130,9 +130,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         Storage storage s = Utils._getMainStorage();
 
         ApplyPnlAndFundingData memory data = Core._applyPnlAndFunding(currentPrice, uint128(block.timestamp));
-        if (!data.isPriceRecent) {
-            revert("price was not updated");
-        }
         s._balanceLong = data.tempLongBalance.toUint256();
         s._balanceVault = data.tempVaultBalance.toUint256();
     }
