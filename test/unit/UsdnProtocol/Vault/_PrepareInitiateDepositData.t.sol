@@ -31,7 +31,6 @@ contract TestUsdnProtocolPrepareInitiateDepositData is UsdnProtocolBaseFixture {
         );
 
         protocol.emptyVault();
-
         vm.expectPartialRevert(UsdnProtocolEmptyVault.selector);
         protocol.i_prepareInitiateDepositData(address(this), 1, DISABLE_SHARES_OUT_MIN, abi.encode(params.initialPrice));
     }

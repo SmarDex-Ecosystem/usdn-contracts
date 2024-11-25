@@ -347,9 +347,14 @@ library UsdnProtocolCoreLibrary {
         Types.Storage storage s = Utils._getMainStorage();
 
         Types.PendingAction memory pending = s._pendingActionsQueue.atRaw(rawIndex);
-        if (block.timestamp < pending.timestamp + s._lowLatencyValidatorDeadline + 1 hours) {
+        if (
+            block.timestamp
+                < pending.timestamp + s._lowLatencyValidatorDeadline + s._onChainValidatorDeadline
+                    + Constants.REMOVE_BLOCKED_PENDING_ACTIONS_DELAY
+        ) {
             revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
         }
+
         delete s._pendingActions[pending.validator];
         s._pendingActionsQueue.clearAt(rawIndex);
         if (pending.action == Types.ProtocolAction.ValidateDeposit && cleanup) {

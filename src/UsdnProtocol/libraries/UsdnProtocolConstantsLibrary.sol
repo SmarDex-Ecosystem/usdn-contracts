@@ -13,6 +13,7 @@ library UsdnProtocolConstantsLibrary {
     uint16 internal constant MAX_LIQUIDATION_ITERATION = 10;
     int24 internal constant NO_POSITION_TICK = type(int24).min;
     address internal constant DEAD_ADDRESS = address(0xdead);
+    uint16 internal constant REMOVE_BLOCKED_PENDING_ACTIONS_DELAY = 5 minutes;
     uint256 internal constant MIN_USDN_SUPPLY = 1000;
     uint256 internal constant MIN_ACTIONABLE_PENDING_ACTIONS_ITER = 20;
     uint256 internal constant MIN_VALIDATION_DEADLINE = 60;

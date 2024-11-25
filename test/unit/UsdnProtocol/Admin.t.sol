@@ -875,10 +875,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test_setMinLongPosition() public adminPrank {
         uint256 newValue = 1 ether;
-        // expected event
+
         vm.expectEmit();
         emit MinLongPositionUpdated(newValue);
-        // set minimum long position
         protocol.setMinLongPosition(newValue);
         // assert that the new value is equal to the expected value
         assertEq(protocol.getMinLongPosition(), newValue);
