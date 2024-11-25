@@ -69,7 +69,7 @@ contract TestUsdnProtocolGetHighestPopulatedTick is UsdnProtocolBaseFixture {
         bytes32 storageMainSlot =
             keccak256(abi.encode(uint256(keccak256("UsdnProtocol.storage.main")) - 1)) & ~bytes32(uint256(0xff));
         // `_highestPopulatedTick` is the 40th slot in the storage struct
-        bytes32 storageSlot = storageMainSlot | bytes32(uint256(40));
+        bytes32 storageSlot = storageMainSlot | bytes32(uint256(41));
         int24 highestPopulatedTickInStorage = int24(int256(uint256(vm.load(address(protocol), storageSlot))));
         assertEq(
             highestPopulatedTickInStorage,
