@@ -334,7 +334,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IRebalancer
-    function validateDepositAssets() external {
+    function validateDepositAssets() external nonReentrant {
         /* authorized previous states:
         - initiated deposit (pending)
             - amount > 0
@@ -393,7 +393,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IRebalancer
-    function initiateWithdrawAssets() external {
+    function initiateWithdrawAssets() external nonReentrant {
         /* authorized previous states:
         - unincluded (pending inclusion)
             - amount > 0
