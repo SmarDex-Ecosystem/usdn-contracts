@@ -867,4 +867,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     function i_initiateDeposit(Vault.InitiateDepositParams memory params, bytes calldata currentPriceData) external {
         Vault._initiateDeposit(params, currentPriceData);
     }
+
+    function i_checkOpenPositionLeverage(uint128 adjustedPrice, uint128 liqPriceWithoutPenalty, uint256 userMaxLeverage)
+        external
+        view
+    {
+        Long._checkOpenPositionLeverage(adjustedPrice, liqPriceWithoutPenalty, userMaxLeverage);
+    }
 }
