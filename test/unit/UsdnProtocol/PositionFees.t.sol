@@ -6,6 +6,8 @@ import { Vm } from "forge-std/Vm.sol";
 import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 
 /**
@@ -45,7 +47,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         ExpectedData memory expected;
         expected.expectedPrice =
-            currentPrice + currentPrice * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
+            currentPrice + currentPrice * uint256(protocol.getPositionFeeBps()) / Constants.BPS_DIVISOR;
         expected.expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
 
         // Price without the liquidation penalty
@@ -133,7 +135,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         // Price without the liquidation penalty
         uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick));
         expected.expectedPrice =
-            currentPrice + currentPrice * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
+            currentPrice + currentPrice * uint256(protocol.getPositionFeeBps()) / Constants.BPS_DIVISOR;
         expected.expectedPosTotalExpo =
             protocol.i_calcPositionTotalExpo(amount, uint128(expected.expectedPrice), effectiveTickPrice);
         expected.expectedPositionValue =
@@ -207,7 +209,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 expectedTransfer = uint256(
             protocol.i_positionValue(
                 action.closePosTotalExpo,
-                uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
+                uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / Constants.BPS_DIVISOR),
                 protocol.i_getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick), action.liqMultiplier)
             )
         );
@@ -260,7 +262,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 initialBlock = uint128(block.timestamp);
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, price);
 
-        uint128 fees = uint128(depositAmount * protocol.getVaultFeeBps() / protocol.BPS_DIVISOR());
+        uint128 fees = uint128(depositAmount * protocol.getVaultFeeBps() / Constants.BPS_DIVISOR);
         uint128 amountAfterFees = depositAmount - fees;
         uint256 expectedSharesBalanceA = Utils._calcMintUsdnShares(
             amountAfterFees, uint256(protocol.vaultAssetAvailableWithFunding(price, initialBlock)), usdn.totalShares()

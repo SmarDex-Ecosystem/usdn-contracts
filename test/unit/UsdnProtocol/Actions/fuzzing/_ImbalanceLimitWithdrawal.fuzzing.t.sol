@@ -3,6 +3,8 @@ pragma solidity 0.8.26;
 
 import { IUsdnProtocolErrors } from "../../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolBaseFixture } from "../../utils/Fixtures.sol";
 
 /**
@@ -31,7 +33,7 @@ contract TestImbalanceLimitWithdrawalFuzzing is UsdnProtocolBaseFixture {
         if (newVaultExpo > 0) {
             // expected imbalance bps
             imbalanceBps =
-                (currentLongExpo - int256(newVaultExpo)) * int256(protocol.BPS_DIVISOR()) / int256(newVaultExpo);
+                (currentLongExpo - int256(newVaultExpo)) * int256(Constants.BPS_DIVISOR) / int256(newVaultExpo);
         }
 
         // initial withdrawal limit bps

@@ -5,6 +5,9 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+
 /**
  * @custom:feature The previewWithdraw function of the UsdnProtocolVault contract
  * @custom:background Given a protocol initialized with default params
@@ -65,7 +68,7 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
 
         // Apply fees on price
         uint128 withdrawalPriceWithFees =
-            (price * 10 + price * 10 * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR()).toUint128();
+            (price * 10 + price * 10 * protocol.getPositionFeeBps() / Constants.BPS_DIVISOR).toUint128();
         uint256 available = protocol.vaultAssetAvailableWithFunding(withdrawalPriceWithFees, timestamp);
         assertEq(available, 0, "vaultAssetAvailableWithFunding should be equal to 0");
 

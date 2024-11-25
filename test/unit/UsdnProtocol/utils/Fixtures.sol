@@ -257,11 +257,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors
         assertEq(
             wstETH.balanceOf(address(protocol)), params.initialDeposit + params.initialLong, "wstETH protocol balance"
         );
-        assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "usdn dead address balance");
+        assertEq(usdn.balanceOf(Constants.DEAD_ADDRESS), Constants.MIN_USDN_SUPPLY, "usdn dead address balance");
         uint256 usdnTotalSupply = uint256(params.initialDeposit) * params.initialPrice / 10 ** 18;
-        usdnTotalSupply -= usdnTotalSupply * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR();
+        usdnTotalSupply -= usdnTotalSupply * protocol.getPositionFeeBps() / Constants.BPS_DIVISOR;
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
-        assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
+        assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - Constants.MIN_USDN_SUPPLY, "usdn deployer balance");
         int24 firstPosTick = protocol.getHighestPopulatedTick();
         (Position memory firstPos,) = protocol.getLongPosition(PositionId(firstPosTick, 0, 0));
         uint128 liquidationPriceWithoutPenalty =
@@ -297,7 +297,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors
                 Utils._calcMintUsdnShares(
                     positionSize, uint256(protocol.i_vaultAssetAvailable(uint128(price))), usdn.totalShares()
                 )
-            ) * protocol.getSdexBurnOnDepositRatio() / protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR(),
+            ) * protocol.getSdexBurnOnDepositRatio() / Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR,
             address(protocol),
             type(uint256).max
         );
@@ -456,12 +456,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors
         initialAmount = uint128(bound(initialAmount, 1 ether, 5000 ether));
 
         int256 depositLimit = protocol.getDepositExpoImbalanceLimitBps();
-        uint128 margin = uint128(initialAmount * uint256(depositLimit) / protocol.BPS_DIVISOR());
+        uint128 margin = uint128(initialAmount * uint256(depositLimit) / Constants.BPS_DIVISOR);
 
         uint128 initialDeposit = uint128(bound(initialAmount, initialAmount, initialAmount + margin));
 
         int256 longLimit = protocol.getOpenExpoImbalanceLimitBps();
-        margin = uint128(initialAmount * uint256(longLimit) / protocol.BPS_DIVISOR());
+        margin = uint128(initialAmount * uint256(longLimit) / Constants.BPS_DIVISOR);
 
         uint256 initialLongExpo = bound(initialAmount, initialAmount, initialAmount + margin);
 

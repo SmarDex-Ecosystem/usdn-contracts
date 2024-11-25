@@ -117,7 +117,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:then The call reverts with a {RebalancerInvalidMaxLeverage} error
      */
     function test_RevertWhen_setPositionMaxLeverageLowerThanMinLeverage() public adminPrank {
-        uint256 minLeverage = usdnProtocol.REBALANCER_MIN_LEVERAGE();
+        uint256 minLeverage = Constants.REBALANCER_MIN_LEVERAGE;
 
         vm.expectRevert(RebalancerInvalidMaxLeverage.selector);
         rebalancer.setPositionMaxLeverage(minLeverage);

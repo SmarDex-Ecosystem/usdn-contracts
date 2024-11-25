@@ -5,6 +5,8 @@ import { Vm } from "forge-std/Vm.sol";
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
 /// @custom:feature Test the _liquidatePositions internal function of the long layer
@@ -237,7 +239,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      */
     function test_liquidationIterationsAreCapped() public {
         uint128 price = 2000 ether;
-        uint16 maxIterations = protocol.MAX_LIQUIDATION_ITERATION();
+        uint16 maxIterations = Constants.MAX_LIQUIDATION_ITERATION;
         uint128 desiredLiqPrice = price - 200 ether;
 
         // Iterate once more than the maximum of liquidations allowed

@@ -3,6 +3,9 @@ pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+
 /// @custom:feature Test the {_calcLiqPriceFromTradingExpo} internal function of the long layer
 contract TestUsdnProtocolLongCalcLiqPriceFromTradingExpo is UsdnProtocolBaseFixture {
     function setUp() public {
@@ -60,7 +63,7 @@ contract TestUsdnProtocolLongCalcLiqPriceFromTradingExpo is UsdnProtocolBaseFixt
         price = bound(price, 1, type(uint128).max);
         leverage = bound(leverage, protocol.getMinLeverage(), protocol.getMaxLeverage());
 
-        uint256 tradingExpo = (amount * leverage - amount) / protocol.LEVERAGE_DECIMALS();
+        uint256 tradingExpo = (amount * leverage - amount) / Constants.LEVERAGE_DECIMALS;
 
         // non-optimized implementation
         // subtract one to compensate for the loss in precision
