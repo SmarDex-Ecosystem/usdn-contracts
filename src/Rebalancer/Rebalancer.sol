@@ -283,7 +283,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IRebalancer
-    function initiateDepositAssets(uint88 amount, address to) external {
+    function initiateDepositAssets(uint88 amount, address to) external nonReentrant {
         /* authorized previous states:
         - not in rebalancer
             - amount = 0
@@ -292,7 +292,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         - included in a liquidated position
             - amount > 0
             - 0 < entryPositionVersion <= _lastLiquidatedVersion
-            OR 
+            OR
             - positionData.tickVersion != protocol.getTickVersion(positionData.tick)
         */
         if (to == address(0)) {
@@ -364,7 +364,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IRebalancer
-    function resetDepositAssets() external {
+    function resetDepositAssets() external nonReentrant {
         /* authorized previous states:
         - deposit cooldown elapsed
             - entryPositionVersion == 0
@@ -428,7 +428,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IRebalancer
-    function validateWithdrawAssets(uint88 amount, address to) external {
+    function validateWithdrawAssets(uint88 amount, address to) external nonReentrant {
         /* authorized previous states:
         - initiated withdrawal
             - initiateTimestamp > 0
