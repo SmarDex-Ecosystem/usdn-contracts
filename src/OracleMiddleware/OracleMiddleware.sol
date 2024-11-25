@@ -104,16 +104,16 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
             // `_pythRecentPriceDelay`
             return _getLowLatencyPrice(data, 0, ConfidenceInterval.None, 0);
         } else if (action == Types.ProtocolAction.InitiateDeposit) {
-            // if the user chooses to initiate with a pyth price, we will use the neutral price so confidence is needed
+            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.InitiateWithdrawal) {
-            // if the user chooses to initiate with a pyth price, we will use the neutral price so confidence is needed
+            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.InitiateOpenPosition) {
-            // if the user chooses to initiate with a pyth price, we will use the neutral price so confidence is needed
+            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.InitiateClosePosition) {
-            // if the user chooses to initiate with a pyth price, we will use the neutral price so confidence is needed
+            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         }
     }
