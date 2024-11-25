@@ -515,11 +515,6 @@ contract UsdnProtocolFallback is
         return Utils._getMainStorage()._nonce[owner];
     }
 
-    /// @inheritdoc IUsdnProtocolFallback
-    function getRemoveBlockedPendingActionsDelay() external view returns (uint256) {
-        return Utils._getMainStorage()._removeBlockedPendingActionsDelay;
-    }
-
     /* -------------------------------------------------------------------------- */
     /*                              SET_EXTERNAL_ROLE                             */
     /* -------------------------------------------------------------------------- */
@@ -625,11 +620,6 @@ contract UsdnProtocolFallback is
         onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE)
     {
         Setters.setSecurityDepositValue(securityDepositValue);
-    }
-
-    /// @inheritdoc IUsdnProtocolFallback
-    function setRemoveBlockedPendingActionsDelay(uint256 delay) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setRemoveBlockedPendingActionsDelay(delay);
     }
 
     /// @inheritdoc IUsdnProtocolFallback

@@ -868,36 +868,6 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     }
 
     /**
-     * @custom:scenario Call "setRemoveBlockedPendingActionsDelay" from admin
-     * @custom:given The initial usdnProtocol state
-     * @custom:when Admin wallet triggers the function
-     * @custom:then The value should be updated with the corresponding event
-     */
-    function test_setRemoveBlockedPendingActionsDelay() public adminPrank {
-        uint256 newValue = 30 minutes;
-
-        vm.expectEmit();
-        emit RemoveBlockedPendingActionsDelayUpdated(newValue);
-        protocol.setRemoveBlockedPendingActionsDelay(newValue);
-
-        assertEq(protocol.getRemoveBlockedPendingActionsDelay(), newValue);
-    }
-
-    /**
-     * @custom:scenario Call "setRemoveBlockedPendingActionsDelay" from admin
-     * @custom:given The initial usdnProtocol state
-     * @custom:when Admin wallet triggers the function with a value below the limit and above the limit
-     * @custom:then Both transactions should revert with the corresponding error
-     */
-    function test_RevertWhen_setRemoveBlockedPendingActionsDelayWrongValues() public adminPrank {
-        vm.expectRevert(UsdnProtocolInvalidRemoveBlockedPendingActionsDelay.selector);
-        protocol.setRemoveBlockedPendingActionsDelay(0);
-
-        vm.expectRevert(UsdnProtocolInvalidRemoveBlockedPendingActionsDelay.selector);
-        protocol.setRemoveBlockedPendingActionsDelay(1 hours + 1);
-    }
-
-    /**
      * @custom:scenario Call "setMinLongPosition" from admin
      * @custom:given The initial usdnProtocol state
      * @custom:when Admin wallet triggers the function

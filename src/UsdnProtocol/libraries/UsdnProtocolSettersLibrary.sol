@@ -240,17 +240,6 @@ library UsdnProtocolSettersLibrary {
     }
 
     /// @notice See {IUsdnProtocolFallback}
-    function setRemoveBlockedPendingActionsDelay(uint256 delay) external {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        if (delay > 1 hours || delay < 1 seconds) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidRemoveBlockedPendingActionsDelay();
-        }
-        s._removeBlockedPendingActionsDelay = delay;
-        emit IUsdnProtocolEvents.RemoveBlockedPendingActionsDelayUpdated(delay);
-    }
-
-    /// @notice See {IUsdnProtocolFallback}
     function setExpoImbalanceLimits(
         uint256 newOpenLimitBps,
         uint256 newDepositLimitBps,
