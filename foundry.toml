@@ -57,11 +57,11 @@ ffi = true
 # ---------------------------------- Fuzzing --------------------------------- #
 
 [profile.local.fuzz]
-runs = 100
+runs = 10_000
 
 [profile.local.invariant]
-runs = 100
-depth = 5
+runs = 10_000
+depth = 15
 # call_override = true # makes invariant tests hang
 dictionary_weight = 80
 
