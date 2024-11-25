@@ -129,9 +129,8 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
      * below its position's liquidation price
      * @custom:given Partial liquidations occurred that left the user's tick un-liquidated
      * @custom:when The user tries to validate its position
-     * @custom:then Nothing happens
-     * @custom:when The lastPrice value is updated and the user tries to validate again
-     * @custom:then The position was not liquidated and matching data is returned
+     * @custom:then They liquidate their own position while trying to validate
+     * @custom:and The position is not validated
      */
     function test_prepareValidateOpenPositionDataWithCurrentPositionPendingLiquidation() public {
         // open a long position to liquidate
@@ -179,23 +178,8 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
         (ValidateOpenPositionData memory data, bool liquidated) =
             protocol.i_prepareValidateOpenPositionData(pendingAction, currentPriceData);
 
-        assertFalse(liquidated, "The position should not have been liquidated");
-        assertTrue(data.isLiquidationPending, "There should be pending liquidations");
-        assertEq(data.lastPrice, protocol.getLastPrice(), "The last price attribute should have been set");
-        _assertData(data, true);
-
-        skip(1 hours);
-
-        // update the value to account for fundings
-        liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick));
-        // update `lastPrice` with a higher price than the position's liquidation price
-        currentPriceData = abi.encode(liqPriceWithoutPenalty * 2);
-        protocol.liquidate(currentPriceData);
-
-        // with `lastPrice` updated to a higher price, the user can validate its position again
-        (data, liquidated) = protocol.i_prepareValidateOpenPositionData(pendingAction, currentPriceData);
-        assertFalse(liquidated, "The position should not have been liquidated");
-        assertFalse(data.isLiquidationPending, "There should not be pending liquidations anymore");
+        assertTrue(liquidated, "The position should have been liquidated");
+        assertFalse(data.isLiquidationPending, "There should be no pending liquidation");
     }
 
     /**
