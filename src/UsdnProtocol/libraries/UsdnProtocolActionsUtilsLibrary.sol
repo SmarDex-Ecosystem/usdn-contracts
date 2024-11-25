@@ -411,7 +411,7 @@ library UsdnProtocolActionsUtilsLibrary {
         // make sure the remaining position is higher than _minLongPosition
         // for the Rebalancer, we allow users to close their position fully in every case
         uint128 remainingAmount = pos.amount - params.amountToClose;
-        if (remainingAmount > 0 && remainingAmount < s._minLongPosition && msg.sender != address(s._rebalancer)) {
+        if (remainingAmount > 0 && remainingAmount < s._minLongPosition && !s._isRebalancer[msg.sender]) {
             revert IUsdnProtocolErrors.UsdnProtocolLongPositionTooSmall();
         }
     }

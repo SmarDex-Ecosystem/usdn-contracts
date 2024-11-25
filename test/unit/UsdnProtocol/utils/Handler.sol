@@ -122,6 +122,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         s._balanceVault = 0;
     }
 
+    function getHighestPopulatedTickFromStorage() external view returns (int24) {
+        return Utils._getMainStorage()._highestPopulatedTick;
+    }
+
     function updateBalances(uint128 currentPrice) external {
         Storage storage s = Utils._getMainStorage();
 
@@ -858,5 +862,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
 
     function i_validateOpenPositionUpdateBalances(uint256 newPosValue, uint256 oldPosValue) external {
         ActionsLong._validateOpenPositionUpdateBalances(newPosValue, oldPosValue);
+    }
+
+    function i_initiateDeposit(Vault.InitiateDepositParams memory params, bytes calldata currentPriceData) external {
+        Vault._initiateDeposit(params, currentPriceData);
     }
 }

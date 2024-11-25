@@ -50,6 +50,7 @@ library UsdnProtocolSettersLibrary {
         Types.Storage storage s = Utils._getMainStorage();
 
         s._rebalancer = newRebalancer;
+        s._isRebalancer[address(newRebalancer)] = true;
 
         emit IUsdnProtocolEvents.RebalancerUpdated(address(newRebalancer));
     }

@@ -64,13 +64,7 @@ contract TestUsdnProtocolGetHighestPopulatedTick is UsdnProtocolBaseFixture {
             payable(address(this)), abi.encode(DEFAULT_PARAMS.initialPrice), EMPTY_PREVIOUS_DATA
         );
 
-        // check the storage slot of `_highestPopulatedTick` to make sure it was not updated after closing the position
-        // (which is intended)
-        bytes32 storageMainSlot =
-            keccak256(abi.encode(uint256(keccak256("UsdnProtocol.storage.main")) - 1)) & ~bytes32(uint256(0xff));
-        // `_highestPopulatedTick` is the 40th slot in the storage struct
-        bytes32 storageSlot = storageMainSlot | bytes32(uint256(41));
-        int24 highestPopulatedTickInStorage = int24(int256(uint256(vm.load(address(protocol), storageSlot))));
+        int24 highestPopulatedTickInStorage = protocol.getHighestPopulatedTickFromStorage();
         assertEq(
             highestPopulatedTickInStorage,
             highestPopulatedTick,

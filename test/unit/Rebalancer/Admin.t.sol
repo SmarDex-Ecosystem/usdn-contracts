@@ -211,6 +211,18 @@ contract TestRebalancerAdmin is RebalancerFixture {
         rebalancer.setTimeLimits(0, 5 minutes, 48 hours + 1, 4 hours);
     }
 
+    /**
+     * @custom:scenario Try to set the time limits with a close delay that is too high
+     * @custom:given We are the owner
+     * @custom:when We call the setter with a cooldown that is too big
+     * @custom:then The transaction reverts with a {RebalancerInvalidTimeLimits} error
+     */
+    function test_RevertWhen_setTimeLimitsCloseDelayTooHigh() public adminPrank {
+        uint256 MAX_CLOSE_DELAY = rebalancer.MAX_CLOSE_DELAY();
+        vm.expectRevert(RebalancerInvalidTimeLimits.selector);
+        rebalancer.setTimeLimits(0, 5 minutes, 48 hours, uint64(MAX_CLOSE_DELAY) + 1);
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                             ownershipCallback                              */
     /* -------------------------------------------------------------------------- */

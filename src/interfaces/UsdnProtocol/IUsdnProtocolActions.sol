@@ -14,6 +14,9 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * leverage). The validation operation then updates the entry price and leverage with fresher data
      * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function will not initiate the position (`isInitiated_` would be false)
+     * If the estimated effect of this action would lead to a protocol imbalance exceeding
+     * `s._openExpoImbalanceLimitBps`, the transaction will revert. Note that due to the validation price not being
+     * known and other factors like liquidations, it's possible that the imbalance slightly exceeds this value at times
      * @param amount The amount of assets to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty. Note: the position's
      * leverage is the result of a calculation involving the liquidation price without the penalty. As such, if the
@@ -67,6 +70,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * the pending action will not be removed from the queue, and the user will have to try again
      * In case the position was liquidated by this call (`outcome_ == LongActionOutcome.Liquidated`),
      * this function will refund the security deposit and remove the pending action from the queue
+     * Note that this action could imbalance the protocol past the set limits, which is expected and unavoidable
      * @param validator The address that has the pending open position action to validate
      * @param openPriceData The price data corresponding to the sender's pending open position action
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -97,6 +101,9 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * the pending action will not be removed from the queue, and the user will have to try again
      * In case the position was liquidated by this call (`outcome_ == LongActionOutcome.Liquidated`),
      * this function will refund the security deposit and remove the pending action from the queue
+     * If the estimated effect of this action would lead to a protocol imbalance exceeding
+     * `s._closeExpoImbalanceLimitBps`, the transaction will revert. Note that due to the validation price not being
+     * known and other factors like liquidations, it's possible that the imbalance slightly exceeds this value at times
      * @param posId The unique identifier of the position to close
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param userMinPrice The minimum price at which the position can be closed (with _priceFeedDecimals). Note that
@@ -144,6 +151,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * the pending action will not be removed from the queue, and the user will have to try again
      * In case the position was liquidated by this call (`outcome_ == LongActionOutcome.Liquidated`),
      * this function will refund the security deposit and remove the pending action from the queue
+     * Note that this action could imbalance the protocol past the set limits, which is expected and unavoidable
      * @param validator The validator of the close pending action, not necessarily the position owner
      * @param closePriceData The price data corresponding to the sender's pending close position action
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -164,6 +172,9 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * of the middleware
      * The transaction must have `_securityDepositValue` in value
      * In case liquidations are pending, this function might not initiate the deposit (and `success_` would be false)
+     * If the estimated effect of this action would lead to a protocol imbalance exceeding
+     * `s._depositExpoImbalanceLimitBps`, the transaction will revert. Note that due to the validation price not being
+     * known and other factors like liquidations, it's possible that the imbalance slightly exceeds this value at times
      * @param amount The amount of assets to deposit
      * @param sharesOutMin The minimum amount of USDN shares to receive. Note that there is no guarantee that the
      * effective minted amount at validation will exceed this value. Price changes during the interval could negatively
@@ -201,6 +212,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * Users wanting to validate an actionable pending action must use another function such as
      * `validateActionablePendingActions` to earn the corresponding security deposit
      * In case liquidations are pending, this function might not validate the deposit (and `success_` would be false)
+     * Note that this action could imbalance the protocol past the set limits, which is expected and unavoidable
      * @param validator The address that has the pending deposit action to validate
      * @param depositPriceData The price data corresponding to the sender's pending deposit action
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -219,6 +231,10 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * The price validation might require payment according to the return value of the {validationCost} function
      * of the middleware
      * The transaction must have `_securityDepositValue` in value
+     * If the estimated effect of this action would lead to a protocol imbalance exceeding
+     * `s._withdrawalExpoImbalanceLimitBps`, the transaction will revert. Note that due to the validation price not
+     * being known and other factors like liquidations, it's possible that the imbalance slightly exceeds this value at
+     * times
      * @param usdnShares The amount of USDN shares to burn (Max 5708990770823839524233143877797980545530986495 which is
      * equivalent to 5.7B USDN token before any rebase. The token amount limit increases with each rebase)
      * In case liquidations are pending, this function might not initiate the withdrawal (and `success_` would be false)
@@ -256,6 +272,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * if the validation deadline has passed Users wanting to validate an actionable pending action must use another
      * function such as `validateActionablePendingActions` to earn the corresponding security deposit
      * In case liquidations are pending, this function might not validate the withdrawal (and `success_` would be false)
+     * Note that this action could imbalance the protocol past the set limits, which is expected and unavoidable
      * @param validator The address that has the pending withdrawal action to validate
      * @param withdrawalPriceData The price data corresponding to the sender's pending withdrawal action
      * @param previousActionsData The data needed to validate actionable pending actions
