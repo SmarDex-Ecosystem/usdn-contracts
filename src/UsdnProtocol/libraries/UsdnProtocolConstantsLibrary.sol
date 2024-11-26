@@ -2,15 +2,6 @@
 pragma solidity 0.8.26;
 
 library UsdnProtocolConstantsLibrary {
-    /**
-     * @notice Minimum leverage allowed for the rebalancer to open a position
-     * @dev In edge cases where the rebalancer holds significantly more assets than the protocol,
-     * opening a position with the protocol's minimum leverage could cause a large overshoot of the target,
-     * potentially creating an even greater imbalance. To prevent this, the rebalancer can use leverage
-     * as low as the technical minimum (10 ** LEVERAGE_DECIMALS + 1)
-     */
-    uint256 internal constant REBALANCER_MIN_LEVERAGE = 10 ** LEVERAGE_DECIMALS + 1; // x1.000000000000000000001
-
     /// @notice Number of decimals used for a position's leverage
     uint8 internal constant LEVERAGE_DECIMALS = 21;
 
@@ -25,6 +16,15 @@ library UsdnProtocolConstantsLibrary {
 
     /// @notice Number of decimals in the scaling factor of the funding rate
     uint8 internal constant FUNDING_SF_DECIMALS = 3;
+
+    /**
+     * @notice Minimum leverage allowed for the rebalancer to open a position
+     * @dev In edge cases where the rebalancer holds significantly more assets than the protocol,
+     * opening a position with the protocol's minimum leverage could cause a large overshoot of the target,
+     * potentially creating an even greater imbalance. To prevent this, the rebalancer can use leverage
+     * as low as the technical minimum (10 ** LEVERAGE_DECIMALS + 1)
+     */
+    uint256 internal constant REBALANCER_MIN_LEVERAGE = 10 ** LEVERAGE_DECIMALS + 1; // x1.000000000000000000001
 
     /// @notice Divisor for the ratio of USDN to SDEX burned on deposit
     uint256 internal constant SDEX_BURN_ON_DEPOSIT_DIVISOR = 1e8;
