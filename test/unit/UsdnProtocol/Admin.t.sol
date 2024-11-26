@@ -6,7 +6,10 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { ADMIN } from "../../utils/Constants.sol";
+import { RebalancerHandler } from "../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
+import { MockInvalidOracleMiddleware } from "./utils/MockInvalidOracleMiddleware.sol";
+import { MockInvalidRebalancer } from "./utils/MockInvalidRebalancer.sol";
 
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
@@ -124,11 +127,26 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     function test_setOracleMiddleware() public adminPrank {
         // expected event
         vm.expectEmit();
-        emit OracleMiddlewareUpdated(address(this));
+        emit OracleMiddlewareUpdated(address(oracleMiddleware));
         // set middleware
-        protocol.setOracleMiddleware(IOracleMiddleware(address(this)));
+        protocol.setOracleMiddleware(oracleMiddleware);
         // assert new middleware equal randAddress
-        assertEq(address(protocol.getOracleMiddleware()), address(this));
+        assertEq(address(protocol.getOracleMiddleware()), address(oracleMiddleware));
+    }
+
+    /**
+     * @custom:scenario Call "setOracleMiddleware" from admin by passing a new middleware contract
+     * that contains an invalid {_lowLatencyDelay}
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then The call should revert with {UsdnProtocolInvalidMiddlewareLowLatencyDelay}
+     */
+    function test_RevertWhen_setOracleMiddlewareInvalidLowLatencyDelay() public adminPrank {
+        MockInvalidOracleMiddleware mockInvalidOracleMiddleware = new MockInvalidOracleMiddleware();
+        uint16 invalidValue = uint16(protocol.getLowLatencyValidatorDeadline() - 1);
+        mockInvalidOracleMiddleware.setLowLatencyDelay(invalidValue);
+        vm.expectRevert(UsdnProtocolInvalidMiddlewareLowLatencyDelay.selector);
+        protocol.setOracleMiddleware(IOracleMiddleware(address(mockInvalidOracleMiddleware)));
     }
 
     /**
@@ -587,13 +605,27 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then The value should be updated
      */
     function test_setRebalancer() public adminPrank {
-        IRebalancer expectedNewValue = IRebalancer(address(this));
-
         vm.expectEmit();
-        emit RebalancerUpdated(address(this));
-        protocol.setRebalancer(expectedNewValue);
+        emit RebalancerUpdated(address(rebalancer));
+        protocol.setRebalancer(rebalancer);
 
-        assertEq(address(protocol.getRebalancer()), address(expectedNewValue));
+        assertEq(address(protocol.getRebalancer()), address(rebalancer));
+    }
+
+    /**
+     * @custom:scenario Call "setRebalancer" from admin by passing
+     * a new rebalancer contract that contains an invalid {_minAssetDeposit}
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then The transaction should revert with {UsdnProtocolInvalidRebalancerMinAssetDeposit}
+     */
+    function test_RevertWhen_setRebalancerInvalidMinAssetDeposit() public adminPrank {
+        uint256 minLongPosition = 1 ether;
+        protocol.setMinLongPosition(minLongPosition);
+        MockInvalidRebalancer invalidRebalancer = new MockInvalidRebalancer();
+        invalidRebalancer.setMinAssetDeposit(minLongPosition - 1);
+        vm.expectRevert(UsdnProtocolInvalidRebalancerMinAssetDeposit.selector);
+        protocol.setRebalancer(RebalancerHandler(payable(invalidRebalancer)));
     }
 
     /**
@@ -631,7 +663,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:when Admin wallet triggers the function with a value above the limit
      * @custom:then The transaction should revert
      */
-    function test_RevertWhen_invalidSetSecuriyDepositValue() public adminPrank {
+    function test_RevertWhen_invalidSetSecurityDepositValue() public adminPrank {
         vm.expectRevert(UsdnProtocolInvalidSecurityDeposit.selector);
         protocol.setSecurityDepositValue(5 ether + 1);
     }

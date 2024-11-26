@@ -6,7 +6,6 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
-import { IBaseRebalancer } from "../../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
@@ -70,13 +69,14 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_checkImbalanceLimitCloseOutRebalancerLimit() public {
         vm.prank(ADMIN);
-        protocol.setRebalancer(IBaseRebalancer(address(this)));
+        protocol.setRebalancer(rebalancer);
 
         (int256 closeLimitBps, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseLimitValues(true);
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, closeLimitBps)
         );
 
+        vm.prank(address(rebalancer));
         protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit, longAmount);
     }
 
