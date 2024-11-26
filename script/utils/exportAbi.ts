@@ -157,7 +157,10 @@ for (const match of contents.matchAll(constantsRegex)) {
   if (value === 'type(int24).min') {
     value = '-8388608n';
   } else if (value.startsWith('address')) {
-    const address = (value.match(/address\((?<addr>0x[a-fA-F0-9]+)\)/)?.groups?.addr as Address) ?? zeroAddress;
+    const address = value.match(/address\((?<addr>0x[a-fA-F0-9]+)\)/)?.groups?.addr as Address;
+    if (!address) {
+      throw new Error('Invalid address in constants');
+    }
     value = `"${pad(address, { size: 20 })}"`;
     typeHint = '`0x${string}`';
   } else if (value.startsWith('keccak256')) {
