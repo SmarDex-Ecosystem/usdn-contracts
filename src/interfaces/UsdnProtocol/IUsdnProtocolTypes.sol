@@ -485,7 +485,6 @@ interface IUsdnProtocolTypes {
      * @param longImbalanceTargetBps The long imbalance target in basis points
      * @param tradingExpoToFill The trading expo to fill
      * @param highestUsableTradingExpo The highest usable trading expo
-     * @param lowestUsableTradingExpo The lowest usable trading expo
      * @param currentLiqPenalty The current liquidation penalty
      * @param liqPriceWithoutPenalty The liquidation price without penalty
      */
@@ -494,7 +493,6 @@ interface IUsdnProtocolTypes {
         int256 longImbalanceTargetBps;
         uint256 tradingExpoToFill;
         uint256 highestUsableTradingExpo;
-        uint256 lowestUsableTradingExpo;
         uint24 currentLiqPenalty;
         uint128 liqPriceWithoutPenalty;
     }

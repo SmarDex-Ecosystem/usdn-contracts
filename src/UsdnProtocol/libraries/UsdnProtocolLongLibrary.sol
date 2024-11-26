@@ -1057,13 +1057,6 @@ library UsdnProtocolLongLibrary {
             tradingExpoToFill = data.highestUsableTradingExpo;
         }
 
-        // check that the trading expo filled by the position would not be below the min leverage
-        data.lowestUsableTradingExpo =
-            positionAmount * Constants.REBALANCER_MIN_LEVERAGE / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
-        if (data.lowestUsableTradingExpo > tradingExpoToFill) {
-            tradingExpoToFill = data.lowestUsableTradingExpo;
-        }
-
         data.currentLiqPenalty = s._liquidationPenalty;
         uint128 idealLiqPrice = _calcLiqPriceFromTradingExpo(lastPrice, positionAmount, tradingExpoToFill);
 
