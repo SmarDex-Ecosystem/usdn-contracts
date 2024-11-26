@@ -962,8 +962,8 @@ library UsdnProtocolVaultLibrary {
             params.to, params.validator, params.usdnShares, params.securityDepositValue, data
         );
 
-        // register the pending withdrawal for imbalance checks of future actions
-        s._pendingBalanceVault -= data.withdrawalAmountAfterFees.toInt256();
+        // update state optimistically
+        s._balanceVault -= data.withdrawalAmountAfterFees;
 
         IUsdn usdn = s._usdn;
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
@@ -973,6 +973,9 @@ library UsdnProtocolVaultLibrary {
             // retrieve the USDN shares, check that the balance is sufficient
             usdn.transferSharesFrom(params.user, address(this), params.usdnShares);
         }
+
+        // burn the received shares
+        usdn.burnShares(params.usdnShares);
 
         isInitiated_ = true;
         emit IUsdnProtocolEvents.InitiatedWithdrawal(
@@ -1024,7 +1027,7 @@ library UsdnProtocolVaultLibrary {
 
         Types.WithdrawalPendingAction memory withdrawal = Utils._toWithdrawalPendingAction(pending);
 
-        PriceInfo memory currentPrice = Utils._getOraclePrice(
+        PriceInfo memory validatePrice = Utils._getOraclePrice(
             Types.ProtocolAction.ValidateWithdrawal,
             withdrawal.timestamp,
             Utils._calcActionId(withdrawal.validator, withdrawal.timestamp),
@@ -1032,8 +1035,8 @@ library UsdnProtocolVaultLibrary {
         );
 
         (, bool isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
-            currentPrice.neutralPrice,
-            currentPrice.timestamp,
+            validatePrice.neutralPrice,
+            validatePrice.timestamp,
             s._liquidationIteration,
             Types.ProtocolAction.ValidateWithdrawal,
             priceData
@@ -1044,65 +1047,64 @@ library UsdnProtocolVaultLibrary {
             return false;
         }
 
-        uint256 available;
+        uint256 balanceVault;
         {
-            // we calculate the available balance of the vault side at the price of the validate action (ignoring any
+            // we extrapolate the balance of the vault side at the price of the validate action (ignoring any
             // funding between the initiate and validate)
-            int256 vaultAssetAvailable = Utils._vaultAssetAvailable(
+            int256 extrapolatedVaultBalance = Utils._vaultAssetAvailable(
                 withdrawal.totalExpo,
                 withdrawal.balanceVault,
                 withdrawal.balanceLong,
-                currentPrice.price.toUint128(),
+                validatePrice.price.toUint128(),
                 withdrawal.assetPrice
             );
 
-            if (vaultAssetAvailable < 0) {
-                vaultAssetAvailable = 0;
+            if (extrapolatedVaultBalance < 0) {
+                extrapolatedVaultBalance = 0;
             }
-            available = uint256(vaultAssetAvailable);
-
-            // we compare it to the available balance from the initiate action
-            // we will use the lowest of the two amounts to redeem the underlying asset share
-            // cast is safe because vaultAssetAvailable cannot be negative
-            if (withdrawal.balanceVault <= uint256(vaultAssetAvailable)) {
-                available = withdrawal.balanceVault;
-            }
+            balanceVault = uint256(extrapolatedVaultBalance);
         }
 
         uint256 shares = Utils._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
 
-        // we can add back the _pendingBalanceVault we subtracted in the initiate action
-        uint256 tempWithdrawalAfterFees =
+        // we need to check if we subtracted too much or too little from the vault balance in the initiate
+        // amount that we subtracted from the vault balance already
+        uint256 withdrawnAmount =
             Utils._calcAmountToWithdraw(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps);
-        s._pendingBalanceVault += tempWithdrawalAfterFees.toInt256();
+        // amount we need to send to the user
+        uint256 amountToUser =
+            Utils._calcAmountToWithdraw(shares, balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps);
 
-        IUsdn usdn = s._usdn;
-        // calculate the amount of asset to transfer with the same fees as recorded during the initiate action
-        uint256 assetToTransferAfterFees =
-            Utils._calcAmountToWithdraw(shares, available, withdrawal.usdnTotalShares, withdrawal.feeBps);
-
-        usdn.burnShares(shares);
+        if (withdrawnAmount < amountToUser) {
+            // we didn't subtract enough from the balance, we need to take more
+            uint256 toWithdraw;
+            unchecked {
+                toWithdraw = amountToUser - withdrawnAmount; // can't underflow, checked above
+                uint256 currentVaultBalance = s._balanceVault;
+                if (currentVaultBalance < toWithdraw) {
+                    toWithdraw = currentVaultBalance;
+                }
+                s._balanceVault = currentVaultBalance - toWithdraw; // can't underflow, checked above
+            }
+            amountToUser += toWithdraw;
+        } else if (withdrawnAmount > amountToUser) {
+            // we subtracted too much from the balance, let's put it back
+            uint256 toPutBack;
+            unchecked {
+                toPutBack = withdrawnAmount - amountToUser; // can't underflow, checked above
+            }
+            s._balanceVault += toPutBack;
+            amountToUser -= toPutBack;
+        }
 
         // send the asset to the user
-        if (assetToTransferAfterFees > 0) {
-            uint256 balanceVault = s._balanceVault;
-            // if there aren't enough funds in the vault, send what remains
-            if (assetToTransferAfterFees > balanceVault) {
-                assetToTransferAfterFees = balanceVault;
-            }
-
-            s._balanceVault = balanceVault - assetToTransferAfterFees;
-            address(s._asset).safeTransfer(withdrawal.to, assetToTransferAfterFees);
+        if (amountToUser > 0) {
+            address(s._asset).safeTransfer(withdrawal.to, amountToUser);
         }
 
         isValidated_ = true;
-
         emit IUsdnProtocolEvents.ValidatedWithdrawal(
-            withdrawal.to,
-            withdrawal.validator,
-            assetToTransferAfterFees,
-            usdn.convertToTokens(shares),
-            withdrawal.timestamp
+            withdrawal.to, withdrawal.validator, amountToUser, s._usdn.convertToTokens(shares), withdrawal.timestamp
         );
     }
 
