@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 
 /**
@@ -26,7 +28,7 @@ contract TestUsdnProtocolActionsCreateWithdrawalPendingAction is UsdnProtocolBas
         data.totalExpo = 420 ether;
         data.balanceVault = 41 ether;
         data.balanceLong = 42 ether;
-        data.usdnTotalShares = 100_000 * (10 ** protocol.TOKENS_DECIMALS());
+        data.usdnTotalShares = 100_000 * (10 ** Constants.TOKENS_DECIMALS);
     }
 
     /**

@@ -122,13 +122,14 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         s._balanceVault = 0;
     }
 
+    function getHighestPopulatedTickFromStorage() external view returns (int24) {
+        return Utils._getMainStorage()._highestPopulatedTick;
+    }
+
     function updateBalances(uint128 currentPrice) external {
         Storage storage s = Utils._getMainStorage();
 
         ApplyPnlAndFundingData memory data = Core._applyPnlAndFunding(currentPrice, uint128(block.timestamp));
-        if (!data.isPriceRecent) {
-            revert("price was not updated");
-        }
         s._balanceLong = data.tempLongBalance.toUint256();
         s._balanceVault = data.tempVaultBalance.toUint256();
     }
@@ -854,5 +855,13 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         returns (bool isValidated_, bool liquidated_)
     {
         return ActionsLong._validateClosePositionWithAction(pending, priceData);
+    }
+
+    function i_validateOpenPositionUpdateBalances(uint256 newPosValue, uint256 oldPosValue) external {
+        ActionsLong._validateOpenPositionUpdateBalances(newPosValue, oldPosValue);
+    }
+
+    function i_initiateDeposit(Vault.InitiateDepositParams memory params, bytes calldata currentPriceData) external {
+        Vault._initiateDeposit(params, currentPriceData);
     }
 }

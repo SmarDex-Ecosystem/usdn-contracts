@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
@@ -31,7 +33,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_checkImbalanceLimitWithdrawal` function should not revert when the imballance is equal to
+     * @custom:scenario The `_checkImbalanceLimitWithdrawal` function should not revert when the imbalance is equal to
      * the limit
      * @custom:given The protocol is in a balanced state
      * @custom:when The `_checkImbalanceLimitWithdrawal` function is called with values on the withdrawal limit
@@ -124,7 +126,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         int256 newVaultExpo =
             int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault() - int256(withdrawalValueToLimit);
         int256 expectedImbalance = (int256(totalExpo - protocol.getBalanceLong()) - newVaultExpo)
-            * int256(protocol.BPS_DIVISOR()) / newVaultExpo;
+            * int256(Constants.BPS_DIVISOR) / newVaultExpo;
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -132,6 +134,27 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
             )
         );
         protocol.i_checkImbalanceLimitWithdrawal(withdrawalValueToLimit, totalExpo);
+    }
+
+    /**
+     * @custom:scenario The `_checkImbalanceLimitWithdrawal` function should revert when the new vault expo is less
+     * than zero
+     * @custom:given A protocol in a balanced state
+     * @custom:when The function is called with a withdrawal value exceeding the vault balance
+     * @custom:and The new vault expo calculation results in a value less than zero
+     * @custom:then The transaction should revert with the `UsdnProtocolEmptyVault` error
+     */
+    function test_RevertWhen_checkImbalanceLimitNewVaultExpoLtZero() public {
+        uint256 vaultBalance = protocol.getBalanceVault();
+        uint256 withdrawalValue = vaultBalance + 1;
+        int256 pendingBalanceVault = protocol.getPendingBalanceVault();
+        uint256 totalExpo = protocol.getTotalExpo();
+
+        // we check that the result of the new vault expo is less than zero
+        assertLt(int256(vaultBalance) + pendingBalanceVault - int256(withdrawalValue), 0);
+
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEmptyVault.selector);
+        protocol.i_checkImbalanceLimitWithdrawal(withdrawalValue, totalExpo);
     }
 
     /**
@@ -149,7 +172,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         withdrawalLimitBps_ = protocol.getWithdrawalExpoImbalanceLimitBps() + 1;
 
         uint256 vaultExpoValueLimit =
-            longExpo * protocol.BPS_DIVISOR() / (protocol.BPS_DIVISOR() + uint256(withdrawalLimitBps_));
+            longExpo * Constants.BPS_DIVISOR / (Constants.BPS_DIVISOR + uint256(withdrawalLimitBps_));
 
         // withdrawal value to reach limit
         int256 withdrawalValueToLimit =

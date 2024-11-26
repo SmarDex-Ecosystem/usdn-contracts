@@ -77,17 +77,11 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             uint256 formattedPythPrice = pythPrice * 10 ** (oracleMiddleware.getDecimals() - pythDecimals);
 
             // price + conf
-            if (
-                action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
-                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
-            ) {
+            if (action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition) {
                 assertEq(middlewarePrice.price, formattedPythPrice + pythConf, priceError);
             }
             // price - conf
-            else if (
-                action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
-            ) {
+            else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
                 assertEq(middlewarePrice.price, formattedPythPrice - pythConf, priceError);
             }
             // price only
@@ -183,14 +177,6 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             uint256 price = uint64(pythPrice.price);
             price *= 10 ** oracleMiddleware.getDecimals() / 10 ** uint32(-pythPrice.expo);
 
-            uint256 conf = pythPrice.conf * 10 ** (oracleMiddleware.getDecimals() - uint32(-pythPrice.expo))
-                * oracleMiddleware.getConfRatioBps() / BPS_DIVISOR;
-            if (action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateWithdrawal) {
-                price += conf;
-            } else if (action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.InitiateDeposit) {
-                price -= conf;
-            }
-
             // middleware data
             PriceInfo memory middlewarePrice =
                 oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), action, "");
@@ -254,17 +240,11 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             // timestamp check
             assertEq(middlewarePrice.timestamp, pythTimestamp);
             // price + conf
-            if (
-                action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
-                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
-            ) {
+            if (action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition) {
                 assertEq(middlewarePrice.price, formattedPythPrice + pythConf, priceError);
             }
             // price - conf
-            else if (
-                action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
-            ) {
+            else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
                 assertEq(middlewarePrice.price, formattedPythPrice - pythConf, priceError);
             }
             // price only
@@ -354,8 +334,8 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
         assertEq(cachedMiddlewarePrice.timestamp, middlewarePrice.timestamp, "timestamp equal to pyth timestamp");
         assertGt(cachedMiddlewarePrice.timestamp, chainlinkTimestamp, "timestamp greater than chainlink timestamp");
         // price check
-        assertEq(cachedMiddlewarePrice.price, middlewarePrice.price, "price equal to pyth price");
-        assertTrue(cachedMiddlewarePrice.price != chainlinkPrice, "price different from chainlink price");
+        assertEq(cachedMiddlewarePrice.neutralPrice, middlewarePrice.neutralPrice, "price equal to pyth price");
+        assertTrue(cachedMiddlewarePrice.neutralPrice != chainlinkPrice, "price different from chainlink price");
     }
 
     /**

@@ -513,13 +513,11 @@ interface IUsdnProtocolTypes {
 
     /**
      * @notice Data structure for the `_applyPnlAndFunding` function
-     * @param isPriceRecent Whether the price was updated or was already the most recent price
      * @param tempLongBalance The new balance of the long side, could be negative (temporarily)
      * @param tempVaultBalance The new balance of the vault side, could be negative (temporarily)
      * @param lastPrice The last price
      */
     struct ApplyPnlAndFundingData {
-        bool isPriceRecent;
         int256 tempLongBalance;
         int256 tempVaultBalance;
         uint128 lastPrice;
@@ -553,6 +551,7 @@ interface IUsdnProtocolTypes {
      * @param _oracleMiddleware The oracle middleware contract
      * @param _liquidationRewardsManager The liquidation rewards manager contract
      * @param _rebalancer The rebalancer contract
+     * @param _isRebalancer Whether an address is or has been a rebalancer
      * @param _minLeverage The minimum leverage for a position
      * @param _maxLeverage The maximum leverage for a position
      * @param _lowLatencyValidatorDeadline The deadline for a user to confirm their action with a low-latency oracle
@@ -641,6 +640,7 @@ interface IUsdnProtocolTypes {
         IBaseOracleMiddleware _oracleMiddleware;
         IBaseLiquidationRewardsManager _liquidationRewardsManager;
         IBaseRebalancer _rebalancer;
+        mapping(address => bool) _isRebalancer;
         uint256 _minLeverage;
         uint256 _maxLeverage;
         uint128 _lowLatencyValidatorDeadline;

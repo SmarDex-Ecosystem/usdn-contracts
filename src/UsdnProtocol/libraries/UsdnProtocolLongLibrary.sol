@@ -59,7 +59,6 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Data structure for the `_applyPnlAndFundingAndLiquidate` function
-     * @param isPriceRecent A boolean indicating if the price is recent
      * @param tempLongBalance The temporary long balance
      * @param tempVaultBalance The temporary vault balance
      * @param lastPrice The last price used to update the protocol
@@ -68,7 +67,6 @@ library UsdnProtocolLongLibrary {
      * @param rebalancerAction The `_triggerRebalancer` action
      */
     struct ApplyPnlAndFundingAndLiquidateData {
-        bool isPriceRecent;
         int256 tempLongBalance;
         int256 tempVaultBalance;
         uint128 lastPrice;
@@ -187,43 +185,41 @@ library UsdnProtocolLongLibrary {
             }
         }
 
-        // liquidate if the price was updated or was already the most recent
-        if (data.isPriceRecent) {
-            Types.LiquidationsEffects memory liquidationEffects =
-                _liquidatePositions(data.lastPrice, iterations, data.tempLongBalance, data.tempVaultBalance);
+        // liquidate with `_lastPrice` if there are pending liquidations, up to `iterations` ticks
+        Types.LiquidationsEffects memory liquidationEffects =
+            _liquidatePositions(data.lastPrice, iterations, data.tempLongBalance, data.tempVaultBalance);
 
-            isLiquidationPending_ = liquidationEffects.isLiquidationPending;
-            if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks.length > 0) {
-                if (s._closeExpoImbalanceLimitBps > 0) {
-                    (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance, data.rebalancerAction) =
-                    _triggerRebalancer(
-                        data.lastPrice,
-                        liquidationEffects.newLongBalance,
-                        liquidationEffects.newVaultBalance,
-                        liquidationEffects.remainingCollateral
-                    );
-                }
-            }
-
-            s._balanceLong = liquidationEffects.newLongBalance;
-            s._balanceVault = liquidationEffects.newVaultBalance;
-
-            (data.rebased, data.callbackResult) = _usdnRebase(data.lastPrice);
-
-            if (liquidationEffects.liquidatedTicks.length > 0) {
-                _sendRewardsToLiquidator(
-                    liquidationEffects.liquidatedTicks,
+        isLiquidationPending_ = liquidationEffects.isLiquidationPending;
+        if (!isLiquidationPending_ && liquidationEffects.liquidatedTicks.length > 0) {
+            if (s._closeExpoImbalanceLimitBps > 0) {
+                (liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance, data.rebalancerAction) =
+                _triggerRebalancer(
                     data.lastPrice,
-                    data.rebased,
-                    data.rebalancerAction,
-                    action,
-                    data.callbackResult,
-                    priceData
+                    liquidationEffects.newLongBalance,
+                    liquidationEffects.newVaultBalance,
+                    liquidationEffects.remainingCollateral
                 );
             }
-
-            liquidatedTicks_ = liquidationEffects.liquidatedTicks;
         }
+
+        s._balanceLong = liquidationEffects.newLongBalance;
+        s._balanceVault = liquidationEffects.newVaultBalance;
+
+        (data.rebased, data.callbackResult) = _usdnRebase(data.lastPrice);
+
+        if (liquidationEffects.liquidatedTicks.length > 0) {
+            _sendRewardsToLiquidator(
+                liquidationEffects.liquidatedTicks,
+                data.lastPrice,
+                data.rebased,
+                data.rebalancerAction,
+                action,
+                data.callbackResult,
+                priceData
+            );
+        }
+
+        liquidatedTicks_ = liquidationEffects.liquidatedTicks;
     }
 
     /**
@@ -583,13 +579,23 @@ library UsdnProtocolLongLibrary {
             return (longBalance_, vaultBalance_, Types.RebalancerAction.None);
         }
 
-        Types.CachedProtocolState memory cache = Types.CachedProtocolState({
-            totalExpo: s._totalExpo,
-            longBalance: longBalance,
-            vaultBalance: (vaultBalance.toInt256() + s._pendingBalanceVault).toUint256(),
-            tradingExpo: 0,
-            liqMultiplierAccumulator: s._liqMultiplierAccumulator
-        });
+        Types.CachedProtocolState memory cache;
+        {
+            int256 tempVaultBalance = vaultBalance.toInt256() + s._pendingBalanceVault;
+            // clamp the vault balance to 0 to avoid underflows
+            if (tempVaultBalance < 0) {
+                tempVaultBalance = 0;
+            }
+
+            cache = Types.CachedProtocolState({
+                totalExpo: s._totalExpo,
+                longBalance: longBalance,
+                // cast is safe as value cannot be negative
+                vaultBalance: uint256(tempVaultBalance),
+                tradingExpo: 0,
+                liqMultiplierAccumulator: s._liqMultiplierAccumulator
+            });
+        }
 
         if (cache.totalExpo < cache.longBalance) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo();
@@ -602,6 +608,10 @@ library UsdnProtocolLongLibrary {
         uint128 bonus;
         if (remainingCollateral > 0) {
             bonus = (uint256(remainingCollateral) * s._rebalancerBonusBps / Constants.BPS_DIVISOR).toUint128();
+            if (bonus > cache.vaultBalance) {
+                bonus = cache.vaultBalance.toUint128();
+            }
+
             cache.vaultBalance -= bonus;
         }
 
@@ -656,6 +666,8 @@ library UsdnProtocolLongLibrary {
 
         // add the bonus to the new rebalancer position and remove it from the vault
         if (bonus > 0) {
+            // those operations will not underflow because the bonus is capped by `remainingCollateral`
+            // which was given to the vault before the trigger, so vaultBalance is always greater than or equal to bonus
             vaultBalance_ -= bonus;
             data.positionAmount += bonus;
         }
@@ -990,6 +1002,7 @@ library UsdnProtocolLongLibrary {
         int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(
             (collateralAmount - collateralAmountAfterFees).toInt256()
         );
+
         int256 imbalanceBps = _calcImbalanceOpenBps(
             currentVaultExpo, (s._balanceLong + collateralAmountAfterFees).toInt256(), s._totalExpo + openTotalExpoValue
         );
@@ -1293,24 +1306,25 @@ library UsdnProtocolLongLibrary {
      * @notice Calculates the current imbalance for the open action checks
      * @dev If the value is positive, the long trading expo is larger than the vault trading expo
      * In case of zero vault balance, the function returns `int256.max` since the resulting imbalance would be infinity
-     * @param vaultBalance The balance of the vault
+     * @param vaultExpo The vault expo (including the pending vault balance and the fees of the wanted open position)
      * @param longBalance The balance of the long side (including the long position to open)
      * @param totalExpo The total expo of the long side (including the long position to open)
      * @return imbalanceBps_ The imbalance in basis points
      */
-    function _calcImbalanceOpenBps(int256 vaultBalance, int256 longBalance, uint256 totalExpo)
+    function _calcImbalanceOpenBps(int256 vaultExpo, int256 longBalance, uint256 totalExpo)
         internal
         pure
         returns (int256 imbalanceBps_)
     {
-        // avoid division by zero
-        if (vaultBalance == 0) {
-            return type(int256).max;
+        // an imbalance cannot be calculated if the new vault expo is zero or negative
+        if (vaultExpo <= 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
-        // imbalanceBps_ = ((totalExpo - longBalance) - vaultBalance) *s. vaultBalance;
-        int256 longTradingExpo = totalExpo.toInt256() - longBalance;
-        imbalanceBps_ =
-            longTradingExpo.safeSub(vaultBalance).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(vaultBalance);
+
+        // imbalanceBps = (longTradingExpo - vaultExpo) / vaultExpo
+        // imbalanceBps = ((totalExpo - longBalance) - vaultExpo) / vaultExpo;
+        imbalanceBps_ = (totalExpo.toInt256() - longBalance).safeSub(vaultExpo).safeMul(int256(Constants.BPS_DIVISOR))
+            .safeDiv(vaultExpo);
     }
 
     /**

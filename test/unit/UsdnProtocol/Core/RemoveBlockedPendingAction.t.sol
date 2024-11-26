@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { ADMIN, USER_1, USER_2 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
@@ -618,8 +620,9 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     }
 
     function _wait() internal {
-        _waitBeforeActionablePendingAction();
-        skip(1 hours);
+        skip(protocol.getLowLatencyValidatorDeadline());
+        skip(protocol.getOnChainValidatorDeadline());
+        skip(Constants.REMOVE_BLOCKED_PENDING_ACTIONS_DELAY);
     }
 
     receive() external payable {

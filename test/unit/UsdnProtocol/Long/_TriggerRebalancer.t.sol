@@ -283,4 +283,29 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         assertEq(rebalancer.getPositionVersion(), 0, "Version should not be incremented");
         assertTrue(rebalancerAction == Types.RebalancerAction.NoCloseNoOpen, "The rebalancer should not be updated");
     }
+
+    function test_triggerRebalancerWithNotEnoughVaultBalance() public {
+        uint128 pendingAssets = 1 ether;
+        vm.prank(address(mockedRebalancer));
+        wstETH.mintAndApprove(address(mockedRebalancer), pendingAssets, address(protocol), type(uint256).max);
+
+        mockedRebalancer.setCurrentStateData(
+            pendingAssets, protocol.getMaxLeverage(), PositionId(Constants.NO_POSITION_TICK, 0, 0)
+        );
+
+        // initiate a withdrawal to have a negative pending vault balance
+        setUpUserPositionInVault(
+            address(this), ProtocolAction.InitiateWithdrawal, uint128(vaultBalance), params.initialPrice
+        );
+
+        // call the trigger function with a balance vault lower than the pending balance vault
+        (,, Types.RebalancerAction rebalancerAction) =
+            protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance - 1, remainingCollateral);
+
+        assertEq(
+            uint8(rebalancerAction),
+            uint8(Types.RebalancerAction.NoImbalance),
+            "The imbalance should not be high enough for a rebalancer trigger"
+        );
+    }
 }

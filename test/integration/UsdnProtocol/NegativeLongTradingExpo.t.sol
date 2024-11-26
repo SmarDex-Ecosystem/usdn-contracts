@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { IAllowanceTransfer } from "@uniswap/permit2/src/interfaces/IAllowanceTransfer.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
 import { SET_PROTOCOL_PARAMS_MANAGER, USER_1 } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
@@ -87,7 +89,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
 
         assertEq(
             protocol.longAssetAvailableWithFunding(DEFAULT_PARAMS.initialPrice, uint128(block.timestamp)),
-            totalExpo * (BPS_DIVISOR - protocol.MIN_LONG_TRADING_EXPO_BPS()) / BPS_DIVISOR,
+            totalExpo * (BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS) / BPS_DIVISOR,
             "sanity check: trading expo should be equal to the min trading expo for this test to work"
         );
 
@@ -145,7 +147,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
 
         assertEq(
             protocol.longAssetAvailableWithFunding(DEFAULT_PARAMS.initialPrice, uint128(block.timestamp)),
-            totalExpo * (BPS_DIVISOR - protocol.MIN_LONG_TRADING_EXPO_BPS()) / BPS_DIVISOR,
+            totalExpo * (BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS) / BPS_DIVISOR,
             "sanity check: trading expo should be equal to the min trading expo for this test to work"
         );
 

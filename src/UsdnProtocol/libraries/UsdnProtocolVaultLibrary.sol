@@ -682,6 +682,8 @@ library UsdnProtocolVaultLibrary {
             return (params.securityDepositValue, false);
         }
 
+        s._pendingBalanceVault += Utils._toInt256(params.amount);
+
         amountToRefund_ =
             _createDepositPendingAction(params.to, params.validator, params.securityDepositValue, params.amount, data);
 
@@ -700,7 +702,6 @@ library UsdnProtocolVaultLibrary {
             // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(params.user, address(this), params.amount);
         }
-        s._pendingBalanceVault += Utils._toInt256(params.amount);
 
         isInitiated_ = true;
 
@@ -1165,8 +1166,8 @@ library UsdnProtocolVaultLibrary {
         int256 newVaultExpo =
             s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeSub(withdrawalValue.toInt256());
 
-        // cannot be calculated if equal to zero
-        if (newVaultExpo == 0) {
+        // an imbalance cannot be calculated if the new vault expo is zero or negative
+        if (newVaultExpo <= 0) {
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
 

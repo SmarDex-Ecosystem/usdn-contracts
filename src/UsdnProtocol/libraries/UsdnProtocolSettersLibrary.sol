@@ -58,6 +58,7 @@ library UsdnProtocolSettersLibrary {
         }
 
         s._rebalancer = newRebalancer;
+        s._isRebalancer[address(newRebalancer)] = true;
 
         emit IUsdnProtocolEvents.RebalancerUpdated(address(newRebalancer));
     }
