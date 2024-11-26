@@ -97,8 +97,8 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
 
     /**
      * @inheritdoc IERC20
-     * @dev This function does not return the sum of all token balances and is based on the current divisor
-     * Please use {totalShares} for an accurate total supply
+     * @dev This function does not return the sum of all token balances and is based on the current divisor. Please use
+     * {totalShares} for an accurate total supply
      */
     function totalSupply() public view override(ERC20, IERC20) returns (uint256) {
         return _convertToTokens(_totalShares, Rounding.Closest, _divisor);
@@ -136,7 +136,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdn
-    function sharesOf(address account) public view returns (uint256) {
+    function sharesOf(address account) public view returns (uint256 shares) {
         return _shares[account];
     }
 
