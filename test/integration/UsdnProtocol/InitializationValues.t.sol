@@ -48,7 +48,7 @@ contract TestForkUsdnProtocolInitializationValues is UsdnProtocolBaseIntegration
 
     /**
      * @custom:scenario A user open a position with a minimum leverage
-     * @custom:given A usdn protocol is initiated with a worse initial amount
+     * @custom:given A usdn protocol is initiated with the worse initial amount
      * @custom:when The function {initiateOpenPosition} is called
      * @custom:then The user position should be initiated
      */
@@ -58,7 +58,7 @@ contract TestForkUsdnProtocolInitializationValues is UsdnProtocolBaseIntegration
 
     /**
      * @custom:scenario A user open a position with a maximum leverage
-     * @custom:given A usdn protocol is initiated with a worse initial amount
+     * @custom:given A usdn protocol is initiated with the worse initial amount
      * @custom:when The function {initiateOpenPosition} is called
      * @custom:then The user position should be initiated
      */
@@ -68,7 +68,7 @@ contract TestForkUsdnProtocolInitializationValues is UsdnProtocolBaseIntegration
 
     /**
      * @custom:scenario A user open a position with a minimum leverage
-     * @custom:given A usdn protocol is initiated with an optimistic initial amount
+     * @custom:given A usdn protocol is initiated with the optimistic initial amount
      * @custom:when The function {initiateOpenPosition} is called
      * @custom:then The user position should be initiated
      */
@@ -78,7 +78,7 @@ contract TestForkUsdnProtocolInitializationValues is UsdnProtocolBaseIntegration
 
     /**
      * @custom:scenario A user open a position with a maximum leverage
-     * @custom:given A usdn protocol is initiated with an optimistic initial amount
+     * @custom:given A usdn protocol is initiated with the optimistic initial amount
      * @custom:when The function {initiateOpenPosition} is called
      * @custom:then The user position should be initiated
      */
