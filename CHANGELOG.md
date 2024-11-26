@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.24.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.23.0...v0.24.0) (2024-11-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* **protocol:** No constant is now exposed, but they all are in the constants library
+
+### Features
+
+* add more validation on admin functions ([#716](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/716)) ([79debf7](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/79debf7b44e0c04a3b692b03b4238388ad35b416))
+* adding mapping to store an history of Rebalancer ([#717](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/717)) ([d8e3725](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/d8e3725fb71e474ae2414781ba3cb766f75c38af))
+* **deployement:** deploy v0.23.0 ([#720](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/720)) ([3b6a201](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/3b6a201663acad17b7fc5ec1f5329e201ef2d913))
+* **protocol:** remove all constants getters ([#724](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/724)) ([3dddf21](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/3dddf2196918852a69f197f992990b8bbdd1d5a6))
+* **rebalancer:** add reentrancy guards to all user functions ([#725](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/725)) ([ee3021f](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/ee3021f8822e797f823184ba5110bca7e93cf019))
+* **remove-blocked-pending-action:** add `_onChainValidatorDeadline` to the delay ([#719](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/719)) ([d0e3900](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/d0e3900093fc30ceef4b9c5b0775b3c1dd10368c))
+
+
+### Bug Fixes
+
+* honor CEI pattern in `initiateDeposit` wrt `transferCallback` ([#702](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/702)) ([7116457](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/71164575708800b8cacf1de2491859ffc9b31c66))
+* limit condition when checking imbalance during withdrawal ([#709](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/709)) ([880f7da](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/880f7da8b2f52bcea4572efd1713a36c3b0823c1))
+* make docker-release compatible with router ([#699](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/699)) ([62c23cc](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/62c23cc60b96460738979d31739a4b868c102aa2))
+* oracle middleware interface ([#731](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/731)) ([d94433a](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/d94433a0b9595723cc412cef88727dc373f2957f))
+* perform liquidations with `lastPrice` in all cases ([#722](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/722)) ([85618b2](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/85618b24a473428ee4e5f95e12e754fb18f51f43))
+
+
+### Performance Improvements
+
+* **oracle-middleware:** no confidence interval for initiate actions ([#727](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/727)) ([4dd35c0](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/4dd35c0612c10c55eadf07f2412e8d3d0378ffcc))
+
 ## [0.23.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.22.0...v0.23.0) (2024-11-21)
 
 
