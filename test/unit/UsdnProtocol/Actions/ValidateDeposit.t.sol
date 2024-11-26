@@ -420,6 +420,82 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         assertEq(address(this).balance, balanceContractBefore - securityDepositValue, "contract balance after refund");
     }
 
+    function test_depositInvertedSandwich() public {
+        skip(1 hours);
+        sdex.mintAndApprove(USER_1, 200_000_000 ether, address(protocol), type(uint256).max);
+
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 50 ether, 2000 ether);
+
+        skip(10 minutes);
+
+        protocol.liquidate(abi.encode(2300 ether));
+
+        setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, 5 ether, 2300 ether);
+
+        vm.prank(USER_1);
+        usdn.approve(address(protocol), type(uint256).max);
+
+        uint256 snapshot = vm.snapshotState();
+
+        protocol.validateDeposit(payable(this), abi.encode(2000 ether), EMPTY_PREVIOUS_DATA);
+
+        vm.startPrank(USER_1);
+        protocol.initiateWithdrawal(
+            uint152(usdn.sharesOf(USER_1)),
+            0,
+            USER_1,
+            USER_1,
+            block.timestamp,
+            abi.encode(2300 ether),
+            EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+        uint256 balanceBefore = wstETH.balanceOf(USER_1);
+        protocol.validateWithdrawal(USER_1, abi.encode(2300 ether), EMPTY_PREVIOUS_DATA);
+        vm.stopPrank();
+        uint256 withdrawn = wstETH.balanceOf(USER_1) - balanceBefore;
+        emit log_named_decimal_uint("withdrawn", withdrawn, 18);
+
+        vm.revertToState(snapshot);
+
+        vm.startPrank(USER_1);
+        protocol.initiateWithdrawal(
+            uint152(usdn.sharesOf(USER_1)),
+            0,
+            USER_1,
+            USER_1,
+            block.timestamp,
+            abi.encode(2300 ether),
+            EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+        balanceBefore = wstETH.balanceOf(USER_1);
+        protocol.validateWithdrawal(USER_1, abi.encode(2300 ether), EMPTY_PREVIOUS_DATA);
+        vm.stopPrank();
+        withdrawn = wstETH.balanceOf(USER_1) - balanceBefore;
+        emit log_named_decimal_uint("withdrawn", withdrawn, 18);
+
+        vm.revertToState(snapshot);
+        protocol.validateDeposit(payable(this), abi.encode(2000 ether), EMPTY_PREVIOUS_DATA);
+
+        usdn.approve(address(protocol), type(uint256).max);
+        protocol.initiateWithdrawal(
+            uint152(usdn.sharesOf(address(this))),
+            0,
+            address(this),
+            payable(this),
+            block.timestamp,
+            abi.encode(2300 ether),
+            EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+        balanceBefore = wstETH.balanceOf(address(this));
+        protocol.validateWithdrawal(payable(this), abi.encode(2300 ether), EMPTY_PREVIOUS_DATA);
+        vm.stopPrank();
+        withdrawn = wstETH.balanceOf(address(this)) - balanceBefore;
+        emit log_named_decimal_uint("withdrawn by user 0", withdrawn, 18);
+    }
+
     // test refunds
     receive() external payable {
         // test reentrancy
