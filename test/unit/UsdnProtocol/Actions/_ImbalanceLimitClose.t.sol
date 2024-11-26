@@ -3,15 +3,13 @@ pragma solidity 0.8.26;
 
 import { ADMIN, DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
-import { MockRebalancer } from "../utils/MockRebalancer.sol";
 
-import { IBaseRebalancer } from "../../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
  * @custom:feature Test of the protocol expo limit for {_checkImbalanceLimitClose} function in a balanced state
  */
-contract TestImbalanceLimitClose is UsdnProtocolBaseFixture, MockRebalancer {
+contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
 
@@ -69,13 +67,14 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture, MockRebalancer {
      */
     function test_RevertWhen_checkImbalanceLimitCloseOutRebalancerLimit() public {
         vm.prank(ADMIN);
-        protocol.setRebalancer(IBaseRebalancer(address(this)));
+        protocol.setRebalancer(rebalancer);
 
         (int256 closeLimitBps, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseLimitValues(true);
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, closeLimitBps)
         );
 
+        vm.prank(address(rebalancer));
         protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit, longAmount);
     }
 
