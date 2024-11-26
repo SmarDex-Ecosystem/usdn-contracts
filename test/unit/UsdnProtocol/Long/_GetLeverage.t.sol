@@ -3,6 +3,9 @@ pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+
 /**
  * @custom:feature The _getLeverage internal function of the UsdnProtocolLong contract.
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
@@ -45,7 +48,7 @@ contract TestUsdnProtocolLongGetLeverage is UsdnProtocolBaseFixture {
      * @custom:then The leverage is calculated correctly
      */
     function test_getLeverageWithExpectedValue() public view {
-        uint8 leverageDecimals = protocol.LEVERAGE_DECIMALS();
+        uint8 leverageDecimals = Constants.LEVERAGE_DECIMALS;
         uint256 leverage = protocol.i_getLeverage(1000, 1000 - 1);
         assertEq(leverage, 1000 * 10 ** leverageDecimals, "leverage should be 1000e21");
 

@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
@@ -124,7 +126,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         int256 newVaultExpo =
             int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault() - int256(withdrawalValueToLimit);
         int256 expectedImbalance = (int256(totalExpo - protocol.getBalanceLong()) - newVaultExpo)
-            * int256(protocol.BPS_DIVISOR()) / newVaultExpo;
+            * int256(Constants.BPS_DIVISOR) / newVaultExpo;
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -170,7 +172,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         withdrawalLimitBps_ = protocol.getWithdrawalExpoImbalanceLimitBps() + 1;
 
         uint256 vaultExpoValueLimit =
-            longExpo * protocol.BPS_DIVISOR() / (protocol.BPS_DIVISOR() + uint256(withdrawalLimitBps_));
+            longExpo * Constants.BPS_DIVISOR / (Constants.BPS_DIVISOR + uint256(withdrawalLimitBps_));
 
         // withdrawal value to reach limit
         int256 withdrawalValueToLimit =

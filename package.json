@@ -30,15 +30,12 @@
     "test": "forge test -vvv"
   },
   "main": "dist/index.js",
-  "files": [
-    "dist",
-    "broadcast",
-    "docs"
-  ],
+  "files": ["dist", "broadcast", "docs"],
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
     "@defi-wonderland/natspec-smells": "^1.1.4",
     "@types/luxon": "^3.4.2",
+    "@types/node": "^20.0.0",
     "abitype": "^1.0.5",
     "commander": "^12.1.0",
     "glob": "^11.0.0",
@@ -47,7 +44,9 @@
     "picocolors": "^1.0.1",
     "solhint": "^5.0.2",
     "tsup": "^8.3.5",
-    "tsx": "^4.19.1",
+    "tsx": "^4.19.1"
+  },
+  "dependencies": {
     "viem": "^2.18.5"
   }
 }

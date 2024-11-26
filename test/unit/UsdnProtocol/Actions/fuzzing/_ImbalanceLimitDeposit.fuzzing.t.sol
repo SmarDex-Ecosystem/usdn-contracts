@@ -3,6 +3,8 @@ pragma solidity 0.8.26;
 
 import { IUsdnProtocolErrors } from "../../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolBaseFixture } from "../../utils/Fixtures.sol";
 
 /**
@@ -28,7 +30,7 @@ contract TestImbalanceLimitDepositFuzzing is UsdnProtocolBaseFixture {
         uint256 initialLongExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
         // expected imbalance bps
         int256 imbalanceBps =
-            (newExpoVault - int256(initialLongExpo)) * int256(protocol.BPS_DIVISOR()) / int256(initialLongExpo);
+            (newExpoVault - int256(initialLongExpo)) * int256(Constants.BPS_DIVISOR) / int256(initialLongExpo);
 
         // initial deposit limit bps
         int256 depositLimit = protocol.getDepositExpoImbalanceLimitBps();
