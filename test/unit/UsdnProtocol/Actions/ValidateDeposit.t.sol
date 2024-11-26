@@ -474,26 +474,6 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         vm.stopPrank();
         withdrawn = wstETH.balanceOf(USER_1) - balanceBefore;
         emit log_named_decimal_uint("withdrawn", withdrawn, 18);
-
-        vm.revertToState(snapshot);
-        protocol.validateDeposit(payable(this), abi.encode(2000 ether), EMPTY_PREVIOUS_DATA);
-
-        usdn.approve(address(protocol), type(uint256).max);
-        protocol.initiateWithdrawal(
-            uint152(usdn.sharesOf(address(this))),
-            0,
-            address(this),
-            payable(this),
-            block.timestamp,
-            abi.encode(2300 ether),
-            EMPTY_PREVIOUS_DATA
-        );
-        _waitDelay();
-        balanceBefore = wstETH.balanceOf(address(this));
-        protocol.validateWithdrawal(payable(this), abi.encode(2300 ether), EMPTY_PREVIOUS_DATA);
-        vm.stopPrank();
-        withdrawn = wstETH.balanceOf(address(this)) - balanceBefore;
-        emit log_named_decimal_uint("withdrawn by user 0", withdrawn, 18);
     }
 
     // test refunds
