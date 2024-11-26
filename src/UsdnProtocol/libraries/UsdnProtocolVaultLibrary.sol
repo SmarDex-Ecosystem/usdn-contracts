@@ -1082,11 +1082,12 @@ library UsdnProtocolVaultLibrary {
                 toWithdraw = amountToUser - withdrawnAmount; // can't underflow, checked above
                 uint256 currentVaultBalance = s._balanceVault;
                 if (currentVaultBalance < toWithdraw) {
+                    // we can't pay the user as much as we should
+                    amountToUser -= toWithdraw - currentVaultBalance;
                     toWithdraw = currentVaultBalance;
                 }
                 s._balanceVault = currentVaultBalance - toWithdraw; // can't underflow, checked above
             }
-            amountToUser += toWithdraw;
         } else if (withdrawnAmount > amountToUser) {
             // we subtracted too much from the balance, let's put it back
             uint256 toPutBack;
@@ -1094,7 +1095,6 @@ library UsdnProtocolVaultLibrary {
                 toPutBack = withdrawnAmount - amountToUser; // can't underflow, checked above
             }
             s._balanceVault += toPutBack;
-            amountToUser -= toPutBack;
         }
 
         // send the asset to the user
