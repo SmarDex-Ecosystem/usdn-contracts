@@ -5,7 +5,7 @@ import {encodeAbiParameters} from 'viem'
 
 const program = new Command();
 
-function execVerify(address: string, contractName: string, constructorArgs: string,) {
+function execVerify(address: string, contractName: string, constructorArgs: string) {
     const cli = `forge verify-contract ${address} ${contractName} ${constructorArgs} --watch ${etherscanApiKey} ${verifierUrl} ${verbose}`;
     if (DEBUG) console.log(`cli : ${cli}`)
 
