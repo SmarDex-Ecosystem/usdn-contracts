@@ -1,7 +1,7 @@
 import {Command} from "commander";
 import {existsSync, readFileSync} from "node:fs";
-import {exec} from "child_process";
 import {encodeAbiParameters} from 'viem'
+import {execSync} from "node:child_process";
 
 const program = new Command();
 
@@ -9,10 +9,13 @@ function execVerify(address: string, contractName: string, constructorArgs: stri
     const cli = `forge verify-contract ${address} ${contractName} ${constructorArgs} --watch ${etherscanApiKey} ${verifierUrl} ${verbose}`;
     if (DEBUG) console.log(`cli : ${cli}`)
 
-    exec(cli, (_error, stdout, stderr) => {
-        console.log(stdout);
-        console.error(stderr);
-    })
+    try {
+        const result = execSync(cli)
+        console.log(result.toString())
+    } catch (error) {
+        console.log(error.stdout.toString())
+        console.error(error.stderr.toString())
+    }
 }
 
 program.description('Verify contract from broadcast file')
