@@ -36,23 +36,21 @@ execSync('forge build src');
 let globSelectorMap = new Map<`0x${string}`, string>();
 for (const contract of contracts) {
   const fileMap = createSelectorMap(contract);
-  globSelectorMap.forEach((selector, signature) => {
+  for (const [signature, selector] of globSelectorMap) {
     if (fileMap.has(signature) && !commonMap.has(signature)) {
       console.log(pc.red('\nFunction clash detected with :'), pc.yellow(selector), pc.green(signature));
       process.exit(1);
     }
-  });
+  }
 
-  globSelectorMap = new Map([...globSelectorMap, ...fileMap]);
+  globSelectorMap = mergeMaps(globSelectorMap, fileMap);
 }
 
-function handleCommonDependencies(commonDeps: string[]): Map<`0x${string}`, string> {
+function handleCommonDependencies(commonDeps: string[] = []): Map<`0x${string}`, string> {
   let commonSelectorMap = new Map<`0x${string}`, string>();
-  if (!commonDeps) return commonSelectorMap;
-
   for (const commonDepName of commonDeps) {
     const depSelectorMap = createSelectorMap(commonDepName);
-    commonSelectorMap = new Map([...commonSelectorMap, ...depSelectorMap]);
+    commonSelectorMap = mergeMaps(commonSelectorMap, depSelectorMap);
   }
 
   return commonSelectorMap;
@@ -70,10 +68,14 @@ function createSelectorMap(contractName: string): Map<`0x${string}`, string> {
     for (const abiItem of abiItems) {
       selectorMap.set(toFunctionSelector(abiItem), toFunctionSignature(abiItem));
     }
-  } catch {
-    console.log(`Error with ${path}`);
+  } catch (error) {
+    console.log(pc.red(`Failed to process ${path}: ${error.message}`));
     process.exit(1);
   }
 
   return selectorMap;
+}
+
+function mergeMaps<K, V>(map1: Map<K, V>, map2: Map<K, V>): Map<K, V> {
+  return new Map([...map1, ...map2]);
 }
