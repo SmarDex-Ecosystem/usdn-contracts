@@ -71,8 +71,8 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      * @custom:then The price is exactly 2000 USD
      */
     function test_parseAndValidatePriceWithPythForAllActions() public {
-        // Give a slightly different price for chainlink to be able to differentiate the oracles responses
-        // If for a reason or another the chainlink price is used, tests will fail
+        // give a slightly different price for chainlink to be able to differentiate the oracles responses
+        // if for a reason or another the chainlink price is used, tests will fail
         int256 mockedChainlinkPrice = int256(ETH_PRICE - 1);
         mockChainlinkOnChain.setLatestRoundData(1, mockedChainlinkPrice, TARGET_TIMESTAMP, 1);
 
@@ -87,17 +87,13 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
 
             // Price + conf
             if (
-                action == Types.ProtocolAction.InitiateWithdrawal || action == Types.ProtocolAction.ValidateWithdrawal
-                    || action == Types.ProtocolAction.InitiateOpenPosition
-                    || action == Types.ProtocolAction.ValidateOpenPosition
+                action == Types.ProtocolAction.ValidateWithdrawal || action == Types.ProtocolAction.ValidateOpenPosition
             ) {
                 assertEq(price.price, FORMATTED_ETH_PRICE + FORMATTED_ETH_CONF, errorMessage);
             }
             // Price - conf
             else if (
-                action == Types.ProtocolAction.InitiateDeposit || action == Types.ProtocolAction.ValidateDeposit
-                    || action == Types.ProtocolAction.InitiateClosePosition
-                    || action == Types.ProtocolAction.ValidateClosePosition
+                action == Types.ProtocolAction.ValidateDeposit || action == Types.ProtocolAction.ValidateClosePosition
             ) {
                 assertEq(price.price, FORMATTED_ETH_PRICE - FORMATTED_ETH_CONF, errorMessage);
             } else {
