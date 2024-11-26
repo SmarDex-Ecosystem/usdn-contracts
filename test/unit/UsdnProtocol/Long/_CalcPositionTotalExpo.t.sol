@@ -5,6 +5,8 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { TickMath } from "../../../../src/libraries/TickMath.sol";
 
 /**
@@ -25,7 +27,7 @@ contract TestUsdnProtocolLongCalcPositionTotalExpo is UsdnProtocolBaseFixture {
      * @custom:then The result is equal to the result of the Rust implementation
      */
     function testFuzzFFI_calcPositionTotalExpo(uint128 amount, uint256 startPrice, uint256 liqPrice) public {
-        uint256 levDecimals = 10 ** protocol.LEVERAGE_DECIMALS();
+        uint256 levDecimals = 10 ** Constants.LEVERAGE_DECIMALS;
         amount = bound(amount, 1, type(uint128).max * levDecimals / protocol.getMaxLeverage()).toUint128();
         startPrice = bound(startPrice, TickMath.MIN_PRICE, type(uint128).max);
         uint256 minLiqrice = startPrice - (startPrice * levDecimals / protocol.getMinLeverage());

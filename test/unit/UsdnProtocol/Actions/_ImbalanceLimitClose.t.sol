@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { ADMIN, DEPLOYER, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IBaseRebalancer } from "../../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
@@ -154,7 +156,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         int256 currentVaultExpo = int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault();
         int256 newLongExpo =
             int256(protocol.getTotalExpo() - totalExpoValueToLimit) - int256(protocol.getBalanceLong() - longAmount);
-        int256 expectedImbalance = (currentVaultExpo - newLongExpo) * int256(protocol.BPS_DIVISOR()) / newLongExpo;
+        int256 expectedImbalance = (currentVaultExpo - newLongExpo) * int256(Constants.BPS_DIVISOR) / newLongExpo;
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -184,14 +186,14 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         uint256 vaultExpo = protocol.getBalanceVault() + uint256(protocol.getPendingBalanceVault());
 
-        uint256 longExpoLimit = vaultExpo * protocol.BPS_DIVISOR() / (uint256(closeLimitBps_) + protocol.BPS_DIVISOR());
+        uint256 longExpoLimit = vaultExpo * Constants.BPS_DIVISOR / (uint256(closeLimitBps_) + Constants.BPS_DIVISOR);
 
         // the long expo value to reach limit from current long expo
         uint256 longExpoValueToLimit = longExpo - longExpoLimit;
 
         // long amount to reach limit from longExpoValueToLimit and any leverage
         longAmount_ =
-            longExpoValueToLimit * 10 ** protocol.LEVERAGE_DECIMALS() / protocol.i_getLeverage(2000 ether, 1500 ether);
+            longExpoValueToLimit * 10 ** Constants.LEVERAGE_DECIMALS / protocol.i_getLeverage(2000 ether, 1500 ether);
 
         // total expo value to reach limit
         totalExpoValueToLimit_ = longExpoValueToLimit + longAmount_;

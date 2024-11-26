@@ -8,6 +8,8 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { ILiquidationRewardsManager } from
     "../../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "../../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
@@ -164,7 +166,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test_setMinLeverage() public adminPrank {
         // allowed value
-        uint256 expectedNewValue = 10 ** protocol.LEVERAGE_DECIMALS() + 1;
+        uint256 expectedNewValue = 10 ** Constants.LEVERAGE_DECIMALS + 1;
         // expected event
         vm.expectEmit();
         emit MinLeverageUpdated(expectedNewValue);
@@ -196,7 +198,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test_RevertWhen_setMaxLeverageWithMax() public adminPrank {
         // cache limit
-        uint256 aboveLimit = 100 * 10 ** protocol.LEVERAGE_DECIMALS() + 1;
+        uint256 aboveLimit = 100 * 10 ** Constants.LEVERAGE_DECIMALS + 1;
         // maxLeverage greater than max disallowed
         vm.expectRevert(UsdnProtocolInvalidMaxLeverage.selector);
         // set maxLeverage
@@ -332,7 +334,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then Revert because greater than max
      */
     function test_RevertWhen_setLiquidationIterationWithMax() public adminPrank {
-        uint16 aboveMax = protocol.MAX_LIQUIDATION_ITERATION() + 1;
+        uint16 aboveMax = Constants.MAX_LIQUIDATION_ITERATION + 1;
         // liquidationIteration greater than max disallowed
         vm.expectRevert(UsdnProtocolInvalidLiquidationIteration.selector);
         // set liquidationIteration
@@ -396,7 +398,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test__RevertWhen_setFundingSFWithMax() public adminPrank {
         // cached limit
-        uint256 aboveLimit = 10 ** protocol.FUNDING_SF_DECIMALS() + 1;
+        uint256 aboveLimit = 10 ** Constants.FUNDING_SF_DECIMALS + 1;
         // fundingSF greater than max disallowed
         vm.expectRevert(UsdnProtocolInvalidFundingSF.selector);
         // set fundingSF
@@ -459,7 +461,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then The call reverts
      */
     function test_RevertWhen_setSdexBurnOnDepositRatioWithMax() public adminPrank {
-        uint32 aboveMax = uint32(protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR() / 20 + 1);
+        uint32 aboveMax = uint32(Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20 + 1);
 
         vm.expectRevert(UsdnProtocolInvalidBurnSdexOnDepositRatio.selector);
         protocol.setSdexBurnOnDepositRatio(aboveMax);
@@ -473,7 +475,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:and a BurnSdexOnDepositRatioUpdated event should be emitted
      */
     function test_setSdexBurnOnDepositRatio() public adminPrank {
-        uint16 expectedNewValue = uint16(protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR()) / 20;
+        uint16 expectedNewValue = uint16(Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR) / 20;
 
         vm.expectEmit();
         emit BurnSdexOnDepositRatioUpdated(expectedNewValue);

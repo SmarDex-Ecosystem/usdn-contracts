@@ -3,6 +3,8 @@ pragma solidity 0.8.26;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
+import { UsdnProtocolConstantsLibrary as Constant } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /**
@@ -28,7 +30,7 @@ contract TestUsdnProtocolLongCheckSafetyMargin is UsdnProtocolBaseFixture {
     function test_RevertWhen_setLiquidationPriceWithoutSafetyMarginBps() public {
         uint128 currentPrice = 100 ether;
         uint128 liquidationPrice = 98 ether;
-        uint128 bpsDivisor = (protocol.BPS_DIVISOR()).toUint128();
+        uint128 bpsDivisor = (Constant.BPS_DIVISOR).toUint128();
         uint128 maxLiquidationPrice =
             (currentPrice * (bpsDivisor - protocol.getSafetyMarginBps()) / bpsDivisor).toUint128();
 

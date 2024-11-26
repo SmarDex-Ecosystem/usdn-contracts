@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { USER_1, USER_2 } from "../../utils/Constants.sol";
 import { RebalancerFixture } from "./utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -216,7 +218,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
      * @custom:and The last liquidated version is set to the previous version
      */
     function test_updatePositionWithNoNewPosition() public {
-        int24 noPositionTick = usdnProtocol.NO_POSITION_TICK();
+        int24 noPositionTick = Constants.NO_POSITION_TICK;
         Types.PositionId memory posId1 = Types.PositionId({ tick: 200, tickVersion: 1, index: 3 });
 
         vm.startPrank(address(usdnProtocol));

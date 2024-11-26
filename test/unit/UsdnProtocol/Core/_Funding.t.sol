@@ -270,7 +270,7 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         uint256 balanceVault,
         int256 ema
     ) public {
-        s.fundingSF = bound(sf, 0, 10 ** protocol.FUNDING_SF_DECIMALS());
+        s.fundingSF = bound(sf, 0, 10 ** Constants.FUNDING_SF_DECIMALS);
         // as a safe upper bound, we use the total supply of eth with a leverage max of 10x
         s.totalExpo = bound(totalExpo, 1 ether, 1.2e9 ether);
         s.balanceLong = bound(balanceLong, 0, s.totalExpo);
@@ -290,7 +290,7 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
 
         // since we cap the imbalance to 100%, the funding rate (without EMA contribution) is at most:
         int256 fundingPerDayMax =
-            int256(s.fundingSF * 10 ** (protocol.FUNDING_RATE_DECIMALS() - protocol.FUNDING_SF_DECIMALS()));
+            int256(s.fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS));
         // a good upper bound for the EMA is thus:
         int256 emaMax = 2 * fundingPerDayMax;
         // we bound the EMA by this value
