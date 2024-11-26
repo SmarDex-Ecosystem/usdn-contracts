@@ -54,6 +54,7 @@ library UsdnProtocolVaultLibrary {
      * @param balanceLong The long side balance
      * @param balanceVault The vault side balance, calculated according to the pendingActionPrice
      * @param usdnTotalShares Total minted shares of USDN
+     * @param usdnSharesToMint Shares of USDN to optimistically mint
      * @param sdexToBurn The amount of SDEX to burn for the deposit
      */
     struct InitiateDepositData {
@@ -64,6 +65,7 @@ library UsdnProtocolVaultLibrary {
         uint256 balanceLong;
         uint256 balanceVault;
         uint256 usdnTotalShares;
+        uint256 usdnSharesToMint;
         uint256 sdexToBurn;
     }
 
@@ -597,12 +599,12 @@ library UsdnProtocolVaultLibrary {
         data_.usdnTotalShares = usdn.totalShares();
 
         // calculate the amount of SDEX tokens to burn
-        uint256 usdnSharesToMintEstimated =
+        data_.usdnSharesToMint =
             Utils._calcMintUsdnShares(amountAfterFees, data_.balanceVault + fees, data_.usdnTotalShares);
-        if (usdnSharesToMintEstimated < sharesOutMin) {
+        if (data_.usdnSharesToMint < sharesOutMin) {
             revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
         }
-        uint256 usdnToMintEstimated = usdn.convertToTokens(usdnSharesToMintEstimated);
+        uint256 usdnToMintEstimated = usdn.convertToTokens(data_.usdnSharesToMint);
         // we want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
             revert IUsdnProtocolErrors.UsdnProtocolDepositTooSmall();
@@ -682,7 +684,8 @@ library UsdnProtocolVaultLibrary {
             return (params.securityDepositValue, false);
         }
 
-        s._pendingBalanceVault += Utils._toInt256(params.amount);
+        s._balanceVault += params.amount;
+        s._usdn.mintShares(address(this), data.usdnSharesToMint);
 
         amountToRefund_ =
             _createDepositPendingAction(params.to, params.validator, params.securityDepositValue, params.amount, data);
@@ -754,7 +757,7 @@ library UsdnProtocolVaultLibrary {
 
         Types.DepositPendingAction memory deposit = Utils._toDepositPendingAction(pending);
 
-        PriceInfo memory currentPrice = Utils._getOraclePrice(
+        PriceInfo memory validatePrice = Utils._getOraclePrice(
             Types.ProtocolAction.ValidateDeposit,
             deposit.timestamp,
             Utils._calcActionId(deposit.validator, deposit.timestamp),
@@ -764,8 +767,8 @@ library UsdnProtocolVaultLibrary {
         {
             // adjust balances
             (, bool isLiquidationPending) = Long._applyPnlAndFundingAndLiquidate(
-                currentPrice.neutralPrice,
-                currentPrice.timestamp,
+                validatePrice.neutralPrice,
+                validatePrice.timestamp,
                 s._liquidationIteration,
                 Types.ProtocolAction.ValidateDeposit,
                 priceData
@@ -785,32 +788,51 @@ library UsdnProtocolVaultLibrary {
         uint128 amountAfterFees = deposit.amount - fees;
 
         uint256 balanceVault = deposit.balanceVault;
-        if (currentPrice.price < deposit.assetPrice) {
-            // without considering the funding, when the price decreases, the balance of the vault increases
-            int256 available = Utils._vaultAssetAvailable(
-                deposit.totalExpo,
-                deposit.balanceVault,
-                deposit.balanceLong,
-                currentPrice.price.toUint128(),
-                deposit.assetPrice
-            );
-            if (available < 0) {
-                // sanity check, should not happen
-                balanceVault = 0;
-            } else {
-                balanceVault = uint256(available);
+        // the amount of shares that was minted optimistically
+        uint256 sharesMinted = Utils._calcMintUsdnShares(amountAfterFees, balanceVault + fees, deposit.usdnTotalShares);
+
+        // the vault balance resulting from the price change at `validatePrice.timestamp`
+        int256 extrapolatedVaultBalance = Utils._vaultAssetAvailable(
+            deposit.totalExpo,
+            deposit.balanceVault,
+            deposit.balanceLong,
+            validatePrice.price.toUint128(),
+            deposit.assetPrice
+        );
+        if (extrapolatedVaultBalance < 0) {
+            // sanity check, should not happen
+            extrapolatedVaultBalance = 0;
+        }
+        balanceVault = uint256(extrapolatedVaultBalance);
+
+        uint256 sharesRequired =
+            Utils._calcMintUsdnShares(amountAfterFees, balanceVault + fees, deposit.usdnTotalShares);
+
+        IUsdn usdn = s._usdn;
+        uint256 sharesToUser = sharesMinted;
+        if (sharesRequired > sharesMinted) {
+            // we need to mint more shares
+            uint256 toMint;
+            unchecked {
+                toMint = sharesRequired - sharesMinted; // can't underflow, checked above
             }
+            sharesToUser += toMint;
+            usdn.mintShares(address(this), toMint);
+        } else if (sharesRequired < sharesMinted) {
+            // we need to burn the excess
+            uint256 toBurn;
+            unchecked {
+                toBurn = sharesMinted - sharesRequired; // can't underflow, checked above
+            }
+            sharesToUser -= toBurn;
+            usdn.burnShares(toBurn);
         }
 
-        s._balanceVault += deposit.amount; // we credit the full deposit amount
-        s._pendingBalanceVault -= Utils._toInt256(deposit.amount);
+        usdn.transferShares(deposit.to, sharesToUser);
 
-        uint256 mintedTokens = s._usdn.mintShares(
-            deposit.to, Utils._calcMintUsdnShares(amountAfterFees, balanceVault + fees, deposit.usdnTotalShares)
-        );
         isValidated_ = true;
         emit IUsdnProtocolEvents.ValidatedDeposit(
-            deposit.to, deposit.validator, amountAfterFees, mintedTokens, deposit.timestamp
+            deposit.to, deposit.validator, amountAfterFees, usdn.convertToTokens(sharesToUser), deposit.timestamp
         );
     }
 
