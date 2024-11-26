@@ -97,7 +97,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
 
     /**
      * @inheritdoc IERC20
-     * @dev This function does not return the sum of all token balances and is based on the shares to token ratio
+     * @dev This function does not return the sum of all token balances and is based on the current divisor
      * Please use {totalShares} for an accurate total supply
      */
     function totalSupply() public view override(ERC20, IERC20) returns (uint256) {
