@@ -14,11 +14,15 @@ program
   .argument('<contract2>', 'second contract to compare')
   .allowExcessArguments(false)
   .option('-d, --debug', 'output extra debugging')
+  .option('-c, --common-dep <paths...>', 'common dependencies paths')
   .parse(process.argv);
 
 const options = program.opts();
 const DEBUG = !!options.debug;
+const commonDeps = options.commonDep || false;
 const contracts = program.args;
+
+const commonMap = handleCommonDependencies(commonDeps);
 
 // parse arguments
 const solFiles = globSync(`src/UsdnProtocol/{${contracts.join(',')}}`);
@@ -33,10 +37,35 @@ for (const [i, file] of solFiles.entries()) {
 }
 
 // check for clashes
-const selectorMap = new Map<`0x${string}`, string>();
+let globSelectorMap = new Map<`0x${string}`, string>();
 for (const file of solFiles) {
+  const fileMap = createFunctionMap(file);
+  globSelectorMap.forEach((selector, signature) => {
+    if (fileMap.has(signature) && !commonMap.has(signature)) {
+      console.log(pc.red('\nFunction clash detected with :'), pc.yellow(selector), pc.green(signature));
+      process.exit(1);
+    }
+  });
+
+  globSelectorMap = new Map([...globSelectorMap, ...fileMap]);
+}
+
+function handleCommonDependencies(commonDeps: string[]): Map<`0x${string}`, string> {
+  let commonSelectorMap = new Map<`0x${string}`, string>();
+
+  for (const commonDep of commonDeps) {
+    const depMap = createFunctionMap(commonDep);
+    commonSelectorMap = new Map([...commonSelectorMap, ...depMap]);
+  }
+  return commonSelectorMap;
+}
+
+function createFunctionMap(contractName: string): Map<`0x${string}`, string> {
+  const selectorMap = new Map<`0x${string}`, string>();
+  const path = `./out/${contractName}.sol/${contractName}.json`;
+
   try {
-    const fileContent = readFileSync(`./out/${file}.sol/${file}.json`);
+    const fileContent = readFileSync(path);
     const artifact = JSON.parse(fileContent.toString());
 
     const abiItems = artifact.abi.filter((abiItem: AbiFunction) => abiItem.type === 'function');
@@ -46,25 +75,16 @@ for (const file of solFiles) {
 
       if (selectorMap.has(selector)) {
         const existingSignature = selectorMap.get(selector);
-
         if (DEBUG) {
           console.log(`${signature}: selector ${selector} is already in the map with signature ${existingSignature}`);
         }
-
-        // if the function selector is already in the map then we have a clash
-        console.log(
-          '\n',
-          pc.bgRed('ERROR:'),
-          `function ${pc.blue(signature)} in ${pc.green(file)} have the same selector (${selector})\n`,
-          `\t    than ${pc.blue(existingSignature)} in ${pc.green(solFiles[0])}`,
-        );
-
-        process.exit(1);
       } else {
         selectorMap.set(selector, signature);
       }
     }
   } catch {
-    console.log(`Error with ./out/${file}.sol/${file}.json`);
+    console.log(`Error with ${path}`);
   }
+
+  return selectorMap;
 }
