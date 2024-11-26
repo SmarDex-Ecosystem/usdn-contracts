@@ -5,6 +5,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary } from "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { TickMath } from "../../../src/libraries/TickMath.sol";
 
 /**
@@ -109,31 +110,33 @@ contract TestForkUsdnProtocolInitializationValues is UsdnProtocolBaseIntegration
         wstETH.approve(address(protocol), type(uint256).max);
 
         uint256 maxTotalExpoToFill = FixedPointMathLib.fullMulDiv(
-            uint256(protocol.getOpenExpoImbalanceLimitBps()), protocol.getBalanceVault(), protocol.BPS_DIVISOR()
+            uint256(protocol.getOpenExpoImbalanceLimitBps()),
+            protocol.getBalanceVault(),
+            UsdnProtocolConstantsLibrary.BPS_DIVISOR
         );
 
-        uint256 leverageFactor = 10 ** protocol.LEVERAGE_DECIMALS();
+        uint256 leverageFactor = 10 ** UsdnProtocolConstantsLibrary.LEVERAGE_DECIMALS;
         uint256 ligPriceWithoutPenalty;
         uint128 longPosition;
         uint256 leverage;
+        uint256 minLongPosition = protocol.getMinLongPosition();
         if (leverageType == LeverageType.min) {
             leverage = protocol.getMinLeverage();
             ligPriceWithoutPenalty =
                 params.initialPrice - FixedPointMathLib.fullMulDiv(leverageFactor, params.initialPrice, leverage);
             longPosition = uint128(FixedPointMathLib.fullMulDiv(leverageFactor, maxTotalExpoToFill, leverage));
 
-            emit log_named_decimal_uint("MIN LEVERAGE", leverage, protocol.LEVERAGE_DECIMALS());
+            emit log_named_decimal_uint("MIN LEVERAGE", leverage, UsdnProtocolConstantsLibrary.LEVERAGE_DECIMALS);
         } else if (leverageType == LeverageType.max) {
-            longPosition = uint128(protocol.getMinLongPosition());
+            longPosition = uint128(minLongPosition);
             leverage = uint128(FixedPointMathLib.fullMulDiv(leverageFactor, maxTotalExpoToFill, longPosition));
             ligPriceWithoutPenalty =
                 params.initialPrice - FixedPointMathLib.fullMulDiv(leverageFactor, params.initialPrice, leverage);
-            emit log_named_decimal_uint("MAX LEVERAGE", leverage, protocol.LEVERAGE_DECIMALS());
+            emit log_named_decimal_uint("MAX LEVERAGE", leverage, UsdnProtocolConstantsLibrary.LEVERAGE_DECIMALS);
         }
-        assertLe(leverage, protocol.getMaxLeverage(), "Leverage should be lower or equal than max leverage");
-        assertGe(
-            longPosition, protocol.getMinLongPosition(), "Position should be higher or equal than minimum long position"
-        );
+        uint256 maxLeverage = protocol.getMaxLeverage();
+        assertLe(leverage, maxLeverage, "Leverage should be lower or equal than max leverage");
+        assertGe(longPosition, minLongPosition, "Position should be higher or equal than minimum long position");
 
         uint128 liqPrice = uint128(
             TickMath.getPriceAtTick(
@@ -146,7 +149,7 @@ contract TestForkUsdnProtocolInitializationValues is UsdnProtocolBaseIntegration
             longPosition,
             liqPrice,
             type(uint128).max,
-            protocol.getMaxLeverage(),
+            maxLeverage,
             address(this),
             payable(this),
             type(uint256).max,
