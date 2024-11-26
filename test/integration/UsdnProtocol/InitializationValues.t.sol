@@ -12,6 +12,25 @@ import { TickMath } from "../../../src/libraries/TickMath.sol";
  * @custom:background Given a forked ethereum mainnet chain
  */
 contract TestForkUsdnProtocolInitializationValues is UsdnProtocolBaseIntegrationFixture {
+    /* 
+        Test results:
+            200 wsteth:
+                - max leverage:
+                    -  collateral   2 wsteth (min long position)
+                    -  leverage     ~x4.9
+                - min leverage:
+                    - collateral    ~8.9 wsteth
+                    - leverage      x1.1
+
+            300 wsteth:
+                - max leverage:
+                    - collateral    2 wsteth (min long position)
+                    - leverage      ~x7.4
+                - min leverage:
+                    - collateral    ~13.4 wsteth
+                    - leverage      x1.1
+     */
+
     /**
      * @dev The type of leverage to use in the {_setupLongPositions} function
      * @param min Uses the {_minLeverage} with the maximum position collateral
