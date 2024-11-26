@@ -5,7 +5,7 @@ import { Command } from 'commander';
 import { globSync } from 'glob';
 import { toEventSelector, toEventSignature, toFunctionSelector, toFunctionSignature } from 'viem';
 
-const DIST_PATH = './dist'
+const DIST_PATH = './dist';
 const ABI_EXPORT_PATH = `${DIST_PATH}/abi`;
 
 type EnumMember = {
@@ -140,4 +140,40 @@ const fileContent = [...allEnums.values()].join('\n');
 writeFileSync(`${ABI_EXPORT_PATH}/Enums.ts`, fileContent);
 indexContent += `export * from './Enums';\n`;
 
+// Export constants
+const constFileLines = ['import { keccak256, toHex } from "viem"'];
+const contents = readFileSync('src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol').toString();
+const constantsRegex = /[^\n]*constant (?<ident>\w+) =\s+(?<value>.+?);/gs;
+for (const match of contents.matchAll(constantsRegex)) {
+  const ident = match.groups?.ident;
+  if (!ident) {
+    continue;
+  }
+  let value = match.groups?.value;
+  if (!value) {
+    continue;
+  }
+  if (value === 'type(int24).min') {
+    value = '-8388608n';
+  } else if (value.startsWith('address')) {
+    value = value.replace(/address\((\w+)\)/g, '"$1"');
+  } else if (value.startsWith('keccak256')) {
+    value = value.replaceAll('\n', '');
+    value = value.replace(/keccak256\(\s*("[^"]+")\s*\)/g, 'keccak256(toHex($1))');
+  } else {
+    // conversion for numbers
+    value = value.replace('minutes', '* 60');
+    value = value.replace('hours', '* 3600');
+    value = value.replace('days', '* 86400');
+    value = value.replace('ether', '* 10 ** 18');
+    value = value.replaceAll(/((?:[0-9]+_?)+)e([0-9]+)/g, '$1 * 10 ** $2'); // scientific notation
+    value = value.replaceAll(/((?:[0-9]+_?)+)/g, '$1n');
+  }
+  constFileLines.push(`export const ${ident} = ${value};`);
+}
+const constFileContent = [...constFileLines.values()].join('\n');
+writeFileSync(`${ABI_EXPORT_PATH}/Constants.ts`, constFileContent);
+indexContent += `export * from './Constants';\n`;
+
+// Write index file
 writeFileSync(`${ABI_EXPORT_PATH}/index.ts`, indexContent);
