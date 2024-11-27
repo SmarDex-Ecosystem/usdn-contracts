@@ -4,6 +4,9 @@ pragma solidity 0.8.26;
 import { ADMIN, USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+
 contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -42,7 +45,6 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
 
         // Testing returned values
         assertEq(data.lastPrice, oldPrice, "PriceOld: last price should not be updated");
-        assertEq(data.isPriceRecent, false, "PriceOld: price is not recent");
         assertEq(data.tempLongBalance, longBalanceBefore, "PriceOld: long balance should not be updated");
         assertEq(data.tempVaultBalance, vaultBalanceBefore, "PriceOld: vault balance should not be updated");
     }
@@ -140,9 +142,9 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
             (expectedFundingPerDay,) = protocol.i_fundingPerDay(emaBefore);
             int256 expectedFunding = expectedFundingPerDay / 2; // 24/2 hours passed
             expectedFundingAsset = expectedFunding * int256(protocol.getLongTradingExpo(oldPrice))
-                / int256(10) ** protocol.FUNDING_RATE_DECIMALS();
+                / int256(10) ** Constants.FUNDING_RATE_DECIMALS;
             int256 protocolFeeBps = int256(uint256(protocol.getProtocolFeeBps()));
-            expectedFeeAsset = expectedFundingAsset * protocolFeeBps / int256(protocol.BPS_DIVISOR());
+            expectedFeeAsset = expectedFundingAsset * protocolFeeBps / int256(Constants.BPS_DIVISOR);
         }
 
         int256 expectedEma = protocol.i_calcEMA(expectedFundingPerDay, 12 hours);
@@ -174,7 +176,6 @@ contract TestUsdnProtocolCoreApplyPnlAndFunding is UsdnProtocolBaseFixture {
 
         // Testing returned values
         assertEq(data.lastPrice, newPrice, "last price should be updated to newPrice");
-        assertEq(data.isPriceRecent, true, "price is recent");
 
         if (expectedFundingAsset > 0) {
             assertEq(

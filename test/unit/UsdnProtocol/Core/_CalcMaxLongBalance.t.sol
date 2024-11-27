@@ -3,6 +3,9 @@ pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+
 /**
  * @custom:feature Tests for the _calcMaxLongBalance function
  * @custom:background Given a protocol instance that was initialized with default params
@@ -20,7 +23,7 @@ contract TestUsdnProtocolCalcMaxLongBalance is UsdnProtocolBaseFixture {
      * @custom:when The returned value is 0
      */
     function test_calcMaxLongBalance() public view {
-        uint256 marginBps = protocol.MIN_LONG_TRADING_EXPO_BPS();
+        uint256 marginBps = Constants.MIN_LONG_TRADING_EXPO_BPS;
 
         uint256 totalExpo = 100 ether;
         uint256 minTradingExpo = totalExpo * marginBps / BPS_DIVISOR;
@@ -59,7 +62,7 @@ contract TestUsdnProtocolCalcMaxLongBalance is UsdnProtocolBaseFixture {
     function testFuzz_calcMaxLongBalance(uint256 totalExpo) public view {
         totalExpo = bound(totalExpo, 0, uint256(type(int256).max) / 10_000);
 
-        uint256 minTradingExpo = totalExpo * protocol.MIN_LONG_TRADING_EXPO_BPS() / BPS_DIVISOR;
+        uint256 minTradingExpo = totalExpo * Constants.MIN_LONG_TRADING_EXPO_BPS / BPS_DIVISOR;
         uint256 maxLongBalance = protocol.i_calcMaxLongBalance(totalExpo);
 
         assertApproxEqAbs(

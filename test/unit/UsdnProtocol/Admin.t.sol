@@ -6,8 +6,13 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { ADMIN } from "../../utils/Constants.sol";
+import { RebalancerHandler } from "../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
+import { MockInvalidOracleMiddleware } from "./utils/MockInvalidOracleMiddleware.sol";
+import { MockInvalidRebalancer } from "./utils/MockInvalidRebalancer.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { ILiquidationRewardsManager } from
     "../../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "../../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
@@ -122,11 +127,26 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     function test_setOracleMiddleware() public adminPrank {
         // expected event
         vm.expectEmit();
-        emit OracleMiddlewareUpdated(address(this));
+        emit OracleMiddlewareUpdated(address(oracleMiddleware));
         // set middleware
-        protocol.setOracleMiddleware(IOracleMiddleware(address(this)));
+        protocol.setOracleMiddleware(oracleMiddleware);
         // assert new middleware equal randAddress
-        assertEq(address(protocol.getOracleMiddleware()), address(this));
+        assertEq(address(protocol.getOracleMiddleware()), address(oracleMiddleware));
+    }
+
+    /**
+     * @custom:scenario Call "setOracleMiddleware" from admin by passing a new middleware contract
+     * that contains an invalid {_lowLatencyDelay}
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then The call should revert with {UsdnProtocolInvalidMiddlewareLowLatencyDelay}
+     */
+    function test_RevertWhen_setOracleMiddlewareInvalidLowLatencyDelay() public adminPrank {
+        MockInvalidOracleMiddleware mockInvalidOracleMiddleware = new MockInvalidOracleMiddleware();
+        uint16 invalidValue = uint16(protocol.getLowLatencyValidatorDeadline() - 1);
+        mockInvalidOracleMiddleware.setLowLatencyDelay(invalidValue);
+        vm.expectRevert(UsdnProtocolInvalidMiddlewareLowLatencyDelay.selector);
+        protocol.setOracleMiddleware(IOracleMiddleware(address(mockInvalidOracleMiddleware)));
     }
 
     /**
@@ -164,7 +184,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test_setMinLeverage() public adminPrank {
         // allowed value
-        uint256 expectedNewValue = 10 ** protocol.LEVERAGE_DECIMALS() + 1;
+        uint256 expectedNewValue = 10 ** Constants.LEVERAGE_DECIMALS + 1;
         // expected event
         vm.expectEmit();
         emit MinLeverageUpdated(expectedNewValue);
@@ -196,7 +216,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test_RevertWhen_setMaxLeverageWithMax() public adminPrank {
         // cache limit
-        uint256 aboveLimit = 100 * 10 ** protocol.LEVERAGE_DECIMALS() + 1;
+        uint256 aboveLimit = 100 * 10 ** Constants.LEVERAGE_DECIMALS + 1;
         // maxLeverage greater than max disallowed
         vm.expectRevert(UsdnProtocolInvalidMaxLeverage.selector);
         // set maxLeverage
@@ -332,7 +352,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then Revert because greater than max
      */
     function test_RevertWhen_setLiquidationIterationWithMax() public adminPrank {
-        uint16 aboveMax = protocol.MAX_LIQUIDATION_ITERATION() + 1;
+        uint16 aboveMax = Constants.MAX_LIQUIDATION_ITERATION + 1;
         // liquidationIteration greater than max disallowed
         vm.expectRevert(UsdnProtocolInvalidLiquidationIteration.selector);
         // set liquidationIteration
@@ -396,7 +416,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test__RevertWhen_setFundingSFWithMax() public adminPrank {
         // cached limit
-        uint256 aboveLimit = 10 ** protocol.FUNDING_SF_DECIMALS() + 1;
+        uint256 aboveLimit = 10 ** Constants.FUNDING_SF_DECIMALS + 1;
         // fundingSF greater than max disallowed
         vm.expectRevert(UsdnProtocolInvalidFundingSF.selector);
         // set fundingSF
@@ -459,7 +479,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then The call reverts
      */
     function test_RevertWhen_setSdexBurnOnDepositRatioWithMax() public adminPrank {
-        uint32 aboveMax = uint32(protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR() / 20 + 1);
+        uint32 aboveMax = uint32(Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20 + 1);
 
         vm.expectRevert(UsdnProtocolInvalidBurnSdexOnDepositRatio.selector);
         protocol.setSdexBurnOnDepositRatio(aboveMax);
@@ -473,7 +493,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:and a BurnSdexOnDepositRatioUpdated event should be emitted
      */
     function test_setSdexBurnOnDepositRatio() public adminPrank {
-        uint16 expectedNewValue = uint16(protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR()) / 20;
+        uint16 expectedNewValue = uint16(Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR) / 20;
 
         vm.expectEmit();
         emit BurnSdexOnDepositRatioUpdated(expectedNewValue);
@@ -585,13 +605,27 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then The value should be updated
      */
     function test_setRebalancer() public adminPrank {
-        IRebalancer expectedNewValue = IRebalancer(address(this));
-
         vm.expectEmit();
-        emit RebalancerUpdated(address(this));
-        protocol.setRebalancer(expectedNewValue);
+        emit RebalancerUpdated(address(rebalancer));
+        protocol.setRebalancer(rebalancer);
 
-        assertEq(address(protocol.getRebalancer()), address(expectedNewValue));
+        assertEq(address(protocol.getRebalancer()), address(rebalancer));
+    }
+
+    /**
+     * @custom:scenario Call "setRebalancer" from admin by passing
+     * a new rebalancer contract that contains an invalid {_minAssetDeposit}
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet triggers admin contract function
+     * @custom:then The transaction should revert with {UsdnProtocolInvalidRebalancerMinAssetDeposit}
+     */
+    function test_RevertWhen_setRebalancerInvalidMinAssetDeposit() public adminPrank {
+        uint256 minLongPosition = 1 ether;
+        protocol.setMinLongPosition(minLongPosition);
+        MockInvalidRebalancer invalidRebalancer = new MockInvalidRebalancer();
+        invalidRebalancer.setMinAssetDeposit(minLongPosition - 1);
+        vm.expectRevert(UsdnProtocolInvalidRebalancerMinAssetDeposit.selector);
+        protocol.setRebalancer(RebalancerHandler(payable(invalidRebalancer)));
     }
 
     /**
@@ -629,7 +663,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:when Admin wallet triggers the function with a value above the limit
      * @custom:then The transaction should revert
      */
-    function test_RevertWhen_invalidSetSecuriyDepositValue() public adminPrank {
+    function test_RevertWhen_invalidSetSecurityDepositValue() public adminPrank {
         vm.expectRevert(UsdnProtocolInvalidSecurityDeposit.selector);
         protocol.setSecurityDepositValue(5 ether + 1);
     }
@@ -875,10 +909,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test_setMinLongPosition() public adminPrank {
         uint256 newValue = 1 ether;
-        // expected event
+
         vm.expectEmit();
         emit MinLongPositionUpdated(newValue);
-        // set minimum long position
         protocol.setMinLongPosition(newValue);
         // assert that the new value is equal to the expected value
         assertEq(protocol.getMinLongPosition(), newValue);

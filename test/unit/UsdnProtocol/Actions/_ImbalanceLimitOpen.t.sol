@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
@@ -115,7 +117,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         int256 expectedImbalance = (
             int256(protocol.getTotalExpo() + totalExpoValueToLimit) - int256(protocol.getBalanceLong() + longAmount)
                 - currentVaultExpo
-        ) * int256(protocol.BPS_DIVISOR()) / currentVaultExpo;
+        ) * int256(Constants.BPS_DIVISOR) / currentVaultExpo;
         vm.expectRevert(
             abi.encodeWithSelector(
                 IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, uint256(expectedImbalance)
@@ -141,10 +143,10 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         // open limit bps
         openLimitBps_ = protocol.getOpenExpoImbalanceLimitBps() + 1;
         // current long expo value to unbalance protocol
-        uint256 longExpoValueToLimit = uint256(vaultExpo) * uint256(openLimitBps_) / protocol.BPS_DIVISOR();
+        uint256 longExpoValueToLimit = uint256(vaultExpo) * uint256(openLimitBps_) / Constants.BPS_DIVISOR;
         // long amount for vaultExpoValueToLimit and any leverage
         longAmount_ =
-            longExpoValueToLimit * 10 ** protocol.LEVERAGE_DECIMALS() / protocol.i_getLeverage(2000 ether, 1500 ether);
+            longExpoValueToLimit * 10 ** Constants.LEVERAGE_DECIMALS / protocol.i_getLeverage(2000 ether, 1500 ether);
         // current total expo value to imbalance the protocol
         totalExpoValueToLimit_ = longExpoValueToLimit + longAmount_ + 1;
 

@@ -275,7 +275,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             EMPTY_PREVIOUS_DATA
         );
         assertFalse(success, "success");
-        assertEq(posId.tick, protocol.NO_POSITION_TICK(), "pos tick");
+        assertEq(posId.tick, Constants.NO_POSITION_TICK, "pos tick");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user 0 should not have a pending action");
@@ -411,13 +411,13 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      */
     function test_RevertWhen_initiateOpenPositionSafetyMargin() public {
         // set the max leverage very high to allow for such a case
-        uint8 leverageDecimals = protocol.LEVERAGE_DECIMALS();
+        uint8 leverageDecimals = Constants.LEVERAGE_DECIMALS;
         vm.prank(ADMIN);
         protocol.setMaxLeverage(uint128(100 * 10 ** leverageDecimals));
 
         // calculate expected error values
         uint128 expectedMaxLiqPrice =
-            uint128(CURRENT_PRICE * (protocol.BPS_DIVISOR() - protocol.getSafetyMarginBps()) / protocol.BPS_DIVISOR());
+            uint128(CURRENT_PRICE * (Constants.BPS_DIVISOR - protocol.getSafetyMarginBps()) / Constants.BPS_DIVISOR);
 
         int24 expectedTick = protocol.getEffectiveTickForPrice(CURRENT_PRICE);
         uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(expectedTick);

@@ -2,15 +2,23 @@
 pragma solidity >=0.8.0;
 
 import { IBaseOracleMiddleware } from "./IBaseOracleMiddleware.sol";
+import { IChainlinkOracle } from "./IChainlinkOracle.sol";
 import { IOracleMiddlewareErrors } from "./IOracleMiddlewareErrors.sol";
 import { IOracleMiddlewareEvents } from "./IOracleMiddlewareEvents.sol";
+import { IPythOracle } from "./IPythOracle.sol";
 
 /**
  * @title Oracle Middleware interface
  * @notice The oracle middleware is a contract that is called by the USDN protocol to validate price data. Using a
  * middleware allows the protocol to later upgrade to a new oracle logic without having to modify the vault contract
  */
-interface IOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, IOracleMiddlewareEvents {
+interface IOracleMiddleware is
+    IChainlinkOracle,
+    IPythOracle,
+    IBaseOracleMiddleware,
+    IOracleMiddlewareErrors,
+    IOracleMiddlewareEvents
+{
     /* -------------------------------------------------------------------------- */
     /*                                    Roles                                   */
     /* -------------------------------------------------------------------------- */

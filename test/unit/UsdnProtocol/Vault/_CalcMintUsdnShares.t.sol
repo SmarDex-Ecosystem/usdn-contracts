@@ -5,6 +5,8 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
@@ -38,7 +40,7 @@ contract TestUsdnProtocolCalcMintUsdnShares is UsdnProtocolBaseFixture {
 
         uint8 assetDecimals = protocol.getAssetDecimals();
         uint8 priceFeedDecimals = protocol.getPriceFeedDecimals();
-        uint8 tokensDecimals = protocol.TOKENS_DECIMALS();
+        uint8 tokensDecimals = Constants.TOKENS_DECIMALS;
         uint8 decimals = assetDecimals + priceFeedDecimals - tokensDecimals;
 
         bytes memory result = vmFFIRustCommand(

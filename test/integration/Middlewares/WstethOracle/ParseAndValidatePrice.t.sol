@@ -80,18 +80,12 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             ) / wstethMiddleware.BPS_DIVISOR();
 
             // price + conf
-            if (
-                action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
-                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
-            ) {
+            if (action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition) {
                 // check price
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + formattedPythConf), priceError);
 
                 // price - conf
-            } else if (
-                action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
-            ) {
+            } else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
                 // check price
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - formattedPythConf), priceError);
 
@@ -192,14 +186,6 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             uint256 price = uint64(pythPrice.price);
             price *= 10 ** wstethMiddleware.getDecimals() / 10 ** uint32(-pythPrice.expo);
 
-            uint256 conf = pythPrice.conf * 10 ** (wstethMiddleware.getDecimals() - uint32(-pythPrice.expo))
-                * wstethMiddleware.getConfRatioBps() / BPS_DIVISOR;
-            if (action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateWithdrawal) {
-                price += conf;
-            } else if (action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.InitiateDeposit) {
-                price -= conf;
-            }
-
             // middleware data
             PriceInfo memory middlewarePrice =
                 wstethMiddleware.parseAndValidatePrice("", uint128(block.timestamp), action, "");
@@ -271,17 +257,11 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             ) / wstethMiddleware.BPS_DIVISOR();
 
             // price + conf
-            if (
-                action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
-                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
-            ) {
+            if (action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition) {
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + formattedPythConf), priceError);
             }
             // price - conf
-            else if (
-                action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
-            ) {
+            else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - formattedPythConf), priceError);
             }
             // price only

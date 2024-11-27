@@ -28,6 +28,10 @@ library UsdnProtocolSettersLibrary {
         if (address(newOracleMiddleware) == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareAddress();
         }
+        if (newOracleMiddleware.getLowLatencyDelay() < s._lowLatencyValidatorDeadline) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareLowLatencyDelay();
+        }
+
         s._oracleMiddleware = newOracleMiddleware;
         emit IUsdnProtocolEvents.OracleMiddlewareUpdated(address(newOracleMiddleware));
     }
@@ -48,6 +52,10 @@ library UsdnProtocolSettersLibrary {
     /// @notice See {IUsdnProtocolFallback}
     function setRebalancer(IBaseRebalancer newRebalancer) external {
         Types.Storage storage s = Utils._getMainStorage();
+
+        if (address(newRebalancer) != address(0) && s._minLongPosition > newRebalancer.getMinAssetDeposit()) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidRebalancerMinAssetDeposit();
+        }
 
         s._rebalancer = newRebalancer;
         s._isRebalancer[address(newRebalancer)] = true;

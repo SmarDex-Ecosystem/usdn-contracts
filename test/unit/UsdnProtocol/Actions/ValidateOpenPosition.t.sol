@@ -459,7 +459,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             // Sanity check
             uint256 expectedLeverage = protocol.i_getLeverage(data.validatePrice, expectedLiqPrice);
             // final leverage should be above 10x because of the stored liquidation penalty of the target tick
-            assertGt(expectedLeverage, uint128(10 * 10 ** protocol.LEVERAGE_DECIMALS()), "final leverage");
+            assertGt(expectedLeverage, uint128(10 * 10 ** Constants.LEVERAGE_DECIMALS), "final leverage");
         }
 
         // validate deposit with a lower entry price

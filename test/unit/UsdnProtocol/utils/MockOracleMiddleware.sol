@@ -12,7 +12,7 @@ import {
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRules {
+contract MockOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, AccessControlDefaultAdminRules {
     uint16 public constant BPS_DIVISOR = 10_000;
     uint16 public constant MAX_CONF_RATIO = BPS_DIVISOR * 2;
     uint8 internal constant DECIMALS = 18;
@@ -27,7 +27,6 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
 
     bytes32 public lastActionId;
 
-    /// @inheritdoc IOracleMiddleware
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     constructor() AccessControlDefaultAdminRules(0, msg.sender) {
@@ -89,17 +88,14 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
         return _requireValidationCost ? 1 : 0;
     }
 
-    /// @inheritdoc IOracleMiddleware
     function getConfRatioBps() external view returns (uint16) {
         return _confRatioBps;
     }
 
-    /// @inheritdoc IOracleMiddleware
     function setValidationDelay(uint256 newDelay) external {
         _validationDelay = newDelay;
     }
 
-    /// @inheritdoc IOracleMiddleware
     function setConfRatio(uint16 newConfRatio) external onlyRole(ADMIN_ROLE) {
         // confidence ratio limit check
         if (newConfRatio > MAX_CONF_RATIO) {
@@ -108,7 +104,6 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
         _confRatioBps = newConfRatio;
     }
 
-    /// @inheritdoc IOracleMiddleware
     function setChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external {
         _timeElapsedLimit = newTimeElapsedLimit;
     }
