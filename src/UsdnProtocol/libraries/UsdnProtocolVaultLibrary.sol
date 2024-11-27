@@ -684,6 +684,7 @@ library UsdnProtocolVaultLibrary {
             return (params.securityDepositValue, false);
         }
 
+        // optimistically mint shares and adjust balance
         s._balanceVault += params.amount;
         s._usdn.mintShares(address(this), data.usdnSharesToMint);
 
@@ -780,55 +781,54 @@ library UsdnProtocolVaultLibrary {
             }
         }
 
-        // we calculate the amount of USDN to mint, either considering the vault balance at the time of the initiate
-        // action, or the current balance with the new price. We will use the higher of the two to mint. Funding between
+        // we calculate the amount of USDN to give the user, considering the new oracle price. Funding between
         // the initiate and validate actions is ignored. So any balance difference due to funding will be ignored when
         // calculating the minted USDN
         uint128 fees = FixedPointMathLib.fullMulDiv(deposit.amount, deposit.feeBps, Constants.BPS_DIVISOR).toUint128();
         uint128 amountAfterFees = deposit.amount - fees;
 
-        uint256 balanceVault = deposit.balanceVault;
         // the amount of shares that was minted optimistically
-        uint256 sharesMinted = Utils._calcMintUsdnShares(amountAfterFees, balanceVault + fees, deposit.usdnTotalShares);
+        uint256 sharesMinted =
+            Utils._calcMintUsdnShares(amountAfterFees, deposit.balanceVault + fees, deposit.usdnTotalShares);
+        IUsdn usdn = s._usdn;
 
-        // the vault balance resulting from the price change at `validatePrice.timestamp`
+        // the vault balance resulting from the price change between the initiate and validate actions
         int256 extrapolatedVaultBalance = Utils._vaultAssetAvailable(
             deposit.totalExpo,
             deposit.balanceVault,
             deposit.balanceLong,
             validatePrice.price.toUint128(),
             deposit.assetPrice
-        );
-        if (extrapolatedVaultBalance < 0) {
-            // sanity check, should not happen
-            extrapolatedVaultBalance = 0;
+        ) + Utils._toInt256(fees); // the fees are added so the user doesn't benefit from their own fees
+        // calculate how many shares the user should receive
+        uint256 sharesToUser;
+        if (extrapolatedVaultBalance <= 0) {
+            // if the vault would be empty due to the new price, we will simply mint 0 shares to the user
+            sharesToUser = 0;
+        } else {
+            sharesToUser =
+                Utils._calcMintUsdnShares(amountAfterFees, uint256(extrapolatedVaultBalance), deposit.usdnTotalShares);
         }
-        balanceVault = uint256(extrapolatedVaultBalance);
 
-        uint256 sharesRequired =
-            Utils._calcMintUsdnShares(amountAfterFees, balanceVault + fees, deposit.usdnTotalShares);
-
-        IUsdn usdn = s._usdn;
-        uint256 sharesToUser = sharesMinted;
-        if (sharesRequired > sharesMinted) {
+        if (sharesToUser > sharesMinted) {
             // we need to mint more shares
             uint256 toMint;
             unchecked {
-                toMint = sharesRequired - sharesMinted; // can't underflow, checked above
+                toMint = sharesToUser - sharesMinted; // can't underflow, checked above
             }
-            sharesToUser += toMint;
             usdn.mintShares(address(this), toMint);
-        } else if (sharesRequired < sharesMinted) {
+        } else if (sharesToUser < sharesMinted) {
             // we need to burn the excess
             uint256 toBurn;
             unchecked {
-                toBurn = sharesMinted - sharesRequired; // can't underflow, checked above
+                toBurn = sharesMinted - sharesToUser; // can't underflow, checked above
             }
-            sharesToUser -= toBurn;
             usdn.burnShares(toBurn);
         }
 
-        usdn.transferShares(deposit.to, sharesToUser);
+        if (sharesToUser > 0) {
+            usdn.transferShares(deposit.to, sharesToUser);
+        }
 
         isValidated_ = true;
         emit IUsdnProtocolEvents.ValidatedDeposit(
@@ -876,9 +876,15 @@ library UsdnProtocolVaultLibrary {
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
         data_.lastPrice = s._lastPrice;
-        data_.balanceVault = vaultAssetAvailableWithFunding(data_.lastPrice, uint128(block.timestamp));
+        // we use the balance from storage, which means the user will be exempt from funding for the period
+        // between the `lastUpdateTimestamp` and `block.timestamp`. This is necessary because we optimistically
+        // remove those assets from the vault balance in this transaction, and we must ensure this amount is
+        // proportional to the user's share of the vault. At most, the user will be exempt from funding for a duration
+        // equal to the on-chain oracle's heartbeat
+        data_.balanceVault = s._balanceVault;
         data_.usdnTotalShares = s._usdn.totalShares();
         data_.feeBps = s._vaultFeeBps;
+        // this quantity is smaller than or equal to `balanceVault` because `usdnShares <= usdnTotalShares`
         data_.withdrawalAmountAfterFees =
             Utils._calcAmountToWithdraw(usdnShares, data_.balanceVault, data_.usdnTotalShares, data_.feeBps);
         if (data_.withdrawalAmountAfterFees < amountOutMin) {
@@ -963,14 +969,16 @@ library UsdnProtocolVaultLibrary {
         );
 
         // update state optimistically
-        s._balanceVault -= data.withdrawalAmountAfterFees;
+        // can't underflow because `withdrawalAmountAfterFees` is calculated from the balance in storage and
+        // must be smaller than or equal to it
+        s._balanceVault = data.balanceVault - data.withdrawalAmountAfterFees;
 
         IUsdn usdn = s._usdn;
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             // ask the msg.sender to send USDN shares and check the balance
             Utils._usdnTransferCallback(usdn, params.usdnShares);
         } else {
-            // retrieve the USDN shares, check that the balance is sufficient
+            // retrieve the USDN shares (checks that the balance is sufficient)
             usdn.transferSharesFrom(params.user, address(this), params.usdnShares);
         }
 
@@ -1060,7 +1068,7 @@ library UsdnProtocolVaultLibrary {
             );
 
             if (extrapolatedVaultBalance < 0) {
-                extrapolatedVaultBalance = 0;
+                extrapolatedVaultBalance = 0; // in this case, we simply will send no assets to the user
             }
             balanceVault = uint256(extrapolatedVaultBalance);
         }
@@ -1068,6 +1076,7 @@ library UsdnProtocolVaultLibrary {
         uint256 shares = Utils._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
 
         // we need to check if we subtracted too much or too little from the vault balance in the initiate
+
         // amount that we subtracted from the vault balance already
         uint256 withdrawnAmount =
             Utils._calcAmountToWithdraw(shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps);
