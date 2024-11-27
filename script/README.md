@@ -108,6 +108,18 @@ npx tsx script/functionClashes.ts UsdnProtocolImpl.sol UsdnProtocolFallback.sol 
 
 ## Verify contracts
 
-The verifying script will work with the latest broadcast script.
-To work, it needs a run-latest.json file.
-It can be an older broadcast file, but you will need to override the run-latest.json file first.
+The verifying script will work with a broadcast file, the compiled contracts and an etherscan API key.
+You don't need to be the deployer to verify the contracts.
+Before verifying, you need to compile the contracts :
+
+```forge compile```
+
+Be sure to be in the same version as the deployment to avoid bytecode difference.
+You can then verify by using this cli:
+
+```
+npm run verify PATH_TO_BROADCAST_FILE -e ETHERSCAN_API_KEY
+```
+
+To show some extra debug you can add `-d` flag.
+If you are verifying contracts in another platform than Etherscan, you can specify the url with `--verifier-url`  
