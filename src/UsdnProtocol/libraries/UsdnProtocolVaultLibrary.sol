@@ -1037,12 +1037,11 @@ library UsdnProtocolVaultLibrary {
             if (vaultAssetAvailable < 0) {
                 vaultAssetAvailable = 0;
             }
-            available = uint256(vaultAssetAvailable);
+            available = uint256(vaultAssetAvailable); // cast is safe because vaultAssetAvailable cannot be negative
 
             // we compare it to the available balance from the initiate action
             // we will use the lowest of the two amounts to redeem the underlying asset share
-            // cast is safe because vaultAssetAvailable cannot be negative
-            if (withdrawal.balanceVault <= uint256(vaultAssetAvailable)) {
+            if (withdrawal.balanceVault <= available) {
                 available = withdrawal.balanceVault;
             }
         }
@@ -1068,8 +1067,9 @@ library UsdnProtocolVaultLibrary {
             if (assetToTransferAfterFees > balanceVault) {
                 assetToTransferAfterFees = balanceVault;
             }
-
-            s._balanceVault = balanceVault - assetToTransferAfterFees;
+            unchecked {
+                s._balanceVault = balanceVault - assetToTransferAfterFees; // can't underflow, checked above
+            }
             address(s._asset).safeTransfer(withdrawal.to, assetToTransferAfterFees);
         }
 
