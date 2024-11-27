@@ -85,7 +85,7 @@ contract Utils is Script {
         returns (string[] memory inputs_)
     {
         inputs_ = new string[](8);
-        uint8 i = 0;
+        uint8 i;
 
         // create the command to run the functionClashes.ts script:
         // npx tsx FUNC_CLASHES_SCRIPT_PATH UsdnProtocolImpl UsdnProtocolFallback -c
@@ -110,7 +110,7 @@ contract Utils is Script {
         returns (string[] memory inputs_)
     {
         inputs_ = new string[](4);
-        uint8 i = 0;
+        uint8 i;
 
         // create the command to run the checkImplementationInitialization.ts script:
         // npx tsx IMPL_INITIALIZATION_SCRIPT_PATH UsdnProtocolImpl.sol
