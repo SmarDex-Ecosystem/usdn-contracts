@@ -584,7 +584,6 @@ library UsdnProtocolLongLibrary {
             cache = Types.CachedProtocolState({
                 totalExpo: s._totalExpo,
                 longBalance: longBalance,
-                // cast is safe as value cannot be negative
                 vaultBalance: vaultBalance,
                 tradingExpo: 0,
                 liqMultiplierAccumulator: s._liqMultiplierAccumulator
