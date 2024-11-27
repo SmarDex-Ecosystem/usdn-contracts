@@ -22,7 +22,7 @@ contract TestUsdnProtocolLongUnadjustPrice is UsdnProtocolBaseFixture {
      * @custom:given A price of 100 ether, an asset price of 2000 ether, a long trading exposure of 0, and an
      * accumulator of 1
      * @custom:when The _unadjustPrice internal function is called
-     * @custom:then The function should revert
+     * @custom:then The function reverts with the UsdnProtocolZeroLongTradingExpo error
      */
     function test_RevertWhen_longTradingExpoEqualToZero() public {
         vm.expectRevert(UsdnProtocolZeroLongTradingExpo.selector);
