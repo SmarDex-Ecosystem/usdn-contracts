@@ -328,11 +328,6 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getPendingBalanceVault() external view returns (int256) {
-        return Utils._getMainStorage()._pendingBalanceVault;
-    }
-
-    /// @inheritdoc IUsdnProtocolFallback
     function getEMA() external view returns (int256) {
         return Utils._getMainStorage()._EMA;
     }

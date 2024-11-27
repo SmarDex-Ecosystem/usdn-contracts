@@ -360,7 +360,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
         int256 newLongBalance = s._balanceLong.toInt256().safeSub(posValueToClose.toInt256());
         uint256 newTotalExpo = s._totalExpo - posTotalExpoToClose;
-        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault);
+        int256 currentVaultExpo = s._balanceVault.toInt256();
 
         int256 imbalanceBps = Utils._calcImbalanceCloseBps(currentVaultExpo, newLongBalance, newTotalExpo);
 

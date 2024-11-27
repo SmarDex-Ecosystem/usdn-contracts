@@ -113,7 +113,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         );
         vm.stopPrank();
 
-        int256 currentVaultExpo = int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault() + FEE;
+        int256 currentVaultExpo = int256(protocol.getBalanceVault()) + FEE;
         int256 expectedImbalance = (
             int256(protocol.getTotalExpo() + totalExpoValueToLimit) - int256(protocol.getBalanceLong() + longAmount)
                 - currentVaultExpo
@@ -139,7 +139,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         returns (int256 openLimitBps_, uint256 longAmount_, uint256 totalExpoValueToLimit_, uint256 amountAfterFee_)
     {
         // current vault expo
-        int256 vaultExpo = int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault() + FEE;
+        int256 vaultExpo = int256(protocol.getBalanceVault()) + FEE;
         // open limit bps
         openLimitBps_ = protocol.getOpenExpoImbalanceLimitBps() + 1;
         // current long expo value to unbalance protocol

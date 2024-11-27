@@ -123,8 +123,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         protocol.setExpoImbalanceLimits(0, 0, 600, 0, 0, 0);
 
         uint256 totalExpo = protocol.getTotalExpo();
-        int256 newVaultExpo =
-            int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault() - int256(withdrawalValueToLimit);
+        int256 newVaultExpo = int256(protocol.getBalanceVault()) - int256(withdrawalValueToLimit);
         int256 expectedImbalance = (int256(totalExpo - protocol.getBalanceLong()) - newVaultExpo)
             * int256(Constants.BPS_DIVISOR) / newVaultExpo;
 
@@ -147,11 +146,10 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     function test_RevertWhen_checkImbalanceLimitNewVaultExpoLtZero() public {
         uint256 vaultBalance = protocol.getBalanceVault();
         uint256 withdrawalValue = vaultBalance + 1;
-        int256 pendingBalanceVault = protocol.getPendingBalanceVault();
         uint256 totalExpo = protocol.getTotalExpo();
 
         // we check that the result of the new vault expo is less than zero
-        assertLt(int256(vaultBalance) + pendingBalanceVault - int256(withdrawalValue), 0);
+        assertLt(int256(vaultBalance) + int256(withdrawalValue), 0);
 
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEmptyVault.selector);
         protocol.i_checkImbalanceLimitWithdrawal(withdrawalValue, totalExpo);
@@ -175,8 +173,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
             longExpo * Constants.BPS_DIVISOR / (Constants.BPS_DIVISOR + uint256(withdrawalLimitBps_));
 
         // withdrawal value to reach limit
-        int256 withdrawalValueToLimit =
-            int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault() - int256(vaultExpoValueLimit);
+        int256 withdrawalValueToLimit = int256(protocol.getBalanceVault()) - int256(vaultExpoValueLimit);
         require(withdrawalValueToLimit > 0, "_ImbalanceLimitWithdrawal: withdrawal is not allowed");
         withdrawalValueToLimit_ = uint256(withdrawalValueToLimit);
     }

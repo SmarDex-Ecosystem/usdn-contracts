@@ -358,20 +358,35 @@ library UsdnProtocolCoreLibrary {
         delete s._pendingActions[pending.validator];
         s._pendingActionsQueue.clearAt(rawIndex);
         if (pending.action == Types.ProtocolAction.ValidateDeposit && cleanup) {
-            // for pending deposits, we send back the locked assets
+            // for pending deposits, we send back the user's assets and burn the minted USDN shares
             Types.DepositPendingAction memory deposit = Utils._toDepositPendingAction(pending);
-            s._pendingBalanceVault -= Utils._toInt256(deposit.amount);
-            address(s._asset).safeTransfer(to, deposit.amount);
+            uint128 fees =
+                FixedPointMathLib.fullMulDiv(deposit.amount, deposit.feeBps, Constants.BPS_DIVISOR).toUint128();
+            uint128 amountAfterFees = deposit.amount - fees;
+            uint256 sharesMinted =
+                Utils._calcMintUsdnShares(amountAfterFees, deposit.balanceVault + fees, deposit.usdnTotalShares);
+            uint256 balanceVault = s._balanceVault;
+            if (deposit.amount > balanceVault) {
+                s._balanceVault = 0;
+                address(s._asset).safeTransfer(to, balanceVault);
+            } else {
+                unchecked {
+                    s._balanceVault = balanceVault - deposit.amount; // can't underflow, checked above
+                }
+                address(s._asset).safeTransfer(to, deposit.amount);
+            }
+            s._usdn.burnShares(sharesMinted);
         } else if (pending.action == Types.ProtocolAction.ValidateWithdrawal && cleanup) {
-            // for pending withdrawals, we send the locked USDN
+            // for pending withdrawals, we mint back the USDN that were burned and restore the vault balance that
+            // was optimistically subtracted
             Types.WithdrawalPendingAction memory withdrawal = Utils._toWithdrawalPendingAction(pending);
             uint256 shares = Utils._mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
             // calculate the pending amount after fees to update the pending vault balance
-            uint256 pendingAmountAfterFees = Utils._calcAmountToWithdraw(
+            uint256 withdrawnAmount = Utils._calcAmountToWithdraw(
                 shares, withdrawal.balanceVault, withdrawal.usdnTotalShares, withdrawal.feeBps
             );
-            s._pendingBalanceVault += pendingAmountAfterFees.toInt256();
-            s._usdn.transferShares(to, shares);
+            s._balanceVault += withdrawnAmount;
+            s._usdn.mintShares(to, shares);
         } else if (pending.action == Types.ProtocolAction.ValidateOpenPosition) {
             // for pending opens, we need to remove the position
             Types.LongPendingAction memory open = Utils._toLongPendingAction(pending);

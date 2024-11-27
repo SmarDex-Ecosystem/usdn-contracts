@@ -1169,7 +1169,7 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo();
         }
 
-        int256 newVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(int256(depositValue));
+        int256 newVaultExpo = s._balanceVault.toInt256().safeAdd(int256(depositValue));
 
         int256 imbalanceBps =
             newVaultExpo.safeSub(currentLongExpo).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(currentLongExpo);
@@ -1196,8 +1196,7 @@ library UsdnProtocolVaultLibrary {
             return;
         }
 
-        int256 newVaultExpo =
-            s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeSub(withdrawalValue.toInt256());
+        int256 newVaultExpo = s._balanceVault.toInt256().safeSub(withdrawalValue.toInt256());
 
         // an imbalance cannot be calculated if the new vault expo is zero or negative
         if (newVaultExpo <= 0) {

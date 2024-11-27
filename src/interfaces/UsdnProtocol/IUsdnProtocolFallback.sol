@@ -439,12 +439,6 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function getBalanceVault() external view returns (uint256);
 
     /**
-     * @notice Get the pending balance updates due to pending vault actions
-     * @return The unreflected balance change due to pending vault actions (in `_assetDecimals`)
-     */
-    function getPendingBalanceVault() external view returns (int256);
-
-    /**
      * @notice Get the exponential moving average of the funding
      * @return The exponential moving average of the funding
      */

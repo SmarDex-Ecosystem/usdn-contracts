@@ -143,8 +143,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setExpoImbalanceLimits(0, 200, 0, 0, 0, 0);
 
-        int256 newVaultExpo =
-            int256(protocol.getBalanceVault() + vaultExpoValueToLimit) + protocol.getPendingBalanceVault();
+        int256 newVaultExpo = int256(protocol.getBalanceVault() + vaultExpoValueToLimit);
         int256 currentLongExpo = int256(protocol.getTotalExpo() - protocol.getBalanceLong());
         int256 expectedImbalance = (newVaultExpo - currentLongExpo) * int256(Constants.BPS_DIVISOR) / currentLongExpo;
 
@@ -168,7 +167,6 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         depositLimitBps_ = protocol.getDepositExpoImbalanceLimitBps() + 1;
         // current vault expo value to imbalance the protocol
         int256 vaultExpoValueToLimit = int256(longExpo * uint256(depositLimitBps_) / Constants.BPS_DIVISOR);
-        vaultExpoValueToLimit -= protocol.getPendingBalanceVault();
         require(vaultExpoValueToLimit > 0, "_ImbalanceLimitDeposit: deposit is not allowed");
         vaultExpoValueToLimit_ = uint256(vaultExpoValueToLimit) + 1;
     }

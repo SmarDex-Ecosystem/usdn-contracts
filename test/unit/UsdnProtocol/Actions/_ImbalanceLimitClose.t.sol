@@ -153,7 +153,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         // this action will affect the vault trading expo once it's validated
         setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, params.initialDeposit, params.initialPrice);
 
-        int256 currentVaultExpo = int256(protocol.getBalanceVault()) + protocol.getPendingBalanceVault();
+        int256 currentVaultExpo = int256(protocol.getBalanceVault());
         int256 newLongExpo =
             int256(protocol.getTotalExpo() - totalExpoValueToLimit) - int256(protocol.getBalanceLong() - longAmount);
         int256 expectedImbalance = (currentVaultExpo - newLongExpo) * int256(Constants.BPS_DIVISOR) / newLongExpo;
@@ -184,7 +184,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
             ? protocol.getRebalancerCloseExpoImbalanceLimitBps() + 1
             : protocol.getCloseExpoImbalanceLimitBps() + 1;
 
-        uint256 vaultExpo = protocol.getBalanceVault() + uint256(protocol.getPendingBalanceVault());
+        uint256 vaultExpo = protocol.getBalanceVault();
 
         uint256 longExpoLimit = vaultExpo * Constants.BPS_DIVISOR / (uint256(closeLimitBps_) + Constants.BPS_DIVISOR);
 

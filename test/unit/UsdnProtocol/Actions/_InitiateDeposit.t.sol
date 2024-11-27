@@ -16,7 +16,7 @@ import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/
 contract TestUsdnProtocolActionsInitiateDeposit is TransferCallback, UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
     uint128 internal constant POSITION_AMOUNT = 1 ether;
-    int256 internal pendingBalanceVaultBefore;
+    uint256 internal balanceVaultBefore;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -25,15 +25,15 @@ contract TestUsdnProtocolActionsInitiateDeposit is TransferCallback, UsdnProtoco
     }
 
     /**
-     * @custom:scenario Initiate a deposit by using callback and verify if pendingBalanceVault changes before token
+     * @custom:scenario Initiate a deposit by using callback and verify if balanceVault changes before token
      * transfer
      * @custom:given The user has wstETH
      * @custom:when The user initiates a deposit of `POSITION_AMOUNT` with a contract that has callback to transfer
      * tokens
-     * @custom:then The protocol updates the pending balance of the vault before receiving the tokens
+     * @custom:then The protocol updates the balance of the vault before receiving the tokens
      */
     function test_initiateDepositWithCallback() public {
-        pendingBalanceVaultBefore = protocol.getPendingBalanceVault();
+        balanceVaultBefore = protocol.getBalanceVault();
         protocol.i_initiateDeposit(
             Vault.InitiateDepositParams({
                 user: address(this),
@@ -48,7 +48,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is TransferCallback, UsdnProtoco
     }
 
     /**
-     * @notice Callback function to be called during initiate functions to verify pending balance of the vault is
+     * @notice Callback function to be called during initiate functions to verify balance of the vault is
      * updated and transfer asset tokens
      * @dev The implementation must ensure that the `msg.sender` is the protocol contract
      * @param token The token to transfer
@@ -56,8 +56,8 @@ contract TestUsdnProtocolActionsInitiateDeposit is TransferCallback, UsdnProtoco
      * @param to The address of the recipient
      */
     function transferCallback(IERC20Metadata token, uint256 amount, address to) external override {
-        int256 pendingBalanceVaultAfter = protocol.getPendingBalanceVault();
-        assertTrue(pendingBalanceVaultBefore != pendingBalanceVaultAfter, "Pending balance should change");
+        uint256 balanceVaultAfter = protocol.getBalanceVault();
+        assertGt(balanceVaultAfter, balanceVaultBefore, "balance should increase");
         token.transfer(to, amount);
     }
 }

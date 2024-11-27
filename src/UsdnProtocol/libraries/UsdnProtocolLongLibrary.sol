@@ -581,17 +581,11 @@ library UsdnProtocolLongLibrary {
 
         Types.CachedProtocolState memory cache;
         {
-            int256 tempVaultBalance = vaultBalance.toInt256() + s._pendingBalanceVault;
-            // clamp the vault balance to 0 to avoid underflows
-            if (tempVaultBalance < 0) {
-                tempVaultBalance = 0;
-            }
-
             cache = Types.CachedProtocolState({
                 totalExpo: s._totalExpo,
                 longBalance: longBalance,
                 // cast is safe as value cannot be negative
-                vaultBalance: uint256(tempVaultBalance),
+                vaultBalance: vaultBalance,
                 tradingExpo: 0,
                 liqMultiplierAccumulator: s._liqMultiplierAccumulator
             });
@@ -999,9 +993,8 @@ library UsdnProtocolLongLibrary {
             return;
         }
 
-        int256 currentVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(
-            (collateralAmount - collateralAmountAfterFees).toInt256()
-        );
+        int256 currentVaultExpo =
+            s._balanceVault.toInt256().safeAdd((collateralAmount - collateralAmountAfterFees).toInt256());
 
         int256 imbalanceBps = _calcImbalanceOpenBps(
             currentVaultExpo, (s._balanceLong + collateralAmountAfterFees).toInt256(), s._totalExpo + openTotalExpoValue
