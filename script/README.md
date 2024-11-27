@@ -170,7 +170,7 @@ Be sure to be in the same version as the deployment to avoid bytecode difference
 You can then verify by using this cli:
 
 ```
-npm run verify PATH_TO_BROADCAST_FILE -e ETHERSCAN_API_KEY
+npm run verify -- PATH_TO_BROADCAST_FILE -e ETHERSCAN_API_KEY
 ```
 
 To show some extra debug you can add `-d` flag.
