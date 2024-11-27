@@ -3,7 +3,7 @@ import { basename } from 'node:path';
 import { type AbiError, type AbiEvent, type AbiFunction, type Address, formatAbiItem } from 'abitype';
 import { Command } from 'commander';
 import { globSync } from 'glob';
-import { pad, toEventSelector, toEventSignature, toFunctionSelector, toFunctionSignature, zeroAddress } from 'viem';
+import { keccak256, pad, toEventSelector, toEventSignature, toFunctionSelector, toFunctionSignature, toHex } from 'viem';
 
 const DIST_PATH = './dist';
 const ABI_EXPORT_PATH = `${DIST_PATH}/abi`;
@@ -164,8 +164,13 @@ for (const match of contents.matchAll(constantsRegex)) {
     value = `"${pad(address, { size: 20 })}"`;
     typeHint = '`0x${string}`';
   } else if (value.startsWith('keccak256')) {
-    value = value.replaceAll('\n', '');
-    value = value.replace(/keccak256\(\s*("[^"]+")\s*\)/g, 'keccak256(toHex($1))');
+    value = value.replaceAll("\n", "");
+    const decodedAbi = value.match(/keccak256\(\s*(?<abi>"[^"]+")\s*\)/)?.groups
+      ?.abi as string;
+    if (!decodedAbi) {
+      throw new Error("Invalid abi in constants");
+    }
+    value = `${keccak256(toHex(decodedAbi))}`;
   } else {
     // conversion for numbers
     value = value.replace('minutes', '* 60');
