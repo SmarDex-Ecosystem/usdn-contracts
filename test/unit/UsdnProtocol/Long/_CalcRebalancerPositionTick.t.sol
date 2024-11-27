@@ -169,6 +169,15 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
         assertEq(tick, expectedTick, "The result should be equal to the expected tick");
     }
 
+    /**
+     * @custom:scenario Calculate teh position tick after the liquidation penalty has changed
+     * @custom:given Liquidation penalty is set to 0
+     * @custom:and Protocol has one position with 10 ether
+     * @custom:when The liquidation penalty is changed to 500
+     * @custom:and _calcRebalancerPositionTick is called
+     * @custom:then The liquidation penalty should be equal to 0
+     * @custom:and The tick should be the same as before the liquidation penalty change
+     */
     function test_calcRebalancerPositionTickLiquidationPenaltyChanged() public {
         uint128 amount = 10 ether;
         uint256 totalExpo = 295 ether;
@@ -209,8 +218,8 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             protocol.getLiqMultiplierAccumulator()
         );
 
-        assertEq(tickBefore, posId.tick, "tick should be equal to posId.tick");
-        assertEq(tickAfter, posId.tick, "tick2 should be equal to posId.tick");
+        assertEq(tickBefore, posId.tick, "tickBefore should be equal to posId.tick");
+        assertEq(tickAfter, posId.tick, "tickAfter should be equal to posId.tick");
         assertTrue(
             liquidationPenaltyBefore == liquidationPenaltyAfter && liquidationPenaltyBefore == 0,
             "liquidationPenalty should be equal to 0"
