@@ -33,6 +33,22 @@ library UsdnProtocolUtilsLibrary {
     using SignedMath for int256;
 
     /**
+     * @notice The slot in which the main storage is stored
+     * @dev keccak256(abi.encode(uint256(keccak256("UsdnProtocol.storage.main")) - 1)) & ~bytes32(uint256(0xff))
+     */
+    bytes32 private constant STORAGE_MAIN = 0xd143a936a6a372725e12535db83a2cfabcb3715dfd88bc350da3399604dc9700;
+
+    /**
+     * @notice Get the main storage slot pointer
+     * @return s_ The main storage slot pointer
+     */
+    function _getMainStorage() internal pure returns (Types.Storage storage s_) {
+        assembly {
+            s_.slot := STORAGE_MAIN
+        }
+    }
+
+    /**
      * @notice Refunds any excess ether to the user to prevent locking ETH in the contract
      * @param securityDepositValue The security deposit value of the action (zero for a validation action)
      * @param amountToRefund The amount to refund to the user:
@@ -80,9 +96,10 @@ library UsdnProtocolUtilsLibrary {
      * @dev This function is called after every action that changes the protocol fee balance
      * Try to call the function `feeCollectorCallback` on the fee collector if it supports the interface (non reverting
      * if it fails)
-     * @param s The storage of the protocol
      */
-    function _checkPendingFee(Types.Storage storage s) internal {
+    function _checkPendingFee() internal {
+        Types.Storage storage s = _getMainStorage();
+
         uint256 pendingFee = s._pendingProtocolFee;
         if (pendingFee >= s._feeThreshold) {
             address feeCollector = s._feeCollector;
@@ -99,20 +116,18 @@ library UsdnProtocolUtilsLibrary {
 
     /**
      * @notice Get the oracle price for the given action and timestamp then validate it
-     * @param s The storage of the protocol
      * @param action The type of action that is being performed by the user
      * @param timestamp The timestamp at which the wanted price was recorded
      * @param actionId The unique identifier of the action
      * @param priceData The price oracle data
      * @return price_ The validated price
      */
-    function _getOraclePrice(
-        Types.Storage storage s,
-        Types.ProtocolAction action,
-        uint256 timestamp,
-        bytes32 actionId,
-        bytes calldata priceData
-    ) internal returns (PriceInfo memory price_) {
+    function _getOraclePrice(Types.ProtocolAction action, uint256 timestamp, bytes32 actionId, bytes calldata priceData)
+        internal
+        returns (PriceInfo memory price_)
+    {
+        Types.Storage storage s = _getMainStorage();
+
         uint256 validationCost = s._oracleMiddleware.validationCost(priceData, action);
         if (address(this).balance < validationCost) {
             revert IUsdnProtocolErrors.UsdnProtocolInsufficientOracleFee();
@@ -125,11 +140,12 @@ library UsdnProtocolUtilsLibrary {
 
     /**
      * @notice Clear the pending action for a user
-     * @param s The storage of the protocol
      * @param user The user's address
      * @param rawIndex The rawIndex of the pending action in the queue
      */
-    function _clearPendingAction(Types.Storage storage s, address user, uint128 rawIndex) internal {
+    function _clearPendingAction(address user, uint128 rawIndex) internal {
+        Types.Storage storage s = _getMainStorage();
+
         s._pendingActionsQueue.clearAt(rawIndex);
         delete s._pendingActions[user];
     }
@@ -138,48 +154,49 @@ library UsdnProtocolUtilsLibrary {
      * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
      * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
      * due to the price change to `currentPrice`
-     * @param s The storage of the protocol
      * @param currentPrice The current price
      * @return available_ The available balance on the long side
      */
-    function _longAssetAvailable(Types.Storage storage s, uint128 currentPrice)
-        internal
-        view
-        returns (int256 available_)
-    {
+    function _longAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
+        Types.Storage storage s = _getMainStorage();
+
         available_ = _longAssetAvailable(s._totalExpo, s._balanceLong, currentPrice, s._lastPrice);
     }
 
     /**
      * @notice Function to calculate the hash and version of a given tick
-     * @param s The storage of the protocol
      * @param tick The tick
      * @return hash_ The hash of the tick
      * @return version_ The version of the tick
      */
-    function _tickHash(Types.Storage storage s, int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+    function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+        Types.Storage storage s = _getMainStorage();
+
         version_ = s._tickVersion[tick];
-        hash_ = tickHash(tick, version_);
+        hash_ = _tickHash(tick, version_);
     }
 
     /**
      * @dev Convert a signed tick to an unsigned index into the Bitmap using the tick spacing in storage
-     * @param s The storage of the protocol
      * @param tick The tick to convert, a multiple of the tick spacing
      * @return index_ The index into the Bitmap
      */
-    function _calcBitmapIndexFromTick(Types.Storage storage s, int24 tick) internal view returns (uint256 index_) {
+    function _calcBitmapIndexFromTick(int24 tick) internal view returns (uint256 index_) {
+        Types.Storage storage s = _getMainStorage();
+
         index_ = _calcBitmapIndexFromTick(tick, s._tickSpacing);
     }
 
-    /// @notice See {IUsdnProtocolLong}
-    function getEffectivePriceForTick(Types.Storage storage s, int24 tick) internal view returns (uint128 price_) {
+    /// @notice See {IUsdnProtocolFallback}
+    function _getEffectivePriceForTick(int24 tick) internal view returns (uint128 price_) {
+        Types.Storage storage s = _getMainStorage();
+
         price_ =
-            getEffectivePriceForTick(tick, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator);
+            _getEffectivePriceForTick(tick, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator);
     }
 
-    /// @notice See {IUsdnProtocolActions}
-    function tickHash(int24 tick, uint256 version) internal pure returns (bytes32) {
+    /// @notice See {IUsdnProtocolFallback}
+    function _tickHash(int24 tick, uint256 version) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(tick, version));
     }
 
@@ -188,7 +205,7 @@ library UsdnProtocolUtilsLibrary {
      * @param x The value to convert
      * @return The converted value
      */
-    function toInt256(uint128 x) internal pure returns (int256) {
+    function _toInt256(uint128 x) internal pure returns (int256) {
         return int256(uint256(x));
     }
 
@@ -200,13 +217,18 @@ library UsdnProtocolUtilsLibrary {
      * @param liqPriceWithoutPenalty The liquidation price without penalty
      * @return posValue_ The value of the position, which must be positive
      */
-    function positionValue(uint128 posTotalExpo, uint128 currentPrice, uint128 liqPriceWithoutPenalty)
+    function _positionValueOptimized(uint128 posTotalExpo, uint128 currentPrice, uint128 liqPriceWithoutPenalty)
         internal
         pure
         returns (uint256 posValue_)
     {
-        // the multiplication cannot overflow because both operands are uint128
-        posValue_ = uint256(posTotalExpo) * (currentPrice - liqPriceWithoutPenalty) / currentPrice;
+        // posValue_ = uint256(posTotalExpo) * (currentPrice - liqPriceWithoutPenalty) / currentPrice;
+        posValue_ = currentPrice - liqPriceWithoutPenalty;
+        unchecked {
+            // the multiplication cannot overflow because both operands are uint128
+            posValue_ *= posTotalExpo;
+        }
+        posValue_ /= currentPrice;
     }
 
     /**
@@ -215,7 +237,7 @@ library UsdnProtocolUtilsLibrary {
      * @param liquidationPenalty The liquidation penalty of the tick, in number of ticks
      * @return tick_ The tick corresponding to the liquidation price without penalty
      */
-    function calcTickWithoutPenalty(int24 tick, uint24 liquidationPenalty) internal pure returns (int24 tick_) {
+    function _calcTickWithoutPenalty(int24 tick, uint24 liquidationPenalty) internal pure returns (int24 tick_) {
         tick_ = tick - int24(liquidationPenalty);
     }
 
@@ -376,10 +398,10 @@ library UsdnProtocolUtilsLibrary {
         pure
         returns (int256 available_)
     {
-        int256 priceDiff = toInt256(newPrice) - toInt256(oldPrice);
+        int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
         uint256 tradingExpo = totalExpo - balanceLong;
 
-        int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(toInt256(newPrice));
+        int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(_toInt256(newPrice));
 
         available_ = balanceLong.toInt256().safeAdd(pnl);
     }
@@ -429,13 +451,13 @@ library UsdnProtocolUtilsLibrary {
 
     /**
      * @notice Calculate the value of a position, knowing its liquidation price and the current asset price
+     * @param positionTotalExpo The total expo of the position
      * @param currentPrice The current price of the asset
      * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
-     * @param positionTotalExpo The total expo of the position
      * @return value_ The value of the position. If the current price is smaller than the liquidation price without
      * penalty, then the position value is negative (bad debt)
      */
-    function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
+    function _positionValue(uint128 positionTotalExpo, uint128 currentPrice, uint128 liqPriceWithoutPenalty)
         internal
         pure
         returns (int256 value_)
@@ -544,24 +566,27 @@ library UsdnProtocolUtilsLibrary {
 
     /**
      * @notice Calculate the amount of assets received when burning USDN shares (after fees)
-     * @param usdnShares The amount of USDN shares
-     * @param available The available asset in the vault
-     * @param usdnTotalShares The total supply of USDN shares
+     * @param usdnShares The amount of USDN shares to burn
+     * @param vaultAvailableBalance The available amount of assets in the vault
+     * @param usdnSharesTotalSupply The total supply of USDN shares
      * @param feeBps The fee in basis points
-     * @return assetExpected_ The expected amount of assets to be received, after fees
+     * @return expectedAssetsAmount_ The expected amount of assets to be received, after fees
      */
-    function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares, uint256 feeBps)
-        internal
-        pure
-        returns (uint256 assetExpected_)
-    {
-        // amount = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
-        //                 = shares * assetAvailable / usdnTotalShares
+    function _calcAmountToWithdraw(
+        uint256 usdnShares,
+        uint256 vaultAvailableBalance,
+        uint256 usdnSharesTotalSupply,
+        uint256 feeBps
+    ) internal pure returns (uint256 expectedAssetsAmount_) {
+        // amount = amountUsdn * usdnPrice / assetPrice
+        //        = usdnShares * vaultAvailableBalance / usdnSharesTotalSupply
+        //
         // amountAfterFees = amount - (amount * feeBps / BPS_DIVISOR)
-        //                = shares * assetAvailable * (BPS_DIVISOR - feeBps) / (usdnTotalShares * BPS_DIVISOR)
+        //                 = usdnShares * (vaultAvailableBalance * (BPS_DIVISOR - feeBps))
+        //                              / (usdnSharesTotalSupply * BPS_DIVISOR)
         // Note: the second division is moved out of the fullMulDiv to avoid an overflow in the denominator
-        assetExpected_ = FixedPointMathLib.fullMulDiv(
-            usdnShares, available * (Constants.BPS_DIVISOR - feeBps), usdnTotalShares
+        expectedAssetsAmount_ = FixedPointMathLib.fullMulDiv(
+            usdnShares, vaultAvailableBalance * (Constants.BPS_DIVISOR - feeBps), usdnSharesTotalSupply
         ) / Constants.BPS_DIVISOR;
     }
 
@@ -621,7 +646,7 @@ library UsdnProtocolUtilsLibrary {
      * @param amount The amount to transfer
      * @param to The address of the recipient
      */
-    function transferCallback(IERC20Metadata token, uint256 amount, address to) internal {
+    function _transferCallback(IERC20Metadata token, uint256 amount, address to) internal {
         uint256 balanceBefore = token.balanceOf(to);
         IPaymentCallback(msg.sender).transferCallback(token, amount, to);
         uint256 balanceAfter = token.balanceOf(to);
@@ -635,7 +660,7 @@ library UsdnProtocolUtilsLibrary {
      * @param usdn The USDN token address
      * @param shares The amount of shares to transfer
      */
-    function usdnTransferCallback(IUsdn usdn, uint256 shares) internal {
+    function _usdnTransferCallback(IUsdn usdn, uint256 shares) internal {
         uint256 balanceBefore = usdn.sharesOf(address(this));
         IPaymentCallback(msg.sender).usdnTransferCallback(usdn, shares);
         uint256 balanceAfter = usdn.sharesOf(address(this));
@@ -644,8 +669,8 @@ library UsdnProtocolUtilsLibrary {
         }
     }
 
-    /// @notice See {IUsdnProtocolLong}
-    function getEffectivePriceForTick(
+    /// @notice See {IUsdnProtocolFallback}
+    function _getEffectivePriceForTick(
         int24 tick,
         uint256 assetPrice,
         uint256 longTradingExpo,

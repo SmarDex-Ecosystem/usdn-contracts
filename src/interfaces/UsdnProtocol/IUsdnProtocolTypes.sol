@@ -13,23 +13,6 @@ import { IUsdn } from "../Usdn/IUsdn.sol";
 
 interface IUsdnProtocolTypes {
     /**
-     * @notice Information about a long user position
-     * @param validated Whether the position was validated
-     * @param timestamp The timestamp of the position start
-     * @param user The user's address
-     * @param totalExpo The total exposition of the position (0 for vault deposits). The product of the initial
-     * collateral and the initial leverage
-     * @param amount The amount of initial collateral in the position
-     */
-    struct Position {
-        bool validated; // 1 byte
-        uint40 timestamp; // 5 bytes. Max 1_099_511_627_775 (36812-02-20 01:36:15)
-        address user; // 20 bytes
-        uint128 totalExpo; // 16 bytes. Max 340_282_366_920_938_463_463.374_607_431_768_211_455 ether
-        uint128 amount; // 16 bytes
-    }
-
-    /**
      * @notice All possible action types for the protocol
      * @dev This is used for pending actions and to interact with the oracle middleware
      * @param None No particular action
@@ -59,6 +42,20 @@ interface IUsdnProtocolTypes {
     }
 
     /**
+     * @notice The outcome of the call targeting a long position
+     * @param Processed The call did what it was supposed to do
+     * An initiate close has been completed / a pending action was validated
+     * @param Liquidated The position has been liquidated by this call
+     * @param PendingLiquidations The call cannot be completed because of pending liquidations
+     * Try calling the `liquidate` function with a fresh price to unblock the situation
+     */
+    enum LongActionOutcome {
+        Processed,
+        Liquidated,
+        PendingLiquidations
+    }
+
+    /**
      * @notice Classifies how far in its logic the `_triggerRebalancer` function made it to
      * @dev Used to estimate the gas spent by the function call to more accurately calculate liquidation rewards
      * @param None The rebalancer is not set
@@ -77,6 +74,23 @@ interface IUsdnProtocolTypes {
         Closed,
         Opened,
         ClosedOpened
+    }
+
+    /**
+     * @notice Information about a long user position
+     * @param validated Whether the position was validated
+     * @param timestamp The timestamp of the position start
+     * @param user The user's address
+     * @param totalExpo The total exposition of the position (0 for vault deposits). The product of the initial
+     * collateral and the initial leverage
+     * @param amount The amount of initial collateral in the position
+     */
+    struct Position {
+        bool validated; // 1 byte
+        uint40 timestamp; // 5 bytes. Max 1_099_511_627_775 (36812-02-20 01:36:15)
+        address user; // 20 bytes
+        uint128 totalExpo; // 16 bytes. Max 340_282_366_920_938_463_463.374_607_431_768_211_455 ether
+        uint128 amount; // 16 bytes
     }
 
     /**
@@ -184,15 +198,14 @@ interface IUsdnProtocolTypes {
      * @param validator The `validator` address
      * @param securityDepositValue The security deposit of the pending action
      * @param tick The tick of the position
-     * @param closeAmount The amount of the pending action (only used when closing a position)
+     * @param closeAmount The portion of the initial position amount to close (only used when closing a position)
      * @param closePosTotalExpo The total expo of the position (only used when closing a position)
      * @param tickVersion The version of the tick
      * @param index The index of the position in the tick list
      * @param liqMultiplier A fixed precision representation of the liquidation multiplier (with
      * `LIQUIDATION_MULTIPLIER_DECIMALS` decimals) used to calculate the effective price for a given tick number
      * @param closeBoundedPositionValue The amount that was removed from the long balance on `initiateClosePosition`
-     * (only
-     * used when closing a position)
+     * (only used when closing a position)
      */
     struct LongPendingAction {
         ProtocolAction action; // 1 byte
@@ -407,6 +420,8 @@ interface IUsdnProtocolTypes {
      * @param lastPrice The price of the last balances update
      * @param tickHash The tick hash
      * @param pos The position object
+     * @param liqPriceWithoutPenaltyNorFunding The liquidation price without penalty nor funding used to calculate the
+     * user leverage and the new total expo
      * @param liqPriceWithoutPenalty The new liquidation price without penalty
      * @param leverage The new leverage
      * @param oldPosValue The value of the position according to the old entry price and the _lastPrice
@@ -419,6 +434,7 @@ interface IUsdnProtocolTypes {
         uint128 lastPrice;
         bytes32 tickHash;
         Position pos;
+        uint128 liqPriceWithoutPenaltyNorFunding;
         uint128 liqPriceWithoutPenalty;
         uint256 leverage;
         uint256 oldPosValue;
@@ -497,13 +513,11 @@ interface IUsdnProtocolTypes {
 
     /**
      * @notice Data structure for the `_applyPnlAndFunding` function
-     * @param isPriceRecent Whether the price was updated or was already the most recent price
      * @param tempLongBalance The new balance of the long side, could be negative (temporarily)
      * @param tempVaultBalance The new balance of the vault side, could be negative (temporarily)
      * @param lastPrice The last price
      */
     struct ApplyPnlAndFundingData {
-        bool isPriceRecent;
         int256 tempLongBalance;
         int256 tempVaultBalance;
         uint128 lastPrice;
@@ -522,29 +536,7 @@ interface IUsdnProtocolTypes {
     }
 
     /**
-     * @notice Structure to hold the addresses of managers during deployment
-     * @param setExternalManager The manager's address to set the external contracts
-     * @param criticalFunctionsManager The manager's address to perform critical functions
-     * @param setProtocolParamsManager The manager's address to set the protocol parameters
-     * @param setUsdnParamsManager The manager's address to set the USDN parameters
-     * @param setOptionsManager The manager's address to set the protocol options that do not impact the usage of the
-     * protocol
-     * @param proxyUpgradeManager The manager's address to upgrade the protocol implementation
-     * @param pauserManager The manager's address to pause the protocol
-     * @param unpauserManager The manager's address to unpause the protocol
-     */
-    struct Managers {
-        address setExternalManager;
-        address criticalFunctionsManager;
-        address setProtocolParamsManager;
-        address setUsdnParamsManager;
-        address setOptionsManager;
-        address proxyUpgradeManager;
-        address pauserManager;
-        address unpauserManager;
-    }
-
-    /**
+     * @custom:storage-location erc7201:UsdnProtocol.storage.main
      * @notice Structure to hold the state of the protocol
      * @param _tickSpacing The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
@@ -559,6 +551,7 @@ interface IUsdnProtocolTypes {
      * @param _oracleMiddleware The oracle middleware contract
      * @param _liquidationRewardsManager The liquidation rewards manager contract
      * @param _rebalancer The rebalancer contract
+     * @param _isRebalancer Whether an address is or has been a rebalancer
      * @param _minLeverage The minimum leverage for a position
      * @param _maxLeverage The maximum leverage for a position
      * @param _lowLatencyValidatorDeadline The deadline for a user to confirm their action with a low-latency oracle
@@ -647,6 +640,7 @@ interface IUsdnProtocolTypes {
         IBaseOracleMiddleware _oracleMiddleware;
         IBaseLiquidationRewardsManager _liquidationRewardsManager;
         IBaseRebalancer _rebalancer;
+        mapping(address => bool) _isRebalancer;
         uint256 _minLeverage;
         uint256 _maxLeverage;
         uint128 _lowLatencyValidatorDeadline;
@@ -673,18 +667,18 @@ interface IUsdnProtocolTypes {
         uint128 _targetUsdnPrice;
         uint128 _usdnRebaseThreshold;
         uint256 _minLongPosition;
-        // State
+        // state
         int256 _lastFundingPerDay;
         uint128 _lastPrice;
         uint128 _lastUpdateTimestamp;
         uint256 _pendingProtocolFee;
-        // Pending actions queue
+        // pending actions queue
         mapping(address => uint256) _pendingActions;
         DoubleEndedQueue.Deque _pendingActionsQueue;
-        // Vault
+        // vault
         uint256 _balanceVault;
         int256 _pendingBalanceVault;
-        // Long positions
+        // long positions
         int256 _EMA;
         uint256 _balanceLong;
         uint256 _totalExpo;
@@ -695,7 +689,9 @@ interface IUsdnProtocolTypes {
         int24 _highestPopulatedTick;
         uint256 _totalLongPositions;
         LibBitmap.Bitmap _tickBitmap;
+        // fallback
         address _protocolFallbackAddr;
+        // EIP712
         mapping(address => uint256) _nonce;
     }
 }

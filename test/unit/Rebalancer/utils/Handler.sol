@@ -13,20 +13,18 @@ import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProt
 contract RebalancerHandler is Rebalancer, Test {
     constructor(IUsdnProtocol usdnProtocol) Rebalancer(usdnProtocol) { }
 
-    /// @dev Sets the position version to the current one + 1
-    function incrementPositionVersion() external {
-        ++_positionVersion;
-    }
-
-    /**
-     * @dev Sets the _lastLiquidatedVersion to the provided value
-     * @param version The version to set
-     */
-    function setLastLiquidatedVersion(uint128 version) external {
-        _lastLiquidatedVersion = version;
-    }
-
     function i_refundEther() external {
         return _refundEther();
+    }
+
+    /// @dev Verifies the EIP712 delegation signature
+    function i_verifyInitiateCloseDelegation(
+        uint88 amount,
+        address to,
+        uint256 userMinPrice,
+        uint256 deadline,
+        bytes calldata delegationData
+    ) external returns (address depositOwner_) {
+        depositOwner_ = _verifyInitiateCloseDelegation(amount, to, userMinPrice, deadline, delegationData);
     }
 }

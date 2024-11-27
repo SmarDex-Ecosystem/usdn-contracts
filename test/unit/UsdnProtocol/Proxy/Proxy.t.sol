@@ -12,6 +12,8 @@ import { UsdnProtocolImplV2 } from "../utils/UsdnProtocolImplV2.sol";
 
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -60,7 +62,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), protocol.PROXY_UPGRADE_ROLE()
+                IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), Constants.PROXY_UPGRADE_ROLE
             )
         );
         protocol.upgradeToAndCall(address(newImplementation), bytes(""));
@@ -82,18 +84,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
             liquidationRewardsManager,
             _tickSpacing,
             address(feeCollector),
-            Managers({
-                setExternalManager: ADMIN,
-                criticalFunctionsManager: ADMIN,
-                setProtocolParamsManager: ADMIN,
-                setUsdnParamsManager: ADMIN,
-                setOptionsManager: ADMIN,
-                proxyUpgradeManager: ADMIN,
-                pauserManager: ADMIN,
-                unpauserManager: ADMIN
-            }),
-            IUsdnProtocolFallback(address(0)),
-            params.eip712Version
+            IUsdnProtocolFallback(address(0))
         );
     }
 
@@ -120,18 +111,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
             liquidationRewardsManager,
             _tickSpacing,
             address(feeCollector),
-            Managers({
-                setExternalManager: ADMIN,
-                criticalFunctionsManager: ADMIN,
-                setProtocolParamsManager: ADMIN,
-                setUsdnParamsManager: ADMIN,
-                setOptionsManager: ADMIN,
-                proxyUpgradeManager: ADMIN,
-                pauserManager: ADMIN,
-                unpauserManager: ADMIN
-            }),
-            IUsdnProtocolFallback(address(0)),
-            params.eip712Version
+            IUsdnProtocolFallback(address(0))
         );
     }
 

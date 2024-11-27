@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { DoubleEndedQueue } from "../../../../src/libraries/DoubleEndedQueue.sol";
 
 /**
@@ -59,7 +61,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         (Position memory firstPos,) = protocol.getLongPosition(PositionId(tick, 0, 0));
 
-        int256 longPosValue = protocol.i_positionValue(params.initialPrice, longLiqPrice, firstPos.totalExpo);
+        int256 longPosValue = protocol.i_positionValue(firstPos.totalExpo, params.initialPrice, longLiqPrice);
 
         // there are rounding errors when calculating the value of a position, here we have up to 1 wei of error for
         // each position, but always in favor of the protocol.
@@ -204,7 +206,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         assertEq(
             fundingPerDay,
-            -int256(fundingSF * 10 ** (protocol.FUNDING_RATE_DECIMALS() - protocol.FUNDING_SF_DECIMALS())) + EMA,
+            -int256(fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + EMA,
             "funding should be equal to -fundingSF + EMA"
         );
     }
@@ -239,7 +241,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         assertEq(
             fundingPerDay,
-            int256(fundingSF * 10 ** (protocol.FUNDING_RATE_DECIMALS() - protocol.FUNDING_SF_DECIMALS())) + EMA,
+            int256(fundingSF * 10 ** (Constants.FUNDING_RATE_DECIMALS - Constants.FUNDING_SF_DECIMALS)) + EMA,
             "funding should be equal to fundingSF + EMA"
         );
     }
@@ -292,7 +294,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp));
 
         uint256 minTradingExpo =
-            protocol.getTotalExpo() * (BPS_DIVISOR - protocol.MIN_LONG_TRADING_EXPO_BPS()) / BPS_DIVISOR;
+            protocol.getTotalExpo() * (BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS) / BPS_DIVISOR;
         assertEq(available, minTradingExpo, "the long balance should be equal to the min trading expo");
 
         // check that a higher timestamp does not increase the amount available
@@ -691,7 +693,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         int256 fundAsset = 1000 ether;
 
         uint16 protocolFeeBps = protocol.getProtocolFeeBps();
-        uint256 bpsDivisor = protocol.BPS_DIVISOR();
+        uint256 bpsDivisor = Constants.BPS_DIVISOR;
         uint256 expectedFee = (uint256(fundAsset) * protocolFeeBps) / bpsDivisor;
 
         (int256 fee, int256 fundAssetWithFee) = protocol.i_calculateFee(fundAsset);
@@ -726,7 +728,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         int256 fundAsset = -1;
 
         uint16 protocolFeeBps = protocol.getProtocolFeeBps();
-        uint256 bpsDivisor = protocol.BPS_DIVISOR();
+        uint256 bpsDivisor = Constants.BPS_DIVISOR;
         uint256 expectedFee = (uint256(-fundAsset) * protocolFeeBps) / bpsDivisor;
 
         (int256 fee, int256 fundAssetWithFee) = protocol.i_calculateFee(fundAsset);

@@ -1,24 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import {
-    ADMIN,
-    CRITICAL_FUNCTIONS_MANAGER,
-    DEPLOYER,
-    PAUSER_MANAGER,
-    PROXY_UPGRADE_MANAGER,
-    SET_EXTERNAL_MANAGER,
-    SET_OPTIONS_MANAGER,
-    SET_PROTOCOL_PARAMS_MANAGER,
-    SET_USDN_PARAMS_MANAGER,
-    UNPAUSER_MANAGER
-} from "../../../utils/Constants.sol";
+import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
-import { IUsdnProtocolHandler } from "../../../utils/IUsdnProtocolHandler.sol";
+import { RolesUtils } from "../../../utils/RolesUtils.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
@@ -34,6 +22,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
+import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
@@ -43,7 +32,7 @@ import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
  * @title UsdnProtocolBaseFixture
  * @dev Utils for testing the USDN Protocol
  */
-contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErrors, IUsdnProtocolEvents {
+contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors, IEventsErrors, IUsdnProtocolEvents {
     struct Flags {
         bool enablePositionFees;
         bool enableProtocolFees;
@@ -64,7 +53,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint128 initialPrice;
         uint256 initialTimestamp;
         uint256 initialBlock;
-        string eip712Version;
         Flags flags;
     }
 
@@ -75,7 +63,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
         initialBlock: block.number,
-        eip712Version: "1",
         flags: Flags({
             enablePositionFees: false,
             enableProtocolFees: false,
@@ -99,24 +86,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint256 price;
     }
 
-    struct InitiateClosePositionDelegation {
-        bytes32 posIdHash;
-        uint128 amountToClose;
-        uint256 userMinPrice;
-        address to;
-        uint256 deadline;
-        address positionOwner;
-        address positionCloser;
-        uint256 nonce;
-    }
-
     Usdn public usdn;
     Sdex public sdex;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
-    IUsdnProtocolHandler public protocol;
+    UsdnProtocolHandler public protocol;
     FeeCollector public feeCollector;
     PositionId public initialPosition;
     uint256 public usdnInitialTotalSupply;
@@ -146,16 +122,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             liquidationRewardsManager.setRewardsParameters(0, 0, 0, 0, 0, 0, 0, 0, 0.1 ether);
         }
 
-        Managers memory managers = Managers({
-            setExternalManager: SET_EXTERNAL_MANAGER,
-            criticalFunctionsManager: CRITICAL_FUNCTIONS_MANAGER,
-            setProtocolParamsManager: SET_PROTOCOL_PARAMS_MANAGER,
-            setUsdnParamsManager: SET_USDN_PARAMS_MANAGER,
-            setOptionsManager: SET_OPTIONS_MANAGER,
-            proxyUpgradeManager: PROXY_UPGRADE_MANAGER,
-            pauserManager: PAUSER_MANAGER,
-            unpauserManager: UNPAUSER_MANAGER
-        });
         if (!testParams.flags.enableRoles) {
             managers = Managers({
                 setExternalManager: ADMIN,
@@ -183,19 +149,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                     liquidationRewardsManager,
                     _tickSpacing,
                     address(feeCollector),
-                    managers,
-                    protocolFallback,
-                    params.eip712Version
+                    protocolFallback
                 )
             )
         );
-        protocol = IUsdnProtocolHandler(proxy);
+        protocol = UsdnProtocolHandler(proxy);
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
-
         vm.stopPrank();
+
+        _giveRolesTo(managers, IUsdnProtocol(address(protocol)));
+
         vm.startPrank(managers.setProtocolParamsManager);
         if (!testParams.flags.enablePositionFees) {
             protocol.setPositionFeeBps(0);
@@ -231,13 +197,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         vm.startPrank(managers.setUsdnParamsManager);
         if (!testParams.flags.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
-            protocol.setUsdnRebaseThreshold(type(uint128).max);
+            protocol.i_setUsdnRebaseThreshold(type(uint128).max);
             protocol.setTargetUsdnPrice(type(uint128).max);
         }
         vm.stopPrank();
 
         vm.prank(DEPLOYER);
-        rebalancer = new RebalancerHandler(protocol);
+        rebalancer = new RebalancerHandler(IUsdnProtocol(address(protocol)));
 
         if (testParams.flags.enableRebalancer) {
             vm.prank(managers.setExternalManager);
@@ -291,11 +257,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         assertEq(
             wstETH.balanceOf(address(protocol)), params.initialDeposit + params.initialLong, "wstETH protocol balance"
         );
-        assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "usdn dead address balance");
+        assertEq(usdn.balanceOf(Constants.DEAD_ADDRESS), Constants.MIN_USDN_SUPPLY, "usdn dead address balance");
         uint256 usdnTotalSupply = uint256(params.initialDeposit) * params.initialPrice / 10 ** 18;
-        usdnTotalSupply -= usdnTotalSupply * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR();
+        usdnTotalSupply -= usdnTotalSupply * protocol.getPositionFeeBps() / Constants.BPS_DIVISOR;
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
-        assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
+        assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - Constants.MIN_USDN_SUPPLY, "usdn deployer balance");
         int24 firstPosTick = protocol.getHighestPopulatedTick();
         (Position memory firstPos,) = protocol.getLongPosition(PositionId(firstPosTick, 0, 0));
         uint128 liquidationPriceWithoutPenalty =
@@ -309,7 +275,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         assertEq(firstPos.amount, params.initialLong, "first pos amount");
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
         assertEq(protocol.getFeeCollector(), address(feeCollector), "fee collector");
-        assertEq(protocol.owner(), ADMIN, "protocol owner");
+        assertEq(protocol.defaultAdmin(), ADMIN, "protocol owner");
     }
 
     /**
@@ -331,7 +297,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
                 Utils._calcMintUsdnShares(
                     positionSize, uint256(protocol.i_vaultAssetAvailable(uint128(price))), usdn.totalShares()
                 )
-            ) * protocol.getSdexBurnOnDepositRatio() / protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR(),
+            ) * protocol.getSdexBurnOnDepositRatio() / Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR,
             address(protocol),
             type(uint256).max
         );
@@ -490,12 +456,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         initialAmount = uint128(bound(initialAmount, 1 ether, 5000 ether));
 
         int256 depositLimit = protocol.getDepositExpoImbalanceLimitBps();
-        uint128 margin = uint128(initialAmount * uint256(depositLimit) / protocol.BPS_DIVISOR());
+        uint128 margin = uint128(initialAmount * uint256(depositLimit) / Constants.BPS_DIVISOR);
 
         uint128 initialDeposit = uint128(bound(initialAmount, initialAmount, initialAmount + margin));
 
         int256 longLimit = protocol.getOpenExpoImbalanceLimitBps();
-        margin = uint128(initialAmount * uint256(longLimit) / protocol.BPS_DIVISOR());
+        margin = uint128(initialAmount * uint256(longLimit) / Constants.BPS_DIVISOR);
 
         uint256 initialLongExpo = bound(initialAmount, initialAmount, initialAmount + margin);
 
@@ -524,39 +490,5 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     /// @dev Wait for the required delay to allow mock middleware price update
     function _waitMockMiddlewarePriceDelay() internal {
         skip(30 minutes - oracleMiddleware.getValidationDelay());
-    }
-
-    /**
-     * @notice Get the signed delegation data
-     * @param privateKey The signer private key
-     * @param domainSeparator The domain separator v4
-     * @param delegationToSign The delegation struct to sign
-     * @return delegationSignature_ The initiateClosePosition eip712 delegation signature
-     */
-    function _getDelegationSignature(
-        uint256 privateKey,
-        bytes32 domainSeparator,
-        InitiateClosePositionDelegation memory delegationToSign
-    ) internal pure returns (bytes memory delegationSignature_) {
-        bytes32 digest = MessageHashUtils.toTypedDataHash(
-            domainSeparator,
-            keccak256(
-                abi.encode(
-                    Constants.INITIATE_CLOSE_TYPEHASH,
-                    delegationToSign.posIdHash,
-                    delegationToSign.amountToClose,
-                    delegationToSign.userMinPrice,
-                    delegationToSign.to,
-                    delegationToSign.deadline,
-                    delegationToSign.positionOwner,
-                    delegationToSign.positionCloser,
-                    delegationToSign.nonce
-                )
-            )
-        );
-
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
-
-        delegationSignature_ = abi.encodePacked(r, s, v);
     }
 }

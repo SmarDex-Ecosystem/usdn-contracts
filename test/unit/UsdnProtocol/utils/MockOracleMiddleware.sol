@@ -12,7 +12,7 @@ import {
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRules {
+contract MockOracleMiddleware is IBaseOracleMiddleware, IOracleMiddlewareErrors, AccessControlDefaultAdminRules {
     uint16 public constant BPS_DIVISOR = 10_000;
     uint16 public constant MAX_CONF_RATIO = BPS_DIVISOR * 2;
     uint8 internal constant DECIMALS = 18;
@@ -22,10 +22,11 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
     uint256 internal _timeElapsedLimit = 1 hours;
     // if true, then the middleware requires a payment of 1 wei for any action
     bool internal _requireValidationCost = false;
+    // confidence applied to the price to adjust `PriceInfo.price`
+    int256 internal _priceConfBps = 0;
 
     bytes32 public lastActionId;
 
-    /// @inheritdoc IOracleMiddleware
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     constructor() AccessControlDefaultAdminRules(0, msg.sender) {
@@ -61,7 +62,14 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
 
         lastActionId = actionId;
 
-        PriceInfo memory price = PriceInfo({ price: priceValue, neutralPrice: priceValue, timestamp: ts });
+        uint256 adjustedPrice = priceValue;
+        if (_priceConfBps > 0) {
+            adjustedPrice += priceValue * uint256(_priceConfBps) / BPS_DIVISOR;
+        } else if (_priceConfBps < 0) {
+            adjustedPrice -= priceValue * uint256(-_priceConfBps) / BPS_DIVISOR;
+        }
+
+        PriceInfo memory price = PriceInfo({ price: adjustedPrice, neutralPrice: priceValue, timestamp: ts });
         return price;
     }
 
@@ -80,17 +88,14 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
         return _requireValidationCost ? 1 : 0;
     }
 
-    /// @inheritdoc IOracleMiddleware
     function getConfRatioBps() external view returns (uint16) {
         return _confRatioBps;
     }
 
-    /// @inheritdoc IOracleMiddleware
     function setValidationDelay(uint256 newDelay) external {
         _validationDelay = newDelay;
     }
 
-    /// @inheritdoc IOracleMiddleware
     function setConfRatio(uint16 newConfRatio) external onlyRole(ADMIN_ROLE) {
         // confidence ratio limit check
         if (newConfRatio > MAX_CONF_RATIO) {
@@ -99,7 +104,6 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
         _confRatioBps = newConfRatio;
     }
 
-    /// @inheritdoc IOracleMiddleware
     function setChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external {
         _timeElapsedLimit = newTimeElapsedLimit;
     }
@@ -112,6 +116,10 @@ contract MockOracleMiddleware is IOracleMiddleware, AccessControlDefaultAdminRul
 
     function setRequireValidationCost(bool req) external {
         _requireValidationCost = req;
+    }
+
+    function setPriceConfBps(int256 confBps) external {
+        _priceConfBps = confBps;
     }
 
     function withdrawEther(address to) external {

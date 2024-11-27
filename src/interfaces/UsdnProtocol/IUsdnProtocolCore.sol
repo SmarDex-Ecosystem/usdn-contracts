@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
-
 /**
  * @title IUsdnProtocolCore
  * @notice Interface for the core layer of the USDN protocol
  */
-interface IUsdnProtocolCore is IUsdnProtocolTypes {
+interface IUsdnProtocolCore {
     /**
      * @notice Get the predicted value of the funding since the last state update for the given timestamp
      * @dev When multiplied with the long trading exposure, the funding value gives the asset balance that needs to be
@@ -26,19 +24,11 @@ interface IUsdnProtocolCore is IUsdnProtocolTypes {
         returns (int256 funding_, int256 fundingPerDay_, int256 oldLongExpo_);
 
     /**
-     * @notice Retrieve a user pending action
-     * @param user The user's address
-     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and
-     * `ProtocolAction.None`
-     */
-    function getUserPendingAction(address user) external view returns (PendingAction memory action_);
-
-    /**
      * @notice Initialize the protocol, making a first deposit and creating a first long position
      * @dev This function can only be called once, and no other user action can be performed until it is called
      * Consult the current oracle middleware implementation to know the expected format for the price data, using the
      * `ProtocolAction.Initialize` action
-     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * The price validation might require payment according to the return value of the {validationCost} function
      * of `IBaseOracleMiddleware`
      * @param depositAmount The amount of assets for the deposit
      * @param longAmount The amount of assets for the long
@@ -51,25 +41,4 @@ interface IUsdnProtocolCore is IUsdnProtocolTypes {
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
     ) external payable;
-
-    /**
-     * @notice Get the predicted value of the long balance for the given asset price and timestamp
-     * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
-     * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
-     * update, the function reverts with `UsdnProtocolTimestampTooOld`. The value cannot be below 0
-     * @param currentPrice The current or predicted asset price
-     * @param timestamp The timestamp corresponding to `currentPrice`
-     * @return The long balance
-     */
-    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
-
-    /**
-     * @notice Get the predicted value of the long trading exposure for the given asset price and timestamp
-     * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
-     * update is taken into account
-     * @param currentPrice The current or predicted asset price
-     * @param timestamp The timestamp corresponding to `currentPrice`
-     * @return The long trading exposure
-     */
-    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
 }

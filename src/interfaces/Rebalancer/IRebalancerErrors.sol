@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 interface IRebalancerErrors {
@@ -49,4 +49,13 @@ interface IRebalancerErrors {
 
     /// @dev Indicates that the address could not accept the ether refund
     error RebalancerEtherRefundFailed();
+
+    /// @dev Indicates that the signature provided for a delegation is invalid
+    error RebalancerInvalidDelegationSignature();
+
+    /**
+     * @dev Indicates that the user can't initiate a close position until the timestamp {closeLockedUntil} has passed
+     * @param closeLockedUntil The timestamp by which a user must wait to perform a {initiateClosePosition}
+     */
+    error RebalancerCloseLockedUntil(uint256 closeLockedUntil);
 }

@@ -3,6 +3,8 @@ pragma solidity 0.8.26;
 
 import { IUsdnProtocolErrors } from "../../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolBaseFixture } from "../../utils/Fixtures.sol";
 
 /**
@@ -36,7 +38,7 @@ contract TestImbalanceLimitCloseFuzzing is UsdnProtocolBaseFixture {
         int256 imbalanceBps;
         if (newLongExpo > 0) {
             imbalanceBps =
-                (int256(int128(params.initialDeposit)) - newLongExpo) * int256(protocol.BPS_DIVISOR()) / newLongExpo;
+                (int256(int128(params.initialDeposit)) - newLongExpo) * int256(Constants.BPS_DIVISOR) / newLongExpo;
         }
 
         // initial close limit bps

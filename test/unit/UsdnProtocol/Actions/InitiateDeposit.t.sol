@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { InitializableReentrancyGuard } from "../../../../src/utils/InitializableReentrancyGuard.sol";
 
@@ -81,7 +83,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         uint256 expectedSdexBurnAmount =
             protocol.i_calcSdexToBurn(usdn.convertToTokens(usdnSharesToMint), protocol.getSdexBurnOnDepositRatio());
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
-        address deadAddress = protocol.DEAD_ADDRESS();
+        address deadAddress = Constants.DEAD_ADDRESS;
 
         vm.expectEmit(address(sdex));
         emit Transfer(address(this), deadAddress, expectedSdexBurnAmount); // SDEX transfer
@@ -119,7 +121,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         // no USDN should be minted yet
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply, "usdn total supply");
         // the pending action should not yet be actionable by a third party
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
+        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0), 0, 0);
         assertEq(actions.length, 0, "no pending action");
 
         PendingAction memory action = protocol.getUserPendingAction(validator);
@@ -131,7 +133,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         // the pending action should be actionable after the validation deadline
         _waitBeforeActionablePendingAction();
-        (actions,) = protocol.getActionablePendingActions(address(0));
+        (actions,) = protocol.getActionablePendingActions(address(0), 0, 0);
         assertEq(actions[0].to, to, "pending action to");
         assertEq(actions[0].validator, validator, "pending action validator");
     }

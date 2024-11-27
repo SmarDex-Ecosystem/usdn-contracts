@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -23,6 +23,21 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @return The minimum cooldown time between actions
      */
     function MAX_ACTION_COOLDOWN() external view returns (uint256);
+
+    /**
+     * @notice The EIP712 {initiateClosePosition} typehash
+     * @dev By including this hash into the EIP712 message for this domain, this can be used together with
+     * {ECDSA-recover} to obtain the signer of a message
+     * @return The EIP712 {initiateClosePosition} typehash
+     */
+    function INITIATE_CLOSE_TYPEHASH() external view returns (bytes32);
+
+    /**
+     * @notice The maximum amount in seconds to wait to execute a {initiateClosePosition} since a new rebalancer
+     * long position has been created
+     * @return The max close delay value
+     */
+    function MAX_CLOSE_DELAY() external view returns (uint256);
 
     /**
      * @notice Returns the address of the asset used by the USDN protocol
@@ -58,7 +73,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
     /**
      * @notice Returns the data of the provided version of the position
      * @param version The version of the position
-     * @return positionData_ The date for the provided version of the position
+     * @return positionData_ The data for the provided version of the position
      */
     function getPositionData(uint128 version) external view returns (PositionData memory positionData_);
 
@@ -80,6 +95,26 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @return The version of the last position that got liquidated
      */
     function getLastLiquidatedVersion() external view returns (uint128);
+
+    /**
+     * @notice Get the nonce a user can use to generate a delegation signature
+     * @dev This is to prevent replay attacks when using an EIP712 delegation signature
+     * @param user The user address of the deposited amount in the rebalancer
+     * @return The user nonce
+     */
+    function getNonce(address user) external view returns (uint256);
+
+    /**
+     * @notice Get the domain separator v4
+     * @return The domain separator v4
+     */
+    function domainSeparatorV4() external view returns (bytes32);
+
+    /**
+     * @notice Get the timestamp by which a user must wait to perform a {initiateClosePosition}
+     * @return The timestamp value
+     */
+    function getCloseLockedUntil() external view returns (uint256);
 
     /**
      * @notice Deposit assets into this contract to be included in the next position after validation
@@ -130,22 +165,28 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * side after calling this function
      * @param amount The amount to close relative to the amount deposited
      * @param to The address that will receive the assets
+     * @param validator The address that should validate the open position
      * @param userMinPrice The minimum price at which the position can be closed
      * @param deadline The deadline of the close position to be initiated
-     * @param currentPriceData The current price data
-     * @param previousActionsData The previous action price data
-     * @return success_ If the UsdnProtocol's `initiateClosePosition` was successful
-     * If false, the action failed because of pending liquidations, check IUsdnProtocolActions:initiateClosePosition for
-     * more details
+     * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
+     * pending validation)
+     * @param previousActionsData The data needed to validate actionable pending actions
+     * @param delegationData An optional delegation data that include the depositOwner and an EIP712 signature to
+     * provide when closing a position on the owner's behalf
+     * If used, it needs to be encoded with `abi.encode(depositOwner, abi.encodePacked(r, s, v))`
+     * @return outcome_ The outcome of the UsdnProtocol's `initiateClosePosition` call
+     * check {IUsdnProtocolActions:initiateClosePosition} for more details
      */
     function initiateClosePosition(
         uint88 amount,
         address to,
+        address payable validator,
         uint256 userMinPrice,
         uint256 deadline,
         bytes calldata currentPriceData,
-        Types.PreviousActionsData calldata previousActionsData
-    ) external payable returns (bool success_);
+        Types.PreviousActionsData calldata previousActionsData,
+        bytes calldata delegationData
+    ) external payable returns (Types.LongActionOutcome outcome_);
 
     /* -------------------------------------------------------------------------- */
     /*                                    Admin                                   */
@@ -164,6 +205,8 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @param validationDelay The validation delay
      * @param validationDeadline The validation deadline
      * @param actionCooldown The cooldown period duration
+     * @param closeDelay The close delay that will be applied to the next long position opening
      */
-    function setTimeLimits(uint80 validationDelay, uint80 validationDeadline, uint80 actionCooldown) external;
+    function setTimeLimits(uint64 validationDelay, uint64 validationDeadline, uint64 actionCooldown, uint64 closeDelay)
+        external;
 }

@@ -6,6 +6,8 @@ import { Vm } from "forge-std/Vm.sol";
 import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 
 /**
@@ -45,7 +47,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         ExpectedData memory expected;
         expected.expectedPrice =
-            currentPrice + currentPrice * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
+            currentPrice + currentPrice * uint256(protocol.getPositionFeeBps()) / Constants.BPS_DIVISOR;
         expected.expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
 
         // Price without the liquidation penalty
@@ -133,7 +135,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         // Price without the liquidation penalty
         uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick));
         expected.expectedPrice =
-            currentPrice + currentPrice * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
+            currentPrice + currentPrice * uint256(protocol.getPositionFeeBps()) / Constants.BPS_DIVISOR;
         expected.expectedPosTotalExpo =
             protocol.i_calcPositionTotalExpo(amount, uint128(expected.expectedPrice), effectiveTickPrice);
         expected.expectedPositionValue =
@@ -206,9 +208,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         uint256 expectedTransfer = uint256(
             protocol.i_positionValue(
-                uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
-                protocol.i_getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick), action.liqMultiplier),
-                action.closePosTotalExpo
+                action.closePosTotalExpo,
+                uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / Constants.BPS_DIVISOR),
+                protocol.i_getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick), action.liqMultiplier)
             )
         );
 
@@ -260,7 +262,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 initialBlock = uint128(block.timestamp);
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, price);
 
-        uint128 fees = uint128(depositAmount * protocol.getVaultFeeBps() / protocol.BPS_DIVISOR());
+        uint128 fees = uint128(depositAmount * protocol.getVaultFeeBps() / Constants.BPS_DIVISOR);
         uint128 amountAfterFees = depositAmount - fees;
         uint256 expectedSharesBalanceA = Utils._calcMintUsdnShares(
             amountAfterFees, uint256(protocol.vaultAssetAvailableWithFunding(price, initialBlock)), usdn.totalShares()
@@ -390,7 +392,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         uint128 depositAmount = 1 ether;
 
-        uint256 snapshotId = vm.snapshot();
+        uint256 snapshotId = vm.snapshotState();
 
         /* ----------------------- Validate with position fees ---------------------- */
         vm.prank(ADMIN);
@@ -401,7 +403,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 mintedUsdnWithoutFees = usdnBalanceAfterWithoutFees - usdnBalanceBefore;
 
         /* ----------------------- Validate with position fees ---------------------- */
-        vm.revertTo(snapshotId);
+        vm.revertToState(snapshotId);
 
         vm.prank(ADMIN);
         protocol.setVaultFeeBps(100); // 1% fees
@@ -436,7 +438,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, depositAmount, price);
 
         // Store the snapshot id to revert to this point after the next test
-        uint256 snapshotId = vm.snapshot();
+        uint256 snapshotId = vm.snapshotState();
 
         uint256 initialAssetBalance = wstETH.balanceOf(address(this));
 
@@ -459,7 +461,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 balanceDiffWithFees = finalAssetBalance - initialAssetBalance;
 
         /* --------------------- Validate without position fees --------------------- */
-        vm.revertTo(snapshotId);
+        vm.revertToState(snapshotId);
 
         protocol.initiateWithdrawal(
             uint128(usdn.sharesOf(address(this))),
@@ -493,7 +495,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 2000 ether / 2;
         bytes memory priceData = abi.encode(2000 ether);
 
-        uint256 snapshotId = vm.snapshot();
+        uint256 snapshotId = vm.snapshotState();
 
         /* --------------------- Validate without position fees --------------------- */
         vm.prank(ADMIN);
@@ -520,7 +522,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         assertEq(logsWithoutFees[1].topics[0], ValidatedOpenPosition.selector);
 
         /* ----------------------- Validate with position fees ---------------------- */
-        vm.revertTo(snapshotId);
+        vm.revertToState(snapshotId);
 
         vm.prank(ADMIN);
         protocol.setPositionFeeBps(100); // 1% fees
@@ -562,7 +564,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 2000 ether / 2;
         bytes memory priceData = abi.encode(2000 ether);
 
-        uint256 snapshotId = vm.snapshot();
+        uint256 snapshotId = vm.snapshotState();
 
         /* ----------------------- Validate with position fees ---------------------- */
         vm.prank(ADMIN);
@@ -607,7 +609,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         assertEq(logs[2].topics[0], ValidatedClosePosition.selector);
 
         /* ----------------------- Validate with position fees ---------------------- */
-        vm.revertTo(snapshotId);
+        vm.revertToState(snapshotId);
 
         vm.prank(ADMIN);
         protocol.setPositionFeeBps(100); // 1% fees

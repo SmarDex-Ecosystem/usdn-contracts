@@ -5,6 +5,8 @@ dist/
 # Non-mainnet deployment artifacts
 broadcast/*.sol/**/*.json
 !broadcast/*.sol/1/run-*.json
+# Tenderly deployments
+!broadcast/*.sol/98*/run-1*.json
 
 # Private files
 .env

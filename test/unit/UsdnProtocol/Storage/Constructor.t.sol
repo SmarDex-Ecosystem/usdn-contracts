@@ -9,6 +9,8 @@ import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IBaseLiquidationRewardsManager } from
     "../../../../src/interfaces/LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
@@ -21,17 +23,6 @@ import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
     UsdnProtocolImpl implementation;
     UsdnProtocolFallback protocolFallback;
-
-    Managers managers = Managers({
-        setExternalManager: address(0),
-        criticalFunctionsManager: address(0),
-        setProtocolParamsManager: address(0),
-        setUsdnParamsManager: address(0),
-        setOptionsManager: address(0),
-        proxyUpgradeManager: address(0),
-        pauserManager: address(0),
-        unpauserManager: address(0)
-    });
 
     function setUp() public {
         _setUp(DEFAULT_PARAMS);
@@ -47,7 +38,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_constructorUSDNNonZeroTotalSupply() public {
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidUsdn.selector, address(usdn)));
-        deployProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), managers);
+        deployProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1));
     }
 
     /**
@@ -60,7 +51,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         usdn = new Usdn(address(0), address(0));
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidFeeCollector.selector));
-        deployProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(0), managers);
+        deployProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(0));
     }
 
     /**
@@ -70,13 +61,13 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      * @custom:then The instantiation should revert
      */
     function test_RevertWhen_constructorAssetDecimalsToLow() public {
-        uint8 wrongDecimals = protocol.FUNDING_SF_DECIMALS() - 1;
+        uint8 wrongDecimals = Constants.FUNDING_SF_DECIMALS - 1;
         usdn = new Usdn(address(0), address(0));
         // Lower the asset's decimals
         wstETH.setDecimals(wrongDecimals);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidAssetDecimals.selector, wrongDecimals));
-        deployProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), managers);
+        deployProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1));
     }
 
     /**
@@ -88,10 +79,10 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_constructorTokenDecimalsMismatch() public {
         usdn = new Usdn(address(0), address(0));
-        sdex.setDecimals(protocol.TOKENS_DECIMALS() - 1);
+        sdex.setDecimals(Constants.TOKENS_DECIMALS - 1);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidTokenDecimals.selector));
-        deployProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1), managers);
+        deployProtocol(usdn, sdex, wstETH, oracleMiddleware, liquidationRewardsManager, 100, address(1));
     }
 
     /**
@@ -101,8 +92,8 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
      * @custom:then The expected values should be returned
      */
     function test_getters() public view {
-        assertEq(protocol.LIQUIDATION_MULTIPLIER_DECIMALS(), 38);
-        assertEq(protocol.MAX_ACTIONABLE_PENDING_ACTIONS(), 20);
+        assertEq(Constants.LIQUIDATION_MULTIPLIER_DECIMALS, 38);
+        assertEq(Constants.MIN_ACTIONABLE_PENDING_ACTIONS_ITER, 20);
         assertEq(address(protocol.getSdex()), address(sdex));
         assertEq(protocol.getUsdnMinDivisor(), usdn.MIN_DIVISOR());
         assertEq(protocol.getMiddlewareValidationDelay(), oracleMiddleware.getValidationDelay());
@@ -116,8 +107,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         IBaseOracleMiddleware oracleMiddleware,
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
-        address feeCollector,
-        Managers memory manager
+        address feeCollector
     ) public {
         UnsafeUpgrades.deployUUPSProxy(
             address(implementation),
@@ -131,9 +121,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
                     liquidationRewardsManager,
                     tickSpacing,
                     feeCollector,
-                    manager,
-                    protocolFallback,
-                    params.eip712Version
+                    protocolFallback
                 )
             )
         );

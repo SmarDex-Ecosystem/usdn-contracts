@@ -6,6 +6,8 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { USER_1 } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
@@ -65,7 +67,7 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
     function test_getLongPosition() public {
         int24 expectedTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
         uint128 adjustedPrice =
-            uint128(params.initialPrice + (params.initialPrice * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR());
+            uint128(params.initialPrice + (params.initialPrice * protocol.getPositionFeeBps()) / Constants.BPS_DIVISOR);
         uint24 liqPenalty = protocol.getTickLiquidationPenalty(expectedTick);
 
         uint128 liqPriceWithoutPenalty =

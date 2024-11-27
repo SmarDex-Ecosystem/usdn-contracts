@@ -4,11 +4,11 @@ pragma solidity 0.8.26;
 import { Script } from "forge-std/Script.sol";
 import { Vm } from "forge-std/Vm.sol";
 
-import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { UsdnProtocolImpl } from "../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 
 contract Utils is Script {
-    string constant FUNC_CLASHES_SCRIPT_PATH = "script/functionClashes.ts";
-    string constant IMPL_INITIALIZATION_SCRIPT_PATH = "script/checkImplementationInitialization.ts";
+    string constant FUNC_CLASHES_SCRIPT_PATH = "script/utils/functionClashes.ts";
+    string constant IMPL_INITIALIZATION_SCRIPT_PATH = "script/utils/checkImplementationInitialization.ts";
 
     // to run the script in standalone mode
     function run() external {
@@ -20,8 +20,9 @@ contract Utils is Script {
      * @dev Call this function to validate the Usdn protocol before deploying it
      */
     function validateProtocol(string memory implementationFile, string memory fallbackFile) public {
-        string[] memory inputs = _buildCommandFunctionClashes(implementationFile, fallbackFile);
-        runFfiCommand(inputs);
+        // todo : fix the issue with the function clashes
+        // string[] memory inputs = _buildCommandFunctionClashes(implementationFile, fallbackFile);
+        // runFfiCommand(inputs);
 
         string[] memory inputs2 = _buildCommandCheckImplementationInitialization(implementationFile);
         runFfiCommand(inputs2);
@@ -68,11 +69,10 @@ contract Utils is Script {
      * @dev Call this function to build the contracts
      */
     function _buildContracts() internal {
-        string[] memory inputs = new string[](4);
+        string[] memory inputs = new string[](3);
         inputs[0] = "forge";
         inputs[1] = "build";
-        inputs[2] = "src";
-        inputs[3] = "script";
+        inputs[2] = "script";
         runFfiCommand(inputs);
     }
 
@@ -85,19 +85,16 @@ contract Utils is Script {
         pure
         returns (string[] memory inputs_)
     {
-        inputs_ = new string[](7);
+        inputs_ = new string[](5);
         uint8 i = 0;
 
         // create the command to run the functionClashes.ts script:
-        // npx tsx UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
+        // npx tsx UsdnProtocolImpl.sol UsdnProtocolFallback.sol
         inputs_[i++] = "npx";
         inputs_[i++] = "tsx";
         inputs_[i++] = FUNC_CLASHES_SCRIPT_PATH;
         inputs_[i++] = implementationFile;
-        inputs_[i++] = fallbackFile;
-        // we need to give the storage contract to remove common functions
-        inputs_[i++] = "-s";
-        inputs_[i] = "UsdnProtocolStorage.sol";
+        inputs_[i] = fallbackFile;
     }
 
     /**

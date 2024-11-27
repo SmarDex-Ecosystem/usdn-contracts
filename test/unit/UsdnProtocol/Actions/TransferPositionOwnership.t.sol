@@ -2,11 +2,12 @@
 pragma solidity 0.8.26;
 
 import { USER_1 } from "../../../utils/Constants.sol";
+import { DelegationSignatureUtils } from "../../../utils/DelegationSignatureUtils.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { OwnershipCallbackHandler } from "../utils/OwnershipCallbackHandler.sol";
 
 /// @custom:feature The `transferPositionOwnership` function of the USDN protocol
-contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture, DelegationSignatureUtils {
     OwnershipCallbackHandler callbackHandler;
 
     function setUp() public {
@@ -37,7 +38,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit PositionOwnershipTransferred(posId, address(this), USER_1);
-        protocol.transferPositionOwnership(posId, USER_1);
+        protocol.transferPositionOwnership(posId, USER_1, "");
 
         (Position memory pos,) = protocol.getLongPosition(posId);
         assertEq(pos.user, USER_1, "position user");
@@ -70,7 +71,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit PositionOwnershipTransferred(posId, address(this), USER_1);
-        protocol.transferPositionOwnership(posId, USER_1);
+        protocol.transferPositionOwnership(posId, USER_1, "");
 
         (Position memory pos,) = protocol.getLongPosition(posId);
         assertEq(pos.user, USER_1, "position user");
@@ -113,7 +114,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit TestOwnershipCallback(address(this), posId);
-        protocol.transferPositionOwnership(posId, address(callbackHandler));
+        protocol.transferPositionOwnership(posId, address(callbackHandler), "");
     }
 
     /**
@@ -136,7 +137,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
 
         callbackHandler.setShouldFail(true);
         vm.expectRevert(OwnershipCallbackFailure.selector);
-        protocol.transferPositionOwnership(posId, address(callbackHandler));
+        protocol.transferPositionOwnership(posId, address(callbackHandler), "");
     }
 
     /**
@@ -157,7 +158,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
         );
 
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
-        protocol.transferPositionOwnership(posId, USER_1);
+        protocol.transferPositionOwnership(posId, USER_1, "");
     }
 
     /**
@@ -179,7 +180,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
 
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
         vm.prank(USER_1);
-        protocol.transferPositionOwnership(posId, USER_1);
+        protocol.transferPositionOwnership(posId, USER_1, "");
     }
 
     /**
@@ -200,7 +201,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
         );
 
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
-        protocol.transferPositionOwnership(posId, address(0));
+        protocol.transferPositionOwnership(posId, address(0), "");
     }
 
     /**
@@ -226,6 +227,47 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
         vm.expectRevert(
             abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, posId.tickVersion + 1, posId.tickVersion)
         );
-        protocol.transferPositionOwnership(posId, USER_1);
+        protocol.transferPositionOwnership(posId, USER_1, "");
+    }
+
+    /**
+     * @custom:scenario Transfer position ownership after a position has been validated using delegation signature
+     * @custom:given A position that has been validated
+     * @custom:given A valid delegation signature
+     * @custom:when The {transferPositionOwnership} function is called
+     * @custom:then The position's ownership is transferred
+     */
+    function test_transferPositionOwnershipDelegation() public {
+        uint256 privateKey = 1;
+        address user = vm.addr(privateKey);
+        uint256 initialNonce = protocol.getNonce(user);
+        PositionId memory posId = setUpUserPositionInLong(
+            OpenParams({
+                user: user,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
+        );
+
+        (Position memory pos,) = protocol.getLongPosition(posId);
+        assertEq(pos.user, user, "the current position user should be `user`");
+
+        TransferPositionOwnershipDelegation memory delegation = TransferPositionOwnershipDelegation({
+            posIdHash: keccak256(abi.encode(posId)),
+            positionOwner: user,
+            newPositionOwner: USER_1,
+            delegatedAddress: address(this),
+            nonce: initialNonce
+        });
+
+        bytes memory delegationSignature =
+            _getTransferPositionDelegationSignature(privateKey, protocol.domainSeparatorV4(), delegation);
+        protocol.transferPositionOwnership(posId, USER_1, delegationSignature);
+
+        (pos,) = protocol.getLongPosition(posId);
+        assertEq(pos.user, USER_1, "the new position user should be `USER_1`");
+        assertEq(protocol.getNonce(user), initialNonce + 1, "the user nonce should be incremented");
     }
 }

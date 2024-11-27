@@ -44,7 +44,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
         rebalancer.ownershipCallback(address(this), Types.PositionId(0, 0, 0));
 
         vm.expectRevert(customError);
-        rebalancer.setTimeLimits(0, 0, 0);
+        rebalancer.setTimeLimits(0, 0, 0, 0);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -117,7 +117,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:then The call reverts with a {RebalancerInvalidMaxLeverage} error
      */
     function test_RevertWhen_setPositionMaxLeverageLowerThanMinLeverage() public adminPrank {
-        uint256 minLeverage = usdnProtocol.REBALANCER_MIN_LEVERAGE();
+        uint256 minLeverage = Constants.REBALANCER_MIN_LEVERAGE;
 
         vm.expectRevert(RebalancerInvalidMaxLeverage.selector);
         rebalancer.setPositionMaxLeverage(minLeverage);
@@ -153,13 +153,14 @@ contract TestRebalancerAdmin is RebalancerFixture {
      * @custom:and The correct event should have been emitted
      */
     function test_setTimeLimits() public adminPrank {
-        uint80 newValidationDelay = 0;
-        uint80 newValidationDeadline = 5 minutes;
-        uint80 newActionCooldown = 48 hours;
+        uint64 newValidationDelay = 0;
+        uint64 newValidationDeadline = 5 minutes;
+        uint64 newActionCooldown = 48 hours;
+        uint64 newCloseDelay = 4 hours;
 
         vm.expectEmit();
-        emit TimeLimitsUpdated(newValidationDelay, newValidationDeadline, newActionCooldown);
-        rebalancer.setTimeLimits(newValidationDelay, newValidationDeadline, newActionCooldown);
+        emit TimeLimitsUpdated(newValidationDelay, newValidationDeadline, newActionCooldown, newCloseDelay);
+        rebalancer.setTimeLimits(newValidationDelay, newValidationDeadline, newActionCooldown, newCloseDelay);
 
         assertEq(rebalancer.getTimeLimits().validationDelay, newValidationDelay, "validation delay");
         assertEq(rebalancer.getTimeLimits().validationDeadline, newValidationDeadline, "validation deadline");
@@ -174,7 +175,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      */
     function test_RevertWhen_setTimeLimitsDelayTooSmall() public adminPrank {
         vm.expectRevert(RebalancerInvalidTimeLimits.selector);
-        rebalancer.setTimeLimits(5 minutes, 5 minutes, 48 hours);
+        rebalancer.setTimeLimits(5 minutes, 5 minutes, 48 hours, 4 hours);
     }
 
     /**
@@ -185,7 +186,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      */
     function test_RevertWhen_setTimeLimitsDeadlineTooSmall() public adminPrank {
         vm.expectRevert(RebalancerInvalidTimeLimits.selector);
-        rebalancer.setTimeLimits(1 minutes, 1 minutes + 59 seconds, 48 hours);
+        rebalancer.setTimeLimits(1 minutes, 1 minutes + 59 seconds, 48 hours, 4 hours);
     }
 
     /**
@@ -196,7 +197,7 @@ contract TestRebalancerAdmin is RebalancerFixture {
      */
     function test_RevertWhen_setTimeLimitsCooldownTooSmall() public adminPrank {
         vm.expectRevert(RebalancerInvalidTimeLimits.selector);
-        rebalancer.setTimeLimits(0, 5 minutes, 5 minutes - 1);
+        rebalancer.setTimeLimits(0, 5 minutes, 5 minutes - 1, 4 hours);
     }
 
     /**
@@ -207,7 +208,19 @@ contract TestRebalancerAdmin is RebalancerFixture {
      */
     function test_RevertWhen_setTimeLimitsCooldownTooBig() public adminPrank {
         vm.expectRevert(RebalancerInvalidTimeLimits.selector);
-        rebalancer.setTimeLimits(0, 5 minutes, 48 hours + 1);
+        rebalancer.setTimeLimits(0, 5 minutes, 48 hours + 1, 4 hours);
+    }
+
+    /**
+     * @custom:scenario Try to set the time limits with a close delay that is too high
+     * @custom:given We are the owner
+     * @custom:when We call the setter with a cooldown that is too big
+     * @custom:then The transaction reverts with a {RebalancerInvalidTimeLimits} error
+     */
+    function test_RevertWhen_setTimeLimitsCloseDelayTooHigh() public adminPrank {
+        uint256 MAX_CLOSE_DELAY = rebalancer.MAX_CLOSE_DELAY();
+        vm.expectRevert(RebalancerInvalidTimeLimits.selector);
+        rebalancer.setTimeLimits(0, 5 minutes, 48 hours, uint64(MAX_CLOSE_DELAY) + 1);
     }
 
     /* -------------------------------------------------------------------------- */

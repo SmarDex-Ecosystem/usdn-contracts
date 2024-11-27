@@ -8,13 +8,54 @@ import { IBaseLiquidationRewardsManager } from "../LiquidationRewardsManager/IBa
 import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../Usdn/IUsdn.sol";
-import { IUsdnProtocolTypes as Types } from "./IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolFallback
  * @notice Interface for the USDN protocol fallback functions
  */
-interface IUsdnProtocolFallback {
+interface IUsdnProtocolFallback is IUsdnProtocolTypes {
+    /**
+     * @notice Retrieve a list of pending actions, one of which must be validated by the next user action in the
+     * protocol
+     * @dev If this function returns a non-empty list of pending actions, then the next user action MUST include the
+     * corresponding list of price update data and raw indices as the last parameter
+     * @param currentUser The address of the user that will submit the price signatures for third-party actions
+     * validations. This is used to filter out their actions from the returned list
+     * @param lookAhead Additionally to pending actions which are actionable at this moment `block.timestamp`, the
+     * function will also return pending actions which will be actionable `lookAhead` seconds later. It is recommended
+     * to use a non-zero value in order to account for the interval where the validation transaction will be pending. A
+     * value of 30 seconds should already account for most situations and avoid reverts in case an action becomes
+     * actionable after a user submits their transaction
+     * @param maxIter The maximum number of iterations when looking through the queue to find actionable pending
+     * actions. Values below MIN_ACTIONABLE_PENDING_ACTIONS_ITER will be clamped to that value, but this parameter can
+     * be used to increase the limit
+     * @return actions_ The pending actions if any, otherwise an empty array. Note that some items can be zero-valued
+     * and there is no need to provide price data for those (an empty `bytes` suffices)
+     * @return rawIndices_ The raw indices of the actionable pending actions in the queue if any, otherwise an empty
+     * array
+     */
+    function getActionablePendingActions(address currentUser, uint256 lookAhead, uint256 maxIter)
+        external
+        view
+        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_);
+
+    /**
+     * @notice Retrieve a user pending action
+     * @param user The user's address
+     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and
+     * `ProtocolAction.None`
+     */
+    function getUserPendingAction(address user) external view returns (PendingAction memory action_);
+
+    /**
+     * @notice Get the hash generated from the tick and a version
+     * @param tick The tick number
+     * @param version The tick version
+     * @return The hash of the tick and version
+     */
+    function tickHash(int24 tick, uint256 version) external pure returns (bytes32);
+
     /**
      * @notice Get the liquidation price corresponding to a given tick number
      * @dev Uses the values from storage for the various variables. Note that ticks that are
@@ -41,7 +82,8 @@ interface IUsdnProtocolFallback {
     ) external view returns (uint128);
 
     /**
-     * @notice Calculate an estimation of assets received when withdrawing
+     * @notice Calculate an estimate of assets received when withdrawing
+     * @dev The result is a rough estimate and do not take into account rebases, liquidations and price adjustments
      * @param usdnShares The amount of USDN shares
      * @param price The price of the asset
      * @param timestamp The timestamp of the operation
@@ -53,7 +95,8 @@ interface IUsdnProtocolFallback {
         returns (uint256 assetExpected_);
 
     /**
-     * @notice Calculate an estimation of USDN tokens to be minted and SDEX tokens to be burned for a deposit
+     * @notice Calculate an estimate of USDN tokens to be minted and SDEX tokens to be burned for a deposit
+     * @dev The result is a rough estimate and do not take into account rebases, liquidations and price adjustments
      * @param amount The amount of assets of the pending deposit
      * @param price The price of the asset at the time of the last update
      * @param timestamp The timestamp of the operation
@@ -113,102 +156,6 @@ interface IUsdnProtocolFallback {
      * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
      */
     function removeBlockedPendingActionNoCleanup(uint128 rawIndex, address payable to) external;
-
-    /* -------------------------------------------------------------------------- */
-    /*                                  Constants                                 */
-    /* -------------------------------------------------------------------------- */
-
-    /**
-     * @notice Get the number of decimals of a position's leverage
-     * @return The leverage's number of decimals
-     */
-    function LEVERAGE_DECIMALS() external view returns (uint8);
-
-    /**
-     * @notice Get the minimum leverage allowed for the rebalancer to open a position
-     * @dev In edge cases where the rebalancer holds significantly more assets than the protocol, opening a position
-     * with the protocol's minimum leverage could cause a large overshoot of the target, potentially creating even
-     * greater imbalance than before the trigger. To prevent this, the rebalancer can use leverage as low as the
-     * technical minimum (10**LEVERAGE_DECIMALS + 1)
-     * @return The minimum leverage value (with `LEVERAGE_DECIMALS` decimals)
-     */
-    function REBALANCER_MIN_LEVERAGE() external view returns (uint256);
-
-    /**
-     * @notice Get the number of decimals of the funding rate
-     * @return The funding rate's number of decimals
-     */
-    function FUNDING_RATE_DECIMALS() external view returns (uint8);
-
-    /**
-     * @notice Get the number of decimals of tokens used in the protocol (except the asset)
-     * @return The tokens' number of decimals
-     */
-    function TOKENS_DECIMALS() external view returns (uint8);
-
-    /**
-     * @notice Get the number of decimals used for the fixed representation of the liquidation multiplier
-     * @return The liquidation multiplier's number of decimals
-     */
-    function LIQUIDATION_MULTIPLIER_DECIMALS() external view returns (uint8);
-
-    /**
-     * @notice Get the number of decimals in the scaling factor of the funding rate
-     * @return The scaling factor's number of decimals
-     */
-    function FUNDING_SF_DECIMALS() external view returns (uint8);
-
-    /**
-     * @notice Get the divisor for the ratio of USDN to SDEX to burn on deposit
-     * @return The USDN to SDEX burn ratio divisor
-     */
-    function SDEX_BURN_ON_DEPOSIT_DIVISOR() external view returns (uint256);
-
-    /**
-     * @notice Get the divisor for basis point values
-     * @dev Example: 200 -> 2%
-     * @return The basis points divisor
-     */
-    function BPS_DIVISOR() external view returns (uint256);
-
-    /**
-     * @notice Get the maximum number of tick liquidations that can be done per call
-     * @return The maximum number of iterations
-     */
-    function MAX_LIQUIDATION_ITERATION() external view returns (uint16);
-
-    /**
-     * @notice Get the sentinel value indicating that a `PositionId` represents no position
-     * @return The tick value for a `PositionId` that represents no position
-     */
-    function NO_POSITION_TICK() external view returns (int24);
-
-    /**
-     * @notice The minimum total supply of USDN that we allow
-     * @dev Upon the first deposit, this amount is sent to the dead address and cannot be later recovered
-     * @return The minimum total supply of USDN
-     */
-    function MIN_USDN_SUPPLY() external view returns (uint256);
-
-    /**
-     * @notice The address that holds the minimum supply of USDN and the first minimum long position
-     * @return The address
-     */
-    function DEAD_ADDRESS() external view returns (address);
-
-    /**
-     * @notice The maximum number of actionable pending action items returned by `getActionablePendingActions`
-     * @return The maximum value
-     */
-    function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256);
-
-    /**
-     * @notice The lowest margin between the total expo and the balance long
-     * @dev The balance long cannot increase in a way that makes the trading expo worth less than the margin
-     * If that happens, the balance long will be clamped down to the total expo minus the margin
-     * @return The minimum margin between the total expo and the balance for the long side (in basis points)
-     */
-    function MIN_LONG_TRADING_EXPO_BPS() external pure returns (uint256);
 
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables getters                         */
@@ -533,7 +480,7 @@ interface IUsdnProtocolFallback {
      * @param tick The tick number
      * @return The tick data
      */
-    function getTickData(int24 tick) external view returns (Types.TickData memory);
+    function getTickData(int24 tick) external view returns (TickData memory);
 
     /**
      * @notice Get the long position at the provided tick, in the provided index
@@ -541,7 +488,7 @@ interface IUsdnProtocolFallback {
      * @param index The position index
      * @return The long position
      */
-    function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Types.Position memory);
+    function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory);
 
     /**
      * @notice Get the highest tick that has an open position
@@ -574,18 +521,6 @@ interface IUsdnProtocolFallback {
      * @return The user nonce
      */
     function getNonce(address owner) external view returns (uint256);
-
-    /**
-     * @notice Get the domain separator v4
-     * @return The domain separator v4
-     */
-    function domainSeparatorV4() external view returns (bytes32);
-
-    /**
-     * @notice Get The EIP712 {initiateClosePosition} typehash
-     * @return The {initiateClosePosition} typehash
-     */
-    function getInitiateCloseTypehash() external pure returns (bytes32);
 
     /* -------------------------------------------------------------------------- */
     /*                                   Setters                                  */
@@ -702,6 +637,7 @@ interface IUsdnProtocolFallback {
      * @notice Set the security deposit value
      * @dev The maximum value of the security deposit is 2^64 - 1 = 18446744073709551615 = 18.4 ethers
      * @param securityDepositValue The security deposit value
+     * @dev This value cannot be greater than MAX_SECURITY_DEPOSIT
      */
     function setSecurityDepositValue(uint64 securityDepositValue) external;
 
@@ -716,6 +652,7 @@ interface IUsdnProtocolFallback {
      * @param newRebalancerCloseLimitBps The new rebalancer close limit
      * @param newLongImbalanceTargetBps The new target imbalance limit for the long side
      * A positive value will target below equilibrium, a negative one will target above equilibrium
+     * If negative, the rebalancerCloseLimit will be useless since the minimum value is 1
      */
     function setExpoImbalanceLimits(
         uint256 newOpenLimitBps,
@@ -756,19 +693,38 @@ interface IUsdnProtocolFallback {
      * @notice Set the USDN rebase threshold
      * @param newThreshold The new threshold value (with _priceFeedDecimals)
      * @dev When the price of USDN exceeds this value, a rebase might be triggered
-     * This value cannot be smaller than `_targetUsdnPrice`
+     * This value cannot be smaller than `_targetUsdnPrice` or greater than uint128(2 * 10 ** s._priceFeedDecimals)
      */
     function setUsdnRebaseThreshold(uint128 newThreshold) external;
 
     /**
      * @notice Pauses related USDN protocol functions
      * @dev Pauses simultaneously all initiate/validate, refundSecurityDeposit and transferPositionOwnership functions
+     * Before pausing, this function will call `_applyPnlAndFunding` with `_lastPrice` and the current timestamp
+     * This is done to stop the funding rate from accumulating while the protocol is paused, be sure to call {unpause}
+     * when unpausing
      */
     function pause() external;
 
     /**
+     * @notice Pauses related USDN protocol functions
+     * @dev Pauses simultaneously all initiate/validate, refundSecurityDeposit and transferPositionOwnership functions
+     * This safe version will not call `_applyPnlAndFunding` before pausing
+     */
+    function pauseSafe() external;
+
+    /**
      * @notice Unpauses related USDN protocol functions
      * @dev Unpauses simultaneously all initiate/validate, refundSecurityDeposit and transferPositionOwnership functions
+     * This function will set `_lastUpdateTimestamp` to the current timestamp to prevent any funding during the pause
+     * Only meant to be called after a {pause} call
      */
     function unpause() external;
+
+    /**
+     * @notice Unpauses related USDN protocol functions
+     * @dev Unpauses simultaneously all initiate/validate, refundSecurityDeposit and transferPositionOwnership functions
+     * This safe version will not set `_lastUpdateTimestamp` to the current timestamp
+     */
+    function unpauseSafe() external;
 }

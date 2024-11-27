@@ -41,7 +41,7 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
 
         assertEq(validated, 4, "validated actions");
 
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
+        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this), 0, 0);
         assertEq(actions.length, 0, "remaining pending actions");
     }
 
@@ -60,7 +60,7 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
 
         assertEq(validated, 2, "validated actions");
 
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
+        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this), 0, 0);
         assertEq(actions.length, 2, "remaining pending actions");
     }
 
@@ -91,7 +91,7 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
 
         assertEq(validated, 3, "validated actions");
 
-        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
+        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this), 0, 0);
         assertEq(actions.length, 1, "remaining pending actions");
     }
 
@@ -194,7 +194,7 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
         _waitBeforeActionablePendingAction();
 
         (PendingAction[] memory actions, uint128[] memory rawIndices) =
-            protocol.getActionablePendingActions(address(this));
+            protocol.getActionablePendingActions(address(this), 0, 0);
 
         assertEq(actions.length, 4, "actions length");
 

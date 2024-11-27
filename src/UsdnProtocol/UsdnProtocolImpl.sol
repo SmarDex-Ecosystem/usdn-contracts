@@ -8,6 +8,7 @@ import { IBaseLiquidationRewardsManager } from
     "../interfaces/LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
+import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolImpl } from "../interfaces/UsdnProtocol/IUsdnProtocolImpl.sol";
 import { UsdnProtocolActions } from "./UsdnProtocolActions.sol";
@@ -15,13 +16,15 @@ import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
 import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
 import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 
 contract UsdnProtocolImpl is
+    IUsdnProtocolErrors,
     IUsdnProtocolImpl,
-    UsdnProtocolLong,
-    UsdnProtocolVault,
-    UsdnProtocolCore,
     UsdnProtocolActions,
+    UsdnProtocolCore,
+    UsdnProtocolVault,
+    UsdnProtocolLong,
     UUPSUpgradeable
 {
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -38,32 +41,23 @@ contract UsdnProtocolImpl is
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Managers memory managers,
-        IUsdnProtocolFallback protocolFallback,
-        string memory eip712Version
+        IUsdnProtocolFallback protocolFallback
     ) public initializer {
+        Storage storage s = Utils._getMainStorage();
+
         __AccessControlDefaultAdminRules_init(0, msg.sender);
         __initializeReentrancyGuard_init();
         __Pausable_init();
-        __EIP712_init("UsdnProtocol", eip712Version);
+        __EIP712_init("UsdnProtocol", "1");
 
-        // roles
-        _setRoleAdmin(SET_EXTERNAL_ROLE, ADMIN_SET_EXTERNAL_ROLE);
-        _setRoleAdmin(CRITICAL_FUNCTIONS_ROLE, ADMIN_CRITICAL_FUNCTIONS_ROLE);
-        _setRoleAdmin(SET_PROTOCOL_PARAMS_ROLE, ADMIN_SET_PROTOCOL_PARAMS_ROLE);
-        _setRoleAdmin(SET_USDN_PARAMS_ROLE, ADMIN_SET_USDN_PARAMS_ROLE);
-        _setRoleAdmin(SET_OPTIONS_ROLE, ADMIN_SET_OPTIONS_ROLE);
-        _setRoleAdmin(PROXY_UPGRADE_ROLE, ADMIN_PROXY_UPGRADE_ROLE);
-        _setRoleAdmin(PAUSER_ROLE, ADMIN_PAUSER_ROLE);
-        _setRoleAdmin(UNPAUSER_ROLE, ADMIN_UNPAUSER_ROLE);
-        _grantRole(SET_EXTERNAL_ROLE, managers.setExternalManager);
-        _grantRole(CRITICAL_FUNCTIONS_ROLE, managers.criticalFunctionsManager);
-        _grantRole(SET_PROTOCOL_PARAMS_ROLE, managers.setProtocolParamsManager);
-        _grantRole(SET_USDN_PARAMS_ROLE, managers.setUsdnParamsManager);
-        _grantRole(SET_OPTIONS_ROLE, managers.setOptionsManager);
-        _grantRole(PROXY_UPGRADE_ROLE, managers.proxyUpgradeManager);
-        _grantRole(PAUSER_ROLE, managers.pauserManager);
-        _grantRole(UNPAUSER_ROLE, managers.unpauserManager);
+        _setRoleAdmin(Constants.SET_EXTERNAL_ROLE, Constants.ADMIN_SET_EXTERNAL_ROLE);
+        _setRoleAdmin(Constants.CRITICAL_FUNCTIONS_ROLE, Constants.ADMIN_CRITICAL_FUNCTIONS_ROLE);
+        _setRoleAdmin(Constants.SET_PROTOCOL_PARAMS_ROLE, Constants.ADMIN_SET_PROTOCOL_PARAMS_ROLE);
+        _setRoleAdmin(Constants.SET_USDN_PARAMS_ROLE, Constants.ADMIN_SET_USDN_PARAMS_ROLE);
+        _setRoleAdmin(Constants.SET_OPTIONS_ROLE, Constants.ADMIN_SET_OPTIONS_ROLE);
+        _setRoleAdmin(Constants.PROXY_UPGRADE_ROLE, Constants.ADMIN_PROXY_UPGRADE_ROLE);
+        _setRoleAdmin(Constants.PAUSER_ROLE, Constants.ADMIN_PAUSER_ROLE);
+        _setRoleAdmin(Constants.UNPAUSER_ROLE, Constants.ADMIN_UNPAUSER_ROLE);
 
         // parameters
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1); // x1.1
@@ -89,7 +83,6 @@ contract UsdnProtocolImpl is
         s._sdexBurnOnDepositRatio = 1e6; // 1%
         s._securityDepositValue = 0.5 ether;
 
-        // Long positions
         s._EMA = int256(3 * 10 ** (Constants.FUNDING_RATE_DECIMALS - 4));
 
         // since all USDN must be minted by the protocol, we check that the total supply is 0
@@ -131,7 +124,7 @@ contract UsdnProtocolImpl is
      * @notice Function to verify that the caller to upgrade the protocol is authorized
      * @param implementation The address of the new implementation
      */
-    function _authorizeUpgrade(address implementation) internal override onlyRole(PROXY_UPGRADE_ROLE) { }
+    function _authorizeUpgrade(address implementation) internal override onlyRole(Constants.PROXY_UPGRADE_ROLE) { }
 
     /**
      * @notice Delegates the call to the fallback contract
@@ -149,6 +142,6 @@ contract UsdnProtocolImpl is
     }
 
     fallback() external {
-        _delegate(s._protocolFallbackAddr);
+        _delegate(Utils._getMainStorage()._protocolFallbackAddr);
     }
 }

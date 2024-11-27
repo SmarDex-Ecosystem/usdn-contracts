@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+import { IAccessControlDefaultAdminRules } from
+    "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
+import { IERC5267 } from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IBaseLiquidationRewardsManager } from "../LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
@@ -10,7 +13,6 @@ import { IUsdnProtocolActions } from "./IUsdnProtocolActions.sol";
 import { IUsdnProtocolCore } from "./IUsdnProtocolCore.sol";
 import { IUsdnProtocolFallback } from "./IUsdnProtocolFallback.sol";
 import { IUsdnProtocolLong } from "./IUsdnProtocolLong.sol";
-import { IUsdnProtocolStorage } from "./IUsdnProtocolStorage.sol";
 import { IUsdnProtocolVault } from "./IUsdnProtocolVault.sol";
 
 /**
@@ -18,11 +20,12 @@ import { IUsdnProtocolVault } from "./IUsdnProtocolVault.sol";
  * @notice Interface for the implementation of the USDN protocol (completed with {IUsdnProtocolFallback})
  */
 interface IUsdnProtocolImpl is
-    IUsdnProtocolStorage,
     IUsdnProtocolActions,
     IUsdnProtocolVault,
     IUsdnProtocolLong,
-    IUsdnProtocolCore
+    IUsdnProtocolCore,
+    IAccessControlDefaultAdminRules,
+    IERC5267
 {
     /**
      * @notice Function to initialize the protocol storage
@@ -35,9 +38,7 @@ interface IUsdnProtocolImpl is
      * @param liquidationRewardsManager The liquidation rewards manager contract
      * @param tickSpacing The positions tick spacing
      * @param feeCollector The address of the fee collector
-     * @param managers The protocol managers
      * @param protocolFallback The protocol fallback contract
-     * @param eip712Version The protocol eip712 version
      */
     function initializeStorage(
         IUsdn usdn,
@@ -47,8 +48,6 @@ interface IUsdnProtocolImpl is
         IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        Managers memory managers,
-        IUsdnProtocolFallback protocolFallback,
-        string memory eip712Version
+        IUsdnProtocolFallback protocolFallback
     ) external;
 }

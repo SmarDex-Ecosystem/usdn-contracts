@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { USER_1 } from "../../utils/Constants.sol";
 import { RebalancerFixture } from "./utils/Fixtures.sol";
 
+import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @custom:feature The `initiateWithdrawAssets` function of the rebalancer contract
  * @custom:background Given a user has made and validated a deposit which was not yet included in the protocol
@@ -133,27 +135,8 @@ contract TestRebalancerInitiateWithdrawAssets is RebalancerFixture {
      * @custom:then The call reverts with {RebalancerWithdrawalUnauthorized}
      */
     function test_RevertWhen_initiateWithdrawalIncludedInProtocol() public {
-        rebalancer.incrementPositionVersion();
-
-        vm.expectRevert(RebalancerWithdrawalUnauthorized.selector);
-        rebalancer.initiateWithdrawAssets();
-    }
-
-    /**
-     * @custom:scenario The user initiates a withdrawal but the assets were already in a liquidated position
-     * @custom:given The user's deposit was in a position that got liquidated
-     * @custom:when The user initiates a withdrawal and the position was liquidated without a new position being created
-     * @custom:or The user initiates a withdrawal and the position was liquidated with a new position being created
-     * @custom:then The call reverts with {RebalancerWithdrawalUnauthorized}
-     */
-    function test_RevertWhen_initiateWithdrawalLiquidated() public {
-        rebalancer.incrementPositionVersion();
-        rebalancer.setLastLiquidatedVersion(rebalancer.getPositionVersion());
-
-        vm.expectRevert(RebalancerWithdrawalUnauthorized.selector);
-        rebalancer.initiateWithdrawAssets();
-
-        rebalancer.incrementPositionVersion();
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId(0, 0, 0), 0);
 
         vm.expectRevert(RebalancerWithdrawalUnauthorized.selector);
         rebalancer.initiateWithdrawAssets();

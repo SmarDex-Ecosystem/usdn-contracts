@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import { ADMIN } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { FeeCollector } from "../../../src/utils/FeeCollector.sol";
 
 /**
@@ -25,7 +27,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with `UsdnProtocolInvalidProtocolFeeBps`
      */
     function test_RevertWhen_setFeeBps_tooBig() public adminPrank {
-        uint16 bpsDivisor = uint16(protocol.BPS_DIVISOR());
+        uint16 bpsDivisor = uint16(Constants.BPS_DIVISOR);
         vm.expectRevert(UsdnProtocolInvalidProtocolFeeBps.selector);
         protocol.setProtocolFeeBps(bpsDivisor + 1);
     }

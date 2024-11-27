@@ -56,7 +56,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
             totalExpo - uint256(longAssetAvailable),
             liqMultiplierAccumulator
         );
-        int256 expectedPositionValue = protocol.i_positionValue(currentPrice, tickPrice, pos.totalExpo);
+        int256 expectedPositionValue = protocol.i_positionValue(pos.totalExpo, currentPrice, tickPrice);
 
         vm.expectEmit();
         emit InitiatedClosePosition(address(this), address(this), address(this), posId, AMOUNT, AMOUNT, 0);
