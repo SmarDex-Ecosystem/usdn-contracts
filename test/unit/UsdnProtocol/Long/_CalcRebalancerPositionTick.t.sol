@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { UsdnProtocolConstantsLibrary as Constant } from
@@ -166,6 +167,54 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             protocol.getLiqMultiplierAccumulator()
         );
         assertEq(tick, expectedTick, "The result should be equal to the expected tick");
+    }
+
+    function test_calcRebalancerPositionTickLiquidationPenaltyChanged() public {
+        uint128 amount = 10 ether;
+        uint256 totalExpo = 295 ether;
+
+        vm.prank(ADMIN);
+        protocol.setLiquidationPenalty(0);
+
+        PositionId memory posId = setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: amount,
+                desiredLiqPrice: DEFAULT_PARAMS.initialPrice / 2,
+                price: DEFAULT_PARAMS.initialPrice
+            })
+        );
+
+        (int24 tickBefore,, uint24 liquidationPenaltyBefore) = protocol.i_calcRebalancerPositionTick(
+            DEFAULT_PARAMS.initialPrice,
+            amount,
+            protocol.getMaxLeverage(),
+            totalExpo,
+            267 ether + 1.25 ether,
+            vaultBalance,
+            protocol.getLiqMultiplierAccumulator()
+        );
+
+        vm.prank(ADMIN);
+        protocol.setLiquidationPenalty(500);
+
+        (int24 tickAfter,, uint24 liquidationPenaltyAfter) = protocol.i_calcRebalancerPositionTick(
+            DEFAULT_PARAMS.initialPrice,
+            amount,
+            protocol.getMaxLeverage(),
+            totalExpo,
+            267 ether,
+            vaultBalance,
+            protocol.getLiqMultiplierAccumulator()
+        );
+
+        assertEq(tickBefore, posId.tick, "tick should be equal to posId.tick");
+        assertEq(tickAfter, posId.tick, "tick2 should be equal to posId.tick");
+        assertTrue(
+            liquidationPenaltyBefore == liquidationPenaltyAfter && liquidationPenaltyBefore == 0,
+            "liquidationPenalty should be equal to 0"
+        );
     }
 
     /**
