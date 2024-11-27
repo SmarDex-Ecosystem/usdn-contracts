@@ -141,7 +141,7 @@ writeFileSync(`${ABI_EXPORT_PATH}/Enums.ts`, fileContent);
 indexContent += `export * from './Enums';\n`;
 
 // Export constants
-const constFileLines = ['import { keccak256, toHex } from "viem";'];
+const constFileLines: string[] = [];
 const contents = readFileSync('src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol').toString();
 const constantsRegex = /[^\n]*constant (?<ident>\w+) =\s+(?<value>.+?);/gs;
 for (const match of contents.matchAll(constantsRegex)) {
