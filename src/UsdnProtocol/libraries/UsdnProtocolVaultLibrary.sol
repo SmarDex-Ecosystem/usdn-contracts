@@ -287,11 +287,11 @@ library UsdnProtocolVaultLibrary {
         if (maxIter < Constants.MIN_ACTIONABLE_PENDING_ACTIONS_ITER) {
             maxIter = Constants.MIN_ACTIONABLE_PENDING_ACTIONS_ITER;
         }
-        actions_ = new Types.PendingAction[](maxIter);
-        rawIndices_ = new uint128[](maxIter);
         if (queueLength < maxIter) {
             maxIter = queueLength;
         }
+        actions_ = new Types.PendingAction[](maxIter);
+        rawIndices_ = new uint128[](maxIter);
 
         uint256 lowLatencyDeadline = s._lowLatencyValidatorDeadline;
         // the lookAhead allows to retrieve pending actions which will be actionable some time after block.timestamp. By
