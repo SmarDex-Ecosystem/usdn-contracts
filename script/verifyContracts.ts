@@ -81,7 +81,7 @@ broadcast.transactions.filter(transaction =>
             } catch {
                 console.error(`Unable to get constructor inputs type for ${contractName}`)
             }
-            if (constructorInputs != undefined) {
+            if (constructorInputs !== undefined) {
                 //build constructor args
                 const encodedConstructorParameters = encodeAbiParameters(constructorInputs, argumentList)
                 if (DEBUG) console.log(`encodedConstructorParameters : ${encodedConstructorParameters}`)
