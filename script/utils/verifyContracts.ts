@@ -30,7 +30,7 @@ const options = program.opts();
 const DEBUG = !!options.debug;
 let etherscanApiKey: string = options.etherscanApiKey;
 let verifierUrl: string = options.verifierUrl;
-const verbose: string = DEBUG ? '--verbose' : '';
+const verbose: string = DEBUG ? '-vvvvv' : '';
 
 if (DEBUG) console.log(`etherscanApiKey : ${etherscanApiKey}`)
 if (DEBUG) console.log(`verifierUrl : ${verifierUrl}`)
