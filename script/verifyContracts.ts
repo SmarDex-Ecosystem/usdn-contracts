@@ -47,7 +47,7 @@ if (verifierUrl) verifierUrl = `--verifier-url ${verifierUrl}`;
 const file = readFileSync(broadcastPath);
 const broadcast = JSON.parse(file.toString());
 broadcast.transactions.filter(transaction =>
-    transaction.transactionType == "CREATE"
+    transaction.transactionType === "CREATE"
 ).forEach(transaction => {
     const address: string = transaction.contractAddress;
     const contractName: string = transaction.contractName;
@@ -55,7 +55,7 @@ broadcast.transactions.filter(transaction =>
     if (DEBUG) console.log(`transaction to verify with address : ${address} and name : ${contractName}`)
     if (DEBUG) console.log(`arguments of the contract : ${argumentList}`)
 
-    if (argumentList == null) {
+    if (argumentList === null) {
         execVerify(address, contractName, '')
     } else {
         const pathAbi: string = `./out/${contractName}.sol/${contractName}.json`;
@@ -68,11 +68,11 @@ broadcast.transactions.filter(transaction =>
             try {
                 constructorInputs = contractAbi.abi.filter((x: {
                     type: string;
-                }) => x.type == "constructor")[0].inputs
+                }) => x.type === "constructor")[0].inputs
                 if (DEBUG) {
                     console.log(`constructorInputs : `)
                     constructorInputs.forEach(x => console.log(x))
-                    if (constructorInputs.length == argumentList.length) {
+                    if (constructorInputs.length === argumentList.length) {
                         console.log(`constructorInputsType and argumentList have the same amount of elements`)
                     } else {
                         console.error(`constructorInputsType length: ${constructorInputs.length} != argumentList length: ${argumentList.length}`)
