@@ -70,10 +70,10 @@ broadcast.transactions.filter(transaction =>
                     type: string;
                 }) => x.type === "constructor")[0].inputs
                 if (DEBUG) {
-                    console.log(`constructorInputs : `)
+                    console.log('constructorInputs : ')
                     constructorInputs.forEach(x => console.log(x))
                     if (constructorInputs.length === argumentList.length) {
-                        console.log(`constructorInputsType and argumentList have the same amount of elements`)
+                        console.log('constructorInputsType and argumentList have the same amount of elements')
                     } else {
                         console.error(`constructorInputsType length: ${constructorInputs.length} != argumentList length: ${argumentList.length}`)
                     }
