@@ -170,7 +170,8 @@ for (const match of contents.matchAll(constantsRegex)) {
     if (!decodedAbi) {
       throw new Error("Invalid abi in constants");
     }
-    value = `${keccak256(toHex(decodedAbi))}`;
+    value = `"${keccak256(toHex(decodedAbi))}"`;
+    typeHint = '`0x${string}`';
   } else {
     // conversion for numbers
     value = value.replace('minutes', '* 60');
