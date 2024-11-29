@@ -25,7 +25,7 @@ import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalance
  */
 contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     function setUp() public {
-        SetUpParams storage params = DEFAULT_PARAMS;
+        params = DEFAULT_PARAMS;
         params.flags.enableLimits = true;
         super._setUp(params);
     }
