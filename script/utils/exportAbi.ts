@@ -2,8 +2,17 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { basename } from 'node:path';
 import { type AbiError, type AbiEvent, type AbiFunction, type Address, formatAbiItem } from 'abitype';
 import { Command } from 'commander';
+import _eval from 'eval';
 import { globSync } from 'glob';
-import { keccak256, pad, toEventSelector, toEventSignature, toFunctionSelector, toFunctionSignature, toHex } from 'viem';
+import {
+  keccak256,
+  pad,
+  toEventSelector,
+  toEventSignature,
+  toFunctionSelector,
+  toFunctionSignature,
+  toHex,
+} from 'viem';
 
 const DIST_PATH = './dist';
 const ABI_EXPORT_PATH = `${DIST_PATH}/abi`;
@@ -140,7 +149,7 @@ writeFileSync(`${ABI_EXPORT_PATH}/Enums.ts`, fileContent);
 indexContent += `export * from './Enums';\n`;
 
 // Export constants
-const numericConstantValue: { [variable: string]: string } = {};
+const numericConstantValue: Map<string, bigint> = new Map();
 const constFileLines: string[] = [];
 const contents = readFileSync('src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol').toString();
 const constantsRegex = /[^\n]*constant (?<ident>\w+) =\s+(?<value>.+?);/gs;
@@ -162,16 +171,15 @@ for (const match of contents.matchAll(constantsRegex)) {
       throw new Error('Invalid address in constants');
     }
     value = `"${pad(address, { size: 20 })}"`;
-    comment = `pad(${address}, { size: 20 })`;
+    comment = `${ident} = pad(${address}, { size: 20 })`;
   } else if (value.startsWith('keccak256')) {
     value = value.replaceAll('\n', '');
-    const decodedAbi = value.match(/keccak256\(\s*(?<abi>"[^"]+")\s*\)/)?.groups
-      ?.abi as string;
+    const decodedAbi = value.match(/keccak256\(\s*(?<abi>"[^"]+")\s*\)/)?.groups?.abi as string;
     if (!decodedAbi) {
       throw new Error('Invalid abi in constants');
     }
     value = `'${keccak256(toHex(decodedAbi))}'`;
-    comment = `keccak256(toHex(${decodedAbi}))`;
+    comment = `${ident} = keccak256(toHex(${decodedAbi}))`;
   } else {
     // conversion for numbers
     value = value.replace('minutes', '* 60');
@@ -181,111 +189,22 @@ for (const match of contents.matchAll(constantsRegex)) {
     value = value.replaceAll(/((?:[0-9]+_?)+)e([0-9]+)/g, '$1 * 10 ** $2'); // scientific notation
     value = value.replaceAll(/((?:[0-9]+_?)+)/g, '$1n');
 
-    comment = /[^0-9n_]/.test(value) ? `(${value})` : '';
-    value = calculateRPN(toRPN(value));
-    numericConstantValue[ident] = value;
+    // if the value is the result of a calculation, we comment with the original calculation
+    comment = /[^0-9n_]/.test(value) ? `${ident} = (${value})` : '';
+
+    // now we execute the calculation to retrieve the result
+    const others = [...numericConstantValue].map(([key, val]) => `const ${key} = ${val}n;`).join('\n');
+    // previously defined constants and included in the executed code to allow referencing them
+    const res = _eval(`${others} const val = ${value}; exports.val = val;`) as { val: bigint };
+    numericConstantValue.set(ident, res.val);
+
+    value = `${res.val}n`;
   }
-  constFileLines.push(
-    `${
-      comment ? `/*! ${comment} */\n` : ''
-    }export const ${ident} = ${value} as const;`
-  );
+  constFileLines.push(`${comment ? `/*! ${comment} */\n` : ''}export const ${ident} = ${value} as const;`);
 }
-const constFileContent = [...constFileLines.values()].join("\n");
+const constFileContent = [...constFileLines.values()].join('\n');
 writeFileSync(`${ABI_EXPORT_PATH}/Constants.ts`, constFileContent);
 indexContent += `export * from './Constants';\n`;
 
 // Write index file
 writeFileSync(`${ABI_EXPORT_PATH}/index.ts`, indexContent);
-
-function toRPN(expression: string): string[] {
-  const operators: { [key: string]: number } = {
-    '+': 1,
-    '-': 1,
-    '*': 2,
-    '/': 2,
-    '%': 2,
-    '**': 3,
-  };
-
-  const output: string[] = [];
-  const stack: string[] = [];
-
-  // Regular expression for detecting numbers bigint, variables, operators and parentheses
-  const regex =
-    /\d{1,3}(_\d{3})+n?|\d+n?|([A-Z]+_?)+|[()+\-\/%]|\*{1,2}/g;
-  const tokens = expression.match(regex) || [];
-
-  for (const token of tokens) {
-    if (/\d+n?|\d{1,3}(_\d{3})+n?/.test(token)) {
-      // Token is a number (BigInt)
-      output.push(token);
-    } else if (/[A-Z_]+/.test(token)) {
-      // Token is a constant
-      output.push(numericConstantValue[token]);
-    } else if (token === '(') {
-      // Left parenthesis
-      stack.push(token);
-    } else if (token === ')') {
-      // Right parenthesis, pop until left parenthesis
-      while (stack.length > 0 && stack[stack.length - 1] !== '(') {
-        output.push(stack.pop()!);
-      }
-      stack.pop(); // pop '('
-    } else {
-      // Operator
-      while (
-        stack.length > 0 &&
-        operators[token] <= operators[stack[stack.length - 1]] &&
-        stack[stack.length - 1] !== '('
-      ) {
-        output.push(stack.pop()!);
-      }
-      stack.push(token);
-    }
-  }
-
-  // Pop any remaining operators in the stack
-  while (stack.length > 0) {
-    output.push(stack.pop()!);
-  }
-
-  return output;
-}
-
-function calculateRPN(rpn: string[]): string {
-  const stack: bigint[] = [];
-  for (const token of rpn) {
-    if (/\d+n?|\d{1,3}(_\d{3})+n?/.test(token)) {
-      // Token is a number (BigInt or normal number)
-      // Remove 'n' in case it is a bigint, and remove underscores
-      stack.push(BigInt(token.replace('n', '').replaceAll('_', '')));
-    } else {
-      // Operator
-      const b = stack.pop()!;
-      const a = stack.pop()!;
-      switch (token) {
-        case '+':
-          stack.push(a + b);
-          break;
-        case '-':
-          stack.push(a - b);
-          break;
-        case '*':
-          stack.push(a * b);
-          break;
-        case '/':
-          stack.push(a / b);
-          break;
-        case '%':
-          stack.push(a % b);
-          break;
-        case '**':
-          stack.push(a ** b);
-          break;
-      }
-    }
-  }
-
-  return `${stack.pop()!}n`;
-}
