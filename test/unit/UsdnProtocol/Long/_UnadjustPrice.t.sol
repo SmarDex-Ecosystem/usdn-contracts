@@ -7,7 +7,7 @@ import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
 /**
  * @custom:feature The _unadjustPrice internal function of the UsdnProtocolLong contract.
- * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
+ * @custom:background Given a protocol initialized with default values
  * leverage of ~2x
  */
 contract TestUsdnProtocolLongUnadjustPrice is UsdnProtocolBaseFixture {
@@ -19,7 +19,7 @@ contract TestUsdnProtocolLongUnadjustPrice is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Revert when longTradingExpo is equal to zero
-     * @custom:given A price of 100 ether, an asset price of 2000 ether, a long trading exposure of 0, and an
+     * @custom:given A price of 100$, an asset price of 2000$, a long trading exposure of 0, and an
      * accumulator of 1
      * @custom:when The _unadjustPrice internal function is called
      * @custom:then The function reverts with the UsdnProtocolZeroLongTradingExpo error

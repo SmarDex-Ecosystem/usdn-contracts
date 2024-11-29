@@ -170,7 +170,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
     }
 
     /**
-     * @custom:scenario Calculate teh position tick after the liquidation penalty has changed
+     * @custom:scenario Calculate the position tick after the liquidation penalty has changed
      * @custom:given Liquidation penalty is set to 0
      * @custom:and Protocol has one position with 10 ether
      * @custom:when The liquidation penalty is changed to 500
