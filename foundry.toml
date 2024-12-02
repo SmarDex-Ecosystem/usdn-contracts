@@ -10,6 +10,7 @@ evm_version = "cancun"
 optimizer = true
 optimizer_runs = 20_000
 libs = ["node_modules", "dependencies"]
+docs = "docs_out"
 invariant = { fail_on_revert = true }
 gas_reports = ["*"]
 ffi = true
