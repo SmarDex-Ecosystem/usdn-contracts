@@ -40,7 +40,7 @@ contract TestDepositBackrun is UsdnProtocolBaseFixture {
      * @param attackerDeposit The amount of assets the attacker should deposit
      * @param priceForAttacker The price of the asset during the attacker's deposit
      */
-    function sandwichScenario(uint128 userDeposit, uint128 attackerDeposit, uint128 priceForAttacker) internal {
+    function backrunScenario(uint128 userDeposit, uint128 attackerDeposit, uint128 priceForAttacker) internal {
         emit log_named_decimal_uint("vault balance        ", protocol.getBalanceVault(), 18);
         uint256 priceIncreaseBps = (priceForAttacker - params.initialPrice) * 10_000 / params.initialPrice;
         emit log_named_decimal_uint("price increase (%)   ", priceIncreaseBps, 2);
@@ -54,7 +54,7 @@ contract TestDepositBackrun is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, attackerDeposit, priceForAttacker);
         protocol.validateDeposit(payable(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
 
-        /* -------------------------------- sandwich -------------------------------- */
+        /* -------------------------------- backrun -------------------------------- */
         vm.startPrank(USER_1);
         protocol.initiateWithdrawal(
             uint152(usdn.sharesOf(USER_1)),
@@ -101,12 +101,12 @@ contract TestDepositBackrun is UsdnProtocolBaseFixture {
      * @custom:when An attacker backruns the validate deposit of the user
      * @custom:then The outcome is outputted
      */
-    function test_Sandwich_SmallVaultBalance_SmallDeposit_SmallPriceIncrease() public {
+    function test_Backrun_SmallVaultBalance_SmallDeposit_SmallPriceIncrease() public {
         params.initialDeposit = 30 ether;
         manualSetUp(params);
 
         uint128 newPrice = 2040 ether;
-        sandwichScenario(0.1 ether, 1.5 ether, newPrice);
+        backrunScenario(0.1 ether, 1.5 ether, newPrice);
     }
 
     /**
@@ -115,12 +115,12 @@ contract TestDepositBackrun is UsdnProtocolBaseFixture {
      * @custom:when An attacker backruns the validate deposit of the user
      * @custom:then The outcome is outputted
      */
-    function test_Sandwich_SmallVaultBalance_SmallDeposit_BigPriceIncrease() public {
+    function test_Backrun_SmallVaultBalance_SmallDeposit_BigPriceIncrease() public {
         params.initialDeposit = 30 ether;
         manualSetUp(params);
 
         uint128 newPrice = 2300 ether;
-        sandwichScenario(0.1 ether, 1.5 ether, newPrice);
+        backrunScenario(0.1 ether, 1.5 ether, newPrice);
     }
 
     /**
@@ -129,12 +129,12 @@ contract TestDepositBackrun is UsdnProtocolBaseFixture {
      * @custom:when An attacker backruns the validate deposit of the user
      * @custom:then The outcome is outputted
      */
-    function test_Sandwich_SmallVaultBalance_BigDeposit_SmallPriceIncrease() public {
+    function test_Backrun_SmallVaultBalance_BigDeposit_SmallPriceIncrease() public {
         params.initialDeposit = 30 ether;
         manualSetUp(params);
 
         uint128 newPrice = 2040 ether;
-        sandwichScenario(1.5 ether, 0.1 ether, newPrice);
+        backrunScenario(1.5 ether, 0.1 ether, newPrice);
     }
 
     /**
@@ -143,12 +143,12 @@ contract TestDepositBackrun is UsdnProtocolBaseFixture {
      * @custom:when An attacker backruns the validate deposit of the user
      * @custom:then The outcome is outputted
      */
-    function test_Sandwich_SmallVaultBalance_BigDeposit_BigPriceIncrease() public {
+    function test_Backrun_SmallVaultBalance_BigDeposit_BigPriceIncrease() public {
         params.initialDeposit = 30 ether;
         manualSetUp(params);
 
         uint128 newPrice = 2300 ether;
-        sandwichScenario(1.5 ether, 0.1 ether, newPrice);
+        backrunScenario(1.5 ether, 0.1 ether, newPrice);
     }
 
     /**
@@ -157,12 +157,12 @@ contract TestDepositBackrun is UsdnProtocolBaseFixture {
      * @custom:when An attacker backruns the validate deposit of the user
      * @custom:then The outcome is outputted
      */
-    function test_Sandwich_BigVaultBalance_BigDeposit_BigPriceIncrease() public {
+    function test_Backrun_BigVaultBalance_BigDeposit_BigPriceIncrease() public {
         params.initialDeposit = 500 ether;
         manualSetUp(params);
 
         uint128 newPrice = 2300 ether;
-        sandwichScenario(24 ether, 4 ether, newPrice);
+        backrunScenario(24 ether, 4 ether, newPrice);
     }
 
     /**
@@ -171,12 +171,12 @@ contract TestDepositBackrun is UsdnProtocolBaseFixture {
      * @custom:when An attacker backruns the validate deposit of the user
      * @custom:then The outcome is outputted
      */
-    function test_Sandwich_BigVaultBalance_BigDeposit_SmallPriceIncrease() public {
+    function test_Backrun_BigVaultBalance_BigDeposit_SmallPriceIncrease() public {
         params.initialDeposit = 500 ether;
         manualSetUp(params);
 
         uint128 newPrice = 2040 ether;
-        sandwichScenario(24 ether, 4 ether, newPrice);
+        backrunScenario(24 ether, 4 ether, newPrice);
     }
 
     /**
@@ -185,12 +185,12 @@ contract TestDepositBackrun is UsdnProtocolBaseFixture {
      * @custom:when An attacker backruns the validate deposit of the user
      * @custom:then The outcome is outputted
      */
-    function test_Sandwich_BigVaultBalance_SmallDeposit_BigPriceIncrease() public {
+    function test_Backrun_BigVaultBalance_SmallDeposit_BigPriceIncrease() public {
         params.initialDeposit = 500 ether;
         manualSetUp(params);
 
         uint128 newPrice = 2300 ether;
-        sandwichScenario(4 ether, 24 ether, newPrice);
+        backrunScenario(4 ether, 24 ether, newPrice);
     }
 
     /**
@@ -199,12 +199,12 @@ contract TestDepositBackrun is UsdnProtocolBaseFixture {
      * @custom:when An attacker backruns the validate deposit of the user
      * @custom:then The outcome is outputted
      */
-    function test_Sandwich_BigVaultBalance_SmallDeposit_SmallPriceIncrease() public {
+    function test_Backrun_BigVaultBalance_SmallDeposit_SmallPriceIncrease() public {
         params.initialDeposit = 500 ether;
         manualSetUp(params);
 
         uint128 newPrice = 2040 ether;
-        sandwichScenario(4 ether, 24 ether, newPrice);
+        backrunScenario(4 ether, 24 ether, newPrice);
     }
 
     receive() external payable { }
