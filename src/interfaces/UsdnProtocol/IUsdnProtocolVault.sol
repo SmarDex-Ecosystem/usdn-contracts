@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 
 /**
  * @title IUsdnProtocolVault
- * @notice Interface for the vault layer of the USDN protocol
+ * @notice Interface for the vault layer of the USDN protocol.
  */
 interface IUsdnProtocolVault {
     /**
