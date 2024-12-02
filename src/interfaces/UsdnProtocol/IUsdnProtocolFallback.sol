@@ -527,14 +527,14 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Replace the `OracleMiddleware` contract with a new implementation.
+     * @notice Replaces the `OracleMiddleware` contract with a new implementation.
      * @dev Cannot be the 0 address.
      * @param newOracleMiddleware The address of the new contract.
      */
     function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware) external;
 
     /**
-     * @notice Set the fee collector address.
+     * @notice Sets the fee collector address.
      * @param newFeeCollector The address of the fee collector.
      * @dev The fee collector is the address that receives the fees charged by the protocol.
      * The fee collector must be different from the zero address.
@@ -542,20 +542,20 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function setFeeCollector(address newFeeCollector) external;
 
     /**
-     * @notice Replace the `LiquidationRewardsManager` contract with a new implementation.
+     * @notice Replaces the `LiquidationRewardsManager` contract with a new implementation.
      * @dev Cannot be the 0 address.
      * @param newLiquidationRewardsManager The address of the new contract.
      */
     function setLiquidationRewardsManager(IBaseLiquidationRewardsManager newLiquidationRewardsManager) external;
 
     /**
-     * @notice Replace the `Rebalancer` contract with a new implementation.
+     * @notice Replaces the `Rebalancer` contract with a new implementation.
      * @param newRebalancer The address of the new contract.
      */
     function setRebalancer(IBaseRebalancer newRebalancer) external;
 
     /**
-     * @notice Set the new deadlines for a user to confirm their action.
+     * @notice Sets the new deadlines for a user to confirm their action.
      * @param newLowLatencyValidatorDeadline The new deadline for low-latency validation (offset from initiate
      * timestamp).
      * @param newOnChainValidatorDeadline The new deadline for on-chain validation (offset from initiate timestamp +
@@ -565,44 +565,44 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
         external;
 
     /**
-     * @notice Set the minimum long position size.
+     * @notice Sets the minimum long position size.
      * @dev This value is used to prevent users from opening positions that are too small and not worth liquidating.
      * @param newMinLongPosition The new minimum long position (in `_assetDecimals`).
      */
     function setMinLongPosition(uint256 newMinLongPosition) external;
 
     /**
-     * @notice Set the new minimum leverage for a position.
+     * @notice Sets the new minimum leverage for a position.
      * @param newMinLeverage The new minimum leverage.
      */
     function setMinLeverage(uint256 newMinLeverage) external;
 
     /**
-     * @notice Set the new maximum leverage for a position.
+     * @notice Sets the new maximum leverage for a position.
      * @param newMaxLeverage The new maximum leverage.
      */
     function setMaxLeverage(uint256 newMaxLeverage) external;
 
     /**
-     * @notice Set the new liquidation penalty (in ticks).
+     * @notice Sets the new liquidation penalty (in ticks).
      * @param newLiquidationPenalty The new liquidation penalty.
      */
     function setLiquidationPenalty(uint24 newLiquidationPenalty) external;
 
     /**
-     * @notice Set the new exponential moving average period of the funding rate.
+     * @notice Sets the new exponential moving average period of the funding rate.
      * @param newEMAPeriod The new EMA period.
      */
     function setEMAPeriod(uint128 newEMAPeriod) external;
 
     /**
-     * @notice Set the new scaling factor (SF) of the funding rate.
+     * @notice Sets the new scaling factor (SF) of the funding rate.
      * @param newFundingSF The new scaling factor (SF) of the funding rate.
      */
     function setFundingSF(uint256 newFundingSF) external;
 
     /**
-     * @notice Set the fee basis points.
+     * @notice Sets the fee basis points.
      * @param newFeeBps The fee bps to be charged.
      * @dev Fees are charged when transfers occur between the vault and the long.
      * Example: 50 bps -> 0.5%.
@@ -610,31 +610,31 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function setProtocolFeeBps(uint16 newFeeBps) external;
 
     /**
-     * @notice Update the position fee.
+     * @notice Updates the position fee.
      * @param newPositionFee The new position fee (in basis points).
      */
     function setPositionFeeBps(uint16 newPositionFee) external;
 
     /**
-     * @notice Update the vault fee.
+     * @notice Updates the vault fee.
      * @param newVaultFee The new vault fee (in basis points).
      */
     function setVaultFeeBps(uint16 newVaultFee) external;
 
     /**
-     * @notice Update the rebalancer bonus.
+     * @notice Updates the rebalancer bonus.
      * @param newBonus The bonus (in basis points).
      */
     function setRebalancerBonusBps(uint16 newBonus) external;
 
     /**
-     * @notice Update the ratio of USDN to SDEX tokens to burn on deposit.
+     * @notice Updates the ratio of USDN to SDEX tokens to burn on deposit.
      * @param newRatio The new ratio.
      */
     function setSdexBurnOnDepositRatio(uint32 newRatio) external;
 
     /**
-     * @notice Set the security deposit value.
+     * @notice Sets the security deposit value.
      * @dev The maximum value of the security deposit is 2^64 - 1 = 18446744073709551615 = 18.4 ethers.
      * @param securityDepositValue The security deposit value.
      * This value cannot be greater than `MAX_SECURITY_DEPOSIT`.
@@ -642,7 +642,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function setSecurityDepositValue(uint64 securityDepositValue) external;
 
     /**
-     * @notice Set imbalance limits basis point.
+     * @notice Sets imbalance limits basis point.
      * @dev `newLongImbalanceTargetBps` needs to be lower than newCloseLimitBps and
      * higher than newWithdrawalLimitBps.
      * @param newOpenLimitBps The new open limit.
@@ -664,25 +664,25 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     ) external;
 
     /**
-     * @notice Set the new safety margin bps for the liquidation price of newly open positions.
+     * @notice Sets the new safety margin bps for the liquidation price of newly open positions.
      * @param newSafetyMarginBps The new safety margin bps.
      */
     function setSafetyMarginBps(uint256 newSafetyMarginBps) external;
 
     /**
-     * @notice Set the new user's current liquidation iteration in the tick.
+     * @notice Sets the new user's current liquidation iteration in the tick.
      * @param newLiquidationIteration The new number of liquidation iteration.
      */
     function setLiquidationIteration(uint16 newLiquidationIteration) external;
 
     /**
-     * @notice Set the minimum amount of fees to be collected before they can be withdrawn.
+     * @notice Sets the minimum amount of fees to be collected before they can be withdrawn.
      * @param newFeeThreshold The minimum amount of fees to be collected before they can be withdrawn.
      */
     function setFeeThreshold(uint256 newFeeThreshold) external;
 
     /**
-     * @notice Set the target USDN price.
+     * @notice Sets the target USDN price.
      * @param newPrice The new target price (in `_priceFeedDecimals`).
      * @dev When a rebase of USDN occurs, it will bring the price back down to this value.
      * This value cannot be greater than `_usdnRebaseThreshold`.
@@ -690,7 +690,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function setTargetUsdnPrice(uint128 newPrice) external;
 
     /**
-     * @notice Set the USDN rebase threshold.
+     * @notice Sets the USDN rebase threshold.
      * @param newThreshold The new threshold value (in `_priceFeedDecimals`).
      * @dev When the price of USDN exceeds this value, a rebase might be triggered.
      * This value cannot be smaller than `_targetUsdnPrice` or greater than uint128(2 * 10 ** s._priceFeedDecimals).
