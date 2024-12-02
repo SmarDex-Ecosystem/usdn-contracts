@@ -10,7 +10,7 @@ import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
  */
 interface IUsdnProtocolLong is IUsdnProtocolTypes {
     /**
-     * @notice Get the value of the lowest usable tick, taking into account the tick spacing.
+     * @notice Gets the value of the lowest usable tick, taking into account the tick spacing.
      * @dev Note that the effective minimum tick of a newly open long position also depends on the minimum allowed
      * leverage value and the current value of the liquidation price multiplier.
      * @return The lowest usable tick.
@@ -18,7 +18,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     function minTick() external view returns (int24);
 
     /**
-     * @notice Get the liquidation price from a desired one by taking into account the tick rounding.
+     * @notice Gets the liquidation price from a desired one by taking into account the tick rounding.
      * @param desiredLiqPriceWithoutPenalty The desired liquidation price without the penalty.
      * @param assetPrice The current price of the asset.
      * @param longTradingExpo The trading expo of the long side.
@@ -37,7 +37,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     ) external view returns (uint128);
 
     /**
-     * @notice Get the value of a long position when the asset price is equal to the given price, at the given
+     * @notice Gets the value of a long position when the asset price is equal to the given price, at the given
      * timestamp.
      * @dev If the current price is smaller than the liquidation price of the position without a liquidation penalty,
      * then the value of the position is negative.
@@ -52,7 +52,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
         returns (int256);
 
     /**
-     * @notice Get the tick number corresponding to a given price.
+     * @notice Gets the tick number corresponding to a given price.
      * @dev Uses the values from storage for the various variables.
      * @param price The price.
      * @return The tick number, a multiple of the tick spacing.
@@ -60,7 +60,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     function getEffectiveTickForPrice(uint128 price) external view returns (int24);
 
     /**
-     * @notice Get the tick number corresponding to a given price.
+     * @notice Gets the tick number corresponding to a given price.
      * @dev This takes into account the effects of the funding and respects the tick spacing.
      * @param price The price.
      * @param assetPrice The current price of the asset.
@@ -78,7 +78,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     ) external view returns (int24);
 
     /**
-     * @notice Retrieve the liquidation penalty assigned to `tick` if there are positions in it, otherwise retrieve the
+     * @notice Retrieves the liquidation penalty assigned to `tick` if there are positions in it, otherwise retrieve the
      * current setting value from storage.
      * @param tick The tick number.
      * @return liquidationPenalty_ The liquidation penalty, in tick spacing units.
@@ -86,7 +86,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     function getTickLiquidationPenalty(int24 tick) external view returns (uint24);
 
     /**
-     * @notice Get a long position identified by its tick, tickVersion and index.
+     * @notice Gets a long position identified by its tick, tickVersion and index.
      * @param posId The unique position identifier (tick, tickVersion, index).
      * @return pos_ The position data.
      * @return liquidationPenalty_ The liquidation penalty for that position (and associated tick).
@@ -97,7 +97,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
         returns (Position memory pos_, uint24 liquidationPenalty_);
 
     /**
-     * @notice Get the predicted value of the long balance for the given asset price and timestamp.
+     * @notice Gets the predicted value of the long balance for the given asset price and timestamp.
      * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
      * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
      * update, the function reverts with `UsdnProtocolTimestampTooOld`. The value cannot be below 0.
@@ -108,7 +108,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
 
     /**
-     * @notice Get the predicted value of the long trading exposure for the given asset price and timestamp.
+     * @notice Gets the predicted value of the long trading exposure for the given asset price and timestamp.
      * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
      * update is taken into account. If the provided timestamp is older than the last state update, the function reverts
      * with `UsdnProtocolTimestampTooOld`. The value cannot be below 0.
