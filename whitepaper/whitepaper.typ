@@ -5,15 +5,23 @@
   abstract: [
     #lorem(50)
   ],
-  index-terms: ("Defi", "Blockchain")
+  index-terms: ("Defi", "Blockchain"),
 )
 
 = Introduction
+
 = Protocol architecture
+
 = USDN Token
+
 = Vault
+
 = Long
+
 == Tick
+
 == PNL
+
 = Funding
+
 = Imbalance
