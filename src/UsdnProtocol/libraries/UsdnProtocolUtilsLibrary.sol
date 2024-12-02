@@ -176,7 +176,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Converts a signed tick into an unsigned index in the Bitmap based on the storage tick spacing.
+     * @notice Converts a signed tick to an unsigned index into the Bitmap based on the storage tick spacing.
      * @param tick The tick number, a multiple of the tick spacing.
      * @return index_ The index into the Bitmap.
      */
@@ -187,7 +187,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Gets the effective price (accounting for funding) for a given tick.
+     * @notice Gets the effective price, accounting for funding, for a given tick.
      * @param tick The tick number.
      * @return price_ The effective price for the tick.
      */
@@ -250,7 +250,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Computes the theoretical liquidation price of a position given its entry price and leverage.
+     * @notice Computes the theoretical liquidation price of a position using its entry price and leverage.
      * @param startPrice The entry price of the position.
      * @param leverage The leverage of the position.
      * @return price_ The computed liquidation price.
@@ -482,7 +482,7 @@ library UsdnProtocolUtilsLibrary {
     /**
      * @notice Calculates a fixed-precision representation of the liquidation price multiplier.
      * @param assetPrice The current price of the asset.
-     * @param longTradingExpo The trading exposure of the long side (total expo - balance long).
+     * @param longTradingExpo The trading exposure of the long side.
      * @param accumulator The liquidation multiplier accumulator.
      * @return multiplier_ The liquidation price multiplier.
      */
@@ -503,17 +503,6 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Variant of `_getEffectivePriceForTick` when a fixed precision representation of the liquidation
-     * multiplier is known.
-     * @param tick The tick number.
-     * @param liqMultiplier The liquidation price multiplier.
-     * @return price_ The adjusted price for the tick.
-     */
-    function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) internal pure returns (uint128 price_) {
-        price_ = _adjustPrice(TickMath.getPriceAtTick(tick), liqMultiplier);
-    }
-
-    /**
      * @notice Variant of `_adjustPrice` when a fixed precision representation of the liquidation multiplier is known.
      * @param unadjustedPrice The unadjusted price for the tick.
      * @param liqMultiplier The liquidation price multiplier.
@@ -528,12 +517,6 @@ library UsdnProtocolUtilsLibrary {
 
     /**
      * @notice Calculates the amount of USDN shares to mint for a given amount of assets.
-     * todo : change the dev, generated doc is not readable
-     * @dev The amount of USDN shares to mint is calculated as follows:
-     * amountUsdn = amountAsset * priceAsset / priceUsdn,
-     * but since priceUsdn = vaultBalance * priceAsset / totalSupply, we can simplify to
-     * amountUsdn = amountAsset * totalSupply / vaultBalance, and
-     * sharesUsdn = amountAsset * totalShares / vaultBalance
      * @param amount The amount of assets to be converted into USDN.
      * @param vaultBalance The current balance of the vault.
      * @param usdnTotalShares The total supply of USDN shares.
@@ -547,7 +530,11 @@ library UsdnProtocolUtilsLibrary {
         if (vaultBalance == 0) {
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
-
+        // the amount of USDN shares to mint is calculated as follows:
+        // amountUsdn = amountAsset * priceAsset / priceUsdn,
+        // but since priceUsdn = vaultBalance * priceAsset / totalSupply, we can simplify to
+        // amountUsdn = amountAsset * totalSupply / vaultBalance, and
+        // sharesUsdn = amountAsset * totalShares / vaultBalance
         toMint_ = FixedPointMathLib.fullMulDiv(amount, usdnTotalShares, vaultBalance);
     }
 
@@ -626,7 +613,7 @@ library UsdnProtocolUtilsLibrary {
      * @notice Adjusts the tick price by accounting for the effects of funding.
      * @param unadjustedPrice The tick's unadjusted price.
      * @param assetPrice The current price of the asset.
-     * @param longTradingExpo The trading exposure of the long side (total expo - balance long).
+     * @param longTradingExpo The trading exposure of the long side.
      * @param accumulator The liquidation multiplier accumulator.
      * @return price_ The adjusted tick price.
      */
@@ -648,8 +635,8 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Invokes a callback on the `msg.sender` to transfer assets and verifies that the assets were received.
-     * @param token The ERC-20 token to be transferred.
+     * @notice Invokes a callback on the `msg.sender` to transfer assets and verifies that they were received.
+     * @param token The ERC-20 token to transfer.
      * @param amount The amount of tokens to transfer.
      * @param to The recipient's address.
      */
@@ -663,8 +650,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Invokes a callback on the `msg.sender` to transfer USDN shares and verifies that the shares were
-     * received.
+     * @notice Invokes a callback on the `msg.sender` to transfer USDN shares and verifies that they were received.
      * @param usdn The address of the USDN token contract.
      * @param shares The amount of USDN shares to transfer.
      */
@@ -692,5 +678,16 @@ library UsdnProtocolUtilsLibrary {
         HugeUint.Uint512 memory accumulator
     ) internal pure returns (uint128 price_) {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), assetPrice, longTradingExpo, accumulator);
+    }
+
+    /**
+     * @notice Variant of `_getEffectivePriceForTick` when a fixed precision representation of the liquidation
+     * multiplier is known.
+     * @param tick The tick number.
+     * @param liqMultiplier The liquidation price multiplier.
+     * @return price_ The adjusted price for the tick.
+     */
+    function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) internal pure returns (uint128 price_) {
+        price_ = _adjustPrice(TickMath.getPriceAtTick(tick), liqMultiplier);
     }
 }
