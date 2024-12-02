@@ -9,6 +9,7 @@
 )
 
 = Introduction
+= Protocol architecture
 = USDN Token
 = Vault
 = Long
