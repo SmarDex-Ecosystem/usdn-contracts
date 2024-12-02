@@ -205,6 +205,8 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             protocol.getLiqMultiplierAccumulator()
         );
 
+        assertEq(liquidationPenaltyBefore, 0, "liquidationPenalty should be equal to 0");
+
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(500);
 
@@ -220,10 +222,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
 
         assertEq(tickBefore, posId.tick, "tickBefore should be equal to posId.tick");
         assertEq(tickAfter, posId.tick, "tickAfter should be equal to posId.tick");
-        assertTrue(
-            liquidationPenaltyBefore == liquidationPenaltyAfter && liquidationPenaltyBefore == 0,
-            "liquidationPenalty should be equal to 0"
-        );
+        assertEq(liquidationPenaltyAfter, 0, "liquidationPenalty should not have changed");
     }
 
     /**
