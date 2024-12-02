@@ -59,7 +59,6 @@ contract UsdnProtocolImpl is
         _setRoleAdmin(Constants.PAUSER_ROLE, Constants.ADMIN_PAUSER_ROLE);
         _setRoleAdmin(Constants.UNPAUSER_ROLE, Constants.ADMIN_UNPAUSER_ROLE);
 
-        // parameters
         s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1); // x1.1
         s._maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS; // x10
         s._lowLatencyValidatorDeadline = 15 minutes;
@@ -82,7 +81,6 @@ contract UsdnProtocolImpl is
         s._vaultFeeBps = 4; // 0.04%
         s._sdexBurnOnDepositRatio = 1e6; // 1%
         s._securityDepositValue = 0.5 ether;
-
         s._EMA = int256(3 * 10 ** (Constants.FUNDING_RATE_DECIMALS - 4));
 
         // since all USDN must be minted by the protocol, we check that the total supply is 0
@@ -95,6 +93,7 @@ contract UsdnProtocolImpl is
 
         s._usdn = usdn;
         s._sdex = sdex;
+        // make sure the USDN and SDEX tokens have the same number of decimals
         if (usdn.decimals() != Constants.TOKENS_DECIMALS || sdex.decimals() != Constants.TOKENS_DECIMALS) {
             revert UsdnProtocolInvalidTokenDecimals();
         }
@@ -121,14 +120,14 @@ contract UsdnProtocolImpl is
 
     /**
      * @inheritdoc UUPSUpgradeable
-     * @notice Function to verify that the caller to upgrade the protocol is authorized
-     * @param implementation The address of the new implementation
+     * @notice Verifies that the caller is allowed to upgrade the protocol.
+     * @param implementation The address of the new implementation contract.
      */
     function _authorizeUpgrade(address implementation) internal override onlyRole(Constants.PROXY_UPGRADE_ROLE) { }
 
     /**
-     * @notice Delegates the call to the fallback contract
-     * @param protocolFallbackAddr The address of the fallback contract
+     * @notice Delegates the call to the fallback contract.
+     * @param protocolFallbackAddr The address of the fallback contract.
      */
     function _delegate(address protocolFallbackAddr) internal {
         assembly {
@@ -141,6 +140,10 @@ contract UsdnProtocolImpl is
         }
     }
 
+    /**
+     * @notice Delegates the call to the fallback contract if the function signature contained in the transaction data
+     * does not match any function in the implementation contract.
+     */
     fallback() external {
         _delegate(Utils._getMainStorage()._protocolFallbackAddr);
     }
