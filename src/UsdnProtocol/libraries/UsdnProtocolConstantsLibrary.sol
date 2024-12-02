@@ -109,7 +109,7 @@ library UsdnProtocolConstantsLibrary {
      * @notice EIP712 typehash for
      * [initiateClosePosition](../../UsdnProtocolActions.sol/abstract.UsdnProtocolActions.html#initiatecloseposition).
      * @dev Used within EIP712 messages for domain-specific signing, enabling recovery of the signer
-     * via {ECDSA-recover}.
+     * via [ECDSA-recover](https://docs.openzeppelin.com/contracts/5.x/api/utils#ECDSA).
      */
     bytes32 internal constant INITIATE_CLOSE_TYPEHASH = keccak256(
         "InitiateClosePositionDelegation(bytes32 posIdHash,uint128 amountToClose,uint256 userMinPrice,address to,uint256 deadline,address positionOwner,address positionCloser,uint256 nonce)"
@@ -119,7 +119,7 @@ library UsdnProtocolConstantsLibrary {
      * @notice EIP712 typehash for
      * [transferPositionOwnership](../../UsdnProtocolActions.sol/abstract.UsdnProtocolActions.html#transferpositionownership).
      * @dev Used within EIP712 messages for domain-specific signing, enabling recovery of the signer
-     * via {ECDSA-recover}.
+     * via [ECDSA-recover](https://docs.openzeppelin.com/contracts/5.x/api/utils#ECDSA).
      */
     bytes32 internal constant TRANSFER_POSITION_OWNERSHIP_TYPEHASH = keccak256(
         "TransferPositionOwnershipDelegation(bytes32 posIdHash,address positionOwner,address newPositionOwner,address delegatedAddress,uint256 nonce)"
@@ -153,27 +153,27 @@ library UsdnProtocolConstantsLibrary {
     /// @notice Role signature for unpausing the protocol.
     bytes32 public constant UNPAUSER_ROLE = keccak256("UNPAUSER_ROLE");
 
-    /// @notice Admin role for managing the {SET_EXTERNAL_ROLE}.
+    /// @notice Admin role for managing the `SET_EXTERNAL_ROLE`.
     bytes32 public constant ADMIN_SET_EXTERNAL_ROLE = keccak256("ADMIN_SET_EXTERNAL_ROLE");
 
-    /// @notice Admin role for managing the {CRITICAL_FUNCTIONS_ROLE}.
+    /// @notice Admin role for managing the `CRITICAL_FUNCTIONS_ROLE`.
     bytes32 public constant ADMIN_CRITICAL_FUNCTIONS_ROLE = keccak256("ADMIN_CRITICAL_FUNCTIONS_ROLE");
 
-    /// @notice Admin role for managing the {SET_PROTOCOL_PARAMS_ROLE}.
+    /// @notice Admin role for managing the `SET_PROTOCOL_PARAMS_ROLE`.
     bytes32 public constant ADMIN_SET_PROTOCOL_PARAMS_ROLE = keccak256("ADMIN_SET_PROTOCOL_PARAMS_ROLE");
 
-    /// @notice Admin role for managing the {SET_USDN_PARAMS_ROLE}.
+    /// @notice Admin role for managing the `SET_USDN_PARAMS_ROLE`.
     bytes32 public constant ADMIN_SET_USDN_PARAMS_ROLE = keccak256("ADMIN_SET_USDN_PARAMS_ROLE");
 
-    /// @notice Admin role for managing the {SET_OPTIONS_ROLE}.
+    /// @notice Admin role for managing the `SET_OPTIONS_ROLE`.
     bytes32 public constant ADMIN_SET_OPTIONS_ROLE = keccak256("ADMIN_SET_OPTIONS_ROLE");
 
-    /// @notice Admin role for managing the {PROXY_UPGRADE_ROLE}.
+    /// @notice Admin role for managing the `PROXY_UPGRADE_ROLE`.
     bytes32 public constant ADMIN_PROXY_UPGRADE_ROLE = keccak256("ADMIN_PROXY_UPGRADE_ROLE");
 
-    /// @notice Admin role for managing the {PAUSER_ROLE}.
+    /// @notice Admin role for managing the `PAUSER_ROLE`.
     bytes32 public constant ADMIN_PAUSER_ROLE = keccak256("ADMIN_PAUSER_ROLE");
 
-    /// @notice Admin role for managing the {UNPAUSER_ROLE}.
+    /// @notice Admin role for managing the `UNPAUSER_ROLE`.
     bytes32 public constant ADMIN_UNPAUSER_ROLE = keccak256("ADMIN_UNPAUSER_ROLE");
 }
