@@ -12,6 +12,10 @@
 
 = Introduction
 
+The decentralized finance (DeFi) ecosystem has long sought alternatives to fiat-backed tokens, aiming to provide users
+with assets that combine dollar-like stability with yield generation. However, existing solutions, particularly stablecoins, suffer
+from inherent flaws: they are often centralized, opaque, and yield-free for holders.
+
 = Protocol architecture
 
 = USDN Token
