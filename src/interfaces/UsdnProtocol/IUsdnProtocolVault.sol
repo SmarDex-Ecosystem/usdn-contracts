@@ -7,7 +7,7 @@ pragma solidity >=0.8.0;
  */
 interface IUsdnProtocolVault {
     /**
-     * @notice Get the predicted value of the USDN token price for the given asset price and timestamp.
+     * @notice Gets the predicted value of the USDN token price for the given asset price and timestamp.
      * @dev The effects of the funding and the PnL of the long positions since the last contract state update are taken
      * into account.
      * @param currentPrice The current or predicted asset price.
@@ -17,7 +17,7 @@ interface IUsdnProtocolVault {
     function usdnPrice(uint128 currentPrice, uint128 timestamp) external view returns (uint256 price_);
 
     /**
-     * @notice Get the value of the USDN token price for the given asset price at the current timestamp.
+     * @notice Gets the value of the USDN token price for the given asset price at the current timestamp.
      * @dev The effects of the funding and the PnL of the long positions since the last contract state update are taken
      * into account.
      * @param currentPrice The current or predicted asset price.
@@ -26,7 +26,7 @@ interface IUsdnProtocolVault {
     function usdnPrice(uint128 currentPrice) external view returns (uint256 price_);
 
     /**
-     * @notice Get the amount of assets in the vault for the given asset price and timestamp.
+     * @notice Gets the amount of assets in the vault for the given asset price and timestamp.
      * @dev The effects of the funding, the PnL of the long positions and the accumulated fees since the last contract
      * state update are taken into account, but not liquidations. If the provided timestamp is older than the last
      * state update, the function reverts with `UsdnProtocolTimestampTooOld`.
