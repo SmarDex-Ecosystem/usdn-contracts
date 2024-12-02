@@ -37,6 +37,8 @@
   make-venue: [],
 )
 
+#show heading.where(level: 3): set text(style: "italic", weight: "medium")
+
 = Introduction
 
 = Protocol architecture
@@ -76,23 +78,18 @@ following @eq:usdn_minting. Thus, for a given amount of USDN to be burned, the c
 
 $ A_"asset" = frac(A_"usdn" P_"usdn", P_"asset") = frac(A_"usdn" B_"vault", S_"tot") $
 
-== Yield Distribution
+== Yield Sources
 
-To avoid that the price of the USDN token largely exceeds the value of \$1, yields are distributed by increasing every
-holder's balance and the total supply of USDN proportionally to maintain a price close to the desired value.
+From @eq:usdn_price, it is clear that the USDN price is influenced by the total assets held in the protocol's vault.
+As such, if the vault balance increases as a result of position fees, losses from long positions, or funding payments,
+the USDN price will rise. When a certain threshold is reached, the token rebases to a price slightly above \$1 by
+increasing the total supply and balance of each holder. This increase in balance represents the yield of the USDN token. The rebase mechanism ensures that yields do not indice a price that significantly exceeds the value of \$1.
 
 === Wrapped USDN
 
 Not all DeFi protocols support tokens which balance increases over time without transfers. To help wit
 integration, a wrapped version of the token, WUSDN, was created. This token behaves like a normal ERC20 token and sees
 its price increase over time, instead of the balances.
-
-== Yield Sources
-
-From @eq:usdn_price, it is clear that the USDN price is influenced by the total assets held in the protocol's vault.
-As such, if the vault balance increases as a result of position fees, losses from long positions, or funding payments,
-the USDN price will rise. When a certain threshold is reached, the token rebases to a price slightly above \$1 by
-increasing the total supply and balance of each holder. This increase in balance represents the yield of the USDN token.
 
 = Vault
 
