@@ -83,7 +83,8 @@ $ A_"asset" = frac(A_"usdn" P_"usdn", P_"asset") = frac(A_"usdn" B_"vault", S_"t
 From @eq:usdn_price, it is clear that the USDN price is influenced by the total assets held in the protocol's vault.
 As such, if the vault balance increases as a result of position fees, losses from long positions, or funding payments,
 the USDN price will rise. When a certain threshold is reached, the token rebases to a price slightly above \$1 by
-increasing the total supply and balance of each holder. This increase in balance represents the yield of the USDN token. The rebase mechanism ensures that yields do not indice a price that significantly exceeds the value of \$1.
+increasing the total supply and balance of each holder. This increase in balance represents the yield of the USDN token.
+The rebase mechanism ensures that yields do not induce a price that significantly exceeds the value of \$1.
 
 === Wrapped USDN
 
