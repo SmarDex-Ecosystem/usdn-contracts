@@ -46,6 +46,7 @@
             solc_0_8_26
             trufflehog
             typescript
+            typst
             (solc.mkDefault pkgs solc_0_8_26)
           ];
 
