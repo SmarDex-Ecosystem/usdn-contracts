@@ -7,8 +7,7 @@ import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
 /**
  * @custom:feature The _unadjustPrice internal function of the UsdnProtocolLong contract.
- * @custom:background Given a protocol initialized with default values
- * leverage of ~2x
+ * @custom:background Given a protocol initialized with default params
  */
 contract TestUsdnProtocolLongUnadjustPrice is UsdnProtocolBaseFixture {
     using HugeUint for HugeUint.Uint512;
