@@ -1,4 +1,3 @@
-#import "@preview/charged-ieee:0.1.3": ieee
 #import "@preview/graceful-genetics:0.2.0": template
 
 // Configure equation numbering and spacing.
