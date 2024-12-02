@@ -88,7 +88,7 @@ The rebase mechanism ensures that yields do not induce a price that significantl
 
 === Wrapped USDN
 
-Not all DeFi protocols support tokens which balance increases over time without transfers. To help wit
+Not all DeFi protocols support tokens which balance increases over time without transfers. To help with
 integration, a wrapped version of the token, WUSDN, was created. This token behaves like a normal ERC20 token and sees
 its price increase over time, instead of the balances.
 
