@@ -11,7 +11,7 @@ import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/
  * @custom:background Given a protocol initialized with a bit more long balance (3%)
  * @custom:and long fees, protocol fees, sdex burn and imbalance limits are enabled
  */
-contract TestReverseSandwich is UsdnProtocolBaseFixture {
+contract TestDepositBackrun is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enableSdexBurnOnDeposit = true;
@@ -34,18 +34,24 @@ contract TestReverseSandwich is UsdnProtocolBaseFixture {
         sdex.mintAndApprove(USER_1, 200_000_000 ether, address(protocol), type(uint256).max);
     }
 
-    function sandwichScenario(uint128 userDeposit, uint128 exploiterDeposit, uint128 priceForExploiter) internal {
+    /**
+     * @notice Scenario to repeat for each test case
+     * @param userDeposit The amount of assets the victim should deposit
+     * @param attackerDeposit The amount of assets the attacker should deposit
+     * @param priceForAttacker The price of the asset during the attacker's deposit
+     */
+    function sandwichScenario(uint128 userDeposit, uint128 attackerDeposit, uint128 priceForAttacker) internal {
         emit log_named_decimal_uint("vault balance        ", protocol.getBalanceVault(), 18);
-        uint256 priceIncreaseBps = (priceForExploiter - params.initialPrice) * 10_000 / params.initialPrice;
+        uint256 priceIncreaseBps = (priceForAttacker - params.initialPrice) * 10_000 / params.initialPrice;
         emit log_named_decimal_uint("price increase (%)   ", priceIncreaseBps, 2);
         emit log_named_decimal_uint("user deposit         ", userDeposit, 18);
-        emit log_named_decimal_uint("exploiter deposit    ", exploiterDeposit, 18);
+        emit log_named_decimal_uint("attacker deposit     ", attackerDeposit, 18);
 
         skip(1 hours);
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, userDeposit, params.initialPrice);
         skip(10 minutes);
-        protocol.liquidate(abi.encode(priceForExploiter));
-        setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, exploiterDeposit, priceForExploiter);
+        protocol.liquidate(abi.encode(priceForAttacker));
+        setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, attackerDeposit, priceForAttacker);
         protocol.validateDeposit(payable(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
 
         /* -------------------------------- sandwich -------------------------------- */
@@ -56,19 +62,17 @@ contract TestReverseSandwich is UsdnProtocolBaseFixture {
             USER_1,
             USER_1,
             block.timestamp,
-            abi.encode(priceForExploiter),
+            abi.encode(priceForAttacker),
             EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         uint256 balanceBefore = wstETH.balanceOf(USER_1);
-        protocol.validateWithdrawal(USER_1, abi.encode(priceForExploiter), EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(USER_1, abi.encode(priceForAttacker), EMPTY_PREVIOUS_DATA);
         vm.stopPrank();
         uint256 withdrawn = wstETH.balanceOf(USER_1) - balanceBefore;
-        emit log_named_decimal_uint("exploiter withdraw   ", withdrawn, 18);
+        emit log_named_decimal_uint("attacker withdraw    ", withdrawn, 18);
         emit log_named_decimal_int(
-            "exploiter profits (%)",
-            (int256(withdrawn) - int128(exploiterDeposit)) * 10_000 / int128(exploiterDeposit),
-            2
+            "attacker profits (%)", (int256(withdrawn) - int128(attackerDeposit)) * 10_000 / int128(attackerDeposit), 2
         );
 
         /* ------------------------ First depositor withdraw ------------------------ */
@@ -78,12 +82,12 @@ contract TestReverseSandwich is UsdnProtocolBaseFixture {
             address(this),
             payable(this),
             block.timestamp,
-            abi.encode(priceForExploiter),
+            abi.encode(priceForAttacker),
             EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         balanceBefore = wstETH.balanceOf(address(this));
-        protocol.validateWithdrawal(payable(this), abi.encode(priceForExploiter), EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(payable(this), abi.encode(priceForAttacker), EMPTY_PREVIOUS_DATA);
         withdrawn = wstETH.balanceOf(address(this)) - balanceBefore;
         emit log_named_decimal_uint("user withdraw        ", withdrawn, 18);
         emit log_named_decimal_int(
@@ -91,6 +95,12 @@ contract TestReverseSandwich is UsdnProtocolBaseFixture {
         );
     }
 
+    /**
+     * @custom:scenario A user's deposit transaction got backrun
+     * @custom:given A small vault balance, a small user deposit and a small price increase
+     * @custom:when An attacker backruns the validate deposit of the user
+     * @custom:then The outcome is outputted
+     */
     function test_Sandwich_SmallVaultBalance_SmallDeposit_SmallPriceIncrease() public {
         params.initialDeposit = 30 ether;
         manualSetUp(params);
@@ -99,6 +109,12 @@ contract TestReverseSandwich is UsdnProtocolBaseFixture {
         sandwichScenario(0.1 ether, 1.5 ether, newPrice);
     }
 
+    /**
+     * @custom:scenario A user's deposit transaction gets backrun
+     * @custom:given A small vault balance, a small user deposit and a big price increase
+     * @custom:when An attacker backruns the validate deposit of the user
+     * @custom:then The outcome is outputted
+     */
     function test_Sandwich_SmallVaultBalance_SmallDeposit_BigPriceIncrease() public {
         params.initialDeposit = 30 ether;
         manualSetUp(params);
@@ -107,6 +123,12 @@ contract TestReverseSandwich is UsdnProtocolBaseFixture {
         sandwichScenario(0.1 ether, 1.5 ether, newPrice);
     }
 
+    /**
+     * @custom:scenario A user's deposit transaction gets backrun
+     * @custom:given A small vault balance, a big user deposit and a small price increase
+     * @custom:when An attacker backruns the validate deposit of the user
+     * @custom:then The outcome is outputted
+     */
     function test_Sandwich_SmallVaultBalance_BigDeposit_SmallPriceIncrease() public {
         params.initialDeposit = 30 ether;
         manualSetUp(params);
@@ -115,6 +137,12 @@ contract TestReverseSandwich is UsdnProtocolBaseFixture {
         sandwichScenario(1.5 ether, 0.1 ether, newPrice);
     }
 
+    /**
+     * @custom:scenario A user's deposit transaction gets backrun
+     * @custom:given A small vault balance, a big user deposit and a big price increase
+     * @custom:when An attacker backruns the validate deposit of the user
+     * @custom:then The outcome is outputted
+     */
     function test_Sandwich_SmallVaultBalance_BigDeposit_BigPriceIncrease() public {
         params.initialDeposit = 30 ether;
         manualSetUp(params);
@@ -123,6 +151,12 @@ contract TestReverseSandwich is UsdnProtocolBaseFixture {
         sandwichScenario(1.5 ether, 0.1 ether, newPrice);
     }
 
+    /**
+     * @custom:scenario A user's deposit transaction gets backrun
+     * @custom:given A big vault balance, a big user deposit and a big price increase
+     * @custom:when An attacker backruns the validate deposit of the user
+     * @custom:then The outcome is outputted
+     */
     function test_Sandwich_BigVaultBalance_BigDeposit_BigPriceIncrease() public {
         params.initialDeposit = 500 ether;
         manualSetUp(params);
@@ -131,6 +165,12 @@ contract TestReverseSandwich is UsdnProtocolBaseFixture {
         sandwichScenario(24 ether, 4 ether, newPrice);
     }
 
+    /**
+     * @custom:scenario A user's deposit transaction gets backrun
+     * @custom:given A big vault balance, a big user deposit and a small price increase
+     * @custom:when An attacker backruns the validate deposit of the user
+     * @custom:then The outcome is outputted
+     */
     function test_Sandwich_BigVaultBalance_BigDeposit_SmallPriceIncrease() public {
         params.initialDeposit = 500 ether;
         manualSetUp(params);
@@ -139,6 +179,12 @@ contract TestReverseSandwich is UsdnProtocolBaseFixture {
         sandwichScenario(24 ether, 4 ether, newPrice);
     }
 
+    /**
+     * @custom:scenario A user's deposit transaction gets backrun
+     * @custom:given A big vault balance, a small user deposit and a big price increase
+     * @custom:when An attacker backruns the validate deposit of the user
+     * @custom:then The outcome is outputted
+     */
     function test_Sandwich_BigVaultBalance_SmallDeposit_BigPriceIncrease() public {
         params.initialDeposit = 500 ether;
         manualSetUp(params);
@@ -147,6 +193,12 @@ contract TestReverseSandwich is UsdnProtocolBaseFixture {
         sandwichScenario(4 ether, 24 ether, newPrice);
     }
 
+    /**
+     * @custom:scenario A user's deposit transaction gets backrun
+     * @custom:given A big vault balance, a small user deposit and a small price increase
+     * @custom:when An attacker backruns the validate deposit of the user
+     * @custom:then The outcome is outputted
+     */
     function test_Sandwich_BigVaultBalance_SmallDeposit_SmallPriceIncrease() public {
         params.initialDeposit = 500 ether;
         manualSetUp(params);
