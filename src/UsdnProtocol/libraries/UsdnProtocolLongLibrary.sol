@@ -675,12 +675,6 @@ library UsdnProtocolLongLibrary {
         Types.RebalancerPositionData memory posData =
             _calcRebalancerPositionTick(lastPrice, data.positionAmount, data.rebalancerMaxLeverage, cache);
 
-        // make sure that the rebalancer was not triggered without a sufficient imbalance
-        // as we check the imbalance above, this should not happen
-        if (posData.tick == Constants.NO_POSITION_TICK) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidRebalancerTick();
-        }
-
         // open a new position for the rebalancer
         Types.PositionId memory posId = _flashOpenPosition(
             address(rebalancer),
@@ -1044,10 +1038,10 @@ library UsdnProtocolLongLibrary {
                 / (int256(Constants.BPS_DIVISOR) + data.longImbalanceTargetBps).toUint256()
         );
 
-        // check that the target is not already exceeded
+        // make sure that the rebalancer was not triggered without a sufficient imbalance
+        // as we check the imbalance above, this should not happen
         if (cache.tradingExpo >= targetTradingExpo) {
-            posData_.tick = Constants.NO_POSITION_TICK;
-            return posData_;
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidRebalancerTick();
         }
 
         uint256 tradingExpoToFill = targetTradingExpo - cache.tradingExpo;
@@ -1057,13 +1051,6 @@ library UsdnProtocolLongLibrary {
             positionAmount * rebalancerMaxLeverage / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
         if (data.highestUsableTradingExpo < tradingExpoToFill) {
             tradingExpoToFill = data.highestUsableTradingExpo;
-        }
-
-        // check that the trading expo filled by the position would not be below the min leverage
-        data.lowestUsableTradingExpo =
-            positionAmount * Constants.REBALANCER_MIN_LEVERAGE / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
-        if (data.lowestUsableTradingExpo > tradingExpoToFill) {
-            tradingExpoToFill = data.lowestUsableTradingExpo;
         }
 
         data.currentLiqPenalty = s._liquidationPenalty;
