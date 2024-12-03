@@ -4,8 +4,8 @@
   title: [Ultimate Synthetic Delta Neutral],
   abstract: [
     This paper present a new decentralized protocol proposing two defi products : making yield by being exposed in dollar and long leverage trading.
-    These both system work in pair to be operational and secure. A new token is introduce, USDN, tradable and making value over time.
-    To ensure good health of the protocol, both products need to be at equilibrium. We describe in this paper how we are using funding and imbalance limits to ensure the good behavior.
+    These two systems work in pair to be operational and secure. A new token is introduce, USDN, tradable and making value over time.
+    To ensure good health of the protocol, both products need to be at equilibrium. We describe in this paper how we are using funding and imbalance limits to ensure the right behavior of the protocol.
   ],
   index-terms: ("Defi", "Blockchain"),
 )
