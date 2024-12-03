@@ -179,8 +179,10 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
      * @custom:and The tick should be the same as before the liquidation penalty change
      */
     function test_calcRebalancerPositionTickLiquidationPenaltyChanged() public {
-        uint128 amount = 10 ether;
-        uint256 totalExpo = 295 ether;
+        uint128 amount = 20 ether;
+        uint256 totalExpo = 80 ether;
+        uint256 balanceLong = 20 ether;
+        uint256 balanceVault = 100 ether;
 
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(0);
@@ -189,7 +191,7 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.InitiateOpenPosition,
-                positionSize: amount,
+                positionSize: 40 ether,
                 desiredLiqPrice: DEFAULT_PARAMS.initialPrice / 2,
                 price: DEFAULT_PARAMS.initialPrice
             })
@@ -200,8 +202,8 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             amount,
             protocol.getMaxLeverage(),
             totalExpo,
-            267 ether + 1.25 ether,
-            vaultBalance,
+            balanceLong,
+            balanceVault,
             protocol.getLiqMultiplierAccumulator()
         );
 
@@ -215,8 +217,9 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             amount,
             protocol.getMaxLeverage(),
             totalExpo,
-            267 ether,
-            vaultBalance,
+            balanceLong - 1.5 ether, // wee need to change the tradingExpo(totalExpo - balanceLong) to have the same
+                // tick
+            balanceVault,
             protocol.getLiqMultiplierAccumulator()
         );
 
