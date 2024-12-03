@@ -41,7 +41,7 @@ library UsdnProtocolUtilsLibrary {
     bytes32 private constant STORAGE_MAIN = 0xd143a936a6a372725e12535db83a2cfabcb3715dfd88bc350da3399604dc9700;
 
     /**
-     * @notice Get the main storage pointer.
+     * @notice Gets the main storage pointer.
      * @return s_ The pointer to the main storage structure.
      */
     function _getMainStorage() internal pure returns (Types.Storage storage s_) {
@@ -51,7 +51,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Refund excess Ether to prevent unintended locking of funds.
+     * @notice Refunds excess Ether to prevent unintended locking of funds.
      * @param securityDepositValue The security deposit for the current action (zero for validation actions).
      * @param amountToRefund The amount to refund to the user: the security deposit when executing an action for another
      * user, and/or the initialization security deposit in the case of a validation action.
@@ -75,7 +75,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Refund Ether to a specified address.
+     * @notice Refunds Ether to a specified address.
      * @param amount The amount of Ether to refund.
      * @param to The address receiving the refund.
      */
@@ -93,7 +93,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Distribute the protocol fee to the fee collector if the pending amount exceeds the threshold.
+     * @notice Distributes the protocol fee to the fee collector if the pending amount exceeds the threshold.
      * @dev Attempts to invoke the `feeCollectorCallback` function on the fee collector if supported.
      */
     function _checkPendingFee() internal {
@@ -114,7 +114,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Get and validate the oracle price for a specified action and timestamp.
+     * @notice Gets and validate the oracle price for a specified action and timestamp.
      * @param action The protocol action being performed.
      * @param timestamp The timestamp for which the price is queried.
      * @param actionId The unique identifier of the action.
@@ -138,7 +138,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Clear the pending action of a user.
+     * @notice Clears the pending action of a user.
      * @param user The user's address.
      * @param rawIndex The `rawIndex` of the pending action in the queue.
      */
@@ -150,7 +150,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Calculate the long balance, including unreflected PnL (excluding funding).
+     * @notice Calculates the long balance, including unreflected PnL (excluding funding).
      * @dev This function uses the latest total exposure, balance, and stored price as reference values. It adjusts the
      * balance by adding the PnL resulting from the price change.
      * @param currentPrice The current price of the asset.
@@ -163,7 +163,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Calculate the hash and version for a given tick number.
+     * @notice Calculates the hash of the given tick number and its current version.
      * @param tick The tick number.
      * @return hash_ The hash of the tick.
      * @return version_ The version of the tick.
@@ -176,7 +176,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Convert a signed tick to an unsigned index into the Bitmap based on the storage tick spacing.
+     * @notice Calculates the corresponding index of the given tick in the Bitmap, based on the storage tick spacing.
      * @param tick The tick number, a multiple of the tick spacing.
      * @return index_ The index into the Bitmap.
      */
@@ -187,7 +187,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Get the effective price, accounting for funding, for a given tick.
+     * @notice Gets the effective price, accounting for funding, for a given tick.
      * @param tick The tick number.
      * @return price_ The effective price for the tick.
      */
@@ -199,7 +199,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Generate a hash based on the tick and a version.
+     * @notice Generates a hash based on the tick and a version.
      * @param tick The tick number.
      * @param version The tick version.
      * @return The hash value.
@@ -209,7 +209,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Convert a `uint128` to an `int256`.
+     * @notice Converts a `uint128` to an `int256`.
      * @param x The `uint128` value to convert.
      * @return The resulting `int256` value.
      */
@@ -218,7 +218,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Optimized position value calculation when `posTotalExpo` is known to be a uint128 and `currentPrice`
+     * @notice Optimized position value calculation when `posTotalExpo` is known to be a `uint128` and `currentPrice`
      * is guaranteed to be above `liqPriceWithoutPenalty`.
      * @param posTotalExpo The total exposure of the position.
      * @param currentPrice The current asset price.
@@ -240,7 +240,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Calculate the tick number without considering the liquidation penalty.
+     * @notice Calculates the tick number without considering the liquidation penalty.
      * @param tick The tick number that holds the position.
      * @param liquidationPenalty The liquidation penalty, measured in ticks.
      * @return tick_ The tick number adjusted to exclude the liquidation penalty.
@@ -250,7 +250,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Compute the theoretical liquidation price of a position using its entry price and leverage.
+     * @notice Calculates the theoretical liquidation price of a position using its entry price and leverage.
      * @param startPrice The entry price of the position.
      * @param leverage The leverage of the position.
      * @return price_ The computed liquidation price.
@@ -260,7 +260,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Compute the leverage of a position using its entry price and liquidation price.
+     * @notice Calculates the leverage of a position using its entry price and liquidation price.
      * @dev The calculation does not take into account the liquidation penalty.
      * @param startPrice The entry price of the position.
      * @param liquidationPrice The price at which the position would be liquidated.
@@ -277,7 +277,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Convert a `LongPendingAction` to a `PendingAction`.
+     * @notice Converts the given `LongPendingAction` to a `PendingAction`.
      * @param action The long pending action.
      * @return pendingAction_ The converted untyped pending action.
      */
@@ -292,7 +292,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Convert a `WithdrawalPendingAction` to a `PendingAction`.
+     * @notice Converts the given `WithdrawalPendingAction` to a `PendingAction`.
      * @param action The withdrawal pending action.
      * @return pendingAction_ The converted untyped pending action.
      */
@@ -307,7 +307,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Convert a `DepositPendingAction` to a `PendingAction`.
+     * @notice Converts the given `DepositPendingAction` to a `PendingAction`.
      * @param action The deposit pending action.
      * @return pendingAction_ The converted untyped pending action.
      */
@@ -322,7 +322,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Convert a `PendingAction` to a `LongPendingAction`.
+     * @notice Converts the given `PendingAction` to a `LongPendingAction`.
      * @param action The untyped pending action.
      * @return longAction_ The converted long pending action.
      */
@@ -337,7 +337,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Convert a `PendingAction` to a `DepositPendingAction`.
+     * @notice Converts the given `PendingAction` to a `DepositPendingAction`.
      * @param action The untyped pending action.
      * @return vaultAction_ The converted deposit pending action.
      */
@@ -352,7 +352,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Convert a `PendingAction` to a `WithdrawalPendingAction`.
+     * @notice Converts the given `PendingAction` to a `WithdrawalPendingAction`.
      * @param action The untyped pending action.
      * @return vaultAction_ The converted withdrawal pending action.
      */
@@ -367,8 +367,8 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @dev Convert a signed tick to an unsigned index into the Bitmap, based on the specified tick spacing.
-     * @param tick The signed tick, which must be a multiple of `tickSpacing`.
+     * @dev Calculates the corresponding index of the given tick in the Bitmap, based on the specified tick spacing.
+     * @param tick The tick, which must be a multiple of `tickSpacing`.
      * @param tickSpacing The tick spacing to use.
      * @return index_ The corresponding index into the Bitmap.
      */
@@ -380,7 +380,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Merge the two parts of the withdrawal amount (USDN shares) stored in the `WithdrawalPendingAction`.
+     * @notice Merges the two parts of the withdrawal amount (USDN shares) stored in the `WithdrawalPendingAction`.
      * @param sharesLSB The lower 24 bits of the USDN shares.
      * @param sharesMSB The higher bits of the USDN shares.
      * @return usdnShares_ The amount of USDN shares.
@@ -394,7 +394,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Compute the updated balance of the long side, considering unreflected PnL (excluding funding).
+     * @notice Calculates the updated balance of the long side, considering unreflected PnL (excluding funding).
      * @param totalExpo The total exposure of the long side.
      * @param balanceLong The previous balance of the long side.
      * @param newPrice The updated price of the asset.
@@ -415,9 +415,9 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Calculate the imbalance between the vault and long sides.
+     * @notice Calculates the imbalance between the vault and long sides.
      * @dev A positive value indicates the long trading exposure is smaller than the vault's. If the trading exposure is
-     * equal to 0, the imbalance is infinite and int256.max is returned.
+     * equal to 0, the imbalance is infinite and `int256.max` is returned.
      * @param vaultBalance The balance of the vault.
      * @param longBalance The balance of the long side.
      * @param totalExpo The total exposure of the long side.
@@ -438,7 +438,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Calculate the total exposure of a position.
+     * @notice Calculates the total exposure of a position.
      * @dev Reverts if `startPrice <= liquidationPrice`.
      * @param amount The amount of assets used as collateral.
      * @param startPrice The asset price when the position was created.
@@ -458,7 +458,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Compute the value of a position based on its liquidation price and the current asset price.
+     * @notice Calculates the value of a position based on its liquidation price and the current asset price.
      * @param positionTotalExpo The total exposure of the position.
      * @param currentPrice The current price of the asset.
      * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty.
@@ -480,7 +480,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Calculate a fixed-precision representation of the liquidation price multiplier.
+     * @notice Calculates a fixed-precision representation of the liquidation price multiplier.
      * @param assetPrice The current price of the asset.
      * @param longTradingExpo The trading exposure of the long side.
      * @param accumulator The liquidation multiplier accumulator.
@@ -516,7 +516,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Calculate the amount of USDN shares to mint for a given amount of assets.
+     * @notice Calculates the amount of USDN shares to mint for a given amount of assets.
      * @param amount The amount of assets to be converted into USDN.
      * @param vaultBalance The current balance of the vault.
      * @param usdnTotalShares The total supply of USDN shares.
@@ -539,7 +539,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Calculate the amount of SDEX tokens to burn when minting USDN tokens.
+     * @notice Calculates the amount of SDEX tokens to burn when minting USDN tokens.
      * @dev The result is rounded up to ensure at least 1 wei of SDEX is burned.
      * @param usdnAmount The amount of USDN to be minted.
      * @param sdexBurnRatio The ratio of SDEX burned per minted USDN.
@@ -550,7 +550,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Calculate a unique identifier for a pending action.
+     * @notice Calculates a unique identifier for a pending action.
      * @dev This identifier can be used by the oracle middleware to link an `Initiate` call with the corresponding
      * `Validate` call.
      * @param validator The address of the validator.
@@ -562,7 +562,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Calculate the amount of assets received when burning USDN shares, accounting for fees.
+     * @notice Calculates the amount of assets received when burning USDN shares, accounting for fees.
      * @param usdnShares The amount of USDN shares to burn.
      * @param vaultAvailableBalance The available amount of assets in the vault.
      * @param usdnSharesTotalSupply The total supply of USDN shares.
@@ -588,7 +588,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Compute the available balance in the vault for a given price, excluding funding effects.
+     * @notice Calculates the available balance in the vault for a given price, excluding funding effects.
      * @param totalExpo The total long exposure.
      * @param balanceVault The previous balance of the vault.
      * @param balanceLong The previous balance of the long side.
@@ -610,7 +610,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Adjust the tick price by accounting for the effects of funding.
+     * @notice Adjusts the tick price by accounting for the effects of funding.
      * @param unadjustedPrice The tick's unadjusted price.
      * @param assetPrice The current price of the asset.
      * @param longTradingExpo The trading exposure of the long side.
@@ -635,7 +635,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Invoke a callback on the `msg.sender` to transfer assets and verifies that they were received.
+     * @notice Invokes a callback on the `msg.sender` to transfer assets and verifies that they were received.
      * @param token The ERC-20 token to transfer.
      * @param amount The amount of tokens to transfer.
      * @param to The recipient's address.
@@ -650,7 +650,7 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Invoke a callback on the `msg.sender` to transfer USDN shares and verifies that they were received.
+     * @notice Invokes a callback on the `msg.sender` to transfer USDN shares and verifies that they were received.
      * @param usdn The address of the USDN token contract.
      * @param shares The amount of USDN shares to transfer.
      */
@@ -664,10 +664,10 @@ library UsdnProtocolUtilsLibrary {
     }
 
     /**
-     * @notice Calculate the effective price for a tick, adjusted for funding effects.
+     * @notice Calculates the effective price for a tick, adjusted for funding effects.
      * @param tick The tick number.
      * @param assetPrice The current price of the asset.
-     * @param longTradingExpo The trading exposure of the long side (total exposure - balance long).
+     * @param longTradingExpo The trading exposure of the long side.
      * @param accumulator The liquidation multiplier accumulator.
      * @return price_ The adjusted price for the tick.
      */
