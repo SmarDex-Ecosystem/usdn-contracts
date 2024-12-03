@@ -18,6 +18,12 @@ The decentralized finance (DeFi) ecosystem has long sought alternatives to fiat-
 with assets that combine dollar-like stability with yield generation. However, existing solutions, particularly stablecoins, suffer
 from inherent flaws: they are often centralized, opaque, and yield-free for holders.
 
+USDN aim to solve this by operating a fully decentralized structured product.
+Its architecture eliminates dependencies on centralized exchanges (CEXs) or custodial intermediaries.
+Instead, users need to provide a predefined asset in order to mint USDN or open long leveraged positions.
+This asset can indirectly bring incentives to users and be able to use financial products.
+In the first instance, the predefined asset is the wrapped staked ETH (wstETH) from Lido.
+
 = Protocol architecture
 
 = USDN Token
