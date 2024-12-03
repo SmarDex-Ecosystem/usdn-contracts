@@ -1,24 +1,4 @@
-#import "@preview/graceful-genetics:0.2.0": template
-
-// Configure equation numbering and spacing.
-#set math.equation(numbering: "(1)")
-
-// Configure appearance of equation references
-#show ref: it => {
-  if it.element != none and it.element.func() == math.equation {
-    // Override equation references.
-    link(
-      it.element.location(),
-      numbering(
-        it.element.numbering,
-        ..counter(math.equation).at(it.element.location()),
-      ),
-    )
-  } else {
-    // Other references as usual.
-    it
-  }
-}
+#import "template.typ": template
 
 #show: template.with(
   title: [Ultimate Synthetic Delta Neutral],
@@ -34,10 +14,7 @@
     #lorem(50)
   ],
   keywords: ("DeFi", "Blockchain", "Synthetic Assets", "Delta Neutral"),
-  make-venue: [],
 )
-
-#show heading.where(level: 3): set text(style: "italic", weight: "medium")
 
 = Introduction
 
