@@ -29,7 +29,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     /**
      * @notice Emitted when a user validates a deposit.
      * @param to The address that received the USDN tokens.
-     * @param validator the address who received the security deposit.
+     * @param validator the address that received the security deposit.
      * @param amountAfterFees The amount of assets that were deposited after fees.
      * @param usdnMinted The amount of USDN that was minted.
      * @param timestamp The timestamp of the `InitiatedDeposit` action.
@@ -53,7 +53,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     /**
      * @notice Emitted when a user validates a withdrawal.
      * @param to The address that received the assets.
-     * @param validator the address who received the security deposit.
+     * @param validator the address that received the security deposit.
      * @param amountWithdrawnAfterFees The amount of assets that were withdrawn after fees.
      * @param usdnBurned The amount of USDN that was burned.
      * @param timestamp The timestamp of the `InitiatedWithdrawal` action.
@@ -89,7 +89,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     /**
      * @notice Emitted when a user validates the opening of a long position.
      * @param owner The address that owns the position.
-     * @param validator the address who received the security deposit.
+     * @param validator the address that received the security deposit.
      * @param totalExpo The total expo of the position.
      * @param newStartPrice The asset price at the moment of the position creation (final).
      * @param posId The unique position identifier.
@@ -109,7 +109,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     /**
      * @notice Emitted when a user initiates the closing of all or part of a long position.
      * @param owner The owner of this position.
-     * @param validator the address who received the security deposit.
+     * @param validator the address that received the security deposit.
      * @param to The address that will receive the assets.
      * @param posId The unique position identifier.
      * @param originalAmount The amount of collateral originally on the position.
@@ -130,7 +130,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
 
     /**
      * @notice Emitted when a user validates the closing of a long position.
-     * @param validator the address who received the security deposit.
+     * @param validator the address that received the security deposit.
      * @param to The address that received the assets.
      * @param posId The unique position identifier.
      * @param amountReceived The amount of assets that were sent to the user.
@@ -357,7 +357,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     /**
      * @notice Emitted when a security deposit is refunded.
      * @param pendingActionValidator Address of the default validator.
-     * @param receivedBy Address of the user who received the security deposit.
+     * @param receivedBy Address of the user that received the security deposit.
      * @param amount Amount of security deposit refunded.
      */
     event SecurityDepositRefunded(address indexed pendingActionValidator, address indexed receivedBy, uint256 amount);
