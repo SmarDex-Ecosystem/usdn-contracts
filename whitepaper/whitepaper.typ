@@ -4,8 +4,10 @@
   title: [Ultimate Synthetic Delta Neutral],
   abstract: [
     This paper present a new decentralized protocol proposing two defi products : making yield by being exposed in dollar and long leverage trading.
-    These two systems work in pair to be operational and secure. A new token is introduce, USDN, tradable and making value over time.
-    To ensure good health of the protocol, both products need to be at equilibrium. We describe in this paper how we are using funding and imbalance limits to ensure the right behavior of the protocol.
+    It covers the mathematical principles and choices for both products.
+    A new token is introduced, USDN, a tradable ERC20 and making value over time.
+    It explain how we store value in a vault for the synthetic dollar side and then how we store long and calculate their profit and loss (PnL).
+    This whitepaper describes the mechanics of funding and imbalance limits to ensure the right behavior of the protocol.
   ],
   index-terms: ("Defi", "Blockchain"),
 )
