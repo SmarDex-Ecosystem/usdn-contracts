@@ -53,7 +53,8 @@ slightly above or below this reference value, supported by market forces and the
 
 == Price
 
-Due to the algorithmic nature of the USDN token, its price $P_"usdn"$ can be calculated using the following formula:
+Due to the algorithmic nature of the USDN token, its price in dollars $P_"usdn"$ can be calculated using the following
+formula:
 
 $ P_"usdn" = frac(B_"vault" P_"asset", S_"tot") $ <eq:usdn_price>
 
