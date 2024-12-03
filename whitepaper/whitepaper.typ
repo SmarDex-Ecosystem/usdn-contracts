@@ -84,13 +84,8 @@ From @eq:usdn_price, it is clear that the USDN price is influenced by the total 
 As such, if the vault balance increases as a result of position fees, losses from long positions, or funding payments,
 the USDN price will rise. When a certain threshold is reached, the token rebases to a price slightly above \$1 by
 increasing the total supply and balance of each holder. This increase in balance represents the yield of the USDN token.
-The rebase mechanism ensures that yields do not induce a price that significantly exceeds the value of \$1.
-
-=== Wrapped USDN
-
-Not all DeFi protocols support tokens which balance increases over time without transfers. To help with
-integration, a wrapped version of the token, WUSDN, was created. This token behaves like a normal ERC20 token and sees
-its price increase over time, instead of the balances.
+The rebase mechanism ensures that yields do not induce a price that significantly exceeds the value of \$1. There is no
+balance and total supply adjustment (rebase) if the price falls below \$1.
 
 = Vault
 
