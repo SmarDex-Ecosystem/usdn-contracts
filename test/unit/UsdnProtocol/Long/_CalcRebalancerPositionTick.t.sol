@@ -217,8 +217,9 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
             amount,
             protocol.getMaxLeverage(),
             totalExpo,
-            balanceLong - 1.5 ether, // wee need to change the tradingExpo(totalExpo - balanceLong) to have the same
-                // tick
+            // we need to change the tradingExpo(totalExpo - balanceLong) to land on the same tick
+            // because of the the new liquidation penalty
+            balanceLong - 1.5 ether, // we need to change the tradingExpo(totalExpo - balanceLong) to have the same
             balanceVault,
             protocol.getLiqMultiplierAccumulator()
         );
