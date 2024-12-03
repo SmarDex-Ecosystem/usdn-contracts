@@ -9,13 +9,13 @@ import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
  */
 interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     /**
-     * @notice Emitted when a user initiates a deposit
-     * @param to The address that will receive the USDN tokens
-     * @param validator The address of the validator that will validate the deposit
-     * @param amount The amount of assets that were deposited
-     * @param feeBps The fee in basis points
-     * @param timestamp The timestamp of the action
-     * @param sdexBurned The amount of SDEX tokens burned
+     * @notice Emitted when a user initiates a deposit.
+     * @param to The address that will receive the USDN tokens.
+     * @param validator the address that will receive the security deposit.
+     * @param amount The amount of assets that were deposited.
+     * @param feeBps The fee in basis points.
+     * @param timestamp The timestamp of the action.
+     * @param sdexBurned The amount of SDEX tokens burned.
      */
     event InitiatedDeposit(
         address indexed to,
@@ -27,24 +27,24 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     );
 
     /**
-     * @notice Emitted when a user validates a deposit
-     * @param to The address that received the USDN tokens
-     * @param validator The address of the validator that validated the deposit
-     * @param amountAfterFees The amount of assets that were deposited after fees
-     * @param usdnMinted The amount of USDN that was minted
-     * @param timestamp The timestamp of the InitiatedDeposit action
+     * @notice Emitted when a user validates a deposit.
+     * @param to The address that received the USDN tokens.
+     * @param validator the address who received the deposit.
+     * @param amountAfterFees The amount of assets that were deposited after fees.
+     * @param usdnMinted The amount of USDN that was minted.
+     * @param timestamp The timestamp of the `InitiatedDeposit` action.
      */
     event ValidatedDeposit(
         address indexed to, address indexed validator, uint256 amountAfterFees, uint256 usdnMinted, uint256 timestamp
     );
 
     /**
-     * @notice Emitted when a user initiates a withdrawal
-     * @param to The address that will receive the assets
-     * @param validator The address of the validator that will validate the withdrawal
-     * @param usdnAmount The amount of USDN that will be burned
-     * @param feeBps The fee in basis points
-     * @param timestamp The timestamp of the action
+     * @notice Emitted when a user initiates a withdrawal.
+     * @param to The address that will receive the assets.
+     * @param validator the address that will receive the security deposit.
+     * @param usdnAmount The amount of USDN that will be burned.
+     * @param feeBps The fee in basis points.
+     * @param timestamp The timestamp of the action.
      */
     event InitiatedWithdrawal(
         address indexed to, address indexed validator, uint256 usdnAmount, uint256 feeBps, uint256 timestamp
