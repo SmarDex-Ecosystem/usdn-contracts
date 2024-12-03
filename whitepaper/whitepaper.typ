@@ -51,6 +51,10 @@ The USDN token is a synthetic USD token designed to approximate the value of one
 returns to its holders. Unlike a stablecoin, USDN does not claim to maintain a rigid peg to \$1. Instead, it oscillates
 slightly above or below this reference value, supported by market forces and the protocol's innovative mechanisms.
 
+The value of USDN comes from assets (a specific ERC20 token) stored in the protocol's vault. This can be any token for
+which a price oracle is available and for which the balance does not change over time without transfer. For the first
+release of the protocol, the token is wstETH.
+
 == Price
 
 Due to the algorithmic nature of the USDN token, its price in dollars $P_"usdn"$ can be calculated using the following
@@ -58,8 +62,8 @@ formula:
 
 $ P_"usdn" = frac(B_"vault" P_"asset", S_"tot") $ <eq:usdn_price>
 
-where $B_"vault"$ is the total assets held in the protocol's vault, $P_"asset"$ is the price of the asset token in USD,
-and $S_"tot"$ is the total supply of USDN tokens.
+where $B_"vault"$ is the balance of assets held in the protocol's vault, $P_"asset"$ is the price of the asset token in
+USD, and $S_"tot"$ is the total supply of USDN tokens.
 
 == Token Minting
 
