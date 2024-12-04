@@ -31,7 +31,7 @@ interface IUsdnProtocolVault {
      * state update are taken into account, but not liquidations. If the provided timestamp is older than the last
      * state update, the function reverts with `UsdnProtocolTimestampTooOld`.
      * @param currentPrice The current or predicted asset price.
-     * @param timestamp The timestamp corresponding to `currentPrice` (must not be earlier than _lastUpdateTimestamp).
+     * @param timestamp The timestamp corresponding to `currentPrice` (must not be earlier than `_lastUpdateTimestamp`).
      * @return available_ The available vault balance (cannot be less than 0).
      */
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
