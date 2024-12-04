@@ -17,7 +17,7 @@
     It explain how we store value in a vault for the synthetic dollar side and then how we store long and calculate their profit and loss (PnL).
     This whitepaper describes the mechanics of funding and imbalance limits to ensure the right behavior of the protocol.
   ],
-  keywords: ("DeFi", "Blockchain", "Synthetic Assets", "Delta Neutral"),
+  keywords: ("DeFi", "Blockchain", "Synthetic Assets", "Delta Neutral")
 )
 
 = Introduction
@@ -30,7 +30,7 @@ USDN aim to solve this by operating a fully decentralized structured product.
 Its architecture eliminates dependencies on centralized exchanges (CEXs) or custodial intermediaries.
 Instead, users need to provide a predefined asset in order to mint USDN or open long leveraged positions.
 This asset can indirectly bring incentives to users and be able to use financial products.
-In the first instance, the predefined asset is the wrapped staked ETH (wstETH) from Lido.
+In the first instance, the predefined asset is the wrapped staked ETH (wstETH) from Lido @lido-wsteth.
 
 = Protocol architecture
 
