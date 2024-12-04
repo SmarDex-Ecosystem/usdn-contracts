@@ -3,232 +3,226 @@ pragma solidity >=0.8.0;
 
 /**
  * @title IUsdnProtocolErrors
- * @notice Errors for the USDN Protocol
+ * @notice All errors used in the USDN Protocol.
  */
 interface IUsdnProtocolErrors {
-    /// @dev Indicates that not enough ether was provided to cover the cost of price validation
+    /// @dev Insufficient Ether provided to cover the cost of price validation.
     error UsdnProtocolInsufficientOracleFee();
 
-    /// @dev Indicates that the sender could not accept the ether refund
+    /// @dev Ether refund to the sender failed.
     error UsdnProtocolEtherRefundFailed();
 
     /**
-     * @dev Indicates that the validator is not eligible for a security deposit refund
-     * @param validator The address of the validator
+     * @dev Validator is not eligible for a security deposit refund.
+     * @param validator The address of the validator.
      */
     error UsdnProtocolNotEligibleForRefund(address validator);
 
-    /// @dev Indicates that the provided amount is zero
+    /// @dev The provided amount is zero.
     error UsdnProtocolZeroAmount();
 
-    /// @dev Indicates that the provided `to` address is invalid
+    /// @dev The provided `to` address is invalid.
     error UsdnProtocolInvalidAddressTo();
 
-    /// @dev Indicates that the provided `validator` address is invalid
+    /// @dev The provided `validator` address is invalid.
     error UsdnProtocolInvalidAddressValidator();
 
-    /**
-     * @dev Indicates that an amount provided during the initialization is too small and do not allow opening
-     * reasonably sized positions afterwards
-     */
+    /// @dev The initial amount provided during initialization is too small to support reasonable positions.
     error UsdnProtocolMinInitAmount();
 
     /**
-     * @dev Indicates that the provided USDN contract has a total supply above zero at deployment
-     * @param usdnAddress The USDN contract address
+     * @dev The provided USDN token has a non-zero total supply at deployment.
+     * @param usdnAddress The address of the USDN contract.
      */
     error UsdnProtocolInvalidUsdn(address usdnAddress);
 
     /**
-     * @dev Indicates that the provided asset decimals are invalid
-     * @param assetDecimals The wanted asset decimals
+     * @dev The asset's decimal precision is invalid.
+     * @param assetDecimals The specified asset decimals.
      */
     error UsdnProtocolInvalidAssetDecimals(uint8 assetDecimals);
 
-    /// @dev Indicates that the token decimals are not equal to `TOKENS_DECIMALS`
+    /// @dev The token's decimals do not match `TOKENS_DECIMALS`.
     error UsdnProtocolInvalidTokenDecimals();
 
-    /// @dev Indicates that the user is not allowed to perform an action
+    /// @dev The caller is not authorized to perform the action.
     error UsdnProtocolUnauthorized();
 
-    /// @dev Indicates that the user already has a pending action
+    /// @dev A pending action already exists for the user.
     error UsdnProtocolPendingAction();
 
-    /// @dev Indicates that the user has no pending action
+    /// @dev The user does not have any pending action.
     error UsdnProtocolNoPendingAction();
 
-    /// @dev Indicates that the user has a pending action but its action type is not the expected one
+    /// @dev A pending action exists, but its type is not the expected one.
     error UsdnProtocolInvalidPendingAction();
 
-    /// @dev Indicates that the provided timestamp is too old (pre-dates the last balances update)
+    /// @dev The provided timestamp predates the last balance update.
     error UsdnProtocolTimestampTooOld();
 
-    /// @dev Indicates that the provided collateral and liquidation price result in a leverage that is too low
+    /// @dev The calculated leverage is below the minimum allowed.
     error UsdnProtocolLeverageTooLow();
 
-    /// @dev Indicates that the provided collateral and liquidation price result in a leverage that is too high
+    /// @dev The calculated leverage exceeds the maximum allowed.
     error UsdnProtocolLeverageTooHigh();
 
-    /// @dev Indicates that the long position is too small
+    /// @dev The long position size is too small.
     error UsdnProtocolLongPositionTooSmall();
 
     /**
-     * @dev Indicates that the liquidation price is higher than or equal to the start price
-     * @param liquidationPrice The wanted liquidation price
-     * @param startPrice The start price
+     * @dev The liquidation price exceeds or equals the starting price.
+     * @param liquidationPrice The specified liquidation price.
+     * @param startPrice The starting price.
      */
     error UsdnProtocolInvalidLiquidationPrice(uint128 liquidationPrice, uint128 startPrice);
 
     /**
-     * @dev Indicates that the liquidation price exceeds the safety margin
-     * @param liquidationPrice The wanted liquidation price
-     * @param maxLiquidationPrice The maximum liquidation price
+     * @dev The liquidation price exceeds the safety margin.
+     * @param liquidationPrice The specified liquidation price.
+     * @param maxLiquidationPrice The maximum liquidation price.
      */
     error UsdnProtocolLiquidationPriceSafetyMargin(uint128 liquidationPrice, uint128 maxLiquidationPrice);
 
     /**
-     * @dev Indicates that the provided tick version is outdated (transactions have been liquidated)
-     * @param currentVersion The current tick version
-     * @param providedVersion The provided tick version
+     * @dev The provided tick version is outdated due to liquidation.
+     * @param currentVersion The current tick version.
+     * @param providedVersion The provided tick version.
      */
     error UsdnProtocolOutdatedTick(uint256 currentVersion, uint256 providedVersion);
 
-    /// @dev Indicates that the position cannot be closed because it's not validated yet
+    /// @dev The position cannot be closed because it has not been validated yet.
     error UsdnProtocolPositionNotValidated();
 
-    /// @dev Indicates that the provided position fee exceeds the maximum allowed
+    /// @dev The specified position fee exceeds the allowed maximum.
     error UsdnProtocolInvalidPositionFee();
 
-    /// @dev Indicates that the provided vault fee exceeds the maximum allowed
+    /// @dev The specified vault fee exceeds the allowed maximum.
     error UsdnProtocolInvalidVaultFee();
 
-    /// @dev Indicates that the provided rebalancer bonus exceeds the maximum allowed
+    /// @dev The specified rebalancer bonus exceeds the allowed maximum.
     error UsdnProtocolInvalidRebalancerBonus();
 
-    /// @dev Indicates that the provided ratio exceeds the maximum allowed
+    /// @dev The specified ratio exceeds the allowed maximum.
     error UsdnProtocolInvalidBurnSdexOnDepositRatio();
 
-    /// @dev Indicates that the new middleware address value is invalid
+    /// @dev The specified middleware address is invalid.
     error UsdnProtocolInvalidMiddlewareAddress();
 
-    /// @dev Indicates that the provided minimum leverage is invalid
+    /// @dev The specified minimum leverage is invalid.
     error UsdnProtocolInvalidRebalancerMinLeverage();
 
-    /// @dev Indicate that the new `minLeverage` value is invalid
+    /// @dev The specified `minLeverage` value is invalid.
     error UsdnProtocolInvalidMinLeverage();
 
-    /// @dev Indicates that the new `maxLeverage` value is invalid
+    /// @dev The specified `maxLeverage` value is invalid.
     error UsdnProtocolInvalidMaxLeverage();
 
-    /// @dev Indicates that the new validation deadline value is invalid
+    /// @dev The specified validation deadline is invalid.
     error UsdnProtocolInvalidValidatorDeadline();
 
-    /// @dev Indicates that the new `liquidationPenalty` value is invalid
+    /// @dev The specified liquidation penalty is invalid.
     error UsdnProtocolInvalidLiquidationPenalty();
 
-    /// @dev Indicates that the new `safetyMargin` value is invalid
+    /// @dev The specified safety margin basis points are invalid.
     error UsdnProtocolInvalidSafetyMarginBps();
 
-    /// @dev Indicates that the new `liquidationIteration` value is invalid
+    /// @dev The specified liquidation iteration value is invalid.
     error UsdnProtocolInvalidLiquidationIteration();
 
-    /// @dev Indicates that the new `EMAPeriod` value is invalid
+    /// @dev The specified EMA period is invalid.
     error UsdnProtocolInvalidEMAPeriod();
 
-    /// @dev Indicates that the new `fundingSF` value is invalid
+    /// @dev The specified funding scale factor (SF) is invalid.
     error UsdnProtocolInvalidFundingSF();
 
-    /// @dev Indicates that the provided address for the `LiquidationRewardsManager` contract address is invalid
+    /// @dev The specified `LiquidationRewardsManager` contract address is invalid.
     error UsdnProtocolInvalidLiquidationRewardsManagerAddress();
 
-    /// @dev Indicates that the provided fee basis point value is invalid
+    /// @dev The specified protocol fee basis points are invalid.
     error UsdnProtocolInvalidProtocolFeeBps();
 
-    /// @dev Indicates that the provided fee collector address is invalid
+    /// @dev The specified fee collector address is invalid.
     error UsdnProtocolInvalidFeeCollector();
 
-    /// @dev Indicates that the provided security deposit is lower than `_securityDepositValue`
+    /// @dev The specified security deposit is below the required value.
     error UsdnProtocolSecurityDepositTooLow();
 
-    /// @dev Indicates that the ether balance of the contract at the end of the action is not the expected one
+    /// @dev The contract's ether balance after the action is not as expected.
     error UsdnProtocolUnexpectedBalance();
 
-    /// @dev Indicates that the trading expo imbalance limit provided is invalid
+    /// @dev The specified trading exposure imbalance limit is invalid.
     error UsdnProtocolInvalidExpoImbalanceLimit();
 
-    /// @dev The imbalance target on the long side is invalid
+    /// @dev The specified imbalance target is invalid.
     error UsdnProtocolInvalidLongImbalanceTarget();
 
     /**
-     * @dev Indicates that the protocol imbalance limit is reached
-     * @param imbalanceBps The imbalance in basis points
+     * @dev The protocol imbalance limit has been reached.
+     * @param imbalanceBps The imbalance value in basis points.
      */
     error UsdnProtocolImbalanceLimitReached(int256 imbalanceBps);
 
-    /// @dev Indicates that the tick of the rebalancer position is invalid
+    /// @dev The tick of the rebalancer position is invalid.
     error UsdnProtocolInvalidRebalancerTick();
 
-    /// @dev Indicates that the protocol long expo is invalid
+    /// @dev The long total exposure value is invalid.
     error UsdnProtocolInvalidLongExpo();
 
-    /// @dev Indicates that the provided total expo is zero
+    /// @dev The total exposure value is zero.
     error UsdnProtocolZeroTotalExpo();
 
-    /**
-     * @dev Indicates that the data provided to validate an actionable pending action is invalid (zero length or length
-     * mismatch)
-     */
+    /// @dev Indicates that the data provided to validate an actionable pending action is invalid.
     error UsdnProtocolInvalidPendingActionData();
 
-    /// @dev Indicates that the provided target USDN price is invalid
+    /// @dev The specified target USDN price is invalid.
     error UsdnProtocolInvalidTargetUsdnPrice();
 
-    /// @dev Indicates that the provided USDN rebase threshold is invalid
+    /// @dev The specified USDN rebase threshold is invalid.
     error UsdnProtocolInvalidUsdnRebaseThreshold();
 
     /**
-     * @dev Indicates that the amount to close in a position is higher than the amount in the position itself
-     * @param amountToClose The wanted amount to close
-     * @param positionAmount The amount in the position
+     * @dev The amount to close exceeds the position amount.
+     * @param amountToClose The specified amount to close.
+     * @param positionAmount The total amount in the position.
      */
     error UsdnProtocolAmountToCloseHigherThanPositionAmount(uint128 amountToClose, uint128 positionAmount);
 
-    /// @dev Indicates that the deposit amount is too small, leading to no USDN minted or no SDEX burned
+    /// @dev The deposit amount is too small to mint USDN.
     error UsdnProtocolDepositTooSmall();
 
-    /// @dev Indicates that the long trading expo is zero, we can't get the effective tick for a liquidation price
+    /// @dev The long trading exposure is zero, making liquidation tick calculation impossible.
     error UsdnProtocolZeroLongTradingExpo();
 
-    /// @dev Indicates that the vault balance is zero, and the calculation cannot be performed
+    /// @dev The vault balance is zero, so the calculation cannot proceed.
     error UsdnProtocolEmptyVault();
 
-    /// @dev Indicates that the entry price exceeds the maximum given by the user
+    /// @dev The entry price exceeds the maximum specified by the user.
     error UsdnProtocolSlippageMaxPriceExceeded();
 
-    /// @dev Indicates that the current price exceeds the minimum given by the user
+    /// @dev The current price is below the minimum specified by the user.
     error UsdnProtocolSlippageMinPriceExceeded();
 
-    /// @dev Indicates that user would not receive enough prediction tokens compared to the expected amount
+    /// @dev The received prediction token amount is less than expected.
     error UsdnProtocolAmountReceivedTooSmall();
 
-    /// @dev Indicates that the payment callback failed
+    /// @dev The payment callback execution failed.
     error UsdnProtocolPaymentCallbackFailed();
 
-    /// @dev Indicates that the deadline of the action has been exceeded
+    /// @dev The action deadline has passed.
     error UsdnProtocolDeadlineExceeded();
 
-    /// @dev Indicates that the signature provided for a delegation is invalid
+    /// @dev The delegation signature is invalid.
     error UsdnProtocolInvalidDelegationSignature();
 
-    /// @dev Indicates that the provided security deposit is invalid
+    /// @dev The specified security deposit value is invalid.
     error UsdnProtocolInvalidSecurityDeposit();
 
-    /// @dev Indicates that the provided minimum long position is invalid
+    /// @dev The specified minimum long position value is invalid.
     error UsdnProtocolInvalidMinLongPosition();
 
-    /// @dev Indicates that the new middleware contains an invalid low latency delay
+    /// @dev The specified middleware low latency delay is invalid.
     error UsdnProtocolInvalidMiddlewareLowLatencyDelay();
 
-    /// @dev Indicates that the new rebalancer contains an invalid minimum asset deposit
+    /// @dev The specified rebalancer's minimum asset deposit value is invalid.
     error UsdnProtocolInvalidRebalancerMinAssetDeposit();
 }
