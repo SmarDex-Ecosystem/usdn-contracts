@@ -7,7 +7,7 @@ pragma solidity >=0.8.0;
  */
 interface IUsdnProtocolVault {
     /**
-     * @notice Calculates the predicted value of the USDN token price for the given asset price and timestamp.
+     * @notice Calculates the predicted USDN token price based on the given asset price and timestamp.
      * @dev The effects of the funding and the PnL of the long positions since the last contract state update are taken
      * into account.
      * @param currentPrice The current or predicted asset price.
