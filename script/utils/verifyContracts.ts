@@ -47,7 +47,7 @@ verifierUrl = verifierUrl ? `--verifier-url ${verifierUrl}` : '';
 const file = readFileSync(broadcastPath);
 const broadcast = JSON.parse(file.toString());
 broadcast.transactions.filter(transaction =>
-    transaction.transactionType === "CREATE"
+    transaction.transactionType === "CREATE" || transaction.transactionType === "CREATE2"
 ).forEach(transaction => {
     const address: string = transaction.contractAddress;
     const contractName: string = transaction.contractName;
