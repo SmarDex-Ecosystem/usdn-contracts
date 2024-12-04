@@ -42,7 +42,7 @@ if (!existsSync(broadcastPath)) {
 }
 
 if (etherscanApiKey) etherscanApiKey = `-e ${etherscanApiKey}`;
-if (verifierUrl) verifierUrl = `--verifier-url ${verifierUrl}`;
+verifierUrl = verifierUrl ? `--verifier-url ${verifierUrl}` : '';
 
 const file = readFileSync(broadcastPath);
 const broadcast = JSON.parse(file.toString());
