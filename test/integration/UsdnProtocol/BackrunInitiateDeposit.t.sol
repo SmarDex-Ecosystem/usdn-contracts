@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { UsdnProtocolBaseFixture } from "../../unit/UsdnProtocol/utils/Fixtures.sol";
 import { USER_1 } from "../../utils/Constants.sol";
 
-import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 
 /**
  * @custom:feature Testing outcomes of backrunning a user's initiateDeposit action
