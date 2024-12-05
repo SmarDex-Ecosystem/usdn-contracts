@@ -28,10 +28,8 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
      * value of 30 seconds should already account for most situations and avoid reverts in case an action becomes
      * actionable after a user submits their transaction.
      * @param maxIter The maximum number of iterations when looking through the queue to find actionable pending
-     * actions. Values outside of the [MIN_ACTIONABLE_PENDING_ACTIONS_ITER,_pendingActionsQueue.length()] range will be
-     * clamped to the closest value.
-     * @return actions_ The pending actions if any, otherwise an empty array. Note that some items can be zero-valued
-     * and there is no need to provide price data for those and can simply be ignored.
+     * actions. This value will be clamped to [MIN_ACTIONABLE_PENDING_ACTIONS_ITER,_pendingActionsQueue.length()].
+     * @return actions_ The pending actions if any, otherwise an empty array.
      * @return rawIndices_ The raw indices of the actionable pending actions in the queue if any, otherwise an empty
      * array. Each entry corresponds to the action in the `actions_` array, at the same index.
      */
@@ -84,10 +82,10 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
 
     /**
      * @notice Computes an estimate of the amount of assets received when withdrawing.
-     * @dev The result is a rough estimate and do not take into account rebases and liquidations.
+     * @dev The result is a rough estimate and does not take into account rebases and liquidations.
      * @param usdnShares The amount of USDN shares to use in the withdrawal.
      * @param price The current/projected price of the asset.
-     * @param timestamp The timestamp of the withdrawal.
+     * @param timestamp The The timestamp corresponding to `price`.
      * @return assetExpected_ The expected amount of assets to be received.
      */
     function previewWithdraw(uint256 usdnShares, uint128 price, uint128 timestamp)
@@ -97,10 +95,10 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
 
     /**
      * @notice Computes an estimate of USDN tokens to be minted and SDEX tokens to be burned when depositing.
-     * @dev The result is a rough estimate and do not take into account rebases and liquidations.
+     * @dev The result is a rough estimate and does not take into account rebases and liquidations.
      * @param amount The amount of assets to deposit.
      * @param price The current/projected price of the asset.
-     * @param timestamp The timestamp of the deposit.
+     * @param timestamp The timestamp corresponding to `price`.
      * @return usdnSharesExpected_ The amount of USDN shares to be minted.
      * @return sdexToBurn_ The amount of SDEX tokens to be burned.
      */
@@ -121,7 +119,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Removes a stuck pending action and perform the minimal amount of cleanup necessary.
+     * @notice Removes a stuck pending action and performs the minimal amount of cleanup necessary.
      * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
      * pending action ever gets stuck due to something internal reverting unexpectedly.
      * It will not refund any fees or burned SDEX.
@@ -142,7 +140,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function removeBlockedPendingActionNoCleanup(address validator, address payable to) external;
 
     /**
-     * @notice Removes a stuck pending action and perform the minimal amount of cleanup necessary.
+     * @notice Removes a stuck pending action and performs the minimal amount of cleanup necessary.
      * @dev This function can only be called by the owner of the protocol, it serves as an escape hatch if a
      * pending action ever gets stuck due to something internal reverting unexpectedly.
      * It will not refund any fees or burned SDEX.
@@ -282,7 +280,8 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function getSafetyMarginBps() external view returns (uint256 safetyMarginBps_);
 
     /**
-     * @notice Gets the number of tick liquidations to do when attempting to liquidate positions during user actions.
+     * @notice Gets the number of tick liquidations to perform when attempting to
+     * liquidate positions during user actions.
      * @return iterations_ The number of iterations for liquidations during user actions.
      */
     function getLiquidationIteration() external view returns (uint16 iterations_);
@@ -325,7 +324,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function getRebalancerBonusBps() external view returns (uint16 bonusBps_);
 
     /**
-     * @notice Gets the ratio of USDN to SDEX tokens to burn on deposit.
+     * @notice Gets the ratio of SDEX tokens to burn per minted USDN.
      * @return ratio_ The ratio (to be divided by SDEX_BURN_ON_DEPOSIT_DIVISOR).
      */
     function getSdexBurnOnDepositRatio() external view returns (uint32 ratio_);
@@ -403,7 +402,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function getTargetUsdnPrice() external view returns (uint128 price_);
 
     /**
-     * @notice Gets the USDN token price after which a rebase should occur.
+     * @notice Gets the USDN token price above which a rebase should occur.
      * @return threshold_ The rebase threshold (in `_priceFeedDecimals`).
      */
     function getUsdnRebaseThreshold() external view returns (uint128 threshold_);
@@ -456,14 +455,14 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function getPendingBalanceVault() external view returns (int256 pendingBalanceVault_);
 
     /**
-     * @notice Gets the exponential moving average of the funding.
-     * @return ema_ The exponential moving average of the funding.
+     * @notice Gets the exponential moving average of the funding rate per day.
+     * @return ema_ The exponential moving average of the funding rate per day.
      */
     function getEMA() external view returns (int256 ema_);
 
     /**
-     * @notice Gets the amount of collateral used by all the currently open long positions.
-     * @return balanceLong_ The amount of collateral used in the protocol (in `_assetDecimals`).
+     * @notice Gets the summed value of all the currently open long positions at `_lastUpdateTimestamp`.
+     * @return balanceLong_ The balance of the long side (in `_assetDecimals`).
      */
     function getBalanceLong() external view returns (uint256 balanceLong_);
 
@@ -494,7 +493,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function getTickData(int24 tick) external view returns (TickData memory tickData_);
 
     /**
-     * @notice Gets the long position at the provided tick, in the provided index.
+     * @notice Gets the long position at the provided tick and index.
      * @param tick The tick number.
      * @param index The position index.
      * @return position_ The long position.
@@ -514,8 +513,8 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function getTotalLongPositions() external view returns (uint256 totalLongPositions_);
 
     /**
-     * @notice Gets the address of the contract that handles the setters.
-     * @return fallback_ The address of the setters contract.
+     * @notice Gets the address of the fallback contract.
+     * @return fallback_ The address of the fallback contract.
      */
     function getFallbackAddress() external view returns (address fallback_);
 
@@ -638,7 +637,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function setRebalancerBonusBps(uint16 newBonus) external;
 
     /**
-     * @notice Sets the ratio of USDN to SDEX tokens to burn on deposit.
+     * @notice Sets the ratio of SDEX tokens to burn per minted USDN.
      * @param newRatio The new ratio.
      */
     function setSdexBurnOnDepositRatio(uint32 newRatio) external;
@@ -654,7 +653,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     /**
      * @notice Sets the imbalance limits (in basis point).
      * @dev `newLongImbalanceTargetBps` needs to be lower than `newCloseLimitBps` and
-     * higher than the inverse of `newWithdrawalLimitBps`.
+     * higher than the additive inverse of `newWithdrawalLimitBps`.
      * @param newOpenLimitBps The new open limit.
      * @param newDepositLimitBps The new deposit limit.
      * @param newWithdrawalLimitBps The new withdrawal limit.
