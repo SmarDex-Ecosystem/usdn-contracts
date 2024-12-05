@@ -11,12 +11,31 @@
     ),
   ),
   abstract: [
-    #lorem(50)
+    Dollar-backed stablecoins have long been a cornerstone of the decentralized finance (DeFi) ecosystem, but they are subject to the
+    same value depreciation as the US dollar due to inflation.
+    Yield-bearing synthetic dollar tokens have been proposed in the past, but they suffer from centralization and lack
+    of transparency.
+    We present a novel protocol comprised of two DeFi products: an algorithmic yield-bearing synthetic dollar token
+    (USDN) and a decentralized long perpetual futures trading platform. We describe the mathematical principles
+    supporting the protocol and the interaction between both products.
+    This research shows that a fully decentralized and transparent model can be used to support a yield-bearing
+    synthetic dollar token while remaining economically viable and gas-efficient.
   ],
-  keywords: ("DeFi", "Blockchain", "Synthetic Assets", "Delta Neutral"),
+  keywords: ("DeFi", "Blockchain", "Synthetic Assets", "Delta Neutral")
 )
 
 = Introduction
+
+The decentralized finance (DeFi) ecosystem has long sought alternatives to fiat-backed tokens, aiming to provide users
+with assets that combine dollar-like stability with yield generation. However, existing solutions, particularly stablecoins, suffer
+from inherent flaws: they are often centralized, opaque, and yield-free for holders.
+
+USDN aims to solve this problem by operating a fully decentralized structured product.
+Its architecture eliminates dependencies on centralized exchanges (CEXs) and custodial intermediaries.
+Instead, users interact with smart contracts to mint or redeem USDN tokens, as well as to open long perpetual positions.
+The underlying asset deposited to mint USDN tokens is used as liquidity for the structured product to enable leveraged trading.
+The first deployment of this protocol uses the wrapped staked ETH (wstETH) from #cite(<lido-wsteth>, form: "prose") as underlying asset.
+This means that we combine the yield of the protocol with that of staking ETH automatically.
 
 = Protocol architecture
 
