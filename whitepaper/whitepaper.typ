@@ -11,11 +11,15 @@
     ),
   ),
   abstract: [
-    This paper present a new decentralized protocol proposing two defi products : making yield by being exposed in dollar and long leverage trading.
-    It covers the mathematical principles and choices for both products.
-    A new token is introduced, USDN, a tradable ERC20 and making value over time.
-    It explain how we store value in a vault for the synthetic dollar side and then how we store long and calculate their profit and loss (PnL).
-    This whitepaper describes the mechanics of funding and imbalance limits to ensure the right behavior of the protocol.
+    Dollar-backed stablecoins have long been a cornerstone of the decentralized finance (DeFi) ecosystem, but they are subject to the
+    same value depreciation as the US dollar due to inflation.
+    Yield-bearing synthetic dollar tokens have been proposed in the past, but they suffer from centralization and lack
+    of transparency.
+    We present a novel protocol comprised of two DeFi products: an algorithmic yield-bearing synthetic dollar token
+    (USDN) and a decentralized long perpetual futures trading platform. We describe the mathematical principles
+    supporting the protocol and the interaction between both products.
+    This research shows that a fully decentralized and transparent model can be used to support a yield-bearing
+    synthetic dollar token while remaining economically viable and gas-efficient.
   ],
   keywords: ("DeFi", "Blockchain", "Synthetic Assets", "Delta Neutral")
 )
