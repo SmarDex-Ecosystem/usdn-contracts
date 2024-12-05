@@ -27,7 +27,7 @@ interface IUsdnProtocolErrors {
     /// @dev The provided `validator` address is invalid.
     error UsdnProtocolInvalidAddressValidator();
 
-    /// @dev The initial amount provided during initialization is too small to support reasonable positions.
+    /// @dev The initial amount provided during initialization is too small to support opening a long position.
     error UsdnProtocolMinInitAmount();
 
     /**
@@ -66,7 +66,7 @@ interface IUsdnProtocolErrors {
     /// @dev The calculated leverage exceeds the maximum allowed.
     error UsdnProtocolLeverageTooHigh();
 
-    /// @dev The long position size is too small.
+    /// @dev The amount of collateral in the long position is too small.
     error UsdnProtocolLongPositionTooSmall();
 
     /**
@@ -202,27 +202,30 @@ interface IUsdnProtocolErrors {
     /// @dev The current price is below the minimum specified by the user.
     error UsdnProtocolSlippageMinPriceExceeded();
 
-    /// @dev The received prediction token amount is less than expected.
+    /// @dev The estimated amount of tokens to be received is less than expected.
     error UsdnProtocolAmountReceivedTooSmall();
 
     /// @dev The payment callback execution failed.
     error UsdnProtocolPaymentCallbackFailed();
 
-    /// @dev The action deadline has passed.
+    /// @dev The user initiate action's deadline has passed.
     error UsdnProtocolDeadlineExceeded();
 
     /// @dev The delegation signature is invalid.
     error UsdnProtocolInvalidDelegationSignature();
 
-    /// @dev The specified security deposit value is invalid.
+    /// @dev The specified security deposit value exceeds the allowed maximum
     error UsdnProtocolInvalidSecurityDeposit();
 
-    /// @dev The specified minimum long position value is invalid.
+    /// @dev The specified minimum long position value exceeds the allowed maximum.
     error UsdnProtocolInvalidMinLongPosition();
 
-    /// @dev The specified middleware low latency delay is invalid.
+    /// @dev The low latency delay of the specified oracle middleware contract is below the validator's deadline.
     error UsdnProtocolInvalidMiddlewareLowLatencyDelay();
 
-    /// @dev The specified rebalancer's minimum asset deposit value is invalid.
+    /**
+     * @dev The minimum asset deposit of the specified rebalancer contract is below the protocol's minimum asset
+     * deposit.
+     */
     error UsdnProtocolInvalidRebalancerMinAssetDeposit();
 }
