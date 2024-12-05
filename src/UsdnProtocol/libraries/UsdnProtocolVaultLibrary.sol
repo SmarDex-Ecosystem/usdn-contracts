@@ -28,13 +28,13 @@ library UsdnProtocolVaultLibrary {
     using SignedMath for int256;
 
     /**
-     * @notice Parameters for the internal `_initiateDeposit` function
-     * @param user The address of the user initiating the deposit
-     * @param to The address to receive the USDN tokens
-     * @param validator The address that will validate the deposit
-     * @param amount The amount of assets to deposit
-     * @param sharesOutMin The minimum amount of USDN shares to receive
-     * @param securityDepositValue The value of the security deposit for the newly created deposit
+     * @dev Parameters for the internal `_initiateDeposit` function.
+     * @param user The address of the user initiating the deposit.
+     * @param to The recipient of the USDN tokens.
+     * @param validator The address that will validate the deposit.
+     * @param amount The amount of assets to deposit.
+     * @param sharesOutMin The minimum amount of USDN shares to receive.
+     * @param securityDepositValue The value of the security deposit for the newly created deposit.
      */
     struct InitiateDepositParams {
         address user;
@@ -46,15 +46,15 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @dev Structure to hold the transient data during `_initiateDeposit`
-     * @param lastPrice The last price of the asset
-     * @param isLiquidationPending Whether some liquidations still need to be performed
-     * @param feeBps The vault deposit fee in basis points
-     * @param totalExpo The total expo of the long side
-     * @param balanceLong The long side balance
-     * @param balanceVault The vault side balance, calculated according to the pendingActionPrice
-     * @param usdnTotalShares Total minted shares of USDN
-     * @param sdexToBurn The amount of SDEX to burn for the deposit
+     * @dev Structure to hold the transient data during `_initiateDeposit`.
+     * @param lastPrice The last known price of the asset.
+     * @param isLiquidationPending Whether some liquidations still need to be performed.
+     * @param feeBps The vault deposit fee (in basis points).
+     * @param totalExpo The total expo of the long side.
+     * @param balanceLong The balance of the long side.
+     * @param balanceVault The balance of the vault including the funding.
+     * @param usdnTotalShares Total minted shares of USDN.
+     * @param sdexToBurn The required amount of SDEX to burn for the deposit.
      */
     struct InitiateDepositData {
         uint128 lastPrice;
@@ -68,13 +68,13 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Parameters for the internal `_initiateWithdrawal` function
-     * @param user The address of the user initiating the withdrawal
-     * @param to The address to receive the USDN tokens
-     * @param validator The address that will validate the withdrawal
-     * @param usdnShares The amount of USDN shares to withdraw
-     * @param amountOutMin The minimum amount of assets to receive
-     * @param securityDepositValue The value of the security deposit for the newly created withdrawal
+     * @dev Parameters for the internal `_initiateWithdrawal` function.
+     * @param user The address of the user initiating the withdrawal.
+     * @param to The address to receive the USDN tokens.
+     * @param validator The address that will validate the withdrawal.
+     * @param usdnShares The amount of USDN shares to withdraw.
+     * @param amountOutMin The minimum amount of assets to receive.
+     * @param securityDepositValue The value of the security deposit for the newly created withdrawal.
      */
     struct WithdrawalParams {
         address user;
@@ -86,15 +86,15 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @dev Structure to hold the transient data during `_initiateWithdrawal`
-     * @param usdnTotalShares The total shares supply of USDN
-     * @param totalExpo The current total expo
-     * @param balanceLong The current long balance
-     * @param balanceVault The vault balance, adjusted according to the pendingActionPrice
-     * @param withdrawalAmountAfterFees The predicted amount of assets that will be withdrawn after fees
-     * @param lastPrice The last price of the asset
-     * @param feeBps The vault deposit fee in basis points
-     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+     * @dev Structure to hold the transient data during `_initiateWithdrawal`.
+     * @param usdnTotalShares The total supply of USDN shares.
+     * @param totalExpo The current total expo.
+     * @param balanceLong The current long balance.
+     * @param balanceVault The balance of the vault including the funding.
+     * @param withdrawalAmountAfterFees The predicted amount of assets that will be withdrawn after fees.
+     * @param lastPrice The last known price of the asset.
+     * @param feeBps The vault deposit fee (in basis points).
+     * @param isLiquidationPending Whether some liquidations still need to be performed.
      */
     struct WithdrawalData {
         uint256 usdnTotalShares;
@@ -111,7 +111,10 @@ library UsdnProtocolVaultLibrary {
     /*                             External functions                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocolVault}
+    /**
+     * @notice See
+     * [initiateDeposit](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#initiateDeposit).
+     */
     function initiateDeposit(
         uint128 amount,
         uint256 sharesOutMin,
@@ -166,7 +169,10 @@ library UsdnProtocolVaultLibrary {
         Utils._checkPendingFee();
     }
 
-    /// @notice See {IUsdnProtocolVault}
+    /**
+     * @notice See
+     * [validateDeposit](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#validateDeposit).
+     */
     function validateDeposit(
         address payable validator,
         bytes calldata depositPriceData,
@@ -191,7 +197,10 @@ library UsdnProtocolVaultLibrary {
         Utils._checkPendingFee();
     }
 
-    /// @notice See {IUsdnProtocolVault}
+    /**
+     * @notice See
+     * [initiateWithdrawal](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#initiateWithdrawal).
+     */
     function initiateWithdrawal(
         uint152 usdnShares,
         uint256 amountOutMin,
@@ -246,7 +255,10 @@ library UsdnProtocolVaultLibrary {
         Utils._checkPendingFee();
     }
 
-    /// @notice See {IUsdnProtocolVault}
+    /**
+     * @notice See
+     * [validateWithdrawal](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#validateWithdrawal).
+     */
     function validateWithdrawal(
         address payable validator,
         bytes calldata withdrawalPriceData,
@@ -271,7 +283,10 @@ library UsdnProtocolVaultLibrary {
         Utils._checkPendingFee();
     }
 
-    /// @notice See {IUsdnProtocolVault}
+    /**
+     * @notice See
+     * [getActionablePendingActions](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#getActionablePendingActions).
+     */
     function getActionablePendingActions(address currentUser, uint256 lookAhead, uint256 maxIter)
         external
         view
@@ -375,7 +390,10 @@ library UsdnProtocolVaultLibrary {
         }
     }
 
-    /// @notice See {IUsdnProtocolVault}
+    /**
+     * @notice See
+     * [usdnPrice](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#usdnPrice-1).
+     */
     function usdnPrice(uint128 currentPrice) external view returns (uint256 price_) {
         price_ = usdnPrice(currentPrice, uint128(block.timestamp));
     }
@@ -384,7 +402,10 @@ library UsdnProtocolVaultLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocolVault}
+    /**
+     * @notice See
+     * [usdnPrice](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#usdnPrice).
+     */
     function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -396,7 +417,10 @@ library UsdnProtocolVaultLibrary {
         );
     }
 
-    /// @notice See {IUsdnProtocolVault}
+    /**
+     * @notice See
+     * [vaultAssetAvailableWithFunding](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#vaultAssetAvailableWithFunding).
+     */
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -416,9 +440,9 @@ library UsdnProtocolVaultLibrary {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Execute the first actionable pending action or revert if the price data was not provided
-     * @param data The price data and raw indices
-     * @return securityDepositValue_ The security deposit value of the executed action
+     * @notice Executes the first actionable pending action or revert if the price data was not provided.
+     * @param data The price data and corresponding raw indices.
+     * @return securityDepositValue_ The security deposit value of the executed action.
      */
     function _executePendingActionOrRevert(Types.PreviousActionsData calldata data)
         public
@@ -432,12 +456,12 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Execute the first actionable pending action and report the success
-     * @param data The price data and raw indices
-     * @return success_ Whether the price data is valid
-     * @return executed_ Whether the pending action was executed (false if the queue has no actionable item)
-     * @return liquidated_ Whether the position corresponding to the pending action was liquidated
-     * @return securityDepositValue_ The security deposit value of the executed action
+     * @notice Executes the first actionable pending action and reports the outcome.
+     * @param data The price data and corresponding raw indices.
+     * @return success_ Whether the price data is valid.
+     * @return executed_ Whether the pending action was executed (false if the queue has no actionable item).
+     * @return liquidated_ Whether the position corresponding to the pending action was liquidated.
+     * @return securityDepositValue_ The security deposit value of the executed action.
      */
     function _executePendingAction(Types.PreviousActionsData calldata data)
         public
@@ -483,10 +507,10 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
-     * are removed
+     * are removed.
      * @return action_ The first actionable pending action if any, otherwise a struct with all fields set to zero and
-     * Types.ProtocolAction.None
-     * @return rawIndex_ The raw index in the queue for the returned pending action, or zero
+     * `Types.ProtocolAction.None`.
+     * @return rawIndex_ The raw index in the queue for the returned pending action, or zero if empty.
      */
     function _getActionablePendingAction() internal returns (Types.PendingAction memory action_, uint128 rawIndex_) {
         Types.Storage storage s = Utils._getMainStorage();
@@ -543,12 +567,13 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Prepare the data for the `initiateDeposit` function
-     * @param validator The validator address
-     * @param amount The amount of asset to deposit
-     * @param sharesOutMin The minimum amount of USDN shares to receive
-     * @param currentPriceData The price data for the initiate action
-     * @return data_ The transient data for the `deposit` action
+     * @notice Prepares the data for the `initiateDeposit` function.
+     * @dev Updates the protocol's balances if the price is fresh.
+     * @param validator The validator address.
+     * @param amount The amount of asset to deposit.
+     * @param sharesOutMin The minimum amount of USDN shares to receive.
+     * @param currentPriceData The current price data.
+     * @return data_ The transient data for the `deposit` action.
      */
     function _prepareInitiateDepositData(
         address validator,
@@ -612,13 +637,13 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Prepare the pending action struct for a deposit and add it to the queue
-     * @param to The address that will receive the minted USDN
-     * @param validator The address that will validate the deposit
-     * @param securityDepositValue The value of the security deposit for the newly created pending action
-     * @param amount The amount of assets to deposit (before fees)
-     * @param data The deposit action data
-     * @return amountToRefund_ Refund The security deposit value of a stale pending action
+     * @notice Prepares the pending action struct for a deposit and adds it to the queue.
+     * @param to The recipient of the minted USDN.
+     * @param validator The address that is supposed to validate the deposit.
+     * @param securityDepositValue The value of the security deposit for the newly created pending action.
+     * @param amount The amount of assets to deposit (before fees).
+     * @param data The deposit action data.
+     * @return amountToRefund_ The security deposit value of a stale pending action.
      */
     function _createDepositPendingAction(
         address to,
@@ -647,16 +672,15 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Initiate a deposit of assets into the vault to mint USDN
-     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `Types.ProtocolAction.InitiateDeposit` action
-     * The price validation might require payment according to the return value of the {validationCost} function
-     * of the middleware
-     * @param params The parameters for the deposit
-     * @param currentPriceData The current price data
+     * @notice Attempts to initiate a deposit of assets into the vault to mint USDN.
+     * @dev Consults the current oracle middleware implementation to know the expected format for the price data, using
+     * the `Types.ProtocolAction.InitiateDeposit` action. The price validation might require payment according to the
+     * return value of the {validationCost} function of the middleware.
+     * @param params The parameters for the deposit.
+     * @param currentPriceData The current price data.
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
-     * else we'll only refund the security deposit value of the stale pending action
-     * @return isInitiated_ Whether the action is initiated
+     * else we'll only refund the security deposit value of the stale pending action.
+     * @return isInitiated_ Whether the action is initiated.
      */
     function _initiateDeposit(InitiateDepositParams memory params, bytes calldata currentPriceData)
         internal
@@ -711,11 +735,12 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Get the pending action data of the owner, try to validate it and clear it if successful
-     * @param validator The address of the validator
-     * @param priceData The current price data
-     * @return securityDepositValue_ The value of the security deposit
-     * @return isValidated_ Whether the action is validated
+     * @notice Attempts to validate the deposit pending action assigned to the given `validator`.
+     * @dev If successful, the pending action will be cleared from the queue.
+     * @param validator The address of the validator.
+     * @param priceData The price data for the pending action to validate.
+     * @return securityDepositValue_ The value of the security deposit to refund.
+     * @return isValidated_ Whether the action is validated.
      */
     function _validateDeposit(address validator, bytes calldata priceData)
         internal
@@ -741,10 +766,10 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Update protocol balances, liquidate positions if necessary, then validate the `deposit` action
-     * @param pending The pending action data
-     * @param priceData The current price data
-     * @return isValidated_ Whether the action is validated
+     * @notice Attempts to validate the given deposit pending action.
+     * @param pending The pending action to validate.
+     * @param priceData The corresponding price data.
+     * @return isValidated_ Whether the action is validated.
      */
     function _validateDepositWithAction(Types.PendingAction memory pending, bytes calldata priceData)
         internal
@@ -815,13 +840,13 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Update protocol balances, then prepare the data for the withdrawal action
-     * @dev Reverts if the imbalance limit is reached
-     * @param validator The validator address
-     * @param usdnShares The amount of USDN shares to burn
-     * @param amountOutMin The estimated minimum amount of assets to receive
-     * @param currentPriceData The current price data
-     * @return data_ The withdrawal data struct
+     * @notice Prepares the data for the `initiateWithdrawal` function.
+     * @dev Updates the protocol's balances if the price is fresh.
+     * @param validator The validator address.
+     * @param usdnShares The amount of USDN shares to burn.
+     * @param amountOutMin The estimated minimum amount of assets to receive.
+     * @param currentPriceData The current price data.
+     * @return data_ The transient data for the `withdrawal` action.
      */
     function _prepareWithdrawalData(
         address validator,
@@ -866,13 +891,13 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Prepare the pending action struct for a withdrawal and add it to the queue
-     * @param to The address that will receive the assets
-     * @param validator The address that will validate the withdrawal
-     * @param usdnShares The amount of USDN shares to burn
-     * @param securityDepositValue The value of the security deposit for the newly created pending action
-     * @param data The withdrawal action data
-     * @return amountToRefund_ Refund The security deposit value of a stale pending action
+     * @notice Prepares the pending action struct for a withdrawal and adds it to the queue.
+     * @param to The recipient of the assets.
+     * @param validator The address that is supposed to validate the withdrawal.
+     * @param usdnShares The amount of USDN shares to burn.
+     * @param securityDepositValue The value of the security deposit for the newly created pending action.
+     * @param data The withdrawal action data.
+     * @return amountToRefund_ Refund The security deposit value of a stale pending action.
      */
     function _createWithdrawalPendingAction(
         address to,
@@ -902,16 +927,15 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Initiate a withdrawal of assets from the vault by providing USDN tokens
-     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `Types.ProtocolAction.InitiateWithdrawal` action
-     * The price validation might require payment according to the return value of the {validationCost} function
-     * of the middleware
-     * @param params The parameters for the withdrawal
-     * @param currentPriceData The current price data
-     * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
-     * else we'll only refund the security deposit value of the stale pending action
-     * @return isInitiated_ Whether the action is initiated
+     * @notice Initiates a withdrawal of assets from the vault by providing USDN tokens.
+     * @dev Consults the current oracle middleware implementation to know the expected format for the price data, using
+     * the `Types.ProtocolAction.InitiateWithdrawal` action. The price validation might require payment according to the
+     * return value of the {validationCost} function of the middleware.
+     * @param params The parameters for the withdrawal.
+     * @param currentPriceData The current price data.
+     * @return amountToRefund_ If there are pending liquidations we'll refund the sent security deposit,
+     * else we'll only refund the security deposit value of the stale pending action.
+     * @return isInitiated_ Whether the action is initiated.
      */
     function _initiateWithdrawal(WithdrawalParams memory params, bytes calldata currentPriceData)
         internal
@@ -959,11 +983,12 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Get the pending action data of the owner, try to validate it and clear it if successful
-     * @param validator The address of the validator
-     * @param priceData The current price data
-     * @return securityDepositValue_ The value of the security deposit
-     * @return isValidated_ Whether the action is validated
+     * @notice Attempts to validate the withdrawal pending action assigned to the given `validator`.
+     * @dev If successful, the pending action will be cleared from the queue.
+     * @param validator The address of the validator.
+     * @param priceData The corresponding price data.
+     * @return securityDepositValue_ The value of the security deposit.
+     * @return isValidated_ Whether the action is validated.
      */
     function _validateWithdrawal(address validator, bytes calldata priceData)
         internal
@@ -989,10 +1014,10 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Update protocol balances, liquidate positions if necessary, then validate the `withdrawal` action
-     * @param pending The pending action data
-     * @param priceData The current price data
-     * @return isValidated_ Whether the action is validated
+     * @notice Attempts to validate the given withdrawal pending action.
+     * @param pending The pending action data.
+     * @param priceData The current price data.
+     * @return isValidated_ Whether the action is validated.
      */
     function _validateWithdrawalWithAction(Types.PendingAction memory pending, bytes calldata priceData)
         internal
@@ -1085,18 +1110,18 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Check whether a pending action is actionable, i.e any user can validate it and retrieve the security
-     * deposit
-     * @dev Between `initiateTimestamp` and `initiateTimestamp + lowLatencyDeadline`,
-     * the validator receives the security deposit
+     * @notice Checks whether a pending action is actionable, i.e any user can validate it and retrieve the security
+     * deposit.
+     * @dev Between `initiateTimestamp` and `initiateTimestamp + lowLatencyDeadline`, the validator receives the
+     * security deposit.
      * Between `initiateTimestamp + lowLatencyDelay` and `initiateTimestamp + lowLatencyDelay + onChainDeadline`,
-     * the validator also receives the security deposit
-     * Outside of those periods, the security deposit goes to the user validating the pending action
-     * @param initiateTimestamp The timestamp at which the action was initiated
-     * @param lowLatencyDeadline The deadline after which the action is actionable within a low latency oracle
-     * @param lowLatencyDelay The amount of time the action can be validated with a low latency oracle
-     * @param onChainDeadline The deadline after which the action is actionable with an on-chain oracle
-     * @return actionable_ Whether the pending action is actionable
+     * the validator also receives the security deposit.
+     * Outside of those periods, the security deposit goes to the user validating the pending action.
+     * @param initiateTimestamp The timestamp at which the action was initiated.
+     * @param lowLatencyDeadline The deadline after which the action is actionable with a low latency oracle.
+     * @param lowLatencyDelay The amount of time the action can be validated with a low latency oracle.
+     * @param onChainDeadline The deadline after which the action is actionable with an on-chain oracle.
+     * @return actionable_ Whether the pending action is actionable.
      */
     function _isActionable(
         uint256 initiateTimestamp,
@@ -1114,10 +1139,8 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice The deposit vault imbalance limit state verification
-     * @dev To ensure that the protocol does not imbalance more than
-     * the deposit limit on the vault side, otherwise revert
-     * @param depositValue The deposit value in asset
+     * @notice Checks and reverts if the deposited value breaks the imbalance limits.
+     * @param depositValue The deposit value in asset.
      */
     function _checkImbalanceLimitDeposit(uint256 depositValue) internal view {
         Types.Storage storage s = Utils._getMainStorage();
@@ -1147,11 +1170,9 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice The withdrawal imbalance limit state verification
-     * @dev To ensure that the protocol does not imbalance more than
-     * the withdrawal limit on the long side, otherwise revert
-     * @param withdrawalValue The withdrawal value in asset
-     * @param totalExpo The current total expo
+     * @notice Checks and reverts if the withdrawn value breaks the imbalance limits.
+     * @param withdrawalValue The withdrawal value in asset.
+     * @param totalExpo The current total expo of the long side.
      */
     function _checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) internal view {
         Types.Storage storage s = Utils._getMainStorage();
@@ -1181,10 +1202,10 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Available balance in the vault side if the price moves to `currentPrice` (without taking funding into
-     * account)
-     * @param currentPrice Current price
-     * @return available_ The available balance in the vault side
+     * @notice Calculates the available balance in the vault if the price moves to `currentPrice`.
+     * @dev The funding is not taken into account.
+     * @param currentPrice The current or predicted price.
+     * @return available_ The available balance in the vault.
      */
     function _vaultAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
         Types.Storage storage s = Utils._getMainStorage();
@@ -1194,13 +1215,13 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Calculate the price of the USDN token as a function of its total supply, the vault balance and the
-     * underlying asset price
-     * @param vaultBalance The vault balance
-     * @param assetPrice The price of the asset
-     * @param usdnTotalSupply The total supply of the USDN token
-     * @param assetDecimals The number of decimals of the underlying asset
-     * @return price_ The price of the USDN token
+     * @notice Calculates the price of the USDN token as a function of its total supply, the vault balance and the
+     * underlying asset price.
+     * @param vaultBalance The vault balance.
+     * @param assetPrice The price of the asset.
+     * @param usdnTotalSupply The total supply of the USDN token.
+     * @param assetDecimals The number of decimals of the underlying asset.
+     * @return price_ The price of the USDN token.
      */
     function _calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)
         internal
@@ -1213,18 +1234,18 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Get the lower 24 bits of the withdrawal amount (USDN shares)
-     * @param usdnShares The amount of USDN shares
-     * @return sharesLSB_ The 24 least significant bits of the USDN shares
+     * @notice Calculates the lower 24 bits of the withdrawal amount (USDN shares).
+     * @param usdnShares The amount of USDN shares.
+     * @return sharesLSB_ The 24 least significant bits of the USDN shares.
      */
     function _calcWithdrawalAmountLSB(uint152 usdnShares) internal pure returns (uint24 sharesLSB_) {
         sharesLSB_ = uint24(usdnShares);
     }
 
     /**
-     * @notice Get the higher 128 bits of the withdrawal amount (USDN shares)
-     * @param usdnShares The amount of USDN shares
-     * @return sharesMSB_ The 128 most significant bits of the USDN shares
+     * @notice Calculates the higher 128 bits of the withdrawal amount (USDN shares).
+     * @param usdnShares The amount of USDN shares.
+     * @return sharesMSB_ The 128 most significant bits of the USDN shares.
      */
     function _calcWithdrawalAmountMSB(uint152 usdnShares) internal pure returns (uint128 sharesMSB_) {
         sharesMSB_ = uint128(usdnShares >> 24);
