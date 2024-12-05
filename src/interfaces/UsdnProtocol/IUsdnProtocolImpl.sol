@@ -28,17 +28,18 @@ interface IUsdnProtocolImpl is
     IERC5267
 {
     /**
-     * @notice Function to initialize the protocol storage
-     * @dev This function should be called on deployment when creating the proxy
-     * It can only be called once
-     * @param usdn The USDN ERC20 contract
-     * @param sdex The SDEX ERC20 contract
-     * @param asset The asset ERC20 contract
-     * @param oracleMiddleware The oracle middleware contract
-     * @param liquidationRewardsManager The liquidation rewards manager contract
-     * @param tickSpacing The positions tick spacing
-     * @param feeCollector The address of the fee collector
-     * @param protocolFallback The protocol fallback contract
+     * @notice Initializes the protocol's storage with the given values.
+     * @dev This function should be called on deployment when creating the proxy.
+     * It can only be called once.
+     * @param usdn The USDN ERC20 contract address (must have a total supply of 0).
+     * @param sdex The SDEX ERC20 contract address.
+     * @param asset The ERC20 contract address of the token held in the vault.
+     * @param oracleMiddleware The oracle middleware contract address.
+     * @param liquidationRewardsManager The liquidation rewards manager contract address.
+     * @param tickSpacing The number of ticks between usable ticks.
+     * @param feeCollector The address that will receive the protocol fees.
+     * @param protocolFallback The address of the contract that contains the remaining functions of the protocol.
+     * Any call with a function signature not present in this contract will be delegated to the fallback contract.
      */
     function initializeStorage(
         IUsdn usdn,
