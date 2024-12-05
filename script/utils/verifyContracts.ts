@@ -5,8 +5,13 @@ import {execSync} from "node:child_process";
 
 const program = new Command();
 
-function execVerify(address: string, contractName: string, constructorArgs: string) {
-    const cli = `forge verify-contract ${address} ${contractName} ${constructorArgs} --watch ${etherscanApiKey} ${verifierUrl} ${verbose}`;
+function execVerify(address: string, contractName: string, constructorArgs: string, libraries: string []) {
+    let cli = `forge verify-contract ${address} ${contractName} ${constructorArgs} --watch ${etherscanApiKey} ${verifierUrl} ${verbose}`;
+    if (libraries.length > 0) {
+        for (const lib of libraries) {
+            cli = cli.concat(" --libraries ", lib)
+        }
+    }
     if (DEBUG) console.log(`cli : ${cli}`)
 
     try {
@@ -46,6 +51,10 @@ verifierUrl = verifierUrl ? `--verifier-url ${verifierUrl}` : '';
 
 const file = readFileSync(broadcastPath);
 const broadcast = JSON.parse(file.toString());
+
+const libraries: string[] = broadcast.libraries
+if (DEBUG) console.log(`libraries from broadcast file : ${libraries}`)
+
 broadcast.transactions.filter(transaction =>
     transaction.transactionType === "CREATE" || transaction.transactionType === "CREATE2"
 ).forEach(transaction => {
@@ -55,18 +64,36 @@ broadcast.transactions.filter(transaction =>
     if (DEBUG) console.log(`transaction to verify with address : ${address} and name : ${contractName}`)
     if (DEBUG) console.log(`arguments of the contract : ${argumentList}`)
 
-    if (argumentList === null) {
-        execVerify(address, contractName, '')
+    const pathOutFile: string = `./out/${contractName}.sol/${contractName}.json`;
+    if (!existsSync(pathOutFile)) {
+        console.error(`Unable to reach ${pathOutFile}, compile contracts of the project`)
     } else {
-        const pathAbi: string = `./out/${contractName}.sol/${contractName}.json`;
-        if (!existsSync(pathAbi)) {
-            console.error(`Unable to reach ${pathAbi}, compile contracts of the project`)
+        const compiledContractOutFile = readFileSync(pathOutFile);
+        const compiledContractOut = JSON.parse(compiledContractOutFile.toString());
+
+        //get linked libraries
+        const listLinkedLibraries: string[] = Object.keys(compiledContractOut.bytecode.linkReferences)
+        if (DEBUG) console.log(`listLinkedLibraries : ${listLinkedLibraries}`)
+        const librariesCli: string[] = []
+        if (listLinkedLibraries.length > 0) {
+            for (const linkedLib of listLinkedLibraries) {
+                const correspondingLib = libraries.find(x => x.startsWith(linkedLib))
+                if (correspondingLib == undefined) {
+                    if (DEBUG) console.error(`Unable to find linked lib ${linkedLib} of deployed contract ${contractName} in broadcast file`)
+                } else {
+                    librariesCli.push(correspondingLib)
+                }
+            }
+            if (DEBUG) console.log(`librariesCli : ${librariesCli}`)
+        }
+
+        //get constructor arguments
+        if (argumentList === null) {
+            execVerify(address, contractName, '', librariesCli)
         } else {
-            const contractAbiFile = readFileSync(pathAbi);
-            const contractAbi = JSON.parse(contractAbiFile.toString());
             let constructorInputs = undefined;
             try {
-                constructorInputs = contractAbi.abi.filter((x: {
+                constructorInputs = compiledContractOut.abi.filter((x: {
                     type: string;
                 }) => x.type === "constructor")[0].inputs
                 if (DEBUG) {
@@ -81,13 +108,14 @@ broadcast.transactions.filter(transaction =>
             } catch {
                 console.error(`Unable to get constructor inputs type for ${contractName}`)
             }
+
             if (constructorInputs !== undefined) {
                 //build constructor args
                 const encodedConstructorParameters = encodeAbiParameters(constructorInputs, argumentList)
                 if (DEBUG) console.log(`encodedConstructorParameters : ${encodedConstructorParameters}`)
                 const constructorArgs = `--constructor-args ${encodedConstructorParameters}`
 
-                execVerify(address, contractName, constructorArgs)
+                execVerify(address, contractName, constructorArgs, librariesCli)
             }
         }
     }
