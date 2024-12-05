@@ -95,7 +95,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice See
-     * [getPositionValue](../../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol/interface.IUsdnProtocolLong.html?#getPositionValue).
+     * [getPositionValue](../../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol/interface.IUsdnProtocolLong.html?#getpositionvalue).
      */
     function getPositionValue(Types.PositionId calldata posId, uint128 price, uint128 timestamp)
         external
@@ -117,7 +117,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice See
-     * [getEffectiveTickForPrice](../../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol/interface.IUsdnProtocolLong.html?#getEffectiveTickForPrice).
+     * [getEffectiveTickForPrice](../../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol/interface.IUsdnProtocolLong.html?#geteffectivetickforprice).
      */
     function getEffectiveTickForPrice(uint128 price) external view returns (int24 tick_) {
         Types.Storage storage s = Utils._getMainStorage();
@@ -133,7 +133,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice See
-     * [minTick](../../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol/interface.IUsdnProtocolLong.html?#minTick).
+     * [minTick](../../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol/interface.IUsdnProtocolLong.html?#mintick).
      */
     function minTick() public view returns (int24 tick_) {
         Types.Storage storage s = Utils._getMainStorage();
@@ -143,7 +143,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice See
-     * [getTickLiquidationPenalty](../../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol/interface.IUsdnProtocolLong.html?#getTickLiquidationPenalty).
+     * [getTickLiquidationPenalty](../../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol/interface.IUsdnProtocolLong.html?#gettickliquidationpenalty).
      */
     function getTickLiquidationPenalty(int24 tick) public view returns (uint24 liquidationPenalty_) {
         (bytes32 tickHash,) = Utils._tickHash(tick);
@@ -152,7 +152,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice See
-     * [getEffectiveTickForPrice](../../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol/interface.IUsdnProtocolLong.html?#getEffectiveTickForPrice-1).
+     * [getEffectiveTickForPrice](../../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol/interface.IUsdnProtocolLong.html?#geteffectivetickforprice-1).
      */
     function getEffectiveTickForPrice(
         uint128 price,
@@ -471,7 +471,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Finds the highest tick that contains at least one position.
-     * @dev If there are no ticks with a position left, returns {minTick()}.
+     * @dev If there are no ticks with a position left, returns {minTick}.
      * @param searchStart The tick to start searching from.
      * @return tick_ The highest tick at or below `searchStart`.
      */
@@ -1343,7 +1343,7 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Rounds a tick down to a multiple of the tick spacing.
-     * @dev The function is bound by {minTick()}, so the first tick which is a multiple of the tick spacing
+     * @dev The function is bound by {minTick}, so the first tick which is a multiple of the tick spacing
      * and greater than or equal to `MIN_TICK`.
      * @param tick The tick number.
      * @param tickSpacing The tick spacing.
