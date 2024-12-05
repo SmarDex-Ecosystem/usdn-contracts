@@ -28,7 +28,8 @@ from inherent flaws: they are often centralized, opaque, and yield-free for hold
 
 USDN aims to solve this problem by operating a fully decentralized structured product.
 Its architecture eliminates dependencies on centralized exchanges (CEXs) and custodial intermediaries.
-Instead, users need to provide a predefined asset in order to mint USDN or open long leveraged positions.
+Instead, users interact with smart contracts to mint or redeem USDN tokens, as well as to open long perpetual positions.
+The underlying asset deposited to mint USDN tokens is used as liquidity for the structure product to enable leveraged trading.
 This asset can indirectly bring incentives to users and be able to use financial products.
 The first deployment of this protocol uses the wrapped staked ETH (wstETH) from #cite(<lido-wsteth>, form: "prose") as underlying asset.
 This means that we combine the yield of the protocol with that of staking ETH automatically.
