@@ -113,7 +113,7 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice See
-     * [initiateDeposit](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#initiateDeposit).
+     * [initiateDeposit](../../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol/interface.IUsdnProtocolActions.html?#initiatedeposit).
      */
     function initiateDeposit(
         uint128 amount,
@@ -171,7 +171,7 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice See
-     * [validateDeposit](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#validateDeposit).
+     * [validateDeposit](../../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol/interface.IUsdnProtocolActions.html?#validatedeposit).
      */
     function validateDeposit(
         address payable validator,
@@ -199,7 +199,7 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice See
-     * [initiateWithdrawal](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#initiateWithdrawal).
+     * [initiateWithdrawal](../../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol/interface.IUsdnProtocolActions.html?#initiatewithdrawal).
      */
     function initiateWithdrawal(
         uint152 usdnShares,
@@ -257,7 +257,7 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice See
-     * [validateWithdrawal](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#validateWithdrawal).
+     * [validateWithdrawal](../../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol/interface.IUsdnProtocolActions.html?#validatewithdrawal).
      */
     function validateWithdrawal(
         address payable validator,
@@ -285,7 +285,7 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice See
-     * [getActionablePendingActions](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#getActionablePendingActions).
+     * [getActionablePendingActions](../../../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol/interface.IUsdnProtocolFallback.html?#getactionablependingactions).
      */
     function getActionablePendingActions(address currentUser, uint256 lookAhead, uint256 maxIter)
         external
@@ -392,7 +392,7 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice See
-     * [usdnPrice](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#usdnPrice-1).
+     * [usdnPrice](../../../interfaces/UsdnProtocol/IUsdnProtocolVault.sol/interface.IUsdnProtocolVault.html?#usdnprice-1).
      */
     function usdnPrice(uint128 currentPrice) external view returns (uint256 price_) {
         price_ = usdnPrice(currentPrice, uint128(block.timestamp));
@@ -404,7 +404,7 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice See
-     * [usdnPrice](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#usdnPrice).
+     * [usdnPrice](../../../interfaces/UsdnProtocol/IUsdnProtocolVault.sol/interface.IUsdnProtocolVault.html?#usdnprice).
      */
     function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
         Types.Storage storage s = Utils._getMainStorage();
@@ -419,7 +419,7 @@ library UsdnProtocolVaultLibrary {
 
     /**
      * @notice See
-     * [vaultAssetAvailableWithFunding](../../../interfaces/UsdnProtocol/IUsdnProtocolVault/interface.IUsdnProtocolVault.html?#vaultAssetAvailableWithFunding).
+     * [vaultAssetAvailableWithFunding](../../../interfaces/UsdnProtocol/IUsdnProtocolVault.sol/interface.IUsdnProtocolVault.html?#vaultassetavailablewithfunding).
      */
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
