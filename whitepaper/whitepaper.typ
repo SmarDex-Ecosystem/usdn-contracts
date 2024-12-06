@@ -92,11 +92,11 @@ balance and total supply adjustment (rebase) if the price falls below \$1.
 
 The vault manages the USDN token. The two main actions of the vault are deposit and withdraw.
 
-The deposit action allow to send asset and minting the corresponding USDN amount by providing a price from oracle.
-It follow the formula described in @seq:token_minting
+The deposit action allows to send asset and minting the corresponding USDN amount by providing a price from oracle.
+It follows the formula described in @seq:token_minting
 
-The withdraw action allow to receive an amount of assets from the USD value of burned USDN.
-It follow the formula described in @seq:token_burning
+The withdraw action allows to receive an amount of assets from the USD value of burned USDN.
+It follows the formula described in @seq:token_burning
 
 = Long
 
