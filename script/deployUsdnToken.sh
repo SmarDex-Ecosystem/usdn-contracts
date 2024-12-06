@@ -44,7 +44,7 @@ function handleKeys() {
 
     UsdnAddress=$(cast compute-address $address --nonce 0)
 
-    read -s -p $'\n'"Enter the safe address : " userSafeAddress
+    read -p $'\n\n'"Enter the safe address : " userSafeAddress
     safeAddress=$userSafeAddress
 }
 
