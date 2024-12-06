@@ -12,19 +12,18 @@ contract Utils is Script {
 
     // to run the script in standalone mode
     function run() external {
-        validateProtocol("UsdnProtocolImpl.sol", "UsdnProtocolFallback.sol");
+        validateProtocol("UsdnProtocolImpl", "UsdnProtocolFallback");
     }
 
     /**
      * @notice Validate the Usdn protocol
      * @dev Call this function to validate the Usdn protocol before deploying it
      */
-    function validateProtocol(string memory implementationFile, string memory fallbackFile) public {
-        // todo : fix the issue with the function clashes
-        // string[] memory inputs = _buildCommandFunctionClashes(implementationFile, fallbackFile);
-        // runFfiCommand(inputs);
+    function validateProtocol(string memory implementationContractName, string memory fallbackContractName) public {
+        string[] memory inputs = _buildCommandFunctionClashes(implementationContractName, fallbackContractName);
+        runFfiCommand(inputs);
 
-        string[] memory inputs2 = _buildCommandCheckImplementationInitialization(implementationFile);
+        string[] memory inputs2 = _buildCommandCheckImplementationInitialization(implementationContractName);
         runFfiCommand(inputs2);
     }
 
@@ -85,16 +84,20 @@ contract Utils is Script {
         pure
         returns (string[] memory inputs_)
     {
-        inputs_ = new string[](5);
-        uint8 i = 0;
+        inputs_ = new string[](8);
+        uint8 i;
 
         // create the command to run the functionClashes.ts script:
-        // npx tsx UsdnProtocolImpl.sol UsdnProtocolFallback.sol
+        // npx tsx FUNC_CLASHES_SCRIPT_PATH UsdnProtocolImpl UsdnProtocolFallback -c
+        // AccessControlDefaultAdminRulesUpgradeable PausableUpgradeable
         inputs_[i++] = "npx";
         inputs_[i++] = "tsx";
         inputs_[i++] = FUNC_CLASHES_SCRIPT_PATH;
         inputs_[i++] = implementationFile;
-        inputs_[i] = fallbackFile;
+        inputs_[i++] = fallbackFile;
+        inputs_[i++] = "-c";
+        inputs_[i++] = "AccessControlDefaultAdminRulesUpgradeable";
+        inputs_[i] = "PausableUpgradeable";
     }
 
     /**
@@ -107,10 +110,10 @@ contract Utils is Script {
         returns (string[] memory inputs_)
     {
         inputs_ = new string[](4);
-        uint8 i = 0;
+        uint8 i;
 
         // create the command to run the checkImplementationInitialization.ts script:
-        // npx tsx UsdnProtocolImpl.sol
+        // npx tsx IMPL_INITIALIZATION_SCRIPT_PATH UsdnProtocolImpl.sol
         inputs_[i++] = "npx";
         inputs_[i++] = "tsx";
         inputs_[i++] = IMPL_INITIALIZATION_SCRIPT_PATH;

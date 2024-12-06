@@ -130,12 +130,12 @@ The parameters are the RPC URL and the deployed addresses of the 3 main contract
 ## Functions clashes
 
 This utility checks that two contracts don't have a common function selector.
-We can specify a common base contract to filter wanted duplications with the `-s` flag.
+We can specify common base contracts to filter wanted duplications with the `-c` flag.
 
 It can be used like so:
 
 ```
-npx tsx script/utils/functionClashes.ts UsdnProtocolImpl.sol UsdnProtocolFallback.sol -s UsdnProtocolStorage.sol
+npx tsx script/utils/functionClashes.ts UsdnProtocolImpl UsdnProtocolFallback -c AccessControlDefaultAdminRulesUpgradeable PausableUpgradeable
 ```
 
 ## Scan Roles

@@ -39,6 +39,7 @@
           ];
           packages = with pkgs; [
             foundry-bin
+            gyre-fonts
             just
             lcov
             nodejs_20
@@ -46,6 +47,7 @@
             solc_0_8_26
             trufflehog
             typescript
+            typst
             (solc.mkDefault pkgs solc_0_8_26)
           ];
 
@@ -57,6 +59,7 @@
 
           RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.gnum4 ];
+          TYPST_FONT_PATHS = "${pkgs.gyre-fonts}/share/fonts";
         };
       });
 }

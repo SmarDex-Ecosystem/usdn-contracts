@@ -2,8 +2,17 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { basename } from 'node:path';
 import { type AbiError, type AbiEvent, type AbiFunction, type Address, formatAbiItem } from 'abitype';
 import { Command } from 'commander';
+import _eval from 'eval';
 import { globSync } from 'glob';
-import { pad, toEventSelector, toEventSignature, toFunctionSelector, toFunctionSignature, zeroAddress } from 'viem';
+import {
+  keccak256,
+  pad,
+  toEventSelector,
+  toEventSignature,
+  toFunctionSelector,
+  toFunctionSignature,
+  toHex,
+} from 'viem';
 
 const DIST_PATH = './dist';
 const ABI_EXPORT_PATH = `${DIST_PATH}/abi`;
@@ -120,7 +129,6 @@ for (const name of solFiles) {
 
 // Get all enums
 const outFiles = globSync('out/**/*.json', { withFileTypes: true });
-
 const allEnums: Map<string, string> = new Map();
 for (const artifact of outFiles) {
   try {
@@ -141,7 +149,8 @@ writeFileSync(`${ABI_EXPORT_PATH}/Enums.ts`, fileContent);
 indexContent += `export * from './Enums';\n`;
 
 // Export constants
-const constFileLines = ['import { keccak256, toHex } from "viem";'];
+const numericConstantValue: Map<string, bigint> = new Map();
+const constFileLines: string[] = [];
 const contents = readFileSync('src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol').toString();
 const constantsRegex = /[^\n]*constant (?<ident>\w+) =\s+(?<value>.+?);/gs;
 for (const match of contents.matchAll(constantsRegex)) {
@@ -153,7 +162,7 @@ for (const match of contents.matchAll(constantsRegex)) {
   if (!value) {
     continue;
   }
-  let typeHint = '';
+  let comment = '';
   if (value === 'type(int24).min') {
     value = '-8388608n';
   } else if (value.startsWith('address')) {
@@ -162,10 +171,15 @@ for (const match of contents.matchAll(constantsRegex)) {
       throw new Error('Invalid address in constants');
     }
     value = `"${pad(address, { size: 20 })}"`;
-    typeHint = '`0x${string}`';
+    comment = `${ident} = pad(${address}, { size: 20 })`;
   } else if (value.startsWith('keccak256')) {
     value = value.replaceAll('\n', '');
-    value = value.replace(/keccak256\(\s*("[^"]+")\s*\)/g, 'keccak256(toHex($1))');
+    const decodedAbi = value.match(/keccak256\(\s*(?<abi>"[^"]+")\s*\)/)?.groups?.abi as string;
+    if (!decodedAbi) {
+      throw new Error('Invalid abi in constants');
+    }
+    value = `'${keccak256(toHex(decodedAbi))}'`;
+    comment = `${ident} = keccak256(toHex(${decodedAbi}))`;
   } else {
     // conversion for numbers
     value = value.replace('minutes', '* 60');
@@ -174,8 +188,19 @@ for (const match of contents.matchAll(constantsRegex)) {
     value = value.replace('ether', '* 10 ** 18');
     value = value.replaceAll(/((?:[0-9]+_?)+)e([0-9]+)/g, '$1 * 10 ** $2'); // scientific notation
     value = value.replaceAll(/((?:[0-9]+_?)+)/g, '$1n');
+
+    // if the value is the result of a calculation, we comment with the original calculation
+    comment = /[^0-9n_]/.test(value) ? `${ident} = (${value})` : '';
+
+    // now we execute the calculation to retrieve the result
+    const others = [...numericConstantValue].map(([key, val]) => `const ${key} = ${val}n;`).join('\n');
+    // previously defined constants and included in the executed code to allow referencing them
+    const res = _eval(`${others} const val = ${value}; exports.val = val;`) as { val: bigint };
+    numericConstantValue.set(ident, res.val);
+
+    value = `${res.val}n`;
   }
-  constFileLines.push(`export const ${ident}${typeHint ? `: ${typeHint}` : ''} = ${value};`);
+  constFileLines.push(`${comment ? `/*! ${comment} */\n` : ''}export const ${ident} = ${value} as const;`);
 }
 const constFileContent = [...constFileLines.values()].join('\n');
 writeFileSync(`${ABI_EXPORT_PATH}/Constants.ts`, constFileContent);

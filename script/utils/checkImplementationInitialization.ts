@@ -13,7 +13,7 @@ program
 const options = program.opts();
 const DEBUG = !!options.debug;
 const implementation = program.args;
-const path = `src/UsdnProtocol/${implementation}`;
+const path = `src/UsdnProtocol/${implementation}.sol`;
 
 if (DEBUG) console.log('implementation path:', path);
 
