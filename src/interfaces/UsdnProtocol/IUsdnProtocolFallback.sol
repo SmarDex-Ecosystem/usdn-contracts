@@ -731,7 +731,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function unpause() external;
 
     /**
-     * @notice Unpauses related USDN protocol functions without updating `_lastUpdateTimestamp`
+     * @notice Unpauses related USDN protocol functions without updating `_lastUpdateTimestamp`.
      * @dev Unpauses simultaneously all initiate/validate, refundSecurityDeposit and transferPositionOwnership
      * functions. This safe version will not set `_lastUpdateTimestamp` to the current timestamp.
      */
