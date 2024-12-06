@@ -34,7 +34,7 @@ function checkNodeVersion() {
 }
 
 # Asks the user for the deployer's private key and checks if it's valid
-# Also calculate the USDN token address and asks the user for the safe address
+# Also calculate the USDN token address
 function handlePrivateKey() {
     read -s -p $'\n'"Enter the private key : " privateKey
     deployerPrivateKey=$privateKey
@@ -47,6 +47,7 @@ function handlePrivateKey() {
     UsdnAddress=$(cast compute-address $address --nonce 0)
 }
 
+# Parses the arguments passed to the script
 function parseArguments() {
     while getopts ":r:s:h" opt; do
         case ${opt} in
@@ -71,7 +72,6 @@ function parseArguments() {
         esac
     done
 
-    # Ensure both options are provided
     if [[ -z "${rpcUrl}" || -z "${safeAddress}" ]]; then
         printf "\nError: Both -r and -s options are required\n"
         printf "${USAGE}"
