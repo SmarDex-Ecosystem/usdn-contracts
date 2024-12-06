@@ -65,8 +65,7 @@ library UsdnProtocolConstantsLibrary {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Minimum iterations when searching for actionable pending actions in
-     * [getActionablePendingActions](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#getactionablependingactions).
+     * @notice Minimum iterations when searching for actionable pending actions in {getActionablePendingActions}.
      */
     uint256 internal constant MIN_ACTIONABLE_PENDING_ACTIONS_ITER = 20;
 
@@ -108,8 +107,7 @@ library UsdnProtocolConstantsLibrary {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice EIP712 typehash for
-     * [initiateClosePosition](../../UsdnProtocolActions.sol/abstract.UsdnProtocolActions.html#initiatecloseposition).
+     * @notice EIP712 typehash for {initiateClosePosition}.
      * @dev Used within EIP712 messages for domain-specific signing, enabling recovery of the signer
      * via [ECDSA-recover](https://docs.openzeppelin.com/contracts/5.x/api/utils#ECDSA).
      */
@@ -118,8 +116,7 @@ library UsdnProtocolConstantsLibrary {
     );
 
     /**
-     * @notice EIP712 typehash for
-     * [transferPositionOwnership](../../UsdnProtocolActions.sol/abstract.UsdnProtocolActions.html#transferpositionownership).
+     * @notice EIP712 typehash for {transferPositionOwnership}.
      * @dev Used within EIP712 messages for domain-specific signing, enabling recovery of the signer
      * via [ECDSA-recover](https://docs.openzeppelin.com/contracts/5.x/api/utils#ECDSA).
      */
