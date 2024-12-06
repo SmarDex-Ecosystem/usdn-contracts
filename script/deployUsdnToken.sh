@@ -9,6 +9,8 @@ green='\033[0;32m'
 blue='\033[0;34m'
 nc='\033[0m'
 
+USAGE="Usage: $(basename $0) [-r RPC_URL] [-s SAFE_ADDRESS]"
+
 # --------------------------------- functions -------------------------------- #
 
 # Checks if the required dependencies are installed
@@ -33,7 +35,7 @@ function checkNodeVersion() {
 
 # Asks the user for the deployer's private key and checks if it's valid
 # Also calculate the USDN token address and asks the user for the safe address
-function handleKeys() {
+function handlePrivateKey() {
     read -s -p $'\n'"Enter the private key : " privateKey
     deployerPrivateKey=$privateKey
     address=$(cast wallet address $deployerPrivateKey)
@@ -43,9 +45,38 @@ function handleKeys() {
     fi
 
     UsdnAddress=$(cast compute-address $address --nonce 0)
+}
 
-    read -p $'\n\n'"Enter the safe address : " userSafeAddress
-    safeAddress=$userSafeAddress
+function parseArguments() {
+    while getopts ":r:s:h" opt; do
+        case ${opt} in
+        r)
+            rpcUrl="$OPTARG"
+            ;;
+        s)
+            safeAddress="$OPTARG"
+            ;;
+        h)
+            printf "\n$USAGE"
+            exit 1
+            ;;
+        :)
+            printf "Option -${OPTARG} requires an argument"
+            exit 1
+            ;;
+        ?)
+            printf "Invalid option: -${OPTARG}"
+            exit 1
+            ;;
+        esac
+    done
+
+    # Ensure both options are provided
+    if [[ -z "${rpcUrl}" || -z "${safeAddress}" ]]; then
+        printf "\nError: Both -r and -s options are required\n"
+        printf "${USAGE}"
+        exit 1
+    fi
 }
 
 # ---------------------------------------------------------------------------- #
@@ -63,12 +94,11 @@ if [ "$1" = "-t" ] || [ "$1" = "--test" ]; then
     export DEPLOYER_ADDRESS="0x9DCCe783B6464611f38631e6C851bf441907c710"
     export SAFE_ADDRESS="0x1E3e1128F6bC2264a19D7a065982696d356879c5"
 else
+    parseArguments "$@"
+
     printf "\n$green To run this script in test mode, add \"-t\" or \"--test\"$nc\n"
 
-    read -p $'\n'"Enter the RPC URL : " userRpcUrl
-    rpcUrl="$userRpcUrl"
-
-    handleKeys
+    handlePrivateKey
 
     printf "\n\n$green Running script with :\n"
 
