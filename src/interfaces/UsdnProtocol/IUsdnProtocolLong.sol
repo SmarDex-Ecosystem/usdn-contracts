@@ -113,7 +113,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
      * update is taken into account. If the provided timestamp is older than the last state update, the function reverts
      * with `UsdnProtocolTimestampTooOld`. The value cannot be below 0.
      * @param currentPrice The current or predicted asset price.
-     * @param timestamp The timestamp corresponding to `currentPrice`
+     * @param timestamp The timestamp corresponding to `currentPrice`.
      * @return The long trading exposure value in assets.
      */
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
