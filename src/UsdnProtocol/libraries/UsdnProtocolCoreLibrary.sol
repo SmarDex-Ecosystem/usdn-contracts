@@ -33,7 +33,7 @@ library UsdnProtocolCoreLibrary {
     /*                             External functions                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocolCore}
+    /// @notice See {IUsdnProtocolCore}.
     function initialize(
         uint128 depositAmount,
         uint128 longAmount,
@@ -71,7 +71,7 @@ library UsdnProtocolCoreLibrary {
         Utils._refundEther(address(this).balance, payable(msg.sender));
     }
 
-    /// @notice See {IUsdnProtocolCore}
+    /// @notice See {IUsdnProtocolCore}.
     function removeBlockedPendingAction(address validator, address payable to) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -85,7 +85,7 @@ library UsdnProtocolCoreLibrary {
         _removeBlockedPendingAction(rawIndex, to, true);
     }
 
-    /// @notice See {IUsdnProtocolCore}
+    /// @notice See {IUsdnProtocolCore}.
     function removeBlockedPendingActionNoCleanup(address validator, address payable to) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -99,12 +99,12 @@ library UsdnProtocolCoreLibrary {
         _removeBlockedPendingAction(rawIndex, to, false);
     }
 
-    /// @notice See {IUsdnProtocolCore}
+    /// @notice See {IUsdnProtocolCore}.
     function getUserPendingAction(address user) external view returns (Types.PendingAction memory action_) {
         (action_,) = _getPendingAction(user);
     }
 
-    /// @notice See {IUsdnProtocolCore}
+    /// @notice See {IUsdnProtocolCore}.
     function funding(uint128 timestamp)
         external
         view
@@ -119,7 +119,7 @@ library UsdnProtocolCoreLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocolCore}
+    /// @notice See {IUsdnProtocolCore}.
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -159,7 +159,7 @@ library UsdnProtocolCoreLibrary {
         }
     }
 
-    /// @notice See {IUsdnProtocolCore}
+    /// @notice See {IUsdnProtocolCore}.
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) public view returns (uint256 expo_) {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -171,12 +171,12 @@ library UsdnProtocolCoreLibrary {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Prepare the pending action struct for an open position and add it to the queue
-     * @param to The address that will be the owner of the position
-     * @param validator The address that will validate the open position
-     * @param securityDepositValue The value of the security deposit for the newly created pending action
-     * @param data The open position action data
-     * @return amountToRefund_ Refund The security deposit value of a stale pending action
+     * @notice Prepares the pending action struct for an open position and adds it to the queue.
+     * @param to The address that will be the owner of the position.
+     * @param validator The address that will validate the open position.
+     * @param securityDepositValue The value of the security deposit for the newly created pending action.
+     * @param data The open position action data.
+     * @return amountToRefund_ Refunds the security deposit value of a stale pending action.
      */
     function _createOpenPendingAction(
         address to,
@@ -203,14 +203,14 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Calculate the profits and losses of the long side, calculate the funding and apply protocol fees,
-     * calculate the new liquidation multiplier and the temporary new balances for each side
+     * @notice Calculates the profits and losses of the long side, calculates the funding and applies protocol fees,
+     * calculates the new liquidation multiplier and the temporary new balances for each side.
      * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding`, but does not
-     * update the balances. This is left to the caller
-     * @param currentPrice The current price
-     * @param timestamp The timestamp of the current price
+     * update the balances. This is left to the caller.
+     * @param currentPrice The current price.
+     * @param timestamp The timestamp of the current price.
      * @return data_ The data containing the temporary long balance, the temporary vault
-     * balance, the last price and a flag indicating if the price is recent
+     * balance, the last price and a flag indicating if the price is recent.
      */
     function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         public
@@ -275,10 +275,10 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Remove the pending action from the queue if its tick version doesn't match the current tick version
-     * @dev This is only applicable to `ValidateOpenPosition` pending actions
-     * @param validator The validator's address
-     * @return securityDepositValue_ The security deposit value of the removed stale pending action
+     * @notice Removes the pending action from the queue if its tick version doesn't match the current tick version.
+     * @dev This is only applicable to `ValidateOpenPosition` pending actions.
+     * @param validator The validator's address.
+     * @return securityDepositValue_ The security deposit value of the removed stale pending action.
      */
     function _removeStalePendingAction(address validator) public returns (uint256 securityDepositValue_) {
         Types.Storage storage s = Utils._getMainStorage();
@@ -310,11 +310,11 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Add a pending action to the queue
-     * @dev This reverts if there is already a pending action for this user
-     * @param user The user's address
-     * @param action The pending action struct
-     * @return amountToRefund_ The security deposit value of the stale pending action
+     * @notice Adds a pending action to the queue.
+     * @dev Reverts if there is already a pending action for this user.
+     * @param user The user's address.
+     * @param action The pending action struct.
+     * @return amountToRefund_ The security deposit value of the stale pending action.
      */
     function _addPendingAction(address user, Types.PendingAction memory action)
         public
@@ -334,14 +334,14 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Remove a stuck pending action and perform the minimal amount of cleanup necessary
+     * @notice Removes a stuck pending action and performs the minimal amount of cleanup necessary.
      * @dev This function should only be called by the owner of the protocol, it serves as an escape hatch if a
-     * pending action ever gets stuck due to something reverting unexpectedly
+     * pending action ever gets stuck due to something reverting unexpectedly.
      * The caller must wait at least 1 hour after the validation deadline to call this function. This is to give the
-     * chance to normal users to validate the action if possible
-     * @param rawIndex The raw index of the pending action in the queue
-     * @param to Where the retrieved funds should be sent (security deposit, assets, usdn)
-     * @param cleanup If `true`, will attempt to perform more cleanup at the risk of reverting. Always try `true` first
+     * chance to normal users to validate the action if possible.
+     * @param rawIndex The raw index of the pending action in the queue.
+     * @param to Where the retrieved funds should be sent (security deposit, assets, usdn).
+     * @param cleanup If `true`, will attempt to perform more cleanup at the risk of reverting. Always try `true` first.
      */
     function _removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) public {
         Types.Storage storage s = Utils._getMainStorage();
@@ -436,14 +436,14 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Save a new position in the protocol, adjusting the tick data and global variables
-     * @dev Note: this method does not update the long balance
-     * @param tick The tick to hold the new position
-     * @param long The position to save
-     * @param liquidationPenalty The liquidation penalty for the tick
-     * @return tickVersion_ The version of the tick
-     * @return index_ The index of the position in the tick array
-     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
+     * @notice Saves a new position in the protocol, adjusting the tick data and global variables.
+     * @dev Note: this method does not update the long balance.
+     * @param tick The tick to hold the new position.
+     * @param long The position to save.
+     * @param liquidationPenalty The liquidation penalty for the tick.
+     * @return tickVersion_ The version of the tick.
+     * @return index_ The index of the position in the tick array.
+     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator.
      */
     function _saveNewPosition(int24 tick, Types.Position memory long, uint24 liquidationPenalty)
         public
@@ -495,11 +495,11 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Get the pending action for a user
-     * @dev This function reverts if there is no pending action for the user
-     * @param user The user's address
-     * @return action_ The pending action struct
-     * @return rawIndex_ The raw index of the pending action in the queue
+     * @notice Gets the pending action for a user.
+     * @dev Reverts if there is no pending action for the user.
+     * @param user The user's address.
+     * @return action_ The pending action struct.
+     * @return rawIndex_ The raw index of the pending action in the queue.
      */
     function _getPendingActionOrRevert(address user)
         public
@@ -513,13 +513,13 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Get the predicted value of the funding (in asset units) since the last state update for the given
-     * timestamp
-     * @dev If the provided timestamp is older than the last state update, the result will be zero
-     * @param timestamp The current timestamp
-     * @param ema The EMA of the funding rate
-     * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
-     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
+     * @notice Gets the predicted value of the funding (in asset units) since the last state update for the given
+     * timestamp.
+     * @dev If the provided timestamp is older than the last state update, the result will be zero.
+     * @param timestamp The current timestamp.
+     * @param ema The EMA of the funding rate.
+     * @return fundingAsset_ The number of asset tokens of funding (with asset decimals).
+     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals.
      */
     function _fundingAsset(uint128 timestamp, int256 ema)
         internal
@@ -533,13 +533,13 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Update the Exponential Moving Average (EMA) of the funding rate (per day)
-     * @dev This function is called every time the protocol state is updated
-     * @dev All required checks are done in the caller function (_applyPnlAndFunding)
-     * @dev If the number of seconds elapsed is greater than or equal to the EMA period, the EMA is updated to the last
-     * funding value
-     * @param fundingPerDay The funding rate per day that was just calculated for the elapsed period
-     * @param secondsElapsed The number of seconds elapsed since the last protocol action
+     * @notice Updates the Exponential Moving Average (EMA) of the funding rate (per day).
+     * @dev This function is called every time the protocol state is updated.
+     * All required checks are done in the caller function (_applyPnlAndFunding).
+     * If the number of seconds elapsed is greater than or equal to the EMA period, the EMA is updated to the last
+     * funding value.
+     * @param fundingPerDay The funding rate per day that was just calculated for the elapsed period.
+     * @param secondsElapsed The number of seconds elapsed since the last protocol action.
      */
     function _updateEMA(int256 fundingPerDay, uint128 secondsElapsed) internal {
         Types.Storage storage s = Utils._getMainStorage();
@@ -548,12 +548,12 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Calculate the protocol fee and apply it to the funding asset amount
+     * @notice Calculates the protocol fee and apply it to the funding asset amount.
      * @dev The funding factor is only adjusted by the fee rate when the funding is negative (vault pays to the long
-     * side)
-     * @param fundAsset The funding asset amount to be used for the fee calculation
-     * @return fee_ The absolute value of the calculated fee
-     * @return fundAssetWithFee_ The updated funding asset amount after applying the fee
+     * side).
+     * @param fundAsset The funding asset amount to be used for the fee calculation.
+     * @return fee_ The absolute value of the calculated fee.
+     * @return fundAssetWithFee_ The updated funding asset amount after applying the fee.
      */
     function _calculateFee(int256 fundAsset) internal returns (int256 fee_, int256 fundAssetWithFee_) {
         Types.Storage storage s = Utils._getMainStorage();
@@ -572,10 +572,10 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Create initial deposit
-     * @dev To be called from `initialize`
-     * @param amount The initial deposit amount
-     * @param price The current asset price
+     * @notice Creates the initial deposit.
+     * @dev To be called from `initialize`.
+     * @param amount The initial deposit amount.
+     * @param price The current asset price.
      */
     function _createInitialDeposit(uint128 amount, uint128 price) internal {
         Types.Storage storage s = Utils._getMainStorage();
@@ -610,12 +610,12 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Create initial long position
-     * @dev To be called from `initialize`
-     * @param amount The initial position amount
-     * @param price The current asset price
-     * @param tick The tick corresponding where the position should be stored
-     * @param totalExpo The total expo of the position
+     * @notice Creates the initial long position.
+     * @dev To be called from `initialize`.
+     * @param amount The initial position amount.
+     * @param price The current asset price.
+     * @param tick The tick corresponding where the position should be stored.
+     * @param totalExpo The total expo of the position.
      */
     function _createInitialPosition(uint128 amount, uint128 price, int24 tick, uint128 totalExpo) internal {
         Types.Storage storage s = Utils._getMainStorage();
@@ -642,12 +642,12 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Get the pending action for a user
-     * @dev To check for the presence of a pending action, compare `action_.action` to `Types.ProtocolAction.None`. There
-     * is a pending action only if the action is different from `Types.ProtocolAction.None`
-     * @param user The user's address
-     * @return action_ The pending action struct if any, otherwise a zero-initialized struct
-     * @return rawIndex_ The raw index of the pending action in the queue
+     * @notice Gets the pending action for a user.
+     * @dev Checks for the presence of a pending action, compares `action_.action` to `Types.ProtocolAction.None`. There
+     * is a pending action only if the action is different from `Types.ProtocolAction.None`.
+     * @param user The user's address.
+     * @return action_ The pending action struct if any, otherwise a zero-initialized struct.
+     * @return rawIndex_ The raw index of the pending action in the queue.
      */
     function _getPendingAction(address user)
         internal
@@ -667,11 +667,11 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Check if the initialize parameters lead to a balanced protocol
-     * @dev This function reverts if the imbalance is exceeded for the deposit or open long action
-     * @param positionTotalExpo The total expo of the deployer's long position
-     * @param longAmount The amount (collateral) of the deployer's long position
-     * @param depositAmount The amount of assets for the deployer's deposit
+     * @notice Checks if the initialize parameters lead to a balanced protocol.
+     * @dev Reverts if the imbalance is exceeded for the deposit or open long action.
+     * @param positionTotalExpo The total expo of the deployer's long position.
+     * @param longAmount The amount (collateral) of the deployer's long position.
+     * @param depositAmount The amount of assets for the deployer's deposit.
      */
     function _checkInitImbalance(uint128 positionTotalExpo, uint128 longAmount, uint128 depositAmount) internal view {
         Types.Storage storage s = Utils._getMainStorage();
@@ -715,10 +715,10 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Calculate the funding rate per day and the old long exposure
-     * @param ema The EMA of the funding rate per day
-     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
-     * @return oldLongExpo_ The old long trading expo
+     * @notice Calculates the funding rate per day and the old long exposure.
+     * @param ema The EMA of the funding rate per day.
+     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals.
+     * @return oldLongExpo_ The old long trading expo.
      */
     function _fundingPerDay(int256 ema) internal view returns (int256 fundingPerDay_, int256 oldLongExpo_) {
         Types.Storage storage s = Utils._getMainStorage();
@@ -777,15 +777,15 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Calculate the funding value, funding rate value and the old long exposure
-     * @dev Reverts if `timestamp` < `s._lastUpdateTimestamp`
-     * @param timestamp The current timestamp
-     * @param ema The EMA of the funding rate per day
+     * @notice Calculates the funding value, funding rate value and the old long exposure.
+     * @dev Reverts if `timestamp` < `s._lastUpdateTimestamp`.
+     * @param timestamp The current timestamp.
+     * @param ema The EMA of the funding rate per day.
      * @return funding_ The funding (proportion of long trading expo that needs to be transferred from one side to the
      * other) with `FUNDING_RATE_DECIMALS` decimals. If positive, long side pays to vault side, otherwise it's the
-     * opposite
-     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals
-     * @return oldLongExpo_ The old long trading expo
+     * opposite.
+     * @return fundingPerDay_ The funding rate (per day) with `FUNDING_RATE_DECIMALS` decimals.
+     * @return oldLongExpo_ The old long trading expo.
      */
     function _funding(uint128 timestamp, int256 ema)
         internal
@@ -813,7 +813,7 @@ library UsdnProtocolCoreLibrary {
         funding_ = fundingPerDay_.safeMul(elapsedSeconds).safeDiv(1 days);
     }
 
-    /// @notice See {IUsdnProtocolCore}
+    /// @notice See {IUsdnProtocolCore}.
     function _calcEMA(int256 lastFundingPerDay, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
         internal
         pure
@@ -830,9 +830,9 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Calculate the maximum value of the long balance for the provided total expo
-     * @param totalExpo The total expo of the long side of the protocol
-     * @return maxLongBalance_ The maximum value the long balance can reach
+     * @notice Calculates the maximum value of the long balance for the provided total expo.
+     * @param totalExpo The total expo of the long side of the protocol.
+     * @return maxLongBalance_ The maximum value the long balance can reach.
      */
     function _calcMaxLongBalance(uint256 totalExpo) internal pure returns (uint256 maxLongBalance_) {
         maxLongBalance_ = FixedPointMathLib.fullMulDiv(
