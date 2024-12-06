@@ -9,7 +9,7 @@ import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
  */
 interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     /**
-     * @notice Emitted when a user initiates a deposit.
+     * @notice User initiates a deposit.
      * @param to The address that will receive the USDN tokens.
      * @param validator The address that will receive the security deposit.
      * @param amount The amount of assets that were deposited.
@@ -27,7 +27,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     );
 
     /**
-     * @notice Emitted when a user validates a deposit.
+     * @notice User validates a deposit.
      * @param to The address that received the USDN tokens.
      * @param validator The address that received the security deposit.
      * @param amountAfterFees The amount of assets that were deposited after fees.
@@ -39,7 +39,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     );
 
     /**
-     * @notice Emitted when a user initiates a withdrawal.
+     * @notice User initiates a withdrawal.
      * @param to The address that will receive the assets.
      * @param validator The address that will receive the security deposit.
      * @param usdnAmount The amount of USDN that will be burned.
@@ -51,7 +51,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     );
 
     /**
-     * @notice Emitted when a user validates a withdrawal.
+     * @notice User validates a withdrawal.
      * @param to The address that received the assets.
      * @param validator The address that received the security deposit.
      * @param amountWithdrawnAfterFees The amount of assets that were withdrawn after fees.
@@ -67,7 +67,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     );
 
     /**
-     * @notice Emitted when a user initiates the opening of a long position.
+     * @notice User initiates the opening of a long position.
      * @param owner The address that owns the position.
      * @param validator The address that will receive the security deposit.
      * @param timestamp The timestamp of the action.
@@ -87,7 +87,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     );
 
     /**
-     * @notice Emitted when a user validates the opening of a long position.
+     * @notice User validates the opening of a long position.
      * @param owner The address that owns the position.
      * @param validator The address that received the security deposit.
      * @param totalExpo The total expo of the position.
@@ -100,14 +100,14 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     );
 
     /**
-     * @notice Emitted when a position was moved from one tick to another.
+     * @notice The position was moved from one tick to another.
      * @param oldPosId The old position identifier.
      * @param newPosId The new position identifier.
      */
     event LiquidationPriceUpdated(PositionId oldPosId, PositionId newPosId);
 
     /**
-     * @notice Emitted when a user initiates the closing of all or part of a long position.
+     * @notice User initiates the closing of all or part of a long position.
      * @param owner The owner of this position.
      * @param validator The address that received the security deposit.
      * @param to The address that will receive the assets.
@@ -129,7 +129,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     );
 
     /**
-     * @notice Emitted when a user validates the closing of a long position.
+     * @notice User validates the closing of a long position.
      * @param validator The address that received the security deposit.
      * @param to The address that received the assets.
      * @param posId The unique position identifier.
@@ -141,7 +141,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     );
 
     /**
-     * @notice Emitted when a tick is liquidated.
+     * @notice The tick is liquidated.
      * @param tick The liquidated tick.
      * @param oldTickVersion The liquidated tick version.
      * @param liquidationPrice The asset price at the moment of liquidation.
@@ -158,7 +158,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     );
 
     /**
-     * @notice Emitted when a position is individually liquidated.
+     * @notice The position is individually liquidated.
      * @param user The validator of the action, not necessarily the owner of the position.
      * @param posId The unique identifier for the position that was liquidated.
      * @param liquidationPrice The asset price at the moment of liquidation.
@@ -169,68 +169,68 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     );
 
     /**
-     * @notice Emitted when a user's position was liquidated while pending validation and we removed the pending action.
+     * @notice User's position was liquidated while pending validation and we removed the pending action.
      * @param validator The validator address.
      * @param posId The unique position identifier.
      */
     event StalePendingActionRemoved(address indexed validator, PositionId posId);
 
     /**
-     * @notice Emitted when the position fee is updated.
+     * @notice The position fee is updated.
      * @param positionFee The new position fee (in basis points).
      */
     event PositionFeeUpdated(uint256 positionFee);
 
     /**
-     * @notice Emitted when the vault fee is updated.
+     * @notice The vault fee is updated.
      * @param vaultFee The new vault fee (in basis points).
      */
     event VaultFeeUpdated(uint256 vaultFee);
 
     /**
-     * @notice Emitted when the rebalancer bonus is updated.
+     * @notice The rebalancer bonus is updated.
      * @param bonus The new bonus (in basis points).
      */
     event RebalancerBonusUpdated(uint256 bonus);
 
     /**
-     * @notice Emitted when the ratio of USDN to SDEX tokens to burn on deposit is updated.
+     * @notice The ratio of USDN to SDEX tokens to burn on deposit is updated.
      * @param newRatio The new ratio.
      */
     event BurnSdexOnDepositRatioUpdated(uint256 newRatio);
 
     /**
-     * @notice Emitted when the deposit value is updated.
+     * @notice The deposit value is updated.
      * @param securityDepositValue The new deposit value.
      */
     event SecurityDepositValueUpdated(uint256 securityDepositValue);
 
     /**
-     * @notice Emitted when the oracle middleware is updated.
+     * @notice The oracle middleware is updated.
      * @param newMiddleware The new oracle middleware address.
      */
     event OracleMiddlewareUpdated(address newMiddleware);
 
     /**
-     * @notice Emitted when the minimum leverage of the rebalancer is updated.
+     * @notice The minimum leverage of the rebalancer is updated.
      * @param newMinLeverage The new value for the minimum leverage.
      */
     event RebalancerMinLeverageUpdated(uint256 newMinLeverage);
 
     /**
-     * @notice Emitted when the `minLeverage` is updated.
+     * @notice The `minLeverage` is updated.
      * @param newMinLeverage The new `minLeverage`.
      */
     event MinLeverageUpdated(uint256 newMinLeverage);
 
     /**
-     * @notice Emitted when the `maxLeverage` is updated.
+     * @notice The `maxLeverage` is updated.
      * @param newMaxLeverage The new `maxLeverage`.
      */
     event MaxLeverageUpdated(uint256 newMaxLeverage);
 
     /**
-     * @notice Emitted when the `lowLatencyValidatorDeadline` and `onChainValidatorDeadline` are updated.
+     * @notice The `lowLatencyValidatorDeadline` and `onChainValidatorDeadline` are updated.
      * @param newLowLatencyValidatorDeadline The new deadline for low-latency validation (offset from the initiate
      * action timestamp).
      * @param newOnChainValidatorDeadline The new deadline for on-chain validation (offset from the initiate action
@@ -239,31 +239,31 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     event ValidatorDeadlinesUpdated(uint128 newLowLatencyValidatorDeadline, uint128 newOnChainValidatorDeadline);
 
     /**
-     * @notice Emitted when the `liquidationPenalty` is updated.
+     * @notice The `liquidationPenalty` is updated.
      * @param newLiquidationPenalty The new `liquidationPenalty`.
      */
     event LiquidationPenaltyUpdated(uint24 newLiquidationPenalty);
 
     /**
-     * @notice Emitted when the `safetyMargin` is updated.
+     * @notice The `safetyMargin` is updated.
      * @param newSafetyMargin The new `safetyMargin`.
      */
     event SafetyMarginBpsUpdated(uint256 newSafetyMargin);
 
     /**
-     * @notice Emitted when the `liquidationIteration` is updated.
+     * @notice The `liquidationIteration` is updated.
      * @param newLiquidationIteration The new `liquidationIteration`.
      */
     event LiquidationIterationUpdated(uint16 newLiquidationIteration);
 
     /**
-     * @notice Emitted when the EMAPeriod is updated.
+     * @notice The EMAPeriod is updated.
      * @param newEMAPeriod The new EMAPeriod.
      */
     event EMAPeriodUpdated(uint128 newEMAPeriod);
 
     /**
-     * @notice Emitted when the `fundingSF` is updated.
+     * @notice The `fundingSF` is updated.
      * @param newFundingSF The new `fundingSF`.
      */
     event FundingSFUpdated(uint256 newFundingSF);
@@ -276,56 +276,56 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     event LiquidatorRewarded(address indexed liquidator, uint256 rewards);
 
     /**
-     * @notice Emitted when the `LiquidationRewardsManager` contract is updated.
+     * @notice The `LiquidationRewardsManager` contract is updated.
      * @param newAddress The address of the new (current) contract.
      */
     event LiquidationRewardsManagerUpdated(address newAddress);
 
     /**
-     * @notice Emitted when the rebalancer contract is updated.
+     * @notice The rebalancer contract is updated.
      * @param newAddress The address of the new (current) contract.
      */
     event RebalancerUpdated(address newAddress);
 
     /**
-     * @notice Emitted when the pending protocol fee is distributed.
+     * @notice The pending protocol fee is distributed.
      * @param feeCollector The collector's address.
      * @param amount The amount of fee transferred.
      */
     event ProtocolFeeDistributed(address feeCollector, uint256 amount);
 
     /**
-     * @notice Emitted when the protocol fee is updated.
+     * @notice The protocol fee is updated.
      * @param feeBps The new fee in basis points.
      */
     event FeeBpsUpdated(uint256 feeBps);
 
     /**
-     * @notice Emitted when the fee collector is updated.
+     * @notice The fee collector is updated.
      * @param feeCollector The new fee collector address.
      */
     event FeeCollectorUpdated(address feeCollector);
 
     /**
-     * @notice Emitted when the fee threshold is updated.
+     * @notice The fee threshold is updated.
      * @param feeThreshold The new fee threshold.
      */
     event FeeThresholdUpdated(uint256 feeThreshold);
 
     /**
-     * @notice Emitted when the target USDN price is updated.
+     * @notice The target USDN price is updated.
      * @param price The new target USDN price.
      */
     event TargetUsdnPriceUpdated(uint128 price);
 
     /**
-     * @notice Emitted when the USDN rebase threshold is updated.
+     * @notice The USDN rebase threshold is updated.
      * @param threshold The new target USDN price.
      */
     event UsdnRebaseThresholdUpdated(uint128 threshold);
 
     /**
-     * @notice Emitted when imbalance limits are updated.
+     * @notice Imbalance limits are updated.
      * @param newOpenLimitBps The new open limit.
      * @param newDepositLimitBps The new deposit limit.
      * @param newWithdrawalLimitBps The new withdrawal limit.
@@ -343,19 +343,19 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     );
 
     /**
-     * @notice Emitted when the minimum long position is updated.
+     * @notice The minimum long position is updated.
      * @param minLongPosition The new minimum long position.
      */
     event MinLongPositionUpdated(uint256 minLongPosition);
 
     /**
-     * @notice Emitted when the highest populated tick is updated.
+     * @notice The highest populated tick is updated.
      * @param tick The new highest populated tick.
      */
     event HighestPopulatedTickUpdated(int24 tick);
 
     /**
-     * @notice Emitted when a security deposit is refunded.
+     * @notice Security deposit is refunded.
      * @param pendingActionValidator Address of the default validator.
      * @param receivedBy Address of the user that received the security deposit.
      * @param amount Amount of security deposit refunded.
@@ -363,7 +363,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     event SecurityDepositRefunded(address indexed pendingActionValidator, address indexed receivedBy, uint256 amount);
 
     /**
-     * @notice Emitted when a position changes ownership.
+     * @notice Position changes ownership.
      * @param posId The unique position ID.
      * @param oldOwner The old owner.
      * @param newOwner The new owner.
@@ -371,7 +371,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     event PositionOwnershipTransferred(PositionId posId, address indexed oldOwner, address indexed newOwner);
 
     /**
-     * @notice Emitted when the last funding per day is updated.
+     * @notice The last funding per day is updated.
      * @param lastFundingPerDay The new funding per day.
      * @param lastUpdateTimestamp The timestamp for which the funding per day was calculated.
      */
