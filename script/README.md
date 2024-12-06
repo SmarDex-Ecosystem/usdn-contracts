@@ -6,11 +6,25 @@
 
 The script verifies that the deployer address has a nonce of 0. It then deploys the token. Finally, it grants the `DEFAULT_ADMIN_ROLE` to the safe address and renounces this role from the deployer.
 
-For a mainnet deployment, you must use the shell script. It will prompt you to enter:
+Use the following command to deploy the USDN token:
 
-- the RPC URL
-- the deployer's private key
-- the safe address
+```shell
+./script/deployUsdnToken.sh -r YOUR_RPC_URL -s SAFE_ADDRESS
+```
+
+It will then prompt you to enter the deployer's private key.
+
+Help can be displayed with the `-h` flag.
+
+```shell
+./script/deployUsdnToken.sh -h
+```
+
+A test mode is available with the `-t` or `--test` flag. It will deploy the token with default values (rpc url: localhost:8545, deployer: 29th account of anvil, safe: EthSafeAddr).
+
+```shell
+./script/deployUsdnToken.sh -t
+```
 
 ### Standalone mode
 
