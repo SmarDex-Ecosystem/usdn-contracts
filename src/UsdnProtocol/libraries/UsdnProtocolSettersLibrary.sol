@@ -21,7 +21,8 @@ library UsdnProtocolSettersLibrary {
     /*                              SET_EXTERNAL_ROLE                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setoraclemiddleware).
     function setOracleMiddleware(IBaseOracleMiddleware newOracleMiddleware) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -36,7 +37,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.OracleMiddlewareUpdated(address(newOracleMiddleware));
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setliquidationrewardsmanager).
     function setLiquidationRewardsManager(IBaseLiquidationRewardsManager newLiquidationRewardsManager) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -49,7 +51,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.LiquidationRewardsManagerUpdated(address(newLiquidationRewardsManager));
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setrebalancer).
     function setRebalancer(IBaseRebalancer newRebalancer) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -63,7 +66,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.RebalancerUpdated(address(newRebalancer));
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setfeecollector).
     function setFeeCollector(address newFeeCollector) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -78,7 +82,8 @@ library UsdnProtocolSettersLibrary {
     /*                           CRITICAL_FUNCTIONS_ROLE                          */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setvalidatordeadlines).
     function setValidatorDeadlines(uint128 newLowLatencyValidatorDeadline, uint128 newOnChainValidatorDeadline)
         external
     {
@@ -105,7 +110,8 @@ library UsdnProtocolSettersLibrary {
     /*                          SET_PROTOCOL_PARAMS_ROLE                          */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setminleverage).
     function setMinLeverage(uint256 newMinLeverage) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -122,7 +128,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.MinLeverageUpdated(newMinLeverage);
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setmaxleverage).
     function setMaxLeverage(uint256 newMaxLeverage) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -139,7 +146,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.MaxLeverageUpdated(newMaxLeverage);
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setliquidationpenalty).
     function setLiquidationPenalty(uint24 newLiquidationPenalty) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -151,7 +159,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.LiquidationPenaltyUpdated(newLiquidationPenalty);
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setemaperiod).
     function setEMAPeriod(uint128 newEMAPeriod) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -163,7 +172,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.EMAPeriodUpdated(newEMAPeriod);
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setfundingsf).
     function setFundingSF(uint256 newFundingSF) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -175,7 +185,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.FundingSFUpdated(newFundingSF);
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setprotocolfeebps).
     function setProtocolFeeBps(uint16 newProtocolFeeBps) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -186,7 +197,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.FeeBpsUpdated(newProtocolFeeBps);
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setpositionfeebps).
     function setPositionFeeBps(uint16 newPositionFee) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -198,7 +210,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.PositionFeeUpdated(newPositionFee);
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setvaultfeebps).
     function setVaultFeeBps(uint16 newVaultFee) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -210,7 +223,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.VaultFeeUpdated(newVaultFee);
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setrebalancerbonusbps).
     function setRebalancerBonusBps(uint16 newBonus) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -222,7 +236,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.RebalancerBonusUpdated(newBonus);
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setsdexburnondepositratio).
     function setSdexBurnOnDepositRatio(uint32 newRatio) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -236,7 +251,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.BurnSdexOnDepositRatioUpdated(newRatio);
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setsecuritydepositvalue).
     function setSecurityDepositValue(uint64 securityDepositValue) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -247,7 +263,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.SecurityDepositValueUpdated(securityDepositValue);
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setexpoimbalancelimits).
     function setExpoImbalanceLimits(
         uint256 newOpenLimitBps,
         uint256 newDepositLimitBps,
@@ -307,7 +324,8 @@ library UsdnProtocolSettersLibrary {
         );
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setminlongposition).
     function setMinLongPosition(uint256 newMinLongPosition) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -327,7 +345,8 @@ library UsdnProtocolSettersLibrary {
     /*                              SET_OPTIONS_ROLE                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setsafetymarginbps).
     function setSafetyMarginBps(uint256 newSafetyMarginBps) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -340,7 +359,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.SafetyMarginBpsUpdated(newSafetyMarginBps);
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setliquidationiteration).
     function setLiquidationIteration(uint16 newLiquidationIteration) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -352,7 +372,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.LiquidationIterationUpdated(newLiquidationIteration);
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setfeethreshold).
     function setFeeThreshold(uint256 newFeeThreshold) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -364,7 +385,8 @@ library UsdnProtocolSettersLibrary {
     /*                            SET_USDN_PARAMS_ROLE                            */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#settargetusdnprice).
     function setTargetUsdnPrice(uint128 newPrice) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -379,7 +401,8 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.TargetUsdnPriceUpdated(newPrice);
     }
 
-    /// @notice See `IUsdnProtocolFallback`.
+    /// @notice See
+    /// [IUsdnProtocolFallback](../../UsdnProtocolFallback.sol/contract.UsdnProtocolFallback.html?#setusdnrebasethreshold).
     function setUsdnRebaseThreshold(uint128 newThreshold) external {
         Types.Storage storage s = Utils._getMainStorage();
 
