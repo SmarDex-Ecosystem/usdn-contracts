@@ -27,12 +27,12 @@ library UsdnProtocolActionsUtilsLibrary {
     using SignedMath for int256;
 
     /**
-     * @notice Data structure for the transient state of the `_validateMultipleActionable` function
-     * @param pending The candidate pending action to validate
-     * @param frontRawIndex The raw index of the front of the queue
-     * @param rawIndex The raw index of the candidate pending action
-     * @param executed Whether the pending action was executed
-     * @param liq Whether the pending action was liquidated
+     * @dev Data structure for the transient state of the `_validateMultipleActionable` function.
+     * @param pending The candidate pending action to validate.
+     * @param frontRawIndex The raw index of the front of the queue.
+     * @param rawIndex The raw index of the candidate pending action.
+     * @param executed Whether the pending action was executed.
+     * @param liq Whether the pending action was liquidated.
      */
     struct ValidateMultipleActionableData {
         Types.PendingAction pending;
@@ -46,7 +46,7 @@ library UsdnProtocolActionsUtilsLibrary {
     /*                             External functions                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocolActions}
+    /// @notice See {IUsdnProtocolActions}.
     function liquidate(bytes calldata currentPriceData)
         external
         returns (Types.LiqTickInfo[] memory liquidatedTicks_)
@@ -66,7 +66,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Utils._checkPendingFee();
     }
 
-    /// @notice See {IUsdnProtocolActions}
+    /// @notice See {IUsdnProtocolActions}.
     function validateActionablePendingActions(
         Types.PreviousActionsData calldata previousActionsData,
         uint256 maxValidations
@@ -80,7 +80,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Utils._checkPendingFee();
     }
 
-    /// @notice See {IUsdnProtocolActions}
+    /// @notice See {IUsdnProtocolActions}.
     function transferPositionOwnership(
         Types.PositionId calldata posId,
         address newOwner,
@@ -122,7 +122,7 @@ library UsdnProtocolActionsUtilsLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocolActions}
+    /// @notice See {IUsdnProtocolActions}.
     function getLongPosition(Types.PositionId memory posId)
         public
         view
@@ -143,12 +143,12 @@ library UsdnProtocolActionsUtilsLibrary {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Update protocol balances, then prepare the data for the initiate close position action
+     * @notice Updates protocol balances, then prepares the data for the initiate close position action.
      * @dev Reverts if the imbalance limit is reached, or if any of the checks in `_checkInitiateClosePosition` fail
-     * Returns without creating a pending action if the position gets liquidated in this transaction
-     * @param params The parameters for the _prepareClosePositionData function
-     * @return data_ The close position data
-     * @return liquidated_ Whether the position was liquidated and the caller should return early
+     * Returns without creating a pending action if the position gets liquidated in this transaction.
+     * @param params The parameters for the _prepareClosePositionData function.
+     * @return data_ The close position data.
+     * @return liquidated_ Whether the position was liquidated and the caller should return early.
      */
     function _prepareClosePositionData(Types.PrepareInitiateClosePositionParams calldata params)
         public
@@ -218,11 +218,11 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Validate multiple actionable pending actions
-     * @param previousActionsData The data for the actions to validate (price and raw indices)
-     * @param maxValidations The maximum number of validations to perform
-     * @return validatedActions_ The number of validated actions
-     * @return amountToRefund_ The total amount of security deposits refunded
+     * @notice Validates multiple actionable pending actions.
+     * @param previousActionsData The data for the actions to validate (price and raw indices).
+     * @param maxValidations The maximum number of validations to perform.
+     * @return validatedActions_ The number of validated actions.
+     * @return amountToRefund_ The total amount of security deposits refunded.
      */
     function _validateMultipleActionable(Types.PreviousActionsData calldata previousActionsData, uint256 maxValidations)
         internal
@@ -305,18 +305,18 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Check whether a pending action is actionable, i.e any user can validate it and retrieve the security
-     * deposit
+     * @notice Checks whether a pending action is actionable, i.e any user can validate it and retrieve the security
+     * deposit.
      * @dev Between `initiateTimestamp` and `initiateTimestamp + lowLatencyDeadline`,
-     * the validator receives the security deposit
+     * the validator receives the security deposit.
      * Between `initiateTimestamp + lowLatencyDelay` and `initiateTimestamp + lowLatencyDelay + onChainDeadline`,
-     * the validator also receives the security deposit
-     * Outside of those periods, the security deposit goes to the user validating the pending action
-     * @param initiateTimestamp The timestamp at which the action was initiated
-     * @param lowLatencyDeadline The deadline after which the action is actionable within a low latency oracle
-     * @param lowLatencyDelay The amount of time the action can be validated with a low latency oracle
-     * @param onChainDeadline The deadline after which the action is actionable with an on-chain oracle
-     * @return actionable_ Whether the pending action is actionable
+     * the validator also receives the security deposit.
+     * Outside of those periods, the security deposit goes to the user validating the pending action.
+     * @param initiateTimestamp The timestamp at which the action was initiated.
+     * @param lowLatencyDeadline The deadline after which the action is actionable within a low latency oracle.
+     * @param lowLatencyDelay The amount of time the action can be validated with a low latency oracle.
+     * @param onChainDeadline The deadline after which the action is actionable with an on-chain oracle.
+     * @return actionable_ Whether the pending action is actionable.
      */
     function _isActionable(
         uint256 initiateTimestamp,
@@ -337,11 +337,11 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice The close vault imbalance limit state verification
-     * @dev To ensure that the protocol does not imbalance more than
-     * the close limit on the vault side, otherwise revert
-     * @param posTotalExpoToClose The total expo to remove position
-     * @param posValueToClose The value to remove from the position (and the long balance)
+     * @notice Checks the close vault imbalance limit state.
+     * @dev Ensures that the protocol does not imbalance more than
+     * the close limit on the vault side, otherwise revert.
+     * @param posTotalExpoToClose The total expo to remove from the position.
+     * @param posValueToClose The value to remove from the position (and the long balance).
      */
     function _checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) internal view {
         Types.Storage storage s = Utils._getMainStorage();
@@ -370,11 +370,11 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Perform checks for the initiate close position action
+     * @notice Performs checks for the initiate close position action.
      * @dev Reverts if the to address is zero, the position was not validated yet, the position is not owned by the
-     * user, the amount to close is higher than the position amount, or the amount to close is zero
-     * @param pos The position to close
-     * @param params The parameters for the {_prepareClosePositionData} function
+     * user, the amount to close is higher than the position amount, or the amount to close is zero.
+     * @param pos The position to close.
+     * @param params The parameters for the {_prepareClosePositionData} function.
      */
     function _checkInitiateClosePosition(
         Types.Position memory pos,
@@ -417,14 +417,14 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Calculate how much assets must be removed from the long balance due to a position closing
-     * @dev The amount is bound by the amount of assets available on the long side
-     * @param balanceLong The balance of long positions (with asset decimals)
-     * @param price The price to use for the position value calculation
-     * @param liqPriceWithoutPenalty The liquidation price without penalty
-     * @param posExpo The total expo to remove from the position
+     * @notice Calculates how much assets must be removed from the long balance due to a position closing.
+     * @dev The amount is bound by the amount of assets available on the long side.
+     * @param balanceLong The balance of long positions (with asset decimals).
+     * @param price The price to use for the position value calculation.
+     * @param liqPriceWithoutPenalty The liquidation price without penalty.
+     * @param posExpo The total expo to remove from the position.
      * @return boundedPosValue_ The amount of assets to remove from the long balance, bound by zero and the available
-     * long balance
+     * long balance.
      */
     function _assetToRemove(uint256 balanceLong, uint128 price, uint128 liqPriceWithoutPenalty, uint128 posExpo)
         internal
@@ -446,11 +446,11 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Performs the {initiateClosePosition} EIP712 delegation signature verification
+     * @notice Performs the `initiateClosePosition` EIP712 delegation signature verification.
      * @dev Reverts if the function arguments don't match those included in the signature
-     * and if the signer isn't the owner of the position
-     * @param params The parameters for the {_prepareClosePositionData} function
-     * @param positionOwner The position owner
+     * and if the signer isn't the owner of the position.
+     * @param params The parameters for the {_prepareClosePositionData} function.
+     * @param positionOwner The position owner.
      */
     function _verifyInitiateCloseDelegation(
         Types.PrepareInitiateClosePositionParams calldata params,
@@ -484,15 +484,15 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Performs the {transferPositionOwnership} EIP712 delegation signature verification
+     * @notice Performs the {transferPositionOwnership} EIP712 delegation signature verification.
      * @dev Reverts if the function arguments don't match those included in the signature
-     * and if the signer isn't the owner of the position
-     * @param posId The unique identifier of the position
-     * @param positionOwner The current position owner
-     * @param newPositionOwner The new position owner
+     * and if the signer isn't the owner of the position.
+     * @param posId The unique identifier of the position.
+     * @param positionOwner The current position owner.
+     * @param newPositionOwner The new position owner.
      * @param delegationSignature An EIP712 signature that proves the caller is authorized by the owner of the position
-     * to transfer the ownership to a different address on his behalf
-     * @param domainSeparatorV4 The domain separator v4
+     * to transfer the ownership to a different address on his behalf.
+     * @param domainSeparatorV4 The domain separator v4.
      */
     function _verifyTransferPositionOwnershipDelegation(
         Types.PositionId calldata posId,
