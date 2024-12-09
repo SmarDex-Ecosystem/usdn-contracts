@@ -302,7 +302,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
             protocol.i_calcTickWithoutPenalty(posId.tick, liquidationPenalty), pendingAction.var6
         );
 
-        // price below the liquidation price of the main position
+        // price below the liquidation price of the initiated position
         uint256 price = protocol.getEffectivePriceForTick(posId.tick) + 10 ether;
         currentPriceData = abi.encode(price);
 
