@@ -590,12 +590,22 @@ library UsdnProtocolActionsLongLibrary {
         data_.oldPosValue =
             Utils._positionValueOptimized(data_.pos.totalExpo, data_.lastPrice, data_.liqPriceWithoutPenalty);
 
-        // if lastPrice > liqPriceWithPenalty but startPrice <= liqPriceWithPenalty then the user dodged liquidations
-        // we still can't let the position open, because we can't calculate the leverage with a start price that is
-        // lower than a liquidation price, and we also can't liquidate the whole tick because other users could have
-        // opened positions in this tick after the user of the current position
+        data_.liqPriceWithoutPenaltyNorFunding = Utils._getEffectivePriceForTick(
+            Utils._calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty), data_.action.liqMultiplier
+        );
+
+        // if lastPrice > liqPriceWithPenalty
+        // but startPrice <= liqPriceWithPenalty OR startPrice <= liqPriceWithoutPenaltyNorFunding,
+        // then the user dodged liquidations. We still can't let the position open, because we can't calculate the
+        // leverage with a start price that is lower than a liquidation price, and we also can't liquidate the whole
+        // tick because other users could have opened positions in this tick after the user of the current position,
         // our only choice is to liquidate this position only
-        if (data_.startPrice <= liqPriceWithPenalty) {
+        if (data_.startPrice <= liqPriceWithPenalty || data_.startPrice <= data_.liqPriceWithoutPenaltyNorFunding) {
+            uint256 liquidationPrice = liqPriceWithPenalty;
+            if (data_.startPrice <= data_.liqPriceWithoutPenaltyNorFunding) {
+                liquidationPrice = data_.liqPriceWithoutPenaltyNorFunding;
+            }
+
             s._balanceLong -= data_.oldPosValue;
             s._balanceVault += data_.oldPosValue;
 
@@ -611,15 +621,12 @@ library UsdnProtocolActionsLongLibrary {
                     index: data_.action.index
                 }),
                 data_.startPrice,
-                liqPriceWithPenalty
+                liquidationPrice
             );
 
             return (data_, true);
         }
 
-        data_.liqPriceWithoutPenaltyNorFunding = Utils._getEffectivePriceForTick(
-            Utils._calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty), data_.action.liqMultiplier
-        );
         // calculate the leverage of the position without considering the penalty nor the funding by using the
         // multiplier state at T+24
         // reverts if liqPriceWithoutPenaltyNorFunding >= startPrice
