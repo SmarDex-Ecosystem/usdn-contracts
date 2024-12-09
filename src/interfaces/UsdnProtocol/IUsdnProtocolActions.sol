@@ -253,7 +253,7 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
 
     /**
      * @notice Retrieves the domain separator used in EIP-712 signatures.
-     * @return The domain separator compliant with EIP-712.
+     * @return domainSeparatorV4_ The domain separator compliant with EIP-712.
      */
-    function domainSeparatorV4() external view returns (bytes32);
+    function domainSeparatorV4() external view returns (bytes32 domainSeparatorV4_);
 }
