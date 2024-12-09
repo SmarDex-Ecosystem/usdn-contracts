@@ -13,9 +13,9 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
      * @notice Gets the value of the lowest usable tick, taking into account the tick spacing.
      * @dev Note that the effective minimum tick of a newly open long position also depends on the minimum allowed
      * leverage value and the current value of the liquidation price multiplier.
-     * @return The lowest usable tick.
+     * @return tick_ The lowest usable tick.
      */
-    function minTick() external view returns (int24);
+    function minTick() external view returns (int24 tick_);
 
     /**
      * @notice Gets the liquidation price from a desired one by taking into account the tick rounding.
@@ -25,7 +25,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
      * @param accumulator The liquidation multiplier accumulator.
      * @param tickSpacing The tick spacing.
      * @param liquidationPenalty The liquidation penalty set on the tick.
-     * @return The new liquidation price without the penalty.
+     * @return liqPrice_ The new liquidation price without the penalty.
      */
     function getLiqPriceFromDesiredLiqPrice(
         uint128 desiredLiqPriceWithoutPenalty,
@@ -34,7 +34,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
         HugeUint.Uint512 memory accumulator,
         int24 tickSpacing,
         uint24 liquidationPenalty
-    ) external view returns (uint128);
+    ) external view returns (uint128 liqPrice_);
 
     /**
      * @notice Gets the value of a long position when the asset price is equal to the given price, at the given
@@ -44,20 +44,20 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
      * @param posId The unique position identifier.
      * @param price The asset price.
      * @param timestamp The timestamp of the price.
-     * @return The position value in assets.
+     * @return value_ The position value in assets.
      */
     function getPositionValue(PositionId calldata posId, uint128 price, uint128 timestamp)
         external
         view
-        returns (int256);
+        returns (int256 value_);
 
     /**
      * @notice Gets the tick number corresponding to a given price, accounting for funding effects.
      * @dev Uses the stored parameters for calculation.
      * @param price The price.
-     * @return The tick number, a multiple of the tick spacing.
+     * @return tick_ The tick number, a multiple of the tick spacing.
      */
-    function getEffectiveTickForPrice(uint128 price) external view returns (int24);
+    function getEffectiveTickForPrice(uint128 price) external view returns (int24 tick_);
 
     /**
      * @notice Gets the tick number corresponding to a given price, taking into account the effects of funding.
@@ -66,7 +66,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
      * @param longTradingExpo The trading exposition of the long side.
      * @param accumulator The liquidation multiplier accumulator.
      * @param tickSpacing The tick spacing.
-     * @return The tick number, a multiple of the tick spacing.
+     * @return tick_ The tick number, a multiple of the tick spacing.
      */
     function getEffectiveTickForPrice(
         uint128 price,
@@ -74,7 +74,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator,
         int24 tickSpacing
-    ) external view returns (int24);
+    ) external view returns (int24 tick_);
 
     /**
      * @notice Retrieves the liquidation penalty assigned to the given tick if there are positions in it, otherwise
@@ -82,7 +82,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
      * @param tick The tick number.
      * @return liquidationPenalty_ The liquidation penalty, in tick spacing units.
      */
-    function getTickLiquidationPenalty(int24 tick) external view returns (uint24);
+    function getTickLiquidationPenalty(int24 tick) external view returns (uint24 liquidationPenalty_);
 
     /**
      * @notice Gets a long position identified by its tick, tick version and index.
@@ -102,9 +102,12 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
      * update, the function reverts with `UsdnProtocolTimestampTooOld`. The value cannot be below 0.
      * @param currentPrice The given asset price.
      * @param timestamp The timestamp corresponding to the given price.
-     * @return The long balance value in assets.
+     * @return available_ The long balance value in assets.
      */
-    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+        external
+        view
+        returns (uint256 available_);
 
     /**
      * @notice Gets the predicted value of the long trading exposure for the given asset price and timestamp.
@@ -113,7 +116,10 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
      * with `UsdnProtocolTimestampTooOld`. The value cannot be below 0.
      * @param currentPrice The given asset price.
      * @param timestamp The timestamp corresponding to the given price.
-     * @return The long trading exposure value in assets.
+     * @return expo_ The long trading exposure value in assets.
      */
-    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
+    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
+        external
+        view
+        returns (uint256 expo_);
 }
