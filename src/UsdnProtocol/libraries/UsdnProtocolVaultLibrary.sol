@@ -112,8 +112,7 @@ library UsdnProtocolVaultLibrary {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice See
-     * [initiateDeposit](../../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol/interface.IUsdnProtocolActions.html?#initiatedeposit).
+     * @notice See {IUsdnProtocolActions.initiateDeposit}.
      */
     function initiateDeposit(
         uint128 amount,
