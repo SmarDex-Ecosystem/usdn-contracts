@@ -77,16 +77,16 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     ) external view returns (int24);
 
     /**
-     * @notice Retrieves the liquidation penalty assigned to `tick` if there are positions in it, otherwise retrieve the
-     * current setting value from storage.
+     * @notice Retrieves the liquidation penalty assigned to the given tick if there are positions in it, otherwise
+     * retrieve the current setting value from storage.
      * @param tick The tick number.
      * @return liquidationPenalty_ The liquidation penalty, in tick spacing units.
      */
     function getTickLiquidationPenalty(int24 tick) external view returns (uint24);
 
     /**
-     * @notice Gets a long position identified by its tick, tickVersion and index.
-     * @param posId The unique position identifier (tick, tickVersion, index).
+     * @notice Gets a long position identified by its tick, tick version and index.
+     * @param posId The unique position identifier.
      * @return pos_ The position data.
      * @return liquidationPenalty_ The liquidation penalty for that position.
      */
