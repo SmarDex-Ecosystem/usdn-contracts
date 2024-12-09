@@ -602,7 +602,7 @@ library UsdnProtocolActionsLongLibrary {
         // our only choice is to liquidate this position only
         if (data_.startPrice <= liqPriceWithPenalty || data_.startPrice <= data_.liqPriceWithoutPenaltyNorFunding) {
             uint256 liquidationPrice = liqPriceWithPenalty;
-            if (data_.startPrice <= data_.liqPriceWithoutPenaltyNorFunding) {
+            if (data_.startPrice > liqPriceWithPenalty && data_.startPrice <= data_.liqPriceWithoutPenaltyNorFunding) {
                 liquidationPrice = data_.liqPriceWithoutPenaltyNorFunding;
             }
 
