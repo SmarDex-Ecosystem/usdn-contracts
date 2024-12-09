@@ -50,7 +50,7 @@ library UsdnProtocolVaultLibrary {
      * @param lastPrice The last known price of the asset.
      * @param isLiquidationPending Whether some liquidations still need to be performed.
      * @param feeBps The vault deposit fee (in basis points).
-     * @param totalExpo The total expo of the long side.
+     * @param totalExpo The total exposure of the long side.
      * @param balanceLong The balance of the long side.
      * @param balanceVault The balance of the vault including the funding.
      * @param usdnTotalShares Total minted shares of USDN.
@@ -88,7 +88,7 @@ library UsdnProtocolVaultLibrary {
     /**
      * @dev Structure to hold the transient data during `_initiateWithdrawal`.
      * @param usdnTotalShares The total supply of USDN shares.
-     * @param totalExpo The current total expo.
+     * @param totalExpo The current total exposure.
      * @param balanceLong The current long balance.
      * @param balanceVault The balance of the vault including the funding.
      * @param withdrawalAmountAfterFees The predicted amount of assets that will be withdrawn after fees.
@@ -893,7 +893,7 @@ library UsdnProtocolVaultLibrary {
     /**
      * @notice Prepares the pending action struct for a withdrawal and adds it to the queue.
      * @param to The recipient of the assets.
-     * @param validator The address that is supposed to validate the withdrawal.
+     * @param validator The address that is supposed to validate the withdrawal and receive the security deposit.
      * @param usdnShares The amount of USDN shares to burn.
      * @param securityDepositValue The value of the security deposit for the newly created pending action.
      * @param data The withdrawal action data.
@@ -1172,7 +1172,7 @@ library UsdnProtocolVaultLibrary {
     /**
      * @notice Checks and reverts if the withdrawn value breaks the imbalance limits.
      * @param withdrawalValue The withdrawal value in asset.
-     * @param totalExpo The current total expo of the long side.
+     * @param totalExpo The current total exposure of the long side.
      */
     function _checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) internal view {
         Types.Storage storage s = Utils._getMainStorage();
@@ -1187,7 +1187,7 @@ library UsdnProtocolVaultLibrary {
         int256 newVaultExpo =
             s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeSub(withdrawalValue.toInt256());
 
-        // an imbalance cannot be calculated if the new vault expo is zero or negative
+        // an imbalance cannot be calculated if the new vault exposure is zero or negative
         if (newVaultExpo <= 0) {
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
