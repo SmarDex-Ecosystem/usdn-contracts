@@ -5,6 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title RebalancerHandler
@@ -26,5 +27,14 @@ contract RebalancerHandler is Rebalancer, Test {
         bytes calldata delegationData
     ) external returns (address depositOwner_) {
         depositOwner_ = _verifyInitiateCloseDelegation(amount, to, userMinPrice, deadline, delegationData);
+    }
+
+    function i_initiateClosePosition(
+        InitiateCloseData memory data,
+        bytes calldata currentPriceData,
+        Types.PreviousActionsData calldata previousActionsData,
+        bytes calldata delegationData
+    ) external returns (Types.LongActionOutcome outcome_) {
+        return _initiateClosePosition(data, currentPriceData, previousActionsData, delegationData);
     }
 }
