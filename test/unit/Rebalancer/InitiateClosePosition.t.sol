@@ -120,7 +120,8 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
         RebalancerHandler.InitiateCloseData memory data;
         data.closeLockedUntil = block.timestamp;
 
-        // expect to not revert because of `RebalancerCloseLockedUntil`
+        // if the call reverts with {RebalancerInvalidAmount}, that means that the check on {_closeLockedUntil} passed
+        // as it is the first check in the function
         vm.expectRevert(abi.encodeWithSelector(IRebalancerErrors.RebalancerInvalidAmount.selector));
         rebalancer.i_initiateClosePosition(data, "", EMPTY_PREVIOUS_DATA, "");
     }
