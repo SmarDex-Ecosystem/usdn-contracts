@@ -262,8 +262,8 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
 
     /**
      * @custom:scenario A user wants to validate its action but the provided price is not fresh and the lastPrice is
-     * below its position's liquidation price (without liq penalty not fundings)
-     * @custom:given `startPrice` is above the liquidation price but below the liquidation price with fundings applied
+     * below its position's liquidation price (without liq penalty nor fundings)
+     * @custom:given `startPrice` is above the liquidation price but below the liquidation price without fundings
      * @custom:and fundings are enabled
      * @custom:when The user tries to validate its position
      * @custom:then Nothing happens
