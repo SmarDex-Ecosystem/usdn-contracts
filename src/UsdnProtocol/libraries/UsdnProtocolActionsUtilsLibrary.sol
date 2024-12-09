@@ -27,7 +27,7 @@ library UsdnProtocolActionsUtilsLibrary {
     using SignedMath for int256;
 
     /**
-     * @dev Data structure for the transient state of the `_validateMultipleActionable` function.
+     * @dev Data structure for the transient state of the {_validateMultipleActionable} function.
      * @param pending The candidate pending action to validate.
      * @param frontRawIndex The raw index of the front of the queue.
      * @param rawIndex The raw index of the candidate pending action.
@@ -144,7 +144,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /**
      * @notice Updates the protocol state, then prepares the data for the initiate close position action.
-     * @dev Reverts if the imbalance limit is reached, or if any of the checks in `_checkInitiateClosePosition` fail
+     * @dev Reverts if the imbalance limit is reached, or if any of the checks in {_checkInitiateClosePosition} fail
      * Returns without creating a pending action if the position gets liquidated in this transaction or if there are
      * still positions pending liquidation.
      * @param params The parameters for the {_prepareClosePositionData} function.
@@ -220,7 +220,8 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /**
      * @notice Validates multiple actionable pending actions.
-     * Early return in case of the raw indices length doesn't match the price length.
+     * Early return in case of the previous actions raw indices length doesn't match
+     * the previous actions price data length.
      * @param previousActionsData The data for the actions to validate (price and raw indices).
      * @param maxValidations The maximum number of validations to perform.
      * @return validatedActions_ The number of validated actions.
@@ -307,8 +308,8 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Checks whether a pending action is actionable, i.e any user can validate it and retrieve the security
-     * deposit.
+     * @notice Checks whether a pending action is actionable, i.e any user
+     * can validate it and retrieve the security deposit.
      * @dev Between `initiateTimestamp` and `initiateTimestamp + lowLatencyDeadline`,
      * the validator receives the security deposit.
      * Between `initiateTimestamp + lowLatencyDelay` and `initiateTimestamp + lowLatencyDelay + onChainDeadline`,
@@ -374,7 +375,8 @@ library UsdnProtocolActionsUtilsLibrary {
     /**
      * @notice Performs checks for the initiate close position action.
      * @dev Reverts if the to address is zero, the position was not validated yet, the position is not owned by the
-     * user, the amount to close is higher than the position amount, or the amount to close is zero.
+     * user and there is not delegated, the amount to close is higher than the position amount, or the
+     * amount to close is zero, the delegation is invalid.
      * @param pos The position to close.
      * @param params The parameters for the {_prepareClosePositionData} function.
      */
