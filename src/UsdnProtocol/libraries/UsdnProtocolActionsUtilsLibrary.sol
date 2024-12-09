@@ -46,7 +46,7 @@ library UsdnProtocolActionsUtilsLibrary {
     /*                             External functions                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocolActions}.
+    /// @notice See {IUsdnProtocolActions.liquidate}.
     function liquidate(bytes calldata currentPriceData)
         external
         returns (Types.LiqTickInfo[] memory liquidatedTicks_)
@@ -66,7 +66,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Utils._checkPendingFee();
     }
 
-    /// @notice See {IUsdnProtocolActions}.
+    /// @notice See {IUsdnProtocolActions.validateActionablePendingActions}.
     function validateActionablePendingActions(
         Types.PreviousActionsData calldata previousActionsData,
         uint256 maxValidations
@@ -80,7 +80,7 @@ library UsdnProtocolActionsUtilsLibrary {
         Utils._checkPendingFee();
     }
 
-    /// @notice See {IUsdnProtocolActions}.
+    /// @notice See {IUsdnProtocolActions.transferPositionOwnership}.
     function transferPositionOwnership(
         Types.PositionId calldata posId,
         address newOwner,
@@ -122,7 +122,7 @@ library UsdnProtocolActionsUtilsLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocolActions}.
+    /// @notice See {IUsdnProtocolLong.getLongPosition}.
     function getLongPosition(Types.PositionId memory posId)
         public
         view
@@ -143,10 +143,11 @@ library UsdnProtocolActionsUtilsLibrary {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Updates protocol balances, then prepares the data for the initiate close position action.
+     * @notice Updates the protocol state, then prepares the data for the initiate close position action.
      * @dev Reverts if the imbalance limit is reached, or if any of the checks in `_checkInitiateClosePosition` fail
-     * Returns without creating a pending action if the position gets liquidated in this transaction.
-     * @param params The parameters for the _prepareClosePositionData function.
+     * Returns without creating a pending action if the position gets liquidated in this transaction or if there are
+     * still positions pending liquidation.
+     * @param params The parameters for the {_prepareClosePositionData} function.
      * @return data_ The close position data.
      * @return liquidated_ Whether the position was liquidated and the caller should return early.
      */
@@ -219,6 +220,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /**
      * @notice Validates multiple actionable pending actions.
+     * Early return in case of the raw indices length doesn't match the price length.
      * @param previousActionsData The data for the actions to validate (price and raw indices).
      * @param maxValidations The maximum number of validations to perform.
      * @return validatedActions_ The number of validated actions.
@@ -446,7 +448,7 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Performs the `initiateClosePosition` EIP712 delegation signature verification.
+     * @notice Performs the {IUsdnProtocolActions.initiateClosePosition} EIP712 delegation signature verification.
      * @dev Reverts if the function arguments don't match those included in the signature
      * and if the signer isn't the owner of the position.
      * @param params The parameters for the {_prepareClosePositionData} function.
@@ -484,7 +486,7 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Performs the {transferPositionOwnership} EIP712 delegation signature verification.
+     * @notice Performs the {IUsdnProtocolActions.transferPositionOwnership} EIP712 delegation signature verification.
      * @dev Reverts if the function arguments don't match those included in the signature
      * and if the signer isn't the owner of the position.
      * @param posId The unique identifier of the position.
