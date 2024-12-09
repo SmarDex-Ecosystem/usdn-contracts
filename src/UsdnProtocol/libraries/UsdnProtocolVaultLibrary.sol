@@ -111,9 +111,7 @@ library UsdnProtocolVaultLibrary {
     /*                             External functions                             */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @notice See {IUsdnProtocolActions.initiateDeposit}.
-     */
+    /// @notice See {IUsdnProtocolActions.initiateDeposit}.
     function initiateDeposit(
         uint128 amount,
         uint256 sharesOutMin,
@@ -168,10 +166,7 @@ library UsdnProtocolVaultLibrary {
         Utils._checkPendingFee();
     }
 
-    /**
-     * @notice See
-     * [validateDeposit](../../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol/interface.IUsdnProtocolActions.html?#validatedeposit).
-     */
+    /// @notice See {IUsdnProtocolActions.validateDeposit}.
     function validateDeposit(
         address payable validator,
         bytes calldata depositPriceData,
@@ -196,10 +191,7 @@ library UsdnProtocolVaultLibrary {
         Utils._checkPendingFee();
     }
 
-    /**
-     * @notice See
-     * [initiateWithdrawal](../../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol/interface.IUsdnProtocolActions.html?#initiatewithdrawal).
-     */
+    /// @notice See {IUsdnProtocolActions.initiateWithdrawal}.
     function initiateWithdrawal(
         uint152 usdnShares,
         uint256 amountOutMin,
@@ -254,10 +246,7 @@ library UsdnProtocolVaultLibrary {
         Utils._checkPendingFee();
     }
 
-    /**
-     * @notice See
-     * [validateWithdrawal](../../../interfaces/UsdnProtocol/IUsdnProtocolActions.sol/interface.IUsdnProtocolActions.html?#validatewithdrawal).
-     */
+    /// @notice See {IUsdnProtocolActions.IUsdnProtocolActions}.
     function validateWithdrawal(
         address payable validator,
         bytes calldata withdrawalPriceData,
@@ -282,10 +271,7 @@ library UsdnProtocolVaultLibrary {
         Utils._checkPendingFee();
     }
 
-    /**
-     * @notice See
-     * [getActionablePendingActions](../../../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol/interface.IUsdnProtocolFallback.html?#getactionablependingactions).
-     */
+    /// @notice See {IUsdnProtocolFallback.getActionablePendingActions}.
     function getActionablePendingActions(address currentUser, uint256 lookAhead, uint256 maxIter)
         external
         view
@@ -389,10 +375,7 @@ library UsdnProtocolVaultLibrary {
         }
     }
 
-    /**
-     * @notice See
-     * [usdnPrice](../../../interfaces/UsdnProtocol/IUsdnProtocolVault.sol/interface.IUsdnProtocolVault.html?#usdnprice-1).
-     */
+    /// @notice See {IUsdnProtocolVault.usdnPrice(uint128)}.
     function usdnPrice(uint128 currentPrice) external view returns (uint256 price_) {
         price_ = usdnPrice(currentPrice, uint128(block.timestamp));
     }
@@ -401,10 +384,7 @@ library UsdnProtocolVaultLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @notice See
-     * [usdnPrice](../../../interfaces/UsdnProtocol/IUsdnProtocolVault.sol/interface.IUsdnProtocolVault.html?#usdnprice).
-     */
+    /// @notice See {IUsdnProtocolVault.usdnPrice(uint128, uint128)}.
     function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -416,10 +396,7 @@ library UsdnProtocolVaultLibrary {
         );
     }
 
-    /**
-     * @notice See
-     * [vaultAssetAvailableWithFunding](../../../interfaces/UsdnProtocol/IUsdnProtocolVault.sol/interface.IUsdnProtocolVault.html?#vaultassetavailablewithfunding).
-     */
+    /// @notice See {IUsdnProtocolVault.vaultAssetAvailableWithFunding}.
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
