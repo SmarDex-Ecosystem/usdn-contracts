@@ -88,7 +88,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
      * @notice Gets a long position identified by its tick, tickVersion and index.
      * @param posId The unique position identifier (tick, tickVersion, index).
      * @return pos_ The position data.
-     * @return liquidationPenalty_ The liquidation penalty for that position (and associated tick).
+     * @return liquidationPenalty_ The liquidation penalty for that position.
      */
     function getLongPosition(PositionId calldata posId)
         external
@@ -97,11 +97,11 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
 
     /**
      * @notice Gets the predicted value of the long balance for the given asset price and timestamp.
-     * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
+     * @dev The effects of the funding and any PnL of the long positions since the last contract state
      * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
      * update, the function reverts with `UsdnProtocolTimestampTooOld`. The value cannot be below 0.
-     * @param currentPrice The current or predicted asset price.
-     * @param timestamp The timestamp corresponding to `currentPrice`.
+     * @param currentPrice The given asset price.
+     * @param timestamp The timestamp corresponding to the given price.
      * @return The long balance value in assets.
      */
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
@@ -111,8 +111,8 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
      * @dev The effects of the funding and any profit or loss of the long positions since the last contract state
      * update is taken into account. If the provided timestamp is older than the last state update, the function reverts
      * with `UsdnProtocolTimestampTooOld`. The value cannot be below 0.
-     * @param currentPrice The current or predicted asset price.
-     * @param timestamp The timestamp corresponding to `currentPrice`.
+     * @param currentPrice The given asset price.
+     * @param timestamp The timestamp corresponding to the given price.
      * @return The long trading exposure value in assets.
      */
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
