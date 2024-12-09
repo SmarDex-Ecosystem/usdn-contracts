@@ -722,7 +722,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         Types.PreviousActionsData calldata previousActionsData,
         bytes calldata delegationData
     ) internal returns (Types.LongActionOutcome outcome_) {
-        if (block.timestamp <= data.closeLockedUntil) {
+        if (block.timestamp < data.closeLockedUntil) {
             revert RebalancerCloseLockedUntil(data.closeLockedUntil);
         }
         if (data.amount == 0) {
