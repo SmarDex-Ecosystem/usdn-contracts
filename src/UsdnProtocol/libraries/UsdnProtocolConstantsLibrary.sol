@@ -64,9 +64,7 @@ library UsdnProtocolConstantsLibrary {
     /*                                   Setters                                  */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @notice Minimum iterations when searching for actionable pending actions in {getActionablePendingActions}.
-     */
+    /// @notice Minimum iterations when searching for actionable pending actions in {getActionablePendingActions}.
     uint256 internal constant MIN_ACTIONABLE_PENDING_ACTIONS_ITER = 20;
 
     /// @notice Minimum validation deadline for validators.
