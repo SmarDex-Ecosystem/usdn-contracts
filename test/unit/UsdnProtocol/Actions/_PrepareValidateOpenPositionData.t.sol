@@ -187,9 +187,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
      * below its position's liquidation price
      * @custom:given Partial liquidations occurred that left the user's tick un-liquidated
      * @custom:when The user tries to validate its position
-     * @custom:then Nothing happens
-     * @custom:when The lastPrice value is updated and the user tries to validate again
-     * @custom:then The position was not liquidated and matching data is returned
+     * @custom:then The position is liquidated
      */
     function test_prepareValidateOpenPositionDataWithStartPriceLowerThanLiquidationPrice() public {
         skip(1 hours);
@@ -266,8 +264,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
      * @custom:given `startPrice` is above the liquidation price but below the liquidation price without fundings
      * @custom:and fundings are enabled
      * @custom:when The user tries to validate its position
-     * @custom:then Nothing happens
-     * @custom:and The action is not validated and should be marked as "to liquidate"
+     * @custom:then The position is liquidated
      */
     function test_prepareValidateOpenPositionDataWithStartPriceLowerThanLiquidationPriceWithoutPenaltyNorFunding()
         public
