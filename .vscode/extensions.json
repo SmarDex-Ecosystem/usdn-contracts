@@ -1,4 +1,9 @@
 {
-  "recommendations": ["nomicfoundation.hardhat-solidity", "stackbreak.comment-divider", "biomejs.biome"],
+  "recommendations": [
+    "nomicfoundation.hardhat-solidity",
+    "stackbreak.comment-divider",
+    "biomejs.biome",
+    "myriad-dreamin.tinymist"
+  ],
   "unwantedRecommendations": []
 }

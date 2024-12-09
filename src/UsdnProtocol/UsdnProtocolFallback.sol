@@ -45,7 +45,7 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function tickHash(int24 tick, uint256 version) external pure returns (bytes32) {
+    function tickHash(int24 tick, uint256 version) external pure returns (bytes32 hash_) {
         return Utils._tickHash(tick, version);
     }
 
@@ -140,225 +140,229 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getTickSpacing() external view returns (int24) {
+    function getTickSpacing() external view returns (int24 tickSpacing_) {
         return Utils._getMainStorage()._tickSpacing;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getAsset() external view returns (IERC20Metadata) {
+    function getAsset() external view returns (IERC20Metadata asset_) {
         return Utils._getMainStorage()._asset;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getSdex() external view returns (IERC20Metadata) {
+    function getSdex() external view returns (IERC20Metadata sdex_) {
         return Utils._getMainStorage()._sdex;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getPriceFeedDecimals() external view returns (uint8) {
+    function getPriceFeedDecimals() external view returns (uint8 decimals_) {
         return Utils._getMainStorage()._priceFeedDecimals;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getAssetDecimals() external view returns (uint8) {
+    function getAssetDecimals() external view returns (uint8 decimals_) {
         return Utils._getMainStorage()._assetDecimals;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getUsdn() external view returns (IUsdn) {
+    function getUsdn() external view returns (IUsdn usdn_) {
         return Utils._getMainStorage()._usdn;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getUsdnMinDivisor() external view returns (uint256) {
+    function getUsdnMinDivisor() external view returns (uint256 minDivisor_) {
         return Utils._getMainStorage()._usdnMinDivisor;
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                                 Parameters getters                         */
+    /*                             Parameters getters                             */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getOracleMiddleware() external view returns (IBaseOracleMiddleware) {
+    function getOracleMiddleware() external view returns (IBaseOracleMiddleware oracleMiddleware_) {
         return Utils._getMainStorage()._oracleMiddleware;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getLiquidationRewardsManager() external view returns (IBaseLiquidationRewardsManager) {
+    function getLiquidationRewardsManager()
+        external
+        view
+        returns (IBaseLiquidationRewardsManager liquidationRewardsManager_)
+    {
         return Utils._getMainStorage()._liquidationRewardsManager;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getRebalancer() external view returns (IBaseRebalancer) {
+    function getRebalancer() external view returns (IBaseRebalancer rebalancer_) {
         return Utils._getMainStorage()._rebalancer;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getMinLeverage() external view returns (uint256) {
+    function getMinLeverage() external view returns (uint256 minLeverage_) {
         return Utils._getMainStorage()._minLeverage;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getMaxLeverage() external view returns (uint256) {
+    function getMaxLeverage() external view returns (uint256 maxLeverage_) {
         return Utils._getMainStorage()._maxLeverage;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getLowLatencyValidatorDeadline() external view returns (uint128) {
+    function getLowLatencyValidatorDeadline() external view returns (uint128 deadline_) {
         return Utils._getMainStorage()._lowLatencyValidatorDeadline;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getOnChainValidatorDeadline() external view returns (uint128) {
+    function getOnChainValidatorDeadline() external view returns (uint128 deadline_) {
         return Utils._getMainStorage()._onChainValidatorDeadline;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getLiquidationPenalty() external view returns (uint24) {
+    function getLiquidationPenalty() external view returns (uint24 liquidationPenalty_) {
         return Utils._getMainStorage()._liquidationPenalty;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getSafetyMarginBps() external view returns (uint256) {
+    function getSafetyMarginBps() external view returns (uint256 safetyMarginBps_) {
         return Utils._getMainStorage()._safetyMarginBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getLiquidationIteration() external view returns (uint16) {
+    function getLiquidationIteration() external view returns (uint16 iterations_) {
         return Utils._getMainStorage()._liquidationIteration;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getEMAPeriod() external view returns (uint128) {
+    function getEMAPeriod() external view returns (uint128 period_) {
         return Utils._getMainStorage()._EMAPeriod;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getFundingSF() external view returns (uint256) {
+    function getFundingSF() external view returns (uint256 scalingFactor_) {
         return Utils._getMainStorage()._fundingSF;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getProtocolFeeBps() external view returns (uint16) {
+    function getProtocolFeeBps() external view returns (uint16 feeBps_) {
         return Utils._getMainStorage()._protocolFeeBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getPositionFeeBps() external view returns (uint16) {
+    function getPositionFeeBps() external view returns (uint16 feeBps_) {
         return Utils._getMainStorage()._positionFeeBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getVaultFeeBps() external view returns (uint16) {
+    function getVaultFeeBps() external view returns (uint16 feeBps_) {
         return Utils._getMainStorage()._vaultFeeBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getRebalancerBonusBps() external view returns (uint16) {
+    function getRebalancerBonusBps() external view returns (uint16 bonusBps_) {
         return Utils._getMainStorage()._rebalancerBonusBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getSdexBurnOnDepositRatio() external view returns (uint32) {
+    function getSdexBurnOnDepositRatio() external view returns (uint32 ratio_) {
         return Utils._getMainStorage()._sdexBurnOnDepositRatio;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getSecurityDepositValue() external view returns (uint64) {
+    function getSecurityDepositValue() external view returns (uint64 securityDeposit_) {
         return Utils._getMainStorage()._securityDepositValue;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getFeeThreshold() external view returns (uint256) {
+    function getFeeThreshold() external view returns (uint256 threshold_) {
         return Utils._getMainStorage()._feeThreshold;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getFeeCollector() external view returns (address) {
+    function getFeeCollector() external view returns (address feeCollector_) {
         return Utils._getMainStorage()._feeCollector;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getMiddlewareValidationDelay() external view returns (uint256) {
+    function getMiddlewareValidationDelay() external view returns (uint256 delay_) {
         return Utils._getMainStorage()._oracleMiddleware.getValidationDelay();
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getTargetUsdnPrice() external view returns (uint128) {
+    function getTargetUsdnPrice() external view returns (uint128 price_) {
         return Utils._getMainStorage()._targetUsdnPrice;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getUsdnRebaseThreshold() external view returns (uint128) {
+    function getUsdnRebaseThreshold() external view returns (uint128 threshold_) {
         return Utils._getMainStorage()._usdnRebaseThreshold;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getMinLongPosition() external view returns (uint256) {
+    function getMinLongPosition() external view returns (uint256 minLongPosition_) {
         return Utils._getMainStorage()._minLongPosition;
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                                    State getters                           */
+    /*                                State getters                               */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getLastFundingPerDay() external view returns (int256) {
+    function getLastFundingPerDay() external view returns (int256 lastFunding_) {
         return Utils._getMainStorage()._lastFundingPerDay;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getLastPrice() external view returns (uint128) {
+    function getLastPrice() external view returns (uint128 lastPrice_) {
         return Utils._getMainStorage()._lastPrice;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getLastUpdateTimestamp() external view returns (uint128) {
+    function getLastUpdateTimestamp() external view returns (uint128 lastTimestamp_) {
         return Utils._getMainStorage()._lastUpdateTimestamp;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getPendingProtocolFee() external view returns (uint256) {
+    function getPendingProtocolFee() external view returns (uint256 protocolFees_) {
         return Utils._getMainStorage()._pendingProtocolFee;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getBalanceVault() external view returns (uint256) {
+    function getBalanceVault() external view returns (uint256 balanceVault_) {
         return Utils._getMainStorage()._balanceVault;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getPendingBalanceVault() external view returns (int256) {
+    function getPendingBalanceVault() external view returns (int256 pendingBalanceVault_) {
         return Utils._getMainStorage()._pendingBalanceVault;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getEMA() external view returns (int256) {
+    function getEMA() external view returns (int256 ema_) {
         return Utils._getMainStorage()._EMA;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getBalanceLong() external view returns (uint256) {
+    function getBalanceLong() external view returns (uint256 balanceLong_) {
         return Utils._getMainStorage()._balanceLong;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getTotalExpo() external view returns (uint256) {
+    function getTotalExpo() external view returns (uint256 totalExpo_) {
         return Utils._getMainStorage()._totalExpo;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getLiqMultiplierAccumulator() external view returns (HugeUint.Uint512 memory) {
+    function getLiqMultiplierAccumulator() external view returns (HugeUint.Uint512 memory accumulator_) {
         return Utils._getMainStorage()._liqMultiplierAccumulator;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getTickVersion(int24 tick) external view returns (uint256) {
+    function getTickVersion(int24 tick) external view returns (uint256 tickVersion_) {
         return Utils._getMainStorage()._tickVersion[tick];
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getTickData(int24 tick) external view returns (TickData memory) {
+    function getTickData(int24 tick) external view returns (TickData memory tickData_) {
         Storage storage s = Utils._getMainStorage();
 
         bytes32 cachedTickHash = Utils._tickHash(tick, s._tickVersion[tick]);
@@ -366,7 +370,7 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory) {
+    function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory position_) {
         Storage storage s = Utils._getMainStorage();
 
         uint256 version = s._tickVersion[tick];
@@ -375,29 +379,29 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getHighestPopulatedTick() external view returns (int24) {
+    function getHighestPopulatedTick() external view returns (int24 tick_) {
         Storage storage s = Utils._getMainStorage();
 
         return Long._findHighestPopulatedTick(s._highestPopulatedTick);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getTotalLongPositions() external view returns (uint256) {
+    function getTotalLongPositions() external view returns (uint256 totalLongPositions_) {
         return Utils._getMainStorage()._totalLongPositions;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getDepositExpoImbalanceLimitBps() external view returns (int256) {
+    function getDepositExpoImbalanceLimitBps() external view returns (int256 depositExpoImbalanceLimitBps_) {
         return Utils._getMainStorage()._depositExpoImbalanceLimitBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getWithdrawalExpoImbalanceLimitBps() external view returns (int256) {
+    function getWithdrawalExpoImbalanceLimitBps() external view returns (int256 withdrawalExpoImbalanceLimitBps_) {
         return Utils._getMainStorage()._withdrawalExpoImbalanceLimitBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getOpenExpoImbalanceLimitBps() external view returns (int256) {
+    function getOpenExpoImbalanceLimitBps() external view returns (int256 openExpoImbalanceLimitBps_) {
         return Utils._getMainStorage()._openExpoImbalanceLimitBps;
     }
 
@@ -421,18 +425,18 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getFallbackAddress() external view returns (address) {
+    function getFallbackAddress() external view returns (address fallback_) {
         return Utils._getMainStorage()._protocolFallbackAddr;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function isPaused() external view returns (bool) {
+    function isPaused() external view returns (bool isPaused_) {
         return paused();
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getNonce(address owner) external view returns (uint256) {
-        return Utils._getMainStorage()._nonce[owner];
+    function getNonce(address user) external view returns (uint256 nonce_) {
+        return Utils._getMainStorage()._nonce[user];
     }
 
     /* -------------------------------------------------------------------------- */
@@ -600,7 +604,7 @@ contract UsdnProtocolFallback is
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                            PAUSER_ROLE                                     */
+    /*                                 PAUSER_ROLE                                */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -615,7 +619,7 @@ contract UsdnProtocolFallback is
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                            UNPAUSER_ROLE                                     */
+    /*                                UNPAUSER_ROLE                               */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolFallback

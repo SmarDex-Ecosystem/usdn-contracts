@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 import { UsdnProtocolConstantsLibrary as Constant } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
 /**
  * @custom:feature Test the {_calcRebalancerPositionTick} internal function of the long layer
@@ -12,6 +14,8 @@ import { UsdnProtocolConstantsLibrary as Constant } from
  * @custom:and 100 ether in the long side
  */
 contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixture {
+    using HugeUint for HugeUint.Uint512;
+
     uint256 vaultBalance = 200 ether;
     uint256 longBalance = 100 ether;
 
@@ -166,27 +170,87 @@ contract TestUsdnProtocolLongCalcRebalancerPositionTick is UsdnProtocolBaseFixtu
     }
 
     /**
-     * @custom:scenario The sentinel value is returned if there is no trading expo to fill
+     * @custom:scenario Calculate the position tick after the liquidation penalty has changed
+     * @custom:given Liquidation penalty is set to 0
+     * @custom:and Protocol has one position with 10 ether
+     * @custom:when The liquidation penalty is changed to 500
+     * @custom:and _calcRebalancerPositionTick is called
+     * @custom:then The liquidation penalty should be equal to 0
+     * @custom:and The tick should be the same as before the liquidation penalty change
+     */
+    function test_calcRebalancerPositionTickLiquidationPenaltyChanged() public {
+        uint128 amount = 20 ether;
+        uint256 totalExpo = 80 ether;
+        uint256 balanceLong = 20 ether;
+        uint256 balanceVault = 100 ether;
+
+        vm.prank(ADMIN);
+        protocol.setLiquidationPenalty(0);
+
+        PositionId memory posId = setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 40 ether,
+                desiredLiqPrice: DEFAULT_PARAMS.initialPrice / 2,
+                price: DEFAULT_PARAMS.initialPrice
+            })
+        );
+
+        (int24 tickBefore,, uint24 liquidationPenaltyBefore) = protocol.i_calcRebalancerPositionTick(
+            DEFAULT_PARAMS.initialPrice,
+            amount,
+            protocol.getMaxLeverage(),
+            totalExpo,
+            balanceLong,
+            balanceVault,
+            protocol.getLiqMultiplierAccumulator()
+        );
+
+        assertEq(liquidationPenaltyBefore, 0, "liquidationPenalty should be equal to 0");
+
+        vm.prank(ADMIN);
+        protocol.setLiquidationPenalty(500);
+
+        (int24 tickAfter,, uint24 liquidationPenaltyAfter) = protocol.i_calcRebalancerPositionTick(
+            DEFAULT_PARAMS.initialPrice,
+            amount,
+            protocol.getMaxLeverage(),
+            totalExpo,
+            balanceLong - 1.5 ether, // we need to change the tradingExpo(totalExpo - balanceLong) to have the same
+            // because of the the new liquidation penalty
+            balanceVault,
+            protocol.getLiqMultiplierAccumulator()
+        );
+
+        assertEq(tickBefore, posId.tick, "tickBefore should be equal to posId.tick");
+        assertEq(tickAfter, posId.tick, "tickAfter should be equal to posId.tick");
+        assertEq(liquidationPenaltyAfter, 0, "liquidationPenalty should not have changed");
+    }
+
+    /**
+     * @custom:scenario Revert when there is no trading expo to fill
      * @custom:given The trading expo is equal to the vault balance
      * @custom:and An amount of 1 ether
      * @custom:when _calcRebalancerPositionTick is called with no trading expo to fill
-     * @custom:then The result is NO_POSITION_TICK sentinel value
+     * @custom:then The function reverts with UsdnProtocolInvalidRebalancerTick
      */
-    function test_calcRebalancerPositionTickWithNoTradingExpoToFill() public view {
+    function test_RevertWhen_calcRebalancerPositionTickWithNoTradingExpoToFill() public {
         uint256 rebalancerMaxLeverage = protocol.getMaxLeverage() + 1;
         uint256 totalExpo = vaultBalance + longBalance;
         uint128 amount = 1 ether;
 
-        int24 expectedTick = Constant.NO_POSITION_TICK;
-        (int24 tick,,) = protocol.i_calcRebalancerPositionTick(
+        HugeUint.Uint512 memory accumulator = protocol.getLiqMultiplierAccumulator();
+
+        vm.expectRevert(UsdnProtocolInvalidRebalancerTick.selector);
+        protocol.i_calcRebalancerPositionTick(
             DEFAULT_PARAMS.initialPrice,
             amount,
             rebalancerMaxLeverage,
             totalExpo,
             longBalance,
             vaultBalance,
-            protocol.getLiqMultiplierAccumulator()
+            accumulator
         );
-        assertEq(tick, expectedTick, "The result should be equal to the expected tick");
     }
 }
