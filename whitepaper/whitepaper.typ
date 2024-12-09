@@ -92,6 +92,10 @@ balance and total supply adjustment (rebase) if the price falls below \$1.
 
 = Long
 
+The long side manages user positions, each of which has an associated leverage. The two primary actions for the long side are openPosition and closePosition.
+
+The openPosition action enables users to send assets and create a position by specifying a price from the oracle and a desired liquidation price. The closePosition action allows users to close a position, either partially or fully, and reclaim their assets.
+
 == Tick
 
 == PNL
