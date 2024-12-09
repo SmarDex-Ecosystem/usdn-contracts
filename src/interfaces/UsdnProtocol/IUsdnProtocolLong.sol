@@ -54,14 +54,14 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     /**
      * @notice Gets the tick number corresponding to a given price, accounting for funding effects.
      * @dev Uses the stored parameters for calculation.
-     * @param price The price.
+     * @param price The asset price.
      * @return tick_ The tick number, a multiple of the tick spacing.
      */
     function getEffectiveTickForPrice(uint128 price) external view returns (int24 tick_);
 
     /**
      * @notice Gets the tick number corresponding to a given price, taking into account the effects of funding.
-     * @param price The price.
+     * @param price The asset price.
      * @param assetPrice The current price of the asset.
      * @param longTradingExpo The trading exposition of the long side.
      * @param accumulator The liquidation multiplier accumulator.
