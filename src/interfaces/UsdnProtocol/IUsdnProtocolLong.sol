@@ -60,7 +60,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     function getEffectiveTickForPrice(uint128 price) external view returns (int24 tick_);
 
     /**
-     * @notice Gets the tick number corresponding to a given price, taking into account the effects of funding.
+     * @notice Gets the tick number corresponding to a given price, accounting for funding effects.
      * @param price The asset price.
      * @param assetPrice The current price of the asset.
      * @param longTradingExpo The trading exposition of the long side.
