@@ -6,7 +6,7 @@ import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolLong
- * @notice Interface for the long side layer of the USDN protocol
+ * @notice Interface for the long side layer of the USDN protocol.
  */
 interface IUsdnProtocolLong is IUsdnProtocolTypes {
     /**
@@ -21,7 +21,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
      * @notice Gets the liquidation price from a desired one by taking into account the tick rounding.
      * @param desiredLiqPriceWithoutPenalty The desired liquidation price without the penalty.
      * @param assetPrice The current price of the asset.
-     * @param longTradingExpo The trading expo of the long side.
+     * @param longTradingExpo The trading exposition of the long side.
      * @param accumulator The liquidation multiplier accumulator.
      * @param tickSpacing The tick spacing.
      * @param liquidationPenalty The liquidation penalty set on the tick.
@@ -39,7 +39,7 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
     /**
      * @notice Gets the value of a long position when the asset price is equal to the given price, at the given
      * timestamp.
-     * @dev If the current price is smaller than the liquidation price of the position without a liquidation penalty,
+     * @dev If the current price is smaller than the liquidation price of the position without the liquidation penalty,
      * then the value of the position is negative.
      * @param posId The unique position identifier.
      * @param price The asset price.
@@ -52,19 +52,18 @@ interface IUsdnProtocolLong is IUsdnProtocolTypes {
         returns (int256);
 
     /**
-     * @notice Gets the tick number corresponding to a given price.
-     * @dev Uses the values from storage for the various variables.
+     * @notice Gets the tick number corresponding to a given price, accounting for funding effects.
+     * @dev Uses the stored parameters for calculation.
      * @param price The price.
      * @return The tick number, a multiple of the tick spacing.
      */
     function getEffectiveTickForPrice(uint128 price) external view returns (int24);
 
     /**
-     * @notice Gets the tick number corresponding to a given price.
-     * @dev This takes into account the effects of the funding and respects the tick spacing.
+     * @notice Gets the tick number corresponding to a given price, taking into account the effects of funding.
      * @param price The price.
      * @param assetPrice The current price of the asset.
-     * @param longTradingExpo The trading expo of the long side (total expo - balance long).
+     * @param longTradingExpo The trading exposition of the long side.
      * @param accumulator The liquidation multiplier accumulator.
      * @param tickSpacing The tick spacing.
      * @return The tick number, a multiple of the tick spacing.
