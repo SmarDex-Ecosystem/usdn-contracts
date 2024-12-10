@@ -631,7 +631,6 @@ library UsdnProtocolActionsLongLibrary {
 
         // calculate the leverage of the position without considering the penalty nor the funding by using the
         // multiplier state at T+24
-        // reverts if liqPriceWithoutPenaltyNorFunding >= startPrice
         data_.leverage = Utils._getLeverage(data_.startPrice, data_.liqPriceWithoutPenaltyNorFunding);
     }
 
