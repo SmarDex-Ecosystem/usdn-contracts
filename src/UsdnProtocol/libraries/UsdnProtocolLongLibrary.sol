@@ -31,7 +31,7 @@ library UsdnProtocolLongLibrary {
     using SignedMath for int256;
 
     /**
-     * @notice Structure to hold the temporary data during liquidations.
+     * @dev Structure to hold the temporary data during liquidations.
      * @param tempLongBalance The updated long balance not saved into storage yet.
      * @param tempVaultBalance The updated vault balance not saved into storage yet.
      * @param currentTick The current tick (corresponding to the current asset price).
@@ -58,7 +58,7 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Data structure for the `_applyPnlAndFundingAndLiquidate` function.
+     * @dev Data structure for the `_applyPnlAndFundingAndLiquidate` function.
      * @param tempLongBalance The updated long balance not saved into storage yet.
      * @param tempVaultBalance The updated vault balance not saved into storage yet.
      * @param lastPrice The last price used to update the protocol.
@@ -76,7 +76,7 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Data structure for the `_triggerRebalancer` function.
+     * @dev Data structure for the `_triggerRebalancer` function.
      * @param positionAmount The amount of assets in the rebalancer's position.
      * @param rebalancerMaxLeverage The maximum leverage of the rebalancer.
      * @param rebalancerPosId The ID of the rebalancer's position.
@@ -93,10 +93,7 @@ library UsdnProtocolLongLibrary {
     /*                             External functions                             */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @notice See
-     * [getPositionValue](../../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol/interface.IUsdnProtocolLong.html?#getpositionvalue).
-     */
+    /// @notice See {IUsdnProtocolLong.getPositionValue}.
     function getPositionValue(Types.PositionId calldata posId, uint128 price, uint128 timestamp)
         external
         view
@@ -115,10 +112,7 @@ library UsdnProtocolLongLibrary {
         value_ = Utils._positionValue(pos.totalExpo, price, liqPrice);
     }
 
-    /**
-     * @notice See
-     * [getEffectiveTickForPrice](../../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol/interface.IUsdnProtocolLong.html?#geteffectivetickforprice).
-     */
+    /// @notice See {IUsdnProtocolLong.getEffectiveTickForPrice(uint128)}.
     function getEffectiveTickForPrice(uint128 price) external view returns (int24 tick_) {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -131,29 +125,20 @@ library UsdnProtocolLongLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @notice See
-     * [minTick](../../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol/interface.IUsdnProtocolLong.html?#mintick).
-     */
+    /// @notice See {IUsdnProtocolLong.minTick}.
     function minTick() public view returns (int24 tick_) {
         Types.Storage storage s = Utils._getMainStorage();
 
         tick_ = TickMath.minUsableTick(s._tickSpacing);
     }
 
-    /**
-     * @notice See
-     * [getTickLiquidationPenalty](../../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol/interface.IUsdnProtocolLong.html?#gettickliquidationpenalty).
-     */
+    /// @notice See {IUsdnProtocolLong.getTickLiquidationPenalty}.
     function getTickLiquidationPenalty(int24 tick) public view returns (uint24 liquidationPenalty_) {
         (bytes32 tickHash,) = Utils._tickHash(tick);
         liquidationPenalty_ = _getTickLiquidationPenalty(tickHash);
     }
 
-    /**
-     * @notice See
-     * [getEffectiveTickForPrice](../../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol/interface.IUsdnProtocolLong.html?#geteffectivetickforprice-1).
-     */
+    /// @notice See {IUsdnProtocolLong.getEffectiveTickForPrice(uint128,uint256,uint256,HugeUint.Uint512,int24)}.
     function getEffectiveTickForPrice(
         uint128 price,
         uint256 assetPrice,
