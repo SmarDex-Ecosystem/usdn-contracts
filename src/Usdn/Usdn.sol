@@ -51,10 +51,10 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /// @inheritdoc IUsdn
     uint256 public constant MIN_DIVISOR = 1e9;
 
-    /// @notice Name of the USDN token.
+    /// @notice The name of the USDN token.
     string internal constant NAME = "Ultimate Synthetic Delta Neutral";
 
-    /// @notice Symbol of the USDN token.
+    /// @notice The symbol of the USDN token.
     string internal constant SYMBOL = "USDN";
 
     /* -------------------------------------------------------------------------- */
@@ -95,7 +95,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /**
      * @notice Returns the total supply of tokens in existence.
      * @dev This value is derived from the total number of shares and the current divisor. It does not represent the
-     * sum of all token balances due to the divisor mechanism.
+     * exact sum of all token balances due to the divisor mechanism.
      * For an accurate representation, consider using the total number of shares via {totalShares}.
      * @return totalSupply_ The total supply of tokens as computed from shares.
      */
@@ -104,7 +104,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /**
-     * @notice Returns the token balance of the specified account.
+     * @notice Returns the token balance of a given account.
      * @dev The returned value is based on the current divisor and may not represent an accurate balance in terms of
      * shares.
      * For precise calculations, use the number of shares via {sharesOf}.
@@ -320,7 +320,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @param from The address from which shares are transferred.
      * @param to The address to which shares are transferred.
      * @param value The amount of shares to transfer.
-     * @param tokenValue The converted token value, used for event.
+     * @param tokenValue The converted token value, used for the {Transfer} event.
      */
     function _transferShares(address from, address to, uint256 value, uint256 tokenValue) internal {
         if (from == address(0)) {
@@ -337,7 +337,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @dev Reverts if the `account` address is the zero address.
      * @param account The account from which shares are burned.
      * @param value The amount of shares to burn.
-     * @param tokenValue The converted token value, used for event.
+     * @param tokenValue The converted token value, used for the {Transfer} event.
      */
     function _burnShares(address account, uint256 value, uint256 tokenValue) internal {
         if (account == address(0)) {
@@ -347,14 +347,14 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /**
-     * @notice Updates the shares of accounts during transfers, mints, or burns.
+     * @notice Updates the shares of accounts during transferShares, mintShares, or burnShares.
      * @dev Emits a {Transfer} event with the token equivalent of the operation.
      * If `from` is the zero address, the operation is a mint.
      * If `to` is the zero address, the operation is a burn.
      * @param from The source address.
      * @param to The destination address.
      * @param value The number of shares to transfer, mint, or burn.
-     * @param tokenValue The converted token value, used for event.
+     * @param tokenValue The converted token value, used for the {Transfer} event.
      */
     function _updateShares(address from, address to, uint256 value, uint256 tokenValue) internal {
         if (from == address(0)) {
@@ -387,7 +387,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /**
-     * @notice Updates the balances of accounts during transfers, mints, or burns.
+     * @notice Updates the shares of accounts during transfers, mints, or burns.
      * @dev Emits a {Transfer} event.
      * If `from` is the zero address, the operation is a mint.
      * If `to` is the zero address, the operation is a burn.
