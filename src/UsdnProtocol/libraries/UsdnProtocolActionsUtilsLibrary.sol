@@ -30,9 +30,9 @@ library UsdnProtocolActionsUtilsLibrary {
      * @dev Data structure for the transient state of the {_validateMultipleActionable} function.
      * @param pending The candidate pending action to validate.
      * @param frontRawIndex The raw index of the front of the queue.
-     * @param rawIndex The raw index of the candidate pending action.
-     * @param executed Whether the pending action was executed.
-     * @param liq Whether the pending action was liquidated.
+     * @param rawIndex The raw index of the candidate pending action in the queue.
+     * @param executed Indicates whether the pending action has been executed.
+     * @param liq Indicates whether the pending action has been liquidated.
      */
     struct ValidateMultipleActionableData {
         Types.PendingAction pending;
@@ -144,12 +144,12 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /**
      * @notice Updates the protocol state, then prepares the data for the initiate close position action.
-     * @dev Reverts if the imbalance limit is reached, or if any of the checks in {_checkInitiateClosePosition} fail
+     * @dev Reverts if the imbalance limit is reached, or if any checks in {_checkInitiateClosePosition} fail
      * Returns without creating a pending action if the position gets liquidated in this transaction or if there are
      * still positions pending liquidation.
      * @param params The parameters for the {_prepareClosePositionData} function.
      * @return data_ The close position data.
-     * @return liquidated_ Whether the position was liquidated and the caller should return early.
+     * @return liquidated_ Indicates whether the position was liquidated.
      */
     function _prepareClosePositionData(Types.PrepareInitiateClosePositionParams calldata params)
         public
@@ -220,12 +220,12 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /**
      * @notice Validates multiple actionable pending actions.
-     * Early return in case of the previous actions raw indices length doesn't match
+     * @dev Early return in case of the previous actions raw indices length doesn't match
      * the previous actions price data length.
      * @param previousActionsData The data for the actions to validate (price and raw indices).
      * @param maxValidations The maximum number of validations to perform.
-     * @return validatedActions_ The number of validated actions.
-     * @return amountToRefund_ The total amount of security deposits refunded.
+     * @return validatedActions_ The number of actions successfully validated.
+     * @return amountToRefund_ The total amount of security deposits to be refunded.
      */
     function _validateMultipleActionable(Types.PreviousActionsData calldata previousActionsData, uint256 maxValidations)
         internal
@@ -308,8 +308,8 @@ library UsdnProtocolActionsUtilsLibrary {
     }
 
     /**
-     * @notice Checks whether a pending action is actionable, i.e any user
-     * can validate it and retrieve the security deposit.
+     * @notice Checks whether a pending action is actionable, allowing any user to validate it and claim the security
+     * deposit.
      * @dev Between `initiateTimestamp` and `initiateTimestamp + lowLatencyDeadline`,
      * the validator receives the security deposit.
      * Between `initiateTimestamp + lowLatencyDelay` and `initiateTimestamp + lowLatencyDelay + onChainDeadline`,
@@ -319,7 +319,7 @@ library UsdnProtocolActionsUtilsLibrary {
      * @param lowLatencyDeadline The deadline after which the action is actionable within a low latency oracle.
      * @param lowLatencyDelay The amount of time the action can be validated with a low latency oracle.
      * @param onChainDeadline The deadline after which the action is actionable with an on-chain oracle.
-     * @return actionable_ Whether the pending action is actionable.
+     * @return actionable_ Indicates whether the pending action is actionable.
      */
     function _isActionable(
         uint256 initiateTimestamp,
@@ -341,9 +341,8 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /**
      * @notice Checks the close vault imbalance limit state.
-     * @dev Ensures that the protocol does not imbalance more than
-     * the close limit on the vault side, otherwise revert.
-     * @param posTotalExpoToClose The total expo to remove from the position.
+     * @dev Ensures that the protocol does not imbalance more than the close limit on the vault side, otherwise revert.
+     * @param posTotalExpoToClose The total exposure to remove from the position.
      * @param posValueToClose The value to remove from the position (and the long balance).
      */
     function _checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) internal view {
@@ -374,9 +373,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /**
      * @notice Performs checks for the initiate close position action.
-     * @dev Reverts if the to address is zero, the position was not validated yet, the position is not owned by the
-     * user and there is not delegated, the amount to close is higher than the position amount, or the
-     * amount to close is zero, the delegation is invalid.
+     * @dev Reverts if a check is unsuccessful.
      * @param pos The position to close.
      * @param params The parameters for the {_prepareClosePositionData} function.
      */
@@ -423,12 +420,11 @@ library UsdnProtocolActionsUtilsLibrary {
     /**
      * @notice Calculates how much assets must be removed from the long balance due to a position closing.
      * @dev The amount is bound by the amount of assets available on the long side.
-     * @param balanceLong The balance of long positions (with asset decimals).
+     * @param balanceLong The balance of the long side.
      * @param price The price to use for the position value calculation.
      * @param liqPriceWithoutPenalty The liquidation price without penalty.
-     * @param posExpo The total expo to remove from the position.
-     * @return boundedPosValue_ The amount of assets to remove from the long balance, bound by zero and the available
-     * long balance.
+     * @param posExpo The total exposure to remove from the position.
+     * @return boundedPosValue_ The amount of assets to remove from the long balance.
      */
     function _assetToRemove(uint256 balanceLong, uint128 price, uint128 liqPriceWithoutPenalty, uint128 posExpo)
         internal
