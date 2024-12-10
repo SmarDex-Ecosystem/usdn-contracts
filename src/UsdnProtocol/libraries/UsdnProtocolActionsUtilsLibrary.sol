@@ -220,8 +220,6 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /**
      * @notice Validates multiple actionable pending actions.
-     * @dev Early return in case of the previous actions raw indices length doesn't match
-     * the previous actions price data length.
      * @param previousActionsData The data for the actions to validate (price and raw indices).
      * @param maxValidations The maximum number of validations to perform.
      * @return validatedActions_ The number of actions successfully validated.
@@ -373,7 +371,6 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /**
      * @notice Performs checks for the initiate close position action.
-     * @dev Reverts if a check is unsuccessful.
      * @param pos The position to close.
      * @param params The parameters for the {_prepareClosePositionData} function.
      */
