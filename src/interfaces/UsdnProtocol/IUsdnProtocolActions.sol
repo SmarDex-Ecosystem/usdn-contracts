@@ -12,15 +12,16 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @notice Initiates an open position action.
      * @dev Consult the current oracle middleware for price data format and possible oracle fee.
      * Requires `_securityDepositValue` to be included in the transaction value. In case of pending liquidations, this
-     * function will not initiate the position (`isInitiated_` would be false). Reverts if the protocol imbalance
-     * exceeds `_openExpoImbalanceLimitBps`.
+     * function will not initiate the position (`isInitiated_` would be false).
+     * The user's input for price and leverage is not guaranteed due to the price difference between the initiate and
+     * validate actions.
      * @param amount The amount of assets to deposit.
      * @param desiredLiqPrice The desired liquidation price, including the penalty.
-     * @param userMaxPrice The user's wanted maximum price at which the position can be opened, not guaranteed.
-     * @param userMaxLeverage The user's wanted maximum leverage for the new position, not guaranteed.
+     * @param userMaxPrice The user's wanted maximum price at which the position can be opened.
+     * @param userMaxLeverage The user's wanted maximum leverage for the new position.
      * @param to The address that will owns of the position.
-     * @param validator The address that validates the open position. If the validator is not an EOA, it must be a
-     * contract that implements a receive function to accept the returned Ether.
+     * @param validator The address that is supposed to validate the opening and receive the security deposit. If not
+     * an EOA, it must be a contract that implements a `receive` function.
      * @param deadline The deadline for initiating the open position.
      * @param currentPriceData The price data used for temporary leverage and entry price computations.
      * @param previousActionsData The data needed to validate actionable pending actions.
@@ -51,7 +52,8 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * not be removed from the queue, and the user will have to try again.
      * In case the position was liquidated by this call (`outcome_ == LongActionOutcome.Liquidated`), this function will
      * refund the security deposit and remove the pending action from the queue.
-     * @param validator The address associated with the pending open position.
+     * @param validator The address associated with the pending open position. If not an EOA, it must be a contract that
+     * implements a `receive` function.
      * @param openPriceData The price data for the pending open position.
      * @param previousActionsData The data needed to validate actionable pending actions.
      * @return outcome_ The effect on the pending action (processed, liquidated, or pending liquidations).
@@ -73,13 +75,14 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * not be removed from the queue, and the user will have to try again.
      * In case the position was liquidated by this call (`outcome_ == LongActionOutcome.Liquidated`), this function will
      * refund the security deposit and remove the pending action from the queue.
-     * Reverts if the imbalance exceeds `_closeExpoImbalanceLimitBps`.
+     * The user's input for the price is not guaranteed due to the price difference between the initiate and validate
+     * actions.
      * @param posId The unique identifier of the position to close.
      * @param amountToClose The amount of collateral to remove.
-     * @param userMinPrice The user's wanted minimum price for closing the position, not guaranteed.
+     * @param userMinPrice The user's wanted minimum price for closing the position.
      * @param to The address that will receive the assets.
-     * @param validator The address validating the close action.If the validator is not an EOA, it must be a contract
-     * that implements a receive function to accept the returned Ether.
+     * @param validator The address that is supposed to validate the closing and receive the security deposit. If not an
+     * EOA, it must be a contract that implements a `receive` function.
      * @param deadline The deadline for initiating the close position.
      * @param currentPriceData The price data for temporary calculations.
      * @param previousActionsData The data needed to validate actionable pending actions.
@@ -109,7 +112,8 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * the pending action will not be removed from the queue, and the user will have to try again.
      * In case the position was liquidated by this call (`outcome_ == LongActionOutcome.Liquidated`),
      * this function will refund the security deposit and remove the pending action from the queue.
-     * @param validator The address of the validator for the close pending action.
+     * @param validator The address associated with the pending close position. If not an EOA, it must be a contract
+     * that implements a `receive` function.
      * @param closePriceData The price data for the pending close position action.
      * @param previousActionsData The data required to validate actionable pending actions.
      * @return outcome_ The outcome of the action (processed, liquidated, or pending liquidations).
@@ -125,13 +129,13 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @dev Consult the current oracle middleware for price data format and possible oracle fee.
      * Requires `_securityDepositValue` to be included in the transaction value.
      * In case liquidations are pending, this function might not initiate the deposit, and `success_` would be false.
-     * If the estimated effect of this action would lead to a protocol imbalance exceeding
-     * `depositExpoImbalanceLimitBps`, the transaction will revert.
+     * The user's input for the shares is not guaranteed due to the price difference between the initiate and validate
+     * actions.
      * @param amount The amount of assets to deposit.
-     * @param sharesOutMin The minimum amount of USDN shares to receive, not guaranteed.
+     * @param sharesOutMin The minimum amount of USDN shares to receive.
      * @param to The address that will receive the USDN tokens.
-     * @param validator The address that is supposed to validate the withdrawal and receive the security deposit. If the
-     * validator is not an EOA, it must be a contract that implements a receive function to accept the returned Ether.
+     * @param validator The address that is supposed to validate the deposit and receive the security deposit. If not an
+     * EOA, it must be a contract that implements a `receive` function.
      * @param deadline The deadline for initiating the deposit.
      * @param currentPriceData The current price data.
      * @param previousActionsData The data required to validate actionable pending actions.
@@ -153,8 +157,8 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * This function always sends the security deposit to the validator. So users wanting to earn the corresponding
      * security deposit must use `validateActionablePendingActions`.
      * If liquidations are pending, the validation may fail, and `success_` would be false.
-     * @param validator The address associated with the pending deposit action. If the validator is not an EOA, it must
-     * be a contract that implements a receive function to accept the returned Ether.
+     * @param validator The address associated with the pending deposit action. If not an EOA, it must be a contract
+     * that implements a `receive` function.
      * @param depositPriceData The price data for the pending deposit action.
      * @param previousActionsData The data required to validate actionable pending actions.
      * @return success_ Indicates whether the deposit was successfully validated.
@@ -169,15 +173,15 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * @notice Initiates a withdrawal of assets from the vault using USDN tokens.
      * @dev Consult the current oracle middleware for price data format and possible oracle fee.
      * Requires `_securityDepositValue` to be included in the transaction value.
-     * If the estimated effect of this action would lead to a protocol imbalance exceeding
-     * `withdrawalExpoImbalanceLimitBps`, the transaction will revert.
      * Note that in case liquidations are pending, this function might not initiate the withdrawal, and `success_` would
      * be false.
+     * The user's input for the minimum amount is not guaranteed due to the price difference between the initiate and
+     * validate actions.
      * @param usdnShares The amount of USDN shares to burn.
-     * @param amountOutMin The estimated minimum amount of assets to receive.
+     * @param amountOutMin The minimum amount of assets to receive.
      * @param to The address that will receive the assets.
-     * @param validator The address that is supposed to validate the withdrawal and receive the security deposit. If the
-     * validator is not an EOA, it must be a contract that implements a receive function to accept the returned Ether.
+     * @param validator The address that is supposed to validate the withdrawal and receive the security deposit. If not
+     * an EOA, it must be a contract that implements a `receive` function.
      * @param deadline The deadline for initiating the withdrawal.
      * @param currentPriceData The current price data.
      * @param previousActionsData The data required to validate actionable pending actions.
@@ -199,8 +203,8 @@ interface IUsdnProtocolActions is IUsdnProtocolTypes {
      * This function always sends the security deposit to the validator. So users wanting to earn the corresponding
      * security deposit must use `validateActionablePendingActions`.
      * In case liquidations are pending, this function might not validate the withdrawal, and `success_` would be false.
-     * @param validator The address associated with the pending withdrawal action. If the validator is not an EOA, it
-     * must be a contract that implements a receive function to accept the returned Ether.
+     * @param validator The address associated with the pending withdrawal action. If not an EOA, it must be a contract
+     * that implements a `receive` function.
      * @param withdrawalPriceData The price data for the pending withdrawal action.
      * @param previousActionsData The data required to validate actionable pending actions.
      * @return success_ Indicates whether the withdrawal was successfully validated.
