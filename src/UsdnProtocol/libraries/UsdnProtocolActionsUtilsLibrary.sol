@@ -144,7 +144,7 @@ library UsdnProtocolActionsUtilsLibrary {
 
     /**
      * @notice Updates the protocol state, then prepares the data for the initiate close position action.
-     * @dev Reverts if the imbalance limit is reached, or if any checks in {_checkInitiateClosePosition} fail
+     * @dev Reverts if the imbalance limit is reached, or if any checks in {_checkInitiateClosePosition} fail.
      * Returns without creating a pending action if the position gets liquidated in this transaction or if there are
      * still positions pending liquidation.
      * @param params The parameters for the {_prepareClosePositionData} function.
