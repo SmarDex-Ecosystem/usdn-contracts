@@ -61,7 +61,7 @@ $ P_"usdn" = frac(B_"vault" P_"asset", S_"tot") $ <eq:usdn_price>
 where $B_"vault"$ is the balance of assets held in the protocol's vault, $P_"asset"$ is the price of the asset token in
 USD, and $S_"tot"$ is the total supply of USDN tokens.
 
-== Token Minting
+== Token Minting <seq:token_minting>
 
 USDN tokens are minted whenever a deposit is made into the protocol's vault. The amount of minted USDN $A_"usdn"$ is
 calculated by dividing the dollar value of the deposited assets by the USDN price:
@@ -72,7 +72,7 @@ Taking into account @eq:usdn_price, the minting formula can be rewritten as:
 
 $ A_"usdn" = frac(A_"asset" S_"tot", B_"vault") $
 
-== Token Burning
+== Token Burning <seq:token_burning>
 
 When assets are removed from the protocol's vault, USDN tokens are burned in proportion to the withdrawn amount,
 following @eq:usdn_minting. Thus, for a given amount of USDN to be burned, the corresponding withdrawn assets amount is:
@@ -89,6 +89,14 @@ The rebase mechanism ensures that yields do not induce a price that significantl
 balance and total supply adjustment (rebase) if the price falls below \$1.
 
 = Vault
+
+The vault manages the supply of USDN tokens. The two main actions of the vault are deposits and withdrawals.
+
+The deposit action allows to lock assets into the vault and mint a proportional amount of USDN tokens by providing an oracle price for the asset token.
+It follows the formula described in @seq:token_minting.
+
+The withdrawal action allows to redeem USDN tokens for an equivalent dollar amount of assets from the vault.
+It follows the formula described in @seq:token_burning.
 
 = Long
 
