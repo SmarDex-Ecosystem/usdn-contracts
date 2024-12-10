@@ -13,7 +13,7 @@ import { IRebaseCallback } from "../interfaces/Usdn/IRebaseCallback.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 
 /**
- * @title USDN token contract
+ * @title USDN Token Contract
  * @notice The USDN token supports the USDN Protocol. It is minted when assets are deposited into the USDN Protocol
  * vault and burned when withdrawn. The total supply and individual balances are periodically increased by modifying a
  * global divisor, ensuring the token's value doesn't grow too far past 1 USD.
