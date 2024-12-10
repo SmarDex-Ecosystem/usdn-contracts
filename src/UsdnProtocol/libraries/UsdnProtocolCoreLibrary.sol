@@ -174,10 +174,10 @@ library UsdnProtocolCoreLibrary {
      * @notice Prepares the pending action struct for an open position and adds it to the queue.
      * @param to The address that will be the owner of the position.
      * @param validator  The address which is supposed to validate the position and receive the
-     * security deposit. The validator address may be different from the position owner.
+     * security deposit.
      * @param securityDepositValue The value of the security deposit for the newly created pending action.
      * @param data The open position action data.
-     * @return amountToRefund_ Refunds the security deposit value of a stale pending action.
+     * @return amountToRefund_ The security deposit value of a stale pending action.
      */
     function _createOpenPendingAction(
         address to,
@@ -204,8 +204,8 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Computes the profits and losses of the long side, computes the funding and applies protocol fees,
-     * computes the new liquidation multiplier and the temporary new balances for each side.
+     * @notice Computes the profits and losses on the long side, calculates the funding, applies protocol fees,
+     * updates the liquidation multiplier, and determines the temporary new balances for each side.
      * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding`, but does not
      * update the balances. This is left to the caller.
      * @param currentPrice The current price.
@@ -276,10 +276,10 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Removes the pending action from the queue if its tick version doesn't match the current tick version
-     * (which means that the tick was liquidated).
+     * @notice Removes the pending action from the queue if its tick version doesn't match the current tick version,
+     * indicating that the tick was liquidated.
      * @dev This is only applicable to `ValidateOpenPosition` pending actions.
-     * @param validator The address for which the action's pending.
+     * @param validator The address associated with the pending action.
      * @return securityDepositValue_ The security deposit value of the removed stale pending action.
      */
     function _removeStalePendingAction(address validator) public returns (uint256 securityDepositValue_) {
@@ -317,7 +317,7 @@ library UsdnProtocolCoreLibrary {
      * @param validator The address which is supposed to validate the position and receive the
      * security deposit. The validator address may be different from the position owner.
      * @param action The pending action struct.
-     * @return amountToRefund_ The security deposit value of the stale pending action.
+     * @return amountToRefund_ The security deposit value of a stale pending action, if any was removed.
      */
     function _addPendingAction(address validator, Types.PendingAction memory action)
         public
@@ -325,8 +325,8 @@ library UsdnProtocolCoreLibrary {
     {
         Types.Storage storage s = Utils._getMainStorage();
 
-        amountToRefund_ = _removeStalePendingAction(validator); // check if there is a pending action that was
-            // liquidated and remove it
+        // check if there is a pending action that was liquidated and remove it
+        amountToRefund_ = _removeStalePendingAction(validator);
         if (s._pendingActions[validator] > 0) {
             revert IUsdnProtocolErrors.UsdnProtocolPendingAction();
         }
@@ -337,13 +337,13 @@ library UsdnProtocolCoreLibrary {
     }
 
     /**
-     * @notice Removes a stuck pending action and performs the minimal amount of cleanup necessary.
+     * @notice Removes a blocked pending action and performs the minimal amount of cleanup necessary.
      * @dev This function should only be called by the owner of the protocol, it serves as an escape hatch if a
      * pending action ever gets stuck due to something reverting unexpectedly.
-     * The caller must wait at least 1 hour after the validation deadline to call this function. This is to give the
-     * chance to normal users to validate the action if possible.
+     * The caller must wait at least 5 minutes after the onchain validator deadline to call this function. This is to
+     * give the chance to normal users to validate the action if possible.
      * @param rawIndex The raw index of the pending action in the queue.
-     * @param to The receiver of funds, which could include security deposit, assets and usdn.
+     * @param to The recipient of the funds, which may include security deposit, assets and USDN tokens.
      * @param cleanup If `true`, will attempt to perform more cleanup at the risk of reverting. Always try `true` first.
      */
     function _removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) public {
@@ -440,7 +440,7 @@ library UsdnProtocolCoreLibrary {
 
     /**
      * @notice Saves a new long position in the protocol, adjusting the tick data and global variables.
-     * @dev Note: this method does not update the long balance.
+     * @dev This method does not update the long balance.
      * @param tick The tick to hold the new position.
      * @param long The position to save.
      * @param liquidationPenalty The liquidation penalty for the tick.
