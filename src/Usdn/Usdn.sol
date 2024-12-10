@@ -18,7 +18,7 @@ import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
  * vault and burned when withdrawn. The total supply and individual balances are periodically increased by modifying a
  * global divisor, ensuring the token's value doesn't grow too far past 1 USD.
  * @dev This contract extends OpenZeppelin's ERC-20 implementation, adapted to support growable balances.
- * Unlike a traditional ERC-20, balances are represented as shares, which are converted into token amounts using the
+ * Unlike a traditional ERC-20, balances are stored as shares, which are converted into token amounts using the
  * global divisor. This design allows for supply growth without updating individual balances. Any divisor modification
  * can only make balances and total supply increase.
  */
@@ -267,7 +267,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Convert an amount of shares into the corresponding amount of tokens, rounding the division according to
+     * @notice Converts an amount of shares into the corresponding amount of tokens, rounding the division according to
      * `rounding`.
      * @dev If rounding to the nearest integer and the result is exactly at the halfway point, we round up.
      * @param amountShares The amount of shares to convert to tokens.
