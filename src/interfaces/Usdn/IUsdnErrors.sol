@@ -3,23 +3,23 @@ pragma solidity >=0.8.0;
 
 /**
  * @title Errors for the USDN token contract
- * @notice Contains all custom errors emitted by the USDN token contract (omitting errors from OpenZeppelin)
+ * @notice Defines all custom errors emitted by the USDN token contract.
  */
 interface IUsdnErrors {
     /**
-     * @dev Indicates that the number of tokens exceeds the maximum allowed value
-     * @param value The invalid token value
+     * @dev The number of tokens value exceeds the maximum allowed limit.
+     * @param value The invalid token value.
      */
     error UsdnMaxTokensExceeded(uint256 value);
 
     /**
-     * @dev Indicates that the sender does not have enough balance to transfer shares
-     * @param sender The sender's address
-     * @param balance The shares balance of the sender
-     * @param needed The desired amount of shares to transfer
+     * @dev The sender's share balance is insufficient.
+     * @param sender The sender's address.
+     * @param balance The current share balance of the sender.
+     * @param needed The required amount of shares for the transfer.
      */
     error UsdnInsufficientSharesBalance(address sender, uint256 balance, uint256 needed);
 
-    /// @dev Indicates that the divisor value in storage is invalid
+    /// @dev The divisor value in storage is invalid (< 1).
     error UsdnInvalidDivisor();
 }
