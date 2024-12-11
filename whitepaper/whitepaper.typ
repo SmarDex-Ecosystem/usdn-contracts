@@ -29,6 +29,9 @@
   keywords: ("DeFi", "Blockchain", "Synthetic Assets", "Delta Neutral"),
 )
 
+// note: use the `_` symbol between quantities and the corresponding unit to insert a thin non-breakable space.
+// e.g. `1_wstETH` will render as `1 wstETH` but no line break will be allowed between the number and the unit.
+
 = Introduction
 
 The decentralized finance (DeFi) ecosystem has long sought alternatives to fiat-backed tokens, aiming to provide users
@@ -51,13 +54,13 @@ an actor of the protocol. Any change in the long side balance due to a change in
 #glspl("funding") is compensated by an equal but opposite change in the vault balance.
 
 The vault holds the amount of underlying assets necessary to back the value of the USDN token (see @sec:token_price).
-For instance, if the price of the USDN token is \$1 and its total supply is 1000 USDN, and if the price of each
-#gls("wsteth") is \$2000, then the vault balance is 0.5 wstETH. Each deposit increases the vault balance an mints new
+For instance, if the price of the USDN token is \$1 and its total supply is 1000_USDN, and if the price of each
+#gls("wsteth") is \$2000, then the vault balance is 0.5_wstETH. Each deposit increases the vault balance an mints new
 USDN tokens.
 
 The long side holds the amount of underlying assets corresponding to the summed value of all the long perpetual
 positions that exist currently. For example (ignoring fees), a newly open position with an initial collateral of
-1 wstETH would increase the long side balance by 1 wstETH, because the position did not lose or gain any value yet,
+1_wstETH would increase the long side balance by 1_wstETH, because the position did not lose or gain any value yet,
 the asset price being the same as the entry price of the position. If the price of the underlying asset increases, the
 value of the position increases (with a leverage effect), and a corresponding decrease in the vault balance occurs
 (see @sec:long_pnl).
@@ -110,16 +113,17 @@ $ A_"asset" = frac(A_"usdn" P_"usdn", P_"asset") = frac(A_"usdn" B_"vault", S_"t
 
 From @eq:usdn_price, it is clear that the USDN price is influenced by the total assets held in the protocol's vault.
 As such, if the vault balance increases as a result of position fees, losses from long positions, or @funding payments,
-the USDN price will rise. When a certain threshold is reached, the token #glspl("rebase") to a price slightly above \$1 by
-increasing the total supply and balance of each holder. This increase in balance represents the yield of the USDN token.
-The rebase mechanism ensures that yields do not induce a price that significantly exceeds the value of \$1. There is no
-balance and total supply adjustment (rebase) if the price falls below \$1.
+the USDN price will rise. When a certain threshold is reached, the token #glspl("rebase") to a price slightly above \$1
+by increasing the total supply and balance of each holder. This increase in balance represents the yield of the USDN
+token. The rebase mechanism ensures that yields do not induce a price that significantly exceeds the value of \$1.
+There is no balance and total supply adjustment (rebase) if the price falls below \$1.
 
 = Vault
 
 The vault manages the supply of USDN tokens. The two main actions of the vault are deposits and withdrawals.
 
-The deposit action allows to lock assets into the vault and mint a proportional amount of USDN tokens by providing an oracle price for the asset token.
+The deposit action allows to lock assets into the vault and mint a proportional amount of USDN tokens by providing an
+oracle price for the asset token.
 It follows the formula described in @sec:token_minting.
 
 The withdrawal action allows to redeem USDN tokens for an equivalent dollar amount of assets from the vault.

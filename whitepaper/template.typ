@@ -43,6 +43,8 @@
   #set heading(numbering: "1.")
   // Links
   #show link: set text(fill: blue.darken(40%))
+  // Thin unbreakable space
+  #show "_": sym.space.nobreak.narrow
 
   // Main body
   #doc
