@@ -182,14 +182,14 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /// @inheritdoc IUsdn
-    function transferShares(address to, uint256 value) external returns (bool) {
+    function transferShares(address to, uint256 value) external returns (bool success_) {
         address owner = _msgSender();
         _transferShares(owner, to, value, _convertToTokens(value, Rounding.Closest, _divisor));
         return true;
     }
 
     /// @inheritdoc IUsdn
-    function transferSharesFrom(address from, address to, uint256 value) external returns (bool) {
+    function transferSharesFrom(address from, address to, uint256 value) external returns (bool success_) {
         address spender = _msgSender();
         uint256 d = _divisor;
         // in case the number of shares is less than 1 wei of token, we round up to make sure we spend at least 1 wei
