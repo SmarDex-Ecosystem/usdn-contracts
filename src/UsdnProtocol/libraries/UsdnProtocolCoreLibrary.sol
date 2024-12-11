@@ -173,7 +173,7 @@ library UsdnProtocolCoreLibrary {
     /**
      * @notice Prepares the pending action struct for an open position and adds it to the queue.
      * @param to The address that will be the owner of the position.
-     * @param validator  The address which is supposed to validate the position and receive the
+     * @param validator The address which is supposed to validate the position and receive the
      * security deposit.
      * @param securityDepositValue The value of the security deposit for the newly created pending action.
      * @param data The open position action data.
