@@ -36,10 +36,10 @@ library UsdnProtocolLongLibrary {
      * @param tempVaultBalance The updated vault balance not saved into storage yet.
      * @param currentTick The current tick (corresponding to the current asset price).
      * @param iTick Tick iterator index.
-     * @param totalExpoToRemove The total expo to remove due to liquidations.
+     * @param totalExpoToRemove The total exposure to remove due to liquidations.
      * @param accumulatorValueToRemove The value to remove from the liquidation multiplier accumulator due to
      * liquidations.
-     * @param longTradingExpo The long trading expo.
+     * @param longTradingExpo The long trading exposure.
      * @param currentPrice The current price of the asset.
      * @param accumulator The liquidation multiplier accumulator before liquidations.
      * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate).
@@ -264,7 +264,8 @@ library UsdnProtocolLongLibrary {
 
         // gas savings, we only load the data once and use it for all conversions below
         Types.TickPriceConversionData memory conversionData = Types.TickPriceConversionData({
-            // we need to take into account the funding for the trading expo between the last price timestamp and now
+            // we need to take into account the funding for the trading exposure between
+            // the last price timestamp and now
             tradingExpo: Core.longTradingExpoWithFunding(lastPrice, uint128(block.timestamp)),
             accumulator: s._liqMultiplierAccumulator,
             tickSpacing: s._tickSpacing
@@ -288,7 +289,7 @@ library UsdnProtocolLongLibrary {
         // liquidation price must be at least x% below the current price
         _checkSafetyMargin(lastPrice, liqPrice);
 
-        // remove liquidation penalty for leverage and total expo calculations
+        // remove liquidation penalty for leverage and total exposure calculations
         uint128 liqPriceWithoutPenalty = Utils._getEffectivePriceForTick(
             Utils._calcTickWithoutPenalty(data_.posId.tick, data_.liquidationPenalty),
             lastPrice,
@@ -315,7 +316,7 @@ library UsdnProtocolLongLibrary {
      * @param index Index of the position in the tick array.
      * @param pos The position to remove the amount from.
      * @param amountToRemove The amount to remove from the position.
-     * @param totalExpoToRemove The total expo to remove from the position.
+     * @param totalExpoToRemove The total exposure to remove from the position.
      * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator.
      */
     function _removeAmountFromPosition(
@@ -396,7 +397,7 @@ library UsdnProtocolLongLibrary {
      * calculates the corresponding liquidation price.
      * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty.
      * @param assetPrice The current price of the asset.
-     * @param longTradingExpo The trading expo of the long side (total expo - balance long).
+     * @param longTradingExpo The trading exposure of the long side (total exposure - balance long).
      * @param accumulator The liquidation multiplier accumulator.
      * @param tickSpacing The tick spacing.
      * @param liquidationPenalty The liquidation penalty.
@@ -555,7 +556,7 @@ library UsdnProtocolLongLibrary {
      * @notice Triggers the rebalancer if the imbalance on the long side is too high.
      * It will close the rebalancer's position (if there is one) and open a new one with the pending assets, the value
      * of the previous position and the liquidation bonus (if available) with a leverage that would fill enough trading
-     * expo to reach the desired imbalance, up to the max leverages.
+     * exposure to reach the desired imbalance, up to the max leverages.
      * @dev Only call this function after liquidations are performed to have a non-zero `remainingCollateral` value.
      * Will return the provided long and vault balances if no rebalancer is set or if the imbalance is not high enough.
      * If `remainingCollateral` is negative, the rebalancer bonus will be 0.
@@ -707,7 +708,7 @@ library UsdnProtocolLongLibrary {
      * @param user The address of the rebalancer.
      * @param lastPrice The last price used to update the protocol.
      * @param tick The tick the position should be opened in.
-     * @param posTotalExpo The total expo of the position.
+     * @param posTotalExpo The total exposure of the position.
      * @param liquidationPenalty The liquidation penalty of the tick.
      * @param amount The amount of collateral in the position.
      * @return posId_ The ID of the position that was created.
@@ -1016,7 +1017,7 @@ library UsdnProtocolLongLibrary {
      * @param positionAmount The amount of assets in the position.
      * @param rebalancerMaxLeverage The maximum leverage supported by the rebalancer.
      * @param cache The cached protocol state values.
-     * @return posData_ The tick, total expo and liquidation penalty for the rebalancer position.
+     * @return posData_ The tick, total exposure and liquidation penalty for the rebalancer position.
      */
     function _calcRebalancerPositionTick(
         uint128 lastPrice,
@@ -1034,7 +1035,7 @@ library UsdnProtocolLongLibrary {
         }
 
         data.longImbalanceTargetBps = s._longImbalanceTargetBps;
-        // calculate the trading expo missing to reach the imbalance target
+        // calculate the trading exposure missing to reach the imbalance target
         uint256 targetTradingExpo = (
             cache.vaultBalance * Constants.BPS_DIVISOR
                 / (int256(Constants.BPS_DIVISOR) + data.longImbalanceTargetBps).toUint256()
@@ -1048,7 +1049,7 @@ library UsdnProtocolLongLibrary {
 
         uint256 tradingExpoToFill = targetTradingExpo - cache.tradingExpo;
 
-        // check that the trading expo filled by the position would not exceed the max leverage
+        // check that the trading exposure filled by the position would not exceed the max leverage
         data.highestUsableTradingExpo =
             positionAmount * rebalancerMaxLeverage / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
         if (data.highestUsableTradingExpo < tradingExpoToFill) {
@@ -1144,7 +1145,7 @@ library UsdnProtocolLongLibrary {
      * corresponding tick.
      * @param price An adjusted liquidation price (taking into account the effects of funding).
      * @param assetPrice The current price of the asset.
-     * @param longTradingExpo The trading expo of the long side (total expo - balance long).
+     * @param longTradingExpo The trading exposure of the long side (total exposure - balance long).
      * @param accumulator The liquidation multiplier accumulator.
      * @return unadjustedPrice_ The unadjusted price of `price`.
      */
@@ -1159,7 +1160,7 @@ library UsdnProtocolLongLibrary {
             return price;
         }
         if (longTradingExpo == 0) {
-            // it is not possible to calculate the unadjusted price when the trading expo is zero
+            // it is not possible to calculate the unadjusted price when the trading exposure is zero
             revert IUsdnProtocolErrors.UsdnProtocolZeroLongTradingExpo();
         }
         // M = assetPrice * (totalExpo - balanceLong) / accumulator
@@ -1184,10 +1185,10 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Calculates the value of a tick, knowing its contained total expo and the current asset price.
+     * @notice Calculates the value of a tick, knowing its contained total exposure and the current asset price.
      * @param tick The tick number.
      * @param currentPrice The current price of the asset.
-     * @param longTradingExpo The trading expo of the long side.
+     * @param longTradingExpo The trading exposure of the long side.
      * @param accumulator The liquidation multiplier accumulator.
      * @param tickData The aggregated data of the tick.
      * @return value_ The amount of asset tokens the tick is worth.
@@ -1218,11 +1219,11 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Calculates the liquidation price without penalty of a position to reach a certain trading expo.
+     * @notice Calculates the liquidation price without penalty of a position to reach a certain trading exposure.
      * @dev If the sum of `amount` and `tradingExpo` equals 0, reverts.
      * @param currentPrice The price of the asset.
      * @param amount The amount of asset used as collateral.
-     * @param tradingExpo The trading expo.
+     * @param tradingExpo The trading exposure.
      * @return liqPrice_ The liquidation price without penalty.
      */
     function _calcLiqPriceFromTradingExpo(uint128 currentPrice, uint128 amount, uint256 tradingExpo)
@@ -1290,11 +1291,11 @@ library UsdnProtocolLongLibrary {
 
     /**
      * @notice Calculates the current imbalance for the open action checks.
-     * @dev If the value is positive, the long trading expo is larger than the vault trading expo.
+     * @dev If the value is positive, the long trading exposure is larger than the vault trading exposure.
      * In case of an empty vault balance, returns `int256.max` since the resulting imbalance would be infinity.
-     * @param vaultExpo The vault expo (including the pending vault balance and the fees of the position to open).
+     * @param vaultExpo The vault exposure (including the pending vault balance and the fees of the position to open).
      * @param longBalance The balance of the long side (including the long position to open).
-     * @param totalExpo The total expo of the long side (including the long position to open).
+     * @param totalExpo The total exposure of the long side (including the long position to open).
      * @return imbalanceBps_ The imbalance (in basis points).
      */
     function _calcImbalanceOpenBps(int256 vaultExpo, int256 longBalance, uint256 totalExpo)
@@ -1302,7 +1303,7 @@ library UsdnProtocolLongLibrary {
         pure
         returns (int256 imbalanceBps_)
     {
-        // an imbalance cannot be calculated if the new vault expo is zero or negative
+        // an imbalance cannot be calculated if the new vault exposure is zero or negative
         if (vaultExpo <= 0) {
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
@@ -1385,7 +1386,7 @@ library UsdnProtocolLongLibrary {
      * @notice Calculates the effective tick for a given price without rounding to the tick spacing.
      * @param price The price to be adjusted.
      * @param assetPrice The current asset price.
-     * @param longTradingExpo The long trading expo.
+     * @param longTradingExpo The long trading exposure.
      * @param accumulator The liquidation multiplier accumulator.
      * @return tick_ The tick number.
      */
