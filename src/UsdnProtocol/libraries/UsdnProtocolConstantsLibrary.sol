@@ -88,6 +88,9 @@ library UsdnProtocolConstantsLibrary {
     /// @notice Maximum vault fee allowed in basis points.
     uint256 internal constant MAX_VAULT_FEE_BPS = 2000;
 
+    /// @notice Maximum ratio of USDN to SDEX burned on deposit (10%).
+    uint256 internal constant MAX_SDEX_BURN_RATIO = SDEX_BURN_ON_DEPOSIT_DIVISOR / 10;
+
     /// @notice Maximum leverage allowed.
     uint256 internal constant MAX_LEVERAGE = 100 * 10 ** LEVERAGE_DECIMALS;
 

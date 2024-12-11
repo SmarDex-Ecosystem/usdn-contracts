@@ -31,18 +31,18 @@ library UsdnProtocolLongLibrary {
     using SignedMath for int256;
 
     /**
-     * @notice Structure to hold the temporary data during liquidation
-     * @param tempLongBalance The temporary long balance
-     * @param tempVaultBalance The temporary vault balance
-     * @param currentTick The current tick (tick corresponding to the current asset price)
-     * @param iTick Tick iterator index
-     * @param totalExpoToRemove The total expo to remove due to the liquidation of some ticks
-     * @param accumulatorValueToRemove The value to remove from the liquidation multiplier accumulator, due to the
-     * liquidation of some ticks
-     * @param longTradingExpo The long trading expo
-     * @param currentPrice The current price of the asset
-     * @param accumulator The liquidation multiplier accumulator before the liquidation
-     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+     * @dev Structure to hold the temporary data during liquidations.
+     * @param tempLongBalance The updated long balance not saved into storage yet.
+     * @param tempVaultBalance The updated vault balance not saved into storage yet.
+     * @param currentTick The current tick (corresponding to the current asset price).
+     * @param iTick Tick iterator index.
+     * @param totalExpoToRemove The total exposure to remove due to liquidations.
+     * @param accumulatorValueToRemove The value to remove from the liquidation multiplier accumulator due to
+     * liquidations.
+     * @param longTradingExpo The long trading exposure.
+     * @param currentPrice The current price of the asset.
+     * @param accumulator The liquidation multiplier accumulator before liquidations.
+     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate).
      */
     struct LiquidationData {
         int256 tempLongBalance;
@@ -58,13 +58,13 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Data structure for the `_applyPnlAndFundingAndLiquidate` function
-     * @param tempLongBalance The temporary long balance
-     * @param tempVaultBalance The temporary vault balance
-     * @param lastPrice The last price used to update the protocol
-     * @param rebased A boolean indicating if the USDN token was rebased
-     * @param callbackResult The result of the callback
-     * @param rebalancerAction The `_triggerRebalancer` action
+     * @dev Data structure for the `_applyPnlAndFundingAndLiquidate` function.
+     * @param tempLongBalance The updated long balance not saved into storage yet.
+     * @param tempVaultBalance The updated vault balance not saved into storage yet.
+     * @param lastPrice The last price used to update the protocol.
+     * @param rebased A boolean indicating if the USDN token was rebased.
+     * @param callbackResult The result of the USDN rebase callback.
+     * @param rebalancerAction The action performed by the `_triggerRebalancer` function.
      */
     struct ApplyPnlAndFundingAndLiquidateData {
         int256 tempLongBalance;
@@ -76,11 +76,11 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Data structure for the `_triggerRebalancer` function
-     * @param positionAmount The amount of assets in the rebalancer
-     * @param rebalancerMaxLeverage The maximum leverage of the rebalancer
-     * @param rebalancerPosId The ID of the rebalancer position
-     * @param positionValue The value of the rebalancer position
+     * @dev Data structure for the `_triggerRebalancer` function.
+     * @param positionAmount The amount of assets in the rebalancer's position.
+     * @param rebalancerMaxLeverage The maximum leverage of the rebalancer.
+     * @param rebalancerPosId The ID of the rebalancer's position.
+     * @param positionValue The value of the rebalancer's position.
      */
     struct TriggerRebalancerData {
         uint128 positionAmount;
@@ -93,7 +93,7 @@ library UsdnProtocolLongLibrary {
     /*                             External functions                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocolLong}
+    /// @notice See {IUsdnProtocolLong.getPositionValue}.
     function getPositionValue(Types.PositionId calldata posId, uint128 price, uint128 timestamp)
         external
         view
@@ -112,7 +112,7 @@ library UsdnProtocolLongLibrary {
         value_ = Utils._positionValue(pos.totalExpo, price, liqPrice);
     }
 
-    /// @notice See {IUsdnProtocolLong}
+    /// @notice See {IUsdnProtocolLong.getEffectiveTickForPrice(uint128)}.
     function getEffectiveTickForPrice(uint128 price) external view returns (int24 tick_) {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -125,20 +125,20 @@ library UsdnProtocolLongLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocolLong}
+    /// @notice See {IUsdnProtocolLong.minTick}.
     function minTick() public view returns (int24 tick_) {
         Types.Storage storage s = Utils._getMainStorage();
 
         tick_ = TickMath.minUsableTick(s._tickSpacing);
     }
 
-    /// @notice See {IUsdnProtocolLong}
+    /// @notice See {IUsdnProtocolLong.getTickLiquidationPenalty}.
     function getTickLiquidationPenalty(int24 tick) public view returns (uint24 liquidationPenalty_) {
         (bytes32 tickHash,) = Utils._tickHash(tick);
         liquidationPenalty_ = _getTickLiquidationPenalty(tickHash);
     }
 
-    /// @notice See {IUsdnProtocolLong}
+    /// @notice See {IUsdnProtocolLong.getEffectiveTickForPrice(uint128,uint256,uint256,HugeUint.Uint512,int24)}.
     function getEffectiveTickForPrice(
         uint128 price,
         uint256 assetPrice,
@@ -157,15 +157,15 @@ library UsdnProtocolLongLibrary {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Applies PnL, funding, and liquidates positions if necessary
-     * @param neutralPrice The neutral price for the asset
-     * @param timestamp The timestamp at which the operation is performed
-     * @param iterations The number of iterations for the liquidation process
-     * @param action The type of action that is being performed by the user
-     * @param priceData The price oracle update data
-     * @return liquidatedTicks_ Information about the liquidated ticks
-     * @return isLiquidationPending_ If there are pending positions to liquidate
-     * @dev If there were any liquidated positions, it sends rewards to the msg.sender
+     * @notice Applies PnL, funding, and liquidates positions if necessary.
+     * @dev If there were any liquidations, it sends the rewards to the `msg.sender`.
+     * @param neutralPrice The neutral price for the asset.
+     * @param timestamp The timestamp at which the operation is performed.
+     * @param iterations The number of iterations for the liquidation process.
+     * @param action The type of action that is being performed by the user.
+     * @param priceData The data given to the oracle middleware corresponding to `neutralPrice`.
+     * @return liquidatedTicks_ Information about the liquidated ticks.
+     * @return isLiquidationPending_ If there are remaining ticks that can be liquidated.
      */
     function _applyPnlAndFundingAndLiquidate(
         uint256 neutralPrice,
@@ -223,10 +223,9 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Update protocol balances, then prepare the data for the initiate open position action
-     * @dev Reverts if the imbalance limit is reached, or if the safety margin is not respected
-     * @param params The parameters for the _prepareInitiateOpenPositionData function
-     * @return data_ The temporary data for the open position action
+     * @notice Prepares the data for the `initiateOpenPosition` function.
+     * @param params The parameters for the `_prepareInitiateOpenPositionData` function.
+     * @return data_ The transient data for the open position action.
      */
     function _prepareInitiateOpenPositionData(Types.PrepareInitiateOpenPositionParams calldata params)
         public
@@ -265,7 +264,8 @@ library UsdnProtocolLongLibrary {
 
         // gas savings, we only load the data once and use it for all conversions below
         Types.TickPriceConversionData memory conversionData = Types.TickPriceConversionData({
-            // we need to take into account the funding for the trading expo between the last price timestamp and now
+            // we need to take into account the funding for the trading exposure between
+            // the last price timestamp and now
             tradingExpo: Core.longTradingExpoWithFunding(lastPrice, uint128(block.timestamp)),
             accumulator: s._liqMultiplierAccumulator,
             tickSpacing: s._tickSpacing
@@ -289,7 +289,7 @@ library UsdnProtocolLongLibrary {
         // liquidation price must be at least x% below the current price
         _checkSafetyMargin(lastPrice, liqPrice);
 
-        // remove liquidation penalty for leverage and total expo calculations
+        // remove liquidation penalty for leverage and total exposure calculations
         uint128 liqPriceWithoutPenalty = Utils._getEffectivePriceForTick(
             Utils._calcTickWithoutPenalty(data_.posId.tick, data_.liquidationPenalty),
             lastPrice,
@@ -309,15 +309,15 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Remove the provided total amount from its position and update the tick data and position
-     * @dev Note: this method does not update the long balance
-     * If the amount to remove is greater than or equal to the position's total amount, the position is deleted instead
-     * @param tick The tick to remove from
-     * @param index Index of the position in the tick array
-     * @param pos The position to remove the amount from
-     * @param amountToRemove The amount to remove from the position
-     * @param totalExpoToRemove The total expo to remove from the position
-     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator
+     * @notice Removes `amountToRemove` from position `pos` then updates the tick data and the position.
+     * @dev This method does not update the long balance.
+     * If the amount to remove is greater than or equal to the position's total amount, the position is deleted instead.
+     * @param tick The tick the position is in.
+     * @param index Index of the position in the tick array.
+     * @param pos The position to remove the amount from.
+     * @param amountToRemove The amount to remove from the position.
+     * @param totalExpoToRemove The total exposure to remove from the position.
+     * @return liqMultiplierAccumulator_ The updated liquidation multiplier accumulator.
      */
     function _removeAmountFromPosition(
         int24 tick,
@@ -362,14 +362,15 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice For a desired liquidation price, get the tick number with penalty and liquidation price without penalty
-     * @dev This function first calculates a tick for the desired liq price (no rounding), then adds the penalty to the
-     * tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
-     * calculates the corresponding liquidation price
-     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty
-     * @param liquidationPenalty The liquidation penalty
-     * @return tickWithPenalty_ The tick number with penalty
-     * @return liqPriceWithoutPenalty_ The liquidation price without penalty
+     * @notice Computes the tick number with penalty and liquidation price without penalty
+     * from the desired liquidation price.
+     * @dev This function first calculates a tick for the desired liquidation price (no rounding), then adds the penalty
+     * to the tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
+     * calculates the corresponding liquidation price.
+     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty.
+     * @param liquidationPenalty The liquidation penalty.
+     * @return tickWithPenalty_ The tick number including the liquidation penalty.
+     * @return liqPriceWithoutPenalty_ The liquidation price without penalty.
      */
     function _getTickFromDesiredLiqPrice(uint128 desiredLiqPriceWithoutPenalty, uint24 liquidationPenalty)
         public
@@ -389,18 +390,19 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice For a desired liquidation price, get the tick number with penalty and liquidation price without penalty
-     * @dev This function first calculates a tick for the desired liq price (no rounding), then adds the penalty to the
-     * tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
-     * calculates the corresponding liquidation price
-     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty
-     * @param assetPrice The current price of the asset
-     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
-     * @param accumulator The liquidation multiplier accumulator
-     * @param tickSpacing The tick spacing
-     * @param liquidationPenalty The liquidation penalty
-     * @return tickWithPenalty_ The tick number with penalty
-     * @return liqPriceWithoutPenalty_ The liquidation price without penalty
+     * @notice Computes the tick number with penalty and liquidation price without penalty
+     * from the desired liquidation price and protocol state.
+     * @dev This function first calculates a tick for the desired liquidation price (no rounding), then adds the penalty
+     * to the tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
+     * calculates the corresponding liquidation price.
+     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty.
+     * @param assetPrice The current price of the asset.
+     * @param longTradingExpo The trading exposure of the long side (total exposure - balance long).
+     * @param accumulator The liquidation multiplier accumulator.
+     * @param tickSpacing The tick spacing.
+     * @param liquidationPenalty The liquidation penalty.
+     * @return tickWithPenalty_ The tick number including the liquidation penalty.
+     * @return liqPriceWithoutPenalty_ The liquidation price without penalty.
      */
     function _getTickFromDesiredLiqPrice(
         uint128 desiredLiqPriceWithoutPenalty,
@@ -425,16 +427,17 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice For a desired liquidation price, get the tick number with penalty and liquidation price without penalty
-     * @dev This function first calculates a tick for the desired liq price (no rounding), then adds the penalty to the
-     * tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
-     * calculates the corresponding liquidation price
-     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty
-     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
-     * @param tickSpacing The tick spacing
-     * @param liquidationPenalty The liquidation penalty
-     * @return tickWithPenalty_ The tick number with penalty
-     * @return liqPriceWithoutPenalty_ The liquidation price without penalty
+     * @notice Computes the tick number with penalty and liquidation price without penalty
+     * from the desired liquidation price and a fixed precision version of the liquidation multiplier accumulator.
+     * @dev This function first calculates a tick for the desired liquidation price (no rounding), then adds the penalty
+     * to the tick and rounds down to the nearest tick spacing. Then it subtracts the penalty from the final tick and
+     * calculates the corresponding liquidation price.
+     * @param desiredLiqPriceWithoutPenalty The desired liquidation price without penalty.
+     * @param liqMultiplier The liquidation price multiplier (with `LIQUIDATION_MULTIPLIER_DECIMALS` decimals).
+     * @param tickSpacing The tick spacing.
+     * @param liquidationPenalty The liquidation penalty.
+     * @return tickWithPenalty_ The tick number including the liquidation penalty.
+     * @return liqPriceWithoutPenalty_ The liquidation price without penalty.
      */
     function _getTickFromDesiredLiqPrice(
         uint128 desiredLiqPriceWithoutPenalty,
@@ -453,10 +456,10 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Find the highest tick that contains at least one position
-     * @dev If there are no ticks with a position left, returns minTick()
-     * @param searchStart The tick from which to start searching
-     * @return tick_ The next highest tick at or below `searchStart`
+     * @notice Finds the highest tick that contains at least one position.
+     * @dev If there are no ticks with a position left, returns {minTick}.
+     * @param searchStart The tick to start searching from.
+     * @return tick_ The highest tick at or below `searchStart`.
      */
     function _findHighestPopulatedTick(int24 searchStart) public view returns (int24 tick_) {
         Types.Storage storage s = Utils._getMainStorage();
@@ -470,11 +473,11 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Check if a USDN rebase is required and adjust the divisor if needed
-     * @dev Note: only call this function after `_applyPnlAndFunding` has been called to update the balances
-     * @param assetPrice The current price of the underlying asset
-     * @return rebased_ Whether a rebase was performed
-     * @return callbackResult_ The rebase callback result, if any
+     * @notice Checks if a USDN rebase is required and adjust the divisor if needed.
+     * @dev Only call this function after `_applyPnlAndFunding` has been called to update the balances.
+     * @param assetPrice The current price of the underlying asset.
+     * @return rebased_ Whether a rebase was performed.
+     * @return callbackResult_ The rebase callback result, if any.
      */
     function _usdnRebase(uint128 assetPrice) internal returns (bool rebased_, bytes memory callbackResult_) {
         Types.Storage storage s = Utils._getMainStorage();
@@ -506,16 +509,16 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Send rewards to the liquidator
+     * @notice Sends rewards to the liquidator.
      * @dev Should still emit an event if liquidationRewards = 0 to better keep track of those anomalies as rewards for
-     * those will be managed off-chain
-     * @param liquidatedTicks Information about the liquidated ticks
-     * @param currentPrice The current price of the asset
-     * @param rebased Whether a USDN rebase was performed
-     * @param rebalancerAction The rebalancer action that was performed
-     * @param action The protocol action that triggered liquidations
-     * @param rebaseCallbackResult The rebase callback result, if any
-     * @param priceData The price oracle update data
+     * those will be managed off-chain.
+     * @param liquidatedTicks Information about the liquidated ticks.
+     * @param currentPrice The current price of the asset.
+     * @param rebased Whether a USDN rebase was performed.
+     * @param rebalancerAction The rebalancer action that was performed.
+     * @param action The protocol action that triggered liquidations.
+     * @param rebaseCallbackResult The rebase callback result, if any.
+     * @param priceData The data given to the oracle middleware to get a price.
      */
     function _sendRewardsToLiquidator(
         Types.LiqTickInfo[] memory liquidatedTicks,
@@ -550,18 +553,20 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Trigger the rebalancer if the imbalance on the long side is too high
-     * It will close the rebalancer position (if there is one) and open a new one with
-     * the pending assets, the value of the previous position and the liquidation bonus (if available)
-     * and a leverage to fill enough trading expo to reach the desired imbalance, up to the max leverages
-     * @dev Will return the provided long balance if no rebalancer is set or if the imbalance is not high enough
-     * @param lastPrice The last price used to update the protocol
-     * @param longBalance The balance of the long side
-     * @param vaultBalance The balance of the vault side
-     * @param remainingCollateral The collateral remaining after the liquidations
-     * @return longBalance_ The temporary balance of the long side
-     * @return vaultBalance_ The temporary balance of the vault side
-     * @return action_ The rebalancer action
+     * @notice Triggers the rebalancer if the imbalance on the long side is too high.
+     * It will close the rebalancer's position (if there is one) and open a new one with the pending assets, the value
+     * of the previous position and the liquidation bonus (if available) with a leverage that would fill enough trading
+     * exposure to reach the desired imbalance, up to the max leverages.
+     * @dev Only call this function after liquidations are performed to have a non-zero `remainingCollateral` value.
+     * Will return the provided long and vault balances if no rebalancer is set or if the imbalance is not high enough.
+     * If `remainingCollateral` is negative, the rebalancer bonus will be 0.
+     * @param lastPrice The last price used to update the protocol.
+     * @param longBalance The balance of the long side.
+     * @param vaultBalance The balance of the vault side.
+     * @param remainingCollateral The collateral remaining after the liquidations.
+     * @return longBalance_ The updated long balance not saved into storage yet.
+     * @return vaultBalance_ The updated vault balance not saved into storage yet.
+     * @return action_ The action performed by this function.
      */
     function _triggerRebalancer(
         uint128 lastPrice,
@@ -698,15 +703,15 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Immediately open a position with the given price
-     * @dev Should only be used to open the rebalancer position
-     * @param user The address of the user
-     * @param lastPrice The last price used to update the protocol
-     * @param tick The tick the position should be opened in
-     * @param posTotalExpo The position total expo
-     * @param liquidationPenalty The liquidation penalty of the tick
-     * @param amount The amount of collateral in the position
-     * @return posId_ The ID of the position that was created
+     * @notice Immediately opens a position with the given price.
+     * @dev Should only be used to open the rebalancer's position.
+     * @param user The address of the rebalancer.
+     * @param lastPrice The last price used to update the protocol.
+     * @param tick The tick the position should be opened in.
+     * @param posTotalExpo The total exposure of the position.
+     * @param liquidationPenalty The liquidation penalty of the tick.
+     * @param amount The amount of collateral in the position.
+     * @return posId_ The ID of the position that was created.
      */
     function _flashOpenPosition(
         address user,
@@ -737,12 +742,12 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Immediately close a position with the given price
-     * @dev Should only be used to close the rebalancer position
-     * @param posId The ID of the position to close
-     * @param lastPrice The last price used to update the protocol
-     * @param cache The cached state of the protocol, will be updated during this call
-     * @return positionValue_ The value of the closed position
+     * @notice Immediately closes a position with the given price.
+     * @dev Should only be used to close the rebalancer's position.
+     * @param posId The ID of the position to close.
+     * @param lastPrice The last price used to update the protocol.
+     * @param cache The cached state of the protocol, will be updated during this call.
+     * @return positionValue_ The value of the closed position.
      */
     function _flashClosePosition(
         Types.PositionId memory posId,
@@ -795,12 +800,12 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Liquidate positions that have a liquidation price lower than the current price
-     * @param currentPrice The current price of the asset
-     * @param iteration The maximum number of ticks to liquidate (minimum is 1)
-     * @param tempLongBalance The temporary long balance as calculated when applying the PnL and funding
-     * @param tempVaultBalance The temporary vault balance as calculated when applying the PnL and funding
-     * @return effects_ The effects of the liquidations on the protocol
+     * @notice Liquidates positions that have a liquidation price lower than the current price.
+     * @param currentPrice The current price of the asset.
+     * @param iteration The maximum number of ticks to liquidate (minimum is 1).
+     * @param tempLongBalance The temporary long balance as calculated when applying the PnL and funding.
+     * @param tempVaultBalance The temporary vault balance as calculated when applying the PnL and funding.
+     * @return effects_ The effects of the liquidations on the protocol.
      */
     function _liquidatePositions(
         uint256 currentPrice,
@@ -906,9 +911,9 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Update the state of the contract according to the liquidation effects
-     * @param data The liquidation data, which gets mutated by the function
-     * @param effects The effects of the liquidations
+     * @notice Updates the state of the contract according to the liquidation effects.
+     * @param data The liquidation data, which gets mutated by the function.
+     * @param effects The effects of the liquidations.
      */
     function _updateStateAfterLiquidation(LiquidationData memory data, Types.LiquidationsEffects memory effects)
         internal
@@ -942,10 +947,10 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Reverts if the position's leverage is higher than max or lower than min
-     * @param adjustedPrice The adjusted price of the asset
-     * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
-     * @param userMaxLeverage The maximum leverage for the newly created position
+     * @notice Checks if the position's leverage is in the authorized range of values.
+     * @param adjustedPrice The adjusted price of the asset.
+     * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty.
+     * @param userMaxLeverage The maximum leverage allowed by the user for the newly created position.
      */
     function _checkOpenPositionLeverage(uint128 adjustedPrice, uint128 liqPriceWithoutPenalty, uint256 userMaxLeverage)
         internal
@@ -972,12 +977,10 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice The open long imbalance limit state verification. Revert
-     * @dev To ensure that the protocol does not imbalance more than
-     * the open limit on the long side, otherwise revert
-     * @param openTotalExpoValue The open position expo value
-     * @param collateralAmount The collateral amount of the position
-     * @param collateralAmountAfterFees The collateral value of the position after fees
+     * @notice Checks and reverts if the position's trading exposure exceeds the imbalance limits.
+     * @param openTotalExpoValue The total exposure of the position to open.
+     * @param collateralAmount The amount of collateral of the position.
+     * @param collateralAmountAfterFees The amount of collateral of the position after fees.
      */
     function _checkImbalanceLimitOpen(
         uint256 openTotalExpoValue,
@@ -1007,14 +1010,14 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Calculates the tick of the rebalancer position to open
+     * @notice Calculates the tick of the rebalancer position to open.
      * @dev The returned tick must give a leverage higher than or equal to the minimum leverage of the protocol
-     * and lower than or equal to the rebalancer and USDN protocol leverages (lower of the 2)
-     * @param lastPrice The last price used to update the protocol
-     * @param positionAmount The amount of assets in the position
-     * @param rebalancerMaxLeverage The maximum leverage supported by the rebalancer
-     * @param cache The cached protocol state values
-     * @return posData_ The tick, total expo and liquidation penalty for the rebalancer position
+     * and lower than or equal to the rebalancer and USDN protocol leverages (lowest of the 2).
+     * @param lastPrice The last price used to update the protocol.
+     * @param positionAmount The amount of assets in the position.
+     * @param rebalancerMaxLeverage The maximum leverage supported by the rebalancer.
+     * @param cache The cached protocol state values.
+     * @return posData_ The tick, total exposure and liquidation penalty for the rebalancer position.
      */
     function _calcRebalancerPositionTick(
         uint128 lastPrice,
@@ -1032,7 +1035,7 @@ library UsdnProtocolLongLibrary {
         }
 
         data.longImbalanceTargetBps = s._longImbalanceTargetBps;
-        // calculate the trading expo missing to reach the imbalance target
+        // calculate the trading exposure missing to reach the imbalance target
         uint256 targetTradingExpo = (
             cache.vaultBalance * Constants.BPS_DIVISOR
                 / (int256(Constants.BPS_DIVISOR) + data.longImbalanceTargetBps).toUint256()
@@ -1046,7 +1049,7 @@ library UsdnProtocolLongLibrary {
 
         uint256 tradingExpoToFill = targetTradingExpo - cache.tradingExpo;
 
-        // check that the trading expo filled by the position would not exceed the max leverage
+        // check that the trading exposure filled by the position would not exceed the max leverage
         data.highestUsableTradingExpo =
             positionAmount * rebalancerMaxLeverage / 10 ** Constants.LEVERAGE_DECIMALS - positionAmount;
         if (data.highestUsableTradingExpo < tradingExpoToFill) {
@@ -1099,10 +1102,9 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Check if the safety margin is respected
-     * @dev Reverts if not respected
-     * @param currentPrice The current price of the asset
-     * @param liquidationPrice The liquidation price of the position
+     * @notice Checks and reverts if the leverage of a position exceeds the safety margin.
+     * @param currentPrice The current price of the asset.
+     * @param liquidationPrice The liquidation price of the position.
      */
     function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) internal view {
         Types.Storage storage s = Utils._getMainStorage();
@@ -1115,11 +1117,10 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Retrieve the liquidation penalty assigned to the tick and version corresponding to `tickHash`, if there
-     * are positions in it, otherwise retrieve the current setting value from storage
-     * @dev This method allows to reuse a pre-computed tickHash if available
-     * @param tickHash The tick hash
-     * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
+     * @notice Retrieves the liquidation penalty assigned to the given `tickHash`.
+     * @dev If there are no positions in it, returns the current setting from storage.
+     * @param tickHash The tick hash (hashed tick number + version).
+     * @return liquidationPenalty_ The liquidation penalty (in tick spacing units).
      */
     function _getTickLiquidationPenalty(bytes32 tickHash) internal view returns (uint24 liquidationPenalty_) {
         Types.Storage storage s = Utils._getMainStorage();
@@ -1129,9 +1130,9 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @dev Convert a Bitmap index to a signed tick using the tick spacing in storage
-     * @param index The index into the Bitmap
-     * @return tick_ The tick corresponding to the index, a multiple of the tick spacing
+     * @dev Converts the given bitmap index to a tick number using the stored tick spacing.
+     * @param index The index into the bitmap.
+     * @return tick_ The tick corresponding to the index, a multiple of the tick spacing.
      */
     function _calcTickFromBitmapIndex(uint256 index) internal view returns (int24 tick_) {
         Types.Storage storage s = Utils._getMainStorage();
@@ -1140,13 +1141,13 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Knowing the liquidation price of a position, get the corresponding unadjusted price, which can be used
-     * to find the corresponding tick
-     * @param price An adjusted liquidation price (taking into account the effects of funding)
-     * @param assetPrice The current price of the asset
-     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
-     * @param accumulator The liquidation multiplier accumulator
-     * @return unadjustedPrice_ The unadjusted price for the liquidation price
+     * @notice Calculates the unadjusted price of a position's liquidation price, which can be used to find the
+     * corresponding tick.
+     * @param price An adjusted liquidation price (taking into account the effects of funding).
+     * @param assetPrice The current price of the asset.
+     * @param longTradingExpo The trading exposure of the long side (total exposure - balance long).
+     * @param accumulator The liquidation multiplier accumulator.
+     * @return unadjustedPrice_ The unadjusted price of `price`.
      */
     function _unadjustPrice(
         uint256 price,
@@ -1159,7 +1160,7 @@ library UsdnProtocolLongLibrary {
             return price;
         }
         if (longTradingExpo == 0) {
-            // it is not possible to calculate the unadjusted price when the trading expo is zero
+            // it is not possible to calculate the unadjusted price when the trading exposure is zero
             revert IUsdnProtocolErrors.UsdnProtocolZeroLongTradingExpo();
         }
         // M = assetPrice * (totalExpo - balanceLong) / accumulator
@@ -1170,26 +1171,27 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Variant of _unadjustPrice when a fixed precision representation of the liquidation multiplier is known
-     * @param price An adjusted liquidation price (taking into account the effects of funding)
-     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
-     * @return unadjustedPrice_ The unadjusted price for the liquidation price
+     * @notice Calculates the unadjusted price of a position's liquidation price, which can be used to find the
+     * corresponding tick, with a fixed precision representation of the liquidation multiplier.
+     * @param price An adjusted liquidation price (taking into account the effects of funding).
+     * @param liqMultiplier The liquidation price multiplier, with `LIQUIDATION_MULTIPLIER_DECIMALS` decimals.
+     * @return unadjustedPrice_ The unadjusted price for the liquidation price.
      */
     function _unadjustPrice(uint256 price, uint256 liqMultiplier) internal pure returns (uint256 unadjustedPrice_) {
         // unadjustedPrice = price / M
-        // unadjustedPrice = price * 10^LIQUIDATION_MULTIPLIER_DECIMALS / liqMultiplier
+        // unadjustedPrice = price * 10 ** LIQUIDATION_MULTIPLIER_DECIMALS / liqMultiplier
         unadjustedPrice_ =
             FixedPointMathLib.fullMulDiv(price, 10 ** Constants.LIQUIDATION_MULTIPLIER_DECIMALS, liqMultiplier);
     }
 
     /**
-     * @notice Calculate the value of a tick, knowing its contained total expo and the current asset price
-     * @param tick The tick number
-     * @param currentPrice The current price of the asset
-     * @param longTradingExpo The trading expo of the long side
-     * @param accumulator The liquidation multiplier accumulator
-     * @param tickData The aggregate data for the tick
-     * @return value_ The value of the tick (qty of asset tokens)
+     * @notice Calculates the value of a tick, knowing its contained total exposure and the current asset price.
+     * @param tick The tick number.
+     * @param currentPrice The current price of the asset.
+     * @param longTradingExpo The trading exposure of the long side.
+     * @param accumulator The liquidation multiplier accumulator.
+     * @param tickData The aggregated data of the tick.
+     * @return value_ The amount of asset tokens the tick is worth.
      */
     function _tickValue(
         int24 tick,
@@ -1217,12 +1219,12 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Calculate the liquidation price without penalty of a position to reach a certain trading expo
-     * @dev If the sum of `amount` and `tradingExpo` equals 0, reverts
-     * @param currentPrice The price of the asset
-     * @param amount The amount of asset
-     * @param tradingExpo The trading expo
-     * @return liqPrice_ The liquidation price without penalty
+     * @notice Calculates the liquidation price without penalty of a position to reach a certain trading exposure.
+     * @dev If the sum of `amount` and `tradingExpo` equals 0, reverts.
+     * @param currentPrice The price of the asset.
+     * @param amount The amount of asset used as collateral.
+     * @param tradingExpo The trading exposure.
+     * @return liqPrice_ The liquidation price without penalty.
      */
     function _calcLiqPriceFromTradingExpo(uint128 currentPrice, uint128 amount, uint256 tradingExpo)
         internal
@@ -1238,10 +1240,10 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @dev Convert a Bitmap index to a signed tick using the provided tick spacing
-     * @param index The index into the Bitmap
-     * @param tickSpacing The tick spacing to use
-     * @return tick_ The tick corresponding to the index, a multiple of `tickSpacing`
+     * @dev Converts a bitmap index to a tick number using the provided tick spacing.
+     * @param index The index into the bitmap.
+     * @param tickSpacing The tick spacing to use.
+     * @return tick_ The tick corresponding to the index, a multiple of `tickSpacing`.
      */
     function _calcTickFromBitmapIndex(uint256 index, int24 tickSpacing) internal pure returns (int24 tick_) {
         tick_ = int24( // cast to int24 is safe as index + TickMath.MIN_TICK cannot be above or below int24 limits
@@ -1254,11 +1256,10 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Handle negative balances by transferring assets from one side to the other
-     * @dev Balances are unsigned integers and can't be negative
+     * @notice Handles negative balances by transferring assets from one side to the other.
+     * @dev Balances are unsigned integers and can't be negative.
      * In theory, this can not happen anymore because we have more precise calculations with the
-     * `liqMultiplierAccumulator` compared to the old `liquidationMultiplier`
-     * TODO: check if can be removed
+     * `liqMultiplierAccumulator` compared to the old `liquidationMultiplier`.
      * @param tempLongBalance The temporary long balance after liquidations
      * @param tempVaultBalance The temporary vault balance after liquidations
      * @return longBalance_ The new long balance after rebalancing
@@ -1284,26 +1285,25 @@ library UsdnProtocolLongLibrary {
             tempVaultBalance = 0;
         }
 
-        // TODO: remove safe cast once we're sure we can never have negative balances
         longBalance_ = tempLongBalance.toUint256();
         vaultBalance_ = tempVaultBalance.toUint256();
     }
 
     /**
-     * @notice Calculates the current imbalance for the open action checks
-     * @dev If the value is positive, the long trading expo is larger than the vault trading expo
-     * In case of zero vault balance, the function returns `int256.max` since the resulting imbalance would be infinity
-     * @param vaultExpo The vault expo (including the pending vault balance and the fees of the wanted open position)
-     * @param longBalance The balance of the long side (including the long position to open)
-     * @param totalExpo The total expo of the long side (including the long position to open)
-     * @return imbalanceBps_ The imbalance in basis points
+     * @notice Calculates the current imbalance for the open action checks.
+     * @dev If the value is positive, the long trading exposure is larger than the vault trading exposure.
+     * In case of an empty vault balance, returns `int256.max` since the resulting imbalance would be infinity.
+     * @param vaultExpo The vault exposure (including the pending vault balance and the fees of the position to open).
+     * @param longBalance The balance of the long side (including the long position to open).
+     * @param totalExpo The total exposure of the long side (including the long position to open).
+     * @return imbalanceBps_ The imbalance (in basis points).
      */
     function _calcImbalanceOpenBps(int256 vaultExpo, int256 longBalance, uint256 totalExpo)
         internal
         pure
         returns (int256 imbalanceBps_)
     {
-        // an imbalance cannot be calculated if the new vault expo is zero or negative
+        // an imbalance cannot be calculated if the new vault exposure is zero or negative
         if (vaultExpo <= 0) {
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
         }
@@ -1315,9 +1315,9 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Calculate the tick corresponding to an unadjusted price, without rounding to the tick spacing
-     * @param unadjustedPrice The unadjusted price
-     * @return tick_ The tick number, bound by MIN_TICK
+     * @notice Calculates the tick corresponding to an unadjusted price, without rounding to the tick spacing.
+     * @param unadjustedPrice The unadjusted price.
+     * @return tick_ The tick number, bound by `MIN_TICK`.
      */
     function _unadjustedPriceToTick(uint256 unadjustedPrice) internal pure returns (int24 tick_) {
         if (unadjustedPrice < TickMath.MIN_PRICE) {
@@ -1328,12 +1328,12 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Round a tick down to a multiple of the tick spacing
-     * @dev The function is bound by the minimum usable tick, so the first tick which is a multiple of the tick spacing
-     * and greater than or equal to MIN_TICK
-     * @param tick The tick number
-     * @param tickSpacing The tick spacing
-     * @return roundedTick_ The rounded tick number
+     * @notice Rounds a tick down to a multiple of the tick spacing.
+     * @dev The function is bound by {minTick}, so the first tick which is a multiple of the tick spacing
+     * and greater than or equal to `MIN_TICK`.
+     * @param tick The tick number.
+     * @param tickSpacing The tick spacing.
+     * @return roundedTick_ The rounded tick number.
      */
     function _roundTickDown(int24 tick, int24 tickSpacing) internal pure returns (int24 roundedTick_) {
         // round down to the next valid tick according to _tickSpacing (towards negative infinity)
@@ -1354,11 +1354,12 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Round a tick down to a multiple of the tick spacing while remaining above MIN_TICK + liquidationPenalty
-     * @param tickWithPenalty The tick number with the liquidation penalty
-     * @param tickSpacing The tick spacing
-     * @param liqPenalty The liquidation penalty
-     * @return roundedTick_ The rounded tick number
+     * @notice Rounds the given tick down to a multiple of the tick spacing .
+     * @dev The result will always be above `MIN_TICK` + liquidationPenalty.
+     * @param tickWithPenalty The tick number with the liquidation penalty.
+     * @param tickSpacing The tick spacing.
+     * @param liqPenalty The liquidation penalty.
+     * @return roundedTick_ The rounded tick number.
      */
     function _roundTickDownWithPenalty(int24 tickWithPenalty, int24 tickSpacing, uint24 liqPenalty)
         internal
@@ -1382,12 +1383,12 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Calculate the effective tick for a given price without rounding to the tick spacing
-     * @param price The price to be adjusted
-     * @param assetPrice The current asset price
-     * @param longTradingExpo The long trading expo
-     * @param accumulator The liquidation multiplier accumulator
-     * @return tick_ The tick number
+     * @notice Calculates the effective tick for a given price without rounding to the tick spacing.
+     * @param price The price to be adjusted.
+     * @param assetPrice The current asset price.
+     * @param longTradingExpo The long trading exposure.
+     * @param accumulator The liquidation multiplier accumulator.
+     * @return tick_ The tick number.
      */
     function _getEffectiveTickForPriceNoRounding(
         uint128 price,
@@ -1401,11 +1402,11 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Variant of `_getEffectiveTickForPriceNoRounding` when a fixed precision representation of the liquidation
-     * multiplier is known
-     * @param price The price to be adjusted
-     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
-     * @return tick_ The tick number
+     * @notice Calculates the effective tick for a given price without rounding to the tick spacing with a fixed
+     * precision representation of the liquidation multiplier.
+     * @param price The price to be adjusted.
+     * @param liqMultiplier The liquidation price multiplier (with `LIQUIDATION_MULTIPLIER_DECIMALS` decimals).
+     * @return tick_ The tick number.
      */
     function _getEffectiveTickForPriceNoRounding(uint128 price, uint256 liqMultiplier)
         internal
@@ -1418,12 +1419,12 @@ library UsdnProtocolLongLibrary {
     }
 
     /**
-     * @notice Calculate the required USDN total supply to reach `targetPrice`
-     * @param vaultBalance The balance of the vault
-     * @param assetPrice The price of the underlying asset
-     * @param targetPrice The target USDN price to reach
-     * @param assetDecimals The number of decimals of the asset
-     * @return totalSupply_ The required total supply to achieve `targetPrice`
+     * @notice Calculates the required USDN total supply to reach `targetPrice`.
+     * @param vaultBalance The balance of the vault.
+     * @param assetPrice The price of the underlying asset.
+     * @param targetPrice The target USDN price to reach.
+     * @param assetDecimals The number of decimals of the asset.
+     * @return totalSupply_ The required total supply to achieve `targetPrice`.
      */
     function _calcRebaseTotalSupply(uint256 vaultBalance, uint128 assetPrice, uint128 targetPrice, uint8 assetDecimals)
         internal

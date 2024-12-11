@@ -41,7 +41,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
      * @param user The address of the user that deposited the funds in the rebalancer
      * @param balanceOfAssetBefore The balance of asset before the protocol initiateClosePosition
      * @param balanceOfAssetAfter The balance of asset after the protocol initiateClosePosition
-     * @param protocolRemainingAmount The remaining amount of the usdn protocol position after the close
      * @param amount The amount to close relative to the amount deposited
      * @param to The address that will receive the assets
      * @param validator The address that should validate the open position
@@ -60,7 +59,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         address user;
         uint256 balanceOfAssetBefore;
         uint256 balanceOfAssetAfter;
-        uint256 protocolRemainingAmount;
         uint88 amount;
         address to;
         address payable validator;
@@ -722,7 +720,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         Types.PreviousActionsData calldata previousActionsData,
         bytes calldata delegationData
     ) internal returns (Types.LongActionOutcome outcome_) {
-        if (block.timestamp <= data.closeLockedUntil) {
+        if (block.timestamp < data.closeLockedUntil) {
             revert RebalancerCloseLockedUntil(data.closeLockedUntil);
         }
         if (data.amount == 0) {

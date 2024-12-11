@@ -51,7 +51,6 @@ library UsdnProtocolSettersLibrary {
         }
 
         s._liquidationRewardsManager = newLiquidationRewardsManager;
-
         emit IUsdnProtocolEvents.LiquidationRewardsManagerUpdated(address(newLiquidationRewardsManager));
     }
 
@@ -68,7 +67,6 @@ library UsdnProtocolSettersLibrary {
 
         s._rebalancer = newRebalancer;
         s._isRebalancer[address(newRebalancer)] = true;
-
         emit IUsdnProtocolEvents.RebalancerUpdated(address(newRebalancer));
     }
 
@@ -82,6 +80,7 @@ library UsdnProtocolSettersLibrary {
         if (newFeeCollector == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidFeeCollector();
         }
+
         s._feeCollector = newFeeCollector;
         emit IUsdnProtocolEvents.FeeCollectorUpdated(newFeeCollector);
     }
@@ -127,11 +126,9 @@ library UsdnProtocolSettersLibrary {
     function setMinLeverage(uint256 newMinLeverage) external {
         Types.Storage storage s = Utils._getMainStorage();
 
-        // zero minLeverage
         if (newMinLeverage <= 10 ** Constants.LEVERAGE_DECIMALS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMinLeverage();
         }
-
         if (newMinLeverage >= s._maxLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMinLeverage();
         }
@@ -150,8 +147,6 @@ library UsdnProtocolSettersLibrary {
         if (newMaxLeverage <= s._minLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage();
         }
-
-        // `maxLeverage` greater than 100
         if (newMaxLeverage > Constants.MAX_LEVERAGE) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage();
         }
@@ -215,6 +210,7 @@ library UsdnProtocolSettersLibrary {
         if (newProtocolFeeBps > Constants.MAX_PROTOCOL_FEE_BPS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidProtocolFeeBps();
         }
+
         s._protocolFeeBps = newProtocolFeeBps;
         emit IUsdnProtocolEvents.FeeBpsUpdated(newProtocolFeeBps);
     }
@@ -226,10 +222,10 @@ library UsdnProtocolSettersLibrary {
     function setPositionFeeBps(uint16 newPositionFee) external {
         Types.Storage storage s = Utils._getMainStorage();
 
-        // `newPositionFee` greater than 20%
         if (newPositionFee > Constants.MAX_POSITION_FEE_BPS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPositionFee();
         }
+
         s._positionFeeBps = newPositionFee;
         emit IUsdnProtocolEvents.PositionFeeUpdated(newPositionFee);
     }
@@ -241,10 +237,10 @@ library UsdnProtocolSettersLibrary {
     function setVaultFeeBps(uint16 newVaultFee) external {
         Types.Storage storage s = Utils._getMainStorage();
 
-        // `newVaultFee` greater than 20%
         if (newVaultFee > Constants.MAX_VAULT_FEE_BPS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidVaultFee();
         }
+
         s._vaultFeeBps = newVaultFee;
         emit IUsdnProtocolEvents.VaultFeeUpdated(newVaultFee);
     }
@@ -256,10 +252,10 @@ library UsdnProtocolSettersLibrary {
     function setRebalancerBonusBps(uint16 newBonus) external {
         Types.Storage storage s = Utils._getMainStorage();
 
-        // `newBonus` greater than 100%
         if (newBonus > Constants.BPS_DIVISOR) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidRebalancerBonus();
         }
+
         s._rebalancerBonusBps = newBonus;
         emit IUsdnProtocolEvents.RebalancerBonusUpdated(newBonus);
     }
@@ -271,13 +267,11 @@ library UsdnProtocolSettersLibrary {
     function setSdexBurnOnDepositRatio(uint32 newRatio) external {
         Types.Storage storage s = Utils._getMainStorage();
 
-        // `newRatio` greater than 5%
-        if (newRatio > Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
+        if (newRatio > Constants.MAX_SDEX_BURN_RATIO) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidBurnSdexOnDepositRatio();
         }
 
         s._sdexBurnOnDepositRatio = newRatio;
-
         emit IUsdnProtocolEvents.BurnSdexOnDepositRatioUpdated(newRatio);
     }
 
@@ -291,6 +285,7 @@ library UsdnProtocolSettersLibrary {
         if (securityDepositValue > Constants.MAX_SECURITY_DEPOSIT) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidSecurityDeposit();
         }
+
         s._securityDepositValue = securityDepositValue;
         emit IUsdnProtocolEvents.SecurityDepositValueUpdated(securityDepositValue);
     }
@@ -347,7 +342,6 @@ library UsdnProtocolSettersLibrary {
         }
 
         s._longImbalanceTargetBps = newLongImbalanceTargetBps;
-
         emit IUsdnProtocolEvents.ImbalanceLimitsUpdated(
             newOpenLimitBps,
             newDepositLimitBps,
@@ -368,6 +362,7 @@ library UsdnProtocolSettersLibrary {
         if (newMinLongPosition > Constants.MAX_MIN_LONG_POSITION) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidMinLongPosition();
         }
+
         s._minLongPosition = newMinLongPosition;
         emit IUsdnProtocolEvents.MinLongPositionUpdated(newMinLongPosition);
 
@@ -388,7 +383,6 @@ library UsdnProtocolSettersLibrary {
     function setSafetyMarginBps(uint256 newSafetyMarginBps) external {
         Types.Storage storage s = Utils._getMainStorage();
 
-        // safetyMarginBps greater than 20%
         if (newSafetyMarginBps > Constants.MAX_SAFETY_MARGIN_BPS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidSafetyMarginBps();
         }
@@ -441,6 +435,7 @@ library UsdnProtocolSettersLibrary {
             // values smaller than $1 are not allowed
             revert IUsdnProtocolErrors.UsdnProtocolInvalidTargetUsdnPrice();
         }
+
         s._targetUsdnPrice = newPrice;
         emit IUsdnProtocolEvents.TargetUsdnPriceUpdated(newPrice);
     }
@@ -459,6 +454,7 @@ library UsdnProtocolSettersLibrary {
             // values greater than $2 are not allowed
             revert IUsdnProtocolErrors.UsdnProtocolInvalidUsdnRebaseThreshold();
         }
+
         s._usdnRebaseThreshold = newThreshold;
         emit IUsdnProtocolEvents.UsdnRebaseThresholdUpdated(newThreshold);
     }
