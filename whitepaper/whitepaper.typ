@@ -92,9 +92,11 @@ balance and total supply adjustment (rebase) if the price falls below \$1.
 
 = Long
 
-The long side manages user positions, each of which has an associated leverage. The two primary actions for the long side are openPosition and closePosition.
+The long side manages user positions. A position is comprised of the collateral (in assets) that the user deposited, together with a leverage which allows to control a larger position than the collateral. For example, a leverage of 3 times with an initial collateral of 1 wstETH behaves like a position of 3 wstETH. The product of the leverage and the initial collateral is called _total exposition_. When the price of the asset reaches the _liquidation price_ for a position, its value is considered too small for it to continue existing, and it gets closed (in a decentralized way). Any remaining value goes to the vault pool and forms part of the yield of USDN.
+The two primary actions for the long side are opening new positions and closing (partially or entirely) existing positions.
 
-The openPosition action enables users to send assets and create a position by specifying a price from the oracle and a desired liquidation price. The closePosition action allows users to close a position, either partially or fully, and reclaim their assets.
+When opening a new position, the user deposits assets as collateral and indicates their desired liquidation price, which is used to calculate the position's leverage. The entry price is taken from an oracle.
+When closing a position, users withdraw part or the entirety of the current value of their position, including any profit or loss resulting from the asset's price action.
 
 == Tick
 
