@@ -24,9 +24,12 @@
       // Override equation references.
       link(
         it.element.location(),
-        numbering(
-          it.element.numbering,
-          ..counter(math.equation).at(it.element.location()),
+        text(
+          fill: black,
+          numbering(
+            it.element.numbering,
+            ..counter(math.equation).at(it.element.location()),
+          ),
         ),
       )
     } else {
@@ -38,7 +41,13 @@
   #show heading.where(level: 3): set text(style: "italic", weight: "medium")
   // Set heading numbering
   #set heading(numbering: "1.")
+  // Links
+  #show link: set text(fill: blue.darken(40%))
+  // Thin unbreakable space
+  #show "_": sym.space.nobreak.narrow
+
+  // Main body
   #doc
 
-  #bibliography("refs.bib", title: "References", full: true )
+  #bibliography("refs.bib", title: "References", full: true)
 ]
