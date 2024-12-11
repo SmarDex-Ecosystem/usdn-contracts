@@ -127,7 +127,7 @@ It follows the formula described in @sec:token_burning.
 
 = Long Side
 
-== Ticks
+== Liquidation
 
 == Position Value, Profits and Losses <sec:long_pnl>
 
