@@ -69,7 +69,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
      * tick spacing cannot contain a long position.
      * @param tick The tick number.
      * @param assetPrice The current/projected price of the asset.
-     * @param longTradingExpo The trading expo of the long side (total expo - balance long).
+     * @param longTradingExpo The trading exposure of the long side (total expo - balance long).
      * @param accumulator The liquidation multiplier accumulator.
      * @return price_ The liquidation price.
      */
