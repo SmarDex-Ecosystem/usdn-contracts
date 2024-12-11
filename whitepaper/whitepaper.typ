@@ -133,6 +133,17 @@ It follows the formula described in @sec:token_burning.
 
 == Liquidation
 
+The down side of leveraged long position is they can be liquidated.
+The liquidation can occur when the value of the collateral isn't enough to pay back the borrowing part.
+The collateral is used to pay back the borrowed part, the owner of the position loose the collateral in this case.
+Liquidation of positions is a critical mechanism, if it's executed too late, the position will not have enough collateral to pay back the lend part.
+If this happen, the position will accumulate bad dept, which will impact the vault.
+To avoid this, liquidation need to be trigger the fastest possible.
+
+We implemented multiple solutions to avoid liquidation delay :
+
+To track
+
 == Position Value, Profits and Losses <sec:long_pnl>
 
 = Imbalance
