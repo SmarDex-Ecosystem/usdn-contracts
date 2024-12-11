@@ -8,16 +8,16 @@
     ],
   ),
   (
-    key: "tradingexpo",
+    key: "trading_expo",
     short: "trading exposure",
     description: [
       The trading exposure of the vault side is equal to the vault balance.
-      The trading exposure of the long side is equal to the @totalexpo of all long positions, minus the long side
+      The trading exposure of the long side is equal to the @total_expo of all long positions, minus the long side
       balance.
     ],
   ),
   (
-    key: "totalexpo",
+    key: "total_expo",
     short: "total exposure",
     description: [
       The total exposure of a position is the product of the position's initial collateral and initial leverage.
@@ -27,7 +27,7 @@
     key: "funding",
     short: "funding fee",
     description: [
-      A fee charged to the side with the higher @tradingexpo, and rewarded to the other side. The fee is calculated by
+      A fee charged to the side with the higher @trading_expo, and rewarded to the other side. The fee is calculated by
       multiplying the funding rate per day by the long side trading exposure, and then normalized to the elapsed
       duration.
     ],

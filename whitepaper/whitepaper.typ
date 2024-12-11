@@ -66,7 +66,7 @@ value of the position increases (with a leverage effect), and a corresponding de
 (see @sec:long_pnl).
 
 When the protocol is balanced, the vault balance is exactly equal to the borrowed amount of the long side. To
-incentivize this equilibrium, the protocol charges a funding fee to the side with the higher @tradingexpo, and
+incentivize this equilibrium, the protocol charges a funding fee to the side with the higher @trading_expo, and
 rewards this amount to the other side (see @sec:funding).
 
 = USDN Token <sec:token>
