@@ -46,8 +46,8 @@ This means that we combine the yield of the protocol with that of staking ETH au
 
 The USDN protocol is comprised of two main components: the _vault_ and the _long side_, each having a balance of the
 underlying asset. The sum of these balances does not change unless a deposit or withdrawal is made towards the vault
-(see @sec:token), a long position was opened, some protocol fees are taken, or liquidation rewards are given out to an
-actor of the protocol. Any change in the long side balance due to a change in the underlying asset price or
+(see @sec:token), a new long position is opened, some protocol fees are taken, or liquidation rewards are given out to
+an actor of the protocol. Any change in the long side balance due to a change in the underlying asset price or
 #glspl("funding") is compensated by an equal but opposite change in the vault balance.
 
 The vault holds the amount of underlying assets necessary to back the value of the USDN token (see @sec:token_price).
