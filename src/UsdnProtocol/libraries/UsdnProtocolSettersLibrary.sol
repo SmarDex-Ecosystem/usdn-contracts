@@ -267,7 +267,7 @@ library UsdnProtocolSettersLibrary {
     function setSdexBurnOnDepositRatio(uint32 newRatio) external {
         Types.Storage storage s = Utils._getMainStorage();
 
-        if (newRatio > Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 10) {
+        if (newRatio > Constants.MAX_SDEX_BURN_RATIO) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidBurnSdexOnDepositRatio();
         }
 
