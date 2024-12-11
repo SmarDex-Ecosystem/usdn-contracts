@@ -13,24 +13,21 @@ import { IRebaseCallback } from "../interfaces/Usdn/IRebaseCallback.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 
 /**
- * @title USDN token contract
- * @notice The USDN token supports the USDN Protocol and is minted when assets are deposited or withdrawn from the
- * vault and tokens are burned. The total supply and balances are increased periodically by adjusting a global divisor,
- * so that the price of the token doesn't grow too far past 1 USD
- *
- * @dev Base implementation of the ERC-20 interface by OpenZeppelin, adapted to support growable balances
- *
- * Unlike a normal ERC-20, we record balances as a number of shares. The balance is then computed by dividing the
- * shares by a divisor. This allows us to grow the total supply without having to update all balances
- *
- * Balances and total supply can only grow over time and never shrink
+ * @title USDN Token Contract
+ * @notice The USDN token supports the USDN Protocol. It is minted when assets are deposited into the USDN Protocol
+ * vault and burned when withdrawn. The total supply and individual balances are periodically increased by modifying a
+ * global divisor, ensuring the token's value doesn't grow too far past 1 USD.
+ * @dev This contract extends OpenZeppelin's ERC-20 implementation, adapted to support growable balances.
+ * Unlike a traditional ERC-20, balances are stored as shares, which are converted into token amounts using the
+ * global divisor. This design allows for supply growth without updating individual balances. Any divisor modification
+ * can only make balances and total supply increase.
  */
 contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /**
-     * @dev Control the rounding when converting from shares to tokens
-     * @param Down Round down (towards zero)
-     * @param Closest Round towards the closest integer (0.5 rounds up)
-     * @param Up Round up (towards positive infinity)
+     * @dev Enum representing the rounding options when converting from shares to tokens.
+     * @param Down Rounds down to the nearest integer (towards zero).
+     * @param Closest Rounds to the nearest integer.
+     * @param Up Rounds up to the nearest integer (towards positive infinity).
      */
     enum Rounding {
         Down,
@@ -54,32 +51,32 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /// @inheritdoc IUsdn
     uint256 public constant MIN_DIVISOR = 1e9;
 
-    /// @notice USDN token name
+    /// @notice The name of the USDN token.
     string internal constant NAME = "Ultimate Synthetic Delta Neutral";
 
-    /// @notice USDN token symbol
+    /// @notice The symbol of the USDN token.
     string internal constant SYMBOL = "USDN";
 
     /* -------------------------------------------------------------------------- */
     /*                              Storage variables                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice Mapping from account to number of shares
+    /// @notice Mapping of the number of shares held by each account.
     mapping(address account => uint256) internal _shares;
 
-    /// @notice Sum of all the shares
+    /// @notice The sum of all the shares.
     uint256 internal _totalShares;
 
-    /// @notice Divisor used to convert between shares and tokens
+    /// @notice The divisor used for conversion between shares and tokens.
     uint256 internal _divisor = MAX_DIVISOR;
 
-    /// @notice A contract that will be called whenever a rebase happens
+    /// @notice Address of a contract to be called upon a rebase event.
     IRebaseCallback internal _rebaseHandler;
 
     /**
-     * @notice Create an instance of the USDN token
-     * @param minter Address which should have the minter role by default (zero address to skip)
-     * @param rebaser Address which should have the rebaser role by default (zero address to skip)
+     * @notice Initializes the USDN token contract.
+     * @param minter Address to be granted the `minter` role (pass zero address to skip).
+     * @param rebaser Address to be granted the `rebaser` role (pass zero address to skip).
      */
     constructor(address minter, address rebaser) ERC20(NAME, SYMBOL) ERC20Permit(NAME) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -96,27 +93,29 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @inheritdoc IERC20
-     * @dev This function does not return the sum of all token balances and is based on the current divisor. Please use
-     * {totalShares} for an accurate total supply
+     * @notice Returns the total supply of tokens in existence.
+     * @dev This value is derived from the total number of shares and the current divisor. It does not represent the
+     * exact sum of all token balances due to the divisor mechanism.
+     * For an accurate representation, consider using the total number of shares via {totalShares}.
+     * @return totalSupply_ The total supply of tokens as computed from shares.
      */
-    function totalSupply() public view override(ERC20, IERC20) returns (uint256) {
+    function totalSupply() public view override(ERC20, IERC20) returns (uint256 totalSupply_) {
         return _convertToTokens(_totalShares, Rounding.Closest, _divisor);
     }
 
     /**
-     * @inheritdoc IERC20
-     * @dev This function does not return an accurate value and is based on the current divisor. Please use {sharesOf}
-     * for an accurate balance of the account
+     * @notice Returns the token balance of a given account.
+     * @dev The returned value is based on the current divisor and may not represent an accurate balance in terms of
+     * shares.
+     * For precise calculations, use the number of shares via {sharesOf}.
+     * @param account The address of the account to query.
+     * @return balance_ The token balance of the account as computed from shares.
      */
-    function balanceOf(address account) public view override(ERC20, IERC20) returns (uint256) {
+    function balanceOf(address account) public view override(ERC20, IERC20) returns (uint256 balance_) {
         return _convertToTokens(sharesOf(account), Rounding.Closest, _divisor);
     }
 
-    /**
-     * @inheritdoc IERC20Permit
-     * @dev This function must be overridden to fix a solidity compiler error
-     */
+    /// @inheritdoc IERC20Permit
     function nonces(address owner) public view override(IERC20Permit, ERC20Permit) returns (uint256) {
         return super.nonces(owner);
     }
@@ -193,8 +192,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     function transferSharesFrom(address from, address to, uint256 value) external returns (bool) {
         address spender = _msgSender();
         uint256 d = _divisor;
-        // to make sure we spend 1 wei of allowance in case the number of shares is less than 1 wei of tokens,
-        // we round up
+        // in case the number of shares is less than 1 wei of token, we round up to make sure we spend at least 1 wei
         _spendAllowance(from, spender, _convertToTokens(value, Rounding.Up, d));
         // the amount of tokens below is only used for emitting an event, we round to the closest value
         _transferShares(from, to, value, _convertToTokens(value, Rounding.Closest, d));
@@ -209,8 +207,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /// @inheritdoc IUsdn
     function burnSharesFrom(address account, uint256 value) public {
         uint256 d = _divisor;
-        // to make sure we spend 1 wei of allowance in case the number of shares is less than 1 wei of tokens,
-        // we round up
+        // in case the number of shares is less than 1 wei of token, we round up to make sure we spend at least 1 wei
         _spendAllowance(account, _msgSender(), _convertToTokens(value, Rounding.Up, d));
         // the amount of tokens below is only used for emitting an event, we round to the closest value
         _burnShares(account, value, _convertToTokens(value, Rounding.Closest, d));
@@ -242,14 +239,11 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     {
         oldDivisor_ = _divisor;
         if (newDivisor > oldDivisor_) {
-            // divisor can only be decreased
             newDivisor = oldDivisor_;
         } else if (newDivisor < MIN_DIVISOR) {
-            // divisor cannot be lower than `MIN_DIVISOR`
             newDivisor = MIN_DIVISOR;
         }
         if (newDivisor == oldDivisor_) {
-            // no rebase necessary
             return (false, oldDivisor_, callbackResult_);
         }
 
@@ -273,14 +267,13 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Convert an amount of shares into the corresponding amount of tokens, rounding the division according to
-     * `rounding`
-     * @dev The conversion never overflows as we are performing a division
-     * If rounding to the nearest integer and the result is exactly at the halfway point, we round up
-     * @param amountShares The amount of shares to convert to tokens
-     * @param rounding Whether to round towards zero, the closest integer, or positive infinity
-     * @param d Current value of the divisor
-     * @return tokens_ The corresponding amount of tokens
+     * @notice Converts an amount of shares into the corresponding amount of tokens, rounding the division according to
+     * `rounding`.
+     * @dev If rounding to the nearest integer and the result is exactly at the halfway point, we round up.
+     * @param amountShares The amount of shares to convert to tokens.
+     * @param rounding The rounding direction: down, closest, or up.
+     * @param d The current divisor value used for the conversion.
+     * @return tokens_ The calculated equivalent amount of tokens.
      */
     function _convertToTokens(uint256 amountShares, Rounding rounding, uint256 d)
         internal
@@ -292,7 +285,6 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
             revert UsdnInvalidDivisor();
         }
         unchecked {
-            // division & modulo can't error because d > 0
             uint256 tokensDown = amountShares / d;
             uint256 remainder = amountShares % d;
             if (rounding == Rounding.Down || remainder == 0) {
@@ -300,18 +292,18 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
                 return tokensDown;
             }
 
-            // division can't error because d > 0
             if (tokensDown == type(uint256).max / d) {
                 // early return, we can't have a token amount larger than maxTokens() = uint256.max / _divisor
                 return tokensDown;
             }
-            uint256 tokensUp = tokensDown + 1; // this can't overflow because d > 1
+
+            uint256 tokensUp = tokensDown + 1;
             if (rounding == Rounding.Up) {
                 // we know there is a remainder to the division, so this value is the result of rounding up the quotient
                 return tokensUp;
             }
 
-            // below, we round to the closest integer
+            // determine whether to round up or down when rounding to the nearest value
             uint256 half = FixedPointMathLib.divUp(d, 2); // need to divUp so some edge cases round correctly
             // if the remainder is equal to or larger than half of the divisor, we round up, else down
             if (remainder >= half) {
@@ -323,12 +315,12 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /**
-     * @notice Transfer some shares from `from` to `to`
-     * @dev Reverts if `from` or `to` is the zero address
-     * @param from The source address
-     * @param to The destination address
-     * @param value The amount of shares to transfer
-     * @param tokenValue The converted amount in tokens, for inclusion in the `Transfer` event
+     * @notice Transfers a given amount of shares.
+     * @dev Reverts if the `from` or `to` address is the zero address.
+     * @param from The address from which shares are transferred.
+     * @param to The address to which shares are transferred.
+     * @param value The amount of shares to transfer.
+     * @param tokenValue The converted token value, used for the {Transfer} event.
      */
     function _transferShares(address from, address to, uint256 value, uint256 tokenValue) internal {
         if (from == address(0)) {
@@ -341,11 +333,11 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /**
-     * @notice Burn shares from `account`
-     * @dev Reverts if the account is the zero address
-     * @param account The owner of the shares
-     * @param value The number of shares to burn
-     * @param tokenValue The converted value in tokens, for emitting the `Transfer` event
+     * @notice Burns a given amount of shares from an account.
+     * @dev Reverts if the `account` address is the zero address.
+     * @param account The account from which shares are burned.
+     * @param value The amount of shares to burn.
+     * @param tokenValue The converted token value, used for the {Transfer} event.
      */
     function _burnShares(address account, uint256 value, uint256 tokenValue) internal {
         if (account == address(0)) {
@@ -355,17 +347,18 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /**
-     * @notice Transfer a `value` amount of shares from `from` to `to`, or mint (or burn) if `from` or `to`
-     * is the zero address
-     * @dev Emits a {Transfer} event
-     * @param from The source address
-     * @param to The destination address
-     * @param value The number of shares to transfer
-     * @param tokenValue The value converted to tokens, for inclusion in the `Transfer` event
+     * @notice Updates the shares of accounts during transferShares, mintShares, or burnShares.
+     * @dev Emits a {Transfer} event with the token equivalent of the operation.
+     * If `from` is the zero address, the operation is a mint.
+     * If `to` is the zero address, the operation is a burn.
+     * @param from The source address.
+     * @param to The destination address.
+     * @param value The number of shares to transfer, mint, or burn.
+     * @param tokenValue The converted token value, used for the {Transfer} event.
      */
     function _updateShares(address from, address to, uint256 value, uint256 tokenValue) internal {
         if (from == address(0)) {
-            // overflow check required: The rest of the code assumes that `totalShares` never overflows
+            // overflow check required: the rest of the code assumes that `totalShares` never overflows
             _totalShares += value;
         } else {
             uint256 fromBalance = _shares[from];
@@ -394,16 +387,16 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /**
-     * @inheritdoc ERC20
-     * @notice Transfer a `value` amount of tokens from `from` to `to`, or mint (or burn) if `from` or `to`
-     * is the zero address
-     * @dev Emits a {Transfer} event
-     * @param from The source address
-     * @param to The destination address
-     * @param value The amount of tokens to transfer, is internally converted to shares
+     * @notice Updates the shares of accounts during transfers, mints, or burns.
+     * @dev Emits a {Transfer} event.
+     * If `from` is the zero address, the operation is a mint.
+     * If `to` is the zero address, the operation is a burn.
+     * @param from The source address.
+     * @param to The destination address.
+     * @param value The number of tokens to transfer, mint, or burn.
      */
     function _update(address from, address to, uint256 value) internal override {
-        // convert the value to shares, reverts with `UsdnMaxTokensExceeded()` if value is too high
+        // convert the value to shares, reverts with `UsdnMaxTokensExceeded` if value is too high
         uint256 valueShares = convertToShares(value);
         uint256 fromBalance = balanceOf(from);
 
@@ -431,7 +424,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
         }
 
         if (to == address(0)) {
-            // burn: Since valueShares <= fromShares <= totalShares, we can safely subtract `valueShares` from
+            // burn: since valueShares <= fromShares <= totalShares, we can safely subtract `valueShares` from
             // `totalShares`
             unchecked {
                 _totalShares -= valueShares;

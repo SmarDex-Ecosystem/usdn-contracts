@@ -5,6 +5,7 @@ import { RebalancerFixture } from "../../../test/unit/Rebalancer/utils/Fixtures.
 import { USER_1 } from "../../utils/Constants.sol";
 
 import { IRebalancerErrors } from "../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
+import { RebalancerHandler } from "./utils/Handler.sol";
 
 /**
  * @custom:feature The `initiateClosePosition` function of the rebalancer contract
@@ -22,7 +23,6 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
         rebalancer.initiateDepositAssets(minAsset, address(this));
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
-        vm.warp(rebalancer.getCloseLockedUntil() + 1);
     }
 
     /**
@@ -98,20 +98,32 @@ contract TestRebalancerInitiateClosePosition is RebalancerFixture {
 
     /**
      * @custom:scenario Call {initiateClosePosition} function with a timestamp before the {closeLockedUntil}
-     * @custom:when The {initiateClosePosition} function is called
+     * @custom:when The {_initiateClosePosition} function is called
      * @custom:then It should revert with {RebalancerCloseLockedUntil}
      */
     function test_RevertWhen_rebalancerBeforeCloseLockedUntil() public {
-        vm.warp(block.timestamp - 1);
+        RebalancerHandler.InitiateCloseData memory data;
+        data.closeLockedUntil = block.timestamp + 1;
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IRebalancerErrors.RebalancerCloseLockedUntil.selector, rebalancer.getCloseLockedUntil()
-            )
+            abi.encodeWithSelector(IRebalancerErrors.RebalancerCloseLockedUntil.selector, block.timestamp + 1)
         );
-        rebalancer.initiateClosePosition(
-            minAsset, address(this), payable(this), DISABLE_MIN_PRICE, type(uint256).max, "", EMPTY_PREVIOUS_DATA, ""
-        );
+        rebalancer.i_initiateClosePosition(data, "", EMPTY_PREVIOUS_DATA, "");
+    }
+
+    /**
+     * @custom:scenario Call {initiateClosePosition} function with a timestamp equal to {closeLockedUntil}
+     * @custom:when The {_initiateClosePosition} function is called
+     * @custom:then The transaction should be successful
+     */
+    function test_timestampEqualToCloseLockedUntil() public {
+        RebalancerHandler.InitiateCloseData memory data;
+        data.closeLockedUntil = block.timestamp;
+
+        // if the call reverts with {RebalancerInvalidAmount}, that means that the check on {_closeLockedUntil} passed
+        // as it is the first check in the function
+        vm.expectRevert(abi.encodeWithSelector(IRebalancerErrors.RebalancerInvalidAmount.selector));
+        rebalancer.i_initiateClosePosition(data, "", EMPTY_PREVIOUS_DATA, "");
     }
 
     receive() external payable { }

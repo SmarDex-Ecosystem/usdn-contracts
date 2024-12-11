@@ -1,8 +1,44 @@
 # Scripts
 
+## Deploy USDN token
+
+### Production mode
+
+The script verifies that the deployer address has a nonce of 0. It then deploys the token. Finally, it grants the `DEFAULT_ADMIN_ROLE` to the safe address and renounces this role from the deployer.
+
+Use the following command to deploy the USDN token:
+
+```shell
+./script/deployUsdnToken.sh -r YOUR_RPC_URL -s SAFE_ADDRESS
+```
+
+It will then prompt you to enter the deployer's private key.
+
+Help can be displayed with the `-h` flag.
+
+```shell
+./script/deployUsdnToken.sh -h
+```
+
+A test mode is available with the `-t` or `--test` flag. It will deploy the token with default values (rpc url: localhost:8545, deployer: 29th account of anvil, safe: EthSafeAddr).
+
+```shell
+./script/deployUsdnToken.sh -t
+```
+
+### Standalone mode
+
+You can run the forge script directly with the following command:
+
+```shell
+forge script --private-key YOUR_PRIVATE_KEY -f YOUR_RPC_URL script/00_DeployUsdn.s.sol:DeployUsdn --broadcast --slow
+```
+
+Two environment variables are required: `DEPLOYER_ADDRESS` and `SAFE_ADDRESS`.
+
 ## Deploy protocol
 
-### Production mode:
+### Production mode
 
 For a mainnet deployment, you have to use the shell script. It will prompt you to enter the required environment variables :
 
@@ -17,7 +53,7 @@ deployMainnet.sh
 
 The script can be run with the following command with `-t` or `--test` flag to deploy with default values. (rpc url: localhost:8545, initial long amount: 100 ethers, get wstETH: true, deployer : 29th account of anvil)
 
-### Fork mode:
+### Fork mode
 
 The deployment script for the fork mode does not require any input:
 
@@ -25,7 +61,7 @@ The deployment script for the fork mode does not require any input:
 deployFork.sh
 ```
 
-### Standalone mode:
+### Standalone mode
 
 You can run the forge script directly with the following command:
 
@@ -37,7 +73,7 @@ Required environment variables: `INIT_LONG_AMOUNT` and `DEPLOYER_ADDRESS`.
 
 If running on mainnet, remember to deploy the USDN token first with the `00_DeployUSDN.s.sol` script and set the `USDN_ADDRESS` environment variable.
 
-### Environment variables:
+### Environment variables
 
 Environment variables can be used to control the script execution:
 
@@ -60,7 +96,7 @@ Environment variables can be used to control the script execution:
 
 Example using the real wstETH and depositing 10 ETH for both vault side and long side for mainnet deployment:
 
-```
+```bash
 export INIT_LONG_AMOUNT=10000000000000000000
 export DEPLOYER_ADDRESS=0x1234567890123456789012345678901234567890
 export GET_WSTETH=true
@@ -109,7 +145,7 @@ The `anvil` fork should be launched with at least the following parameters:
 - `-f https://..` to fork mainnet at the latest height
 - `--chain-id $FORK_CHAIN_ID` to change from the default (1) forked chain ID
 
-```
+```bash
 anvil -a 100 -f [Mainnet RPC] --chain-id $FORK_CHAIN_ID
 ```
 
@@ -121,7 +157,7 @@ The script first requires that the ABIs have been exported with `npm run exportA
 
 Then, it can be used like so:
 
-```
+```bash
 npx tsx script/utils/logsAnalysis.ts -r https://fork-rpc-url.com/ --protocol 0x24EcC5E6EaA700368B8FAC259d3fBD045f695A08 --usdn 0x0D92d35D311E54aB8EEA0394d7E773Fc5144491a --middleware 0x4278C5d322aB92F1D876Dd7Bd9b44d1748b88af2
 ```
 
@@ -134,7 +170,7 @@ We can specify common base contracts to filter wanted duplications with the `-c`
 
 It can be used like so:
 
-```
+```bash
 npx tsx script/utils/functionClashes.ts UsdnProtocolImpl UsdnProtocolFallback -c AccessControlDefaultAdminRulesUpgradeable PausableUpgradeable
 ```
 

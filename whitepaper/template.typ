@@ -36,6 +36,8 @@
   }
   // Different style for level 3 headings
   #show heading.where(level: 3): set text(style: "italic", weight: "medium")
+  // Set heading numbering
+  #set heading(numbering: "1.")
   #doc
 
   #bibliography("refs.bib", title: "References", full: true )
