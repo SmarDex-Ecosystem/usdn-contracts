@@ -205,7 +205,7 @@ library UsdnProtocolCoreLibrary {
 
     /**
      * @notice Computes the profits and losses on the long side, calculates the funding, applies protocol fees,
-     * updates the liquidation multiplier, and determines the temporary new balances for each side.
+     * updates the liquidation multiplier and determines the temporary new balances for each side.
      * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding`, but does not
      * update the balances. This is left to the caller.
      * @param currentPrice The current price.
@@ -340,9 +340,8 @@ library UsdnProtocolCoreLibrary {
      * @notice Removes a blocked pending action and performs the minimal amount of cleanup necessary.
      * @dev This function should only be called by the owner of the protocol, it serves as an escape hatch if a
      * pending action ever gets stuck due to something reverting unexpectedly.
-     * The caller must wait at least `REMOVE_BLOCKED_PENDING_ACTIONS_DELAY` after both `_lowLatencyValidatorDeadline`
-     * and `_onChainValidatorDeadline` to call this function. This is to give the chance to normal users to validate the
-     * action if possible.
+     * From the user action timestamp, the caller must wait at least `REMOVE_BLOCKED_PENDING_ACTIONS_DELAY` after both
+     * `_lowLatencyValidatorDeadline` and `_onChainValidatorDeadline`.
      * @param rawIndex The raw index of the pending action in the queue.
      * @param to The recipient of the funds, which may include security deposit, assets and USDN tokens.
      * @param cleanup If `true`, will attempt to perform more cleanup at the risk of reverting. Always try `true` first.
