@@ -13,7 +13,7 @@
     description: [
       The trading exposure of the vault side is equal to the vault balance.
       The trading exposure of the long side is equal to the @total_expo of all long positions, minus the long side
-      balance.
+      balance. It represents the borrowed part of all long positions.
     ],
   ),
   (
