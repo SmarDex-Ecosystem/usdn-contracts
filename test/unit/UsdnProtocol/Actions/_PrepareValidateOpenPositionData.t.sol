@@ -187,9 +187,7 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
      * below its position's liquidation price
      * @custom:given Partial liquidations occurred that left the user's tick un-liquidated
      * @custom:when The user tries to validate its position
-     * @custom:then Nothing happens
-     * @custom:when The lastPrice value is updated and the user tries to validate again
-     * @custom:then The position was not liquidated and matching data is returned
+     * @custom:then The position is liquidated
      */
     function test_prepareValidateOpenPositionDataWithStartPriceLowerThanLiquidationPrice() public {
         skip(1 hours);
@@ -211,8 +209,9 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
             protocol.i_prepareValidateOpenPositionData(pendingAction, currentPriceData);
 
         uint24 liquidationPenalty = protocol.getLiquidationPenalty();
-        uint256 positionTotalExpo =
-            protocol.i_calcPositionTotalExpo(POSITION_AMOUNT, params.initialPrice, liqPriceWithoutPenalty);
+        uint256 positionTotalExpo = protocol.i_calcPositionTotalExpo(
+            POSITION_AMOUNT, params.initialPrice, data.liqPriceWithoutPenaltyNorFunding
+        );
 
         /* ------------------------ checking returned values ------------------------ */
         assertTrue(liquidated, "The position should have been liquidated");
@@ -259,12 +258,84 @@ contract TestUsdnProtocolActionsPrepareValidateOpenPositionData is UsdnProtocolB
         );
     }
 
+    /**
+     * @custom:scenario A user wants to validate its action but the provided price is not fresh and the lastPrice is
+     * below its position's liquidation price (without liq penalty nor fundings)
+     * @custom:given `startPrice` is above the liquidation price but below the liquidation price without fundings
+     * @custom:and fundings are enabled
+     * @custom:when The user tries to validate its position
+     * @custom:then The position is liquidated
+     */
+    function test_prepareValidateOpenPositionDataWithStartPriceLowerThanLiquidationPriceWithoutPenaltyNorFunding()
+        public
+    {
+        skip(1 hours);
+        vm.startPrank(ADMIN);
+        protocol.setFundingSF(500);
+        vm.stopPrank();
+
+        // big position to have high fundings
+        setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, 20 ether, DEFAULT_PARAMS.initialPrice);
+
+        (, posId) = protocol.initiateOpenPosition(
+            POSITION_AMOUNT,
+            params.initialPrice * 8 / 10,
+            type(uint128).max,
+            protocol.getMaxLeverage(),
+            address(this),
+            USER_1,
+            type(uint256).max,
+            currentPriceData,
+            EMPTY_PREVIOUS_DATA
+        );
+        timestampAtInitiate = uint40(block.timestamp);
+
+        skip(4 hours);
+
+        // update lastPrice and lastUpdatedTimestamp
+        protocol.liquidate(currentPriceData);
+
+        liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick));
+        (pendingAction,) = protocol.i_getPendingAction(USER_1);
+        uint24 liquidationPenalty = protocol.getLiquidationPenalty();
+        uint256 liqPriceWithoutPenaltyNorFunding = protocol.i_getEffectivePriceForTick(
+            protocol.i_calcTickWithoutPenalty(posId.tick, liquidationPenalty), pendingAction.var6
+        );
+
+        // price below the liquidation price of the initiated position
+        uint256 price = protocol.getEffectivePriceForTick(posId.tick) + 10 ether;
+        currentPriceData = abi.encode(price);
+
+        vm.expectEmit();
+        emit LiquidatedPosition(USER_1, posId, price, liqPriceWithoutPenaltyNorFunding);
+        (ValidateOpenPositionData memory data, bool liquidated) =
+            protocol.i_prepareValidateOpenPositionData(pendingAction, currentPriceData);
+
+        /* ------------------------------ sanity checks ----------------------------- */
+        assertGt(
+            data.liqPriceWithoutPenaltyNorFunding,
+            liqPriceWithoutPenalty,
+            "liqPriceWithoutPenaltyNorFunding should be higher than liqPriceWithoutPenalty"
+        );
+        assertLt(data.liqPriceWithoutPenalty, price, "liqPriceWithoutPenalty should be less than the current price");
+        assertGt(
+            data.liqPriceWithoutPenaltyNorFunding,
+            price,
+            "liqPriceWithoutPenaltyNorFunding should be higher than the current price"
+        );
+
+        /* ------------------------ checking returned values ------------------------ */
+        assertTrue(liquidated, "The position should have been liquidated");
+        assertFalse(data.isLiquidationPending, "There should not be any pending liquidations");
+    }
+
     /// @notice Assert the data in ValidateOpenPositionData depending on `isEarlyReturn`
     function _assertData(ValidateOpenPositionData memory data, bool isEarlyReturn) private view {
         uint128 currentPrice = abi.decode(currentPriceData, (uint128));
         uint24 liquidationPenalty = protocol.getLiquidationPenalty();
-        uint256 positionTotalExpo =
-            protocol.i_calcPositionTotalExpo(POSITION_AMOUNT, params.initialPrice, liqPriceWithoutPenalty);
+        uint256 positionTotalExpo = protocol.i_calcPositionTotalExpo(
+            POSITION_AMOUNT, params.initialPrice, data.liqPriceWithoutPenaltyNorFunding
+        );
         uint128 liqPriceWithoutPenaltyNorFunding = protocol.i_getEffectivePriceForTick(
             protocol.i_calcTickWithoutPenalty(data.action.tick, data.liquidationPenalty), data.action.liqMultiplier
         );
