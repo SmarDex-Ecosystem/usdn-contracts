@@ -195,7 +195,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
      * @notice Gets the minimum acceptable value of the divisor.
      * @dev The minimum divisor that can be set. This corresponds to a growth of 1B times. Technically, 1e5 would still
      * work without precision errors.
-     * @return minDivisor_ The minimum divisor
+     * @return minDivisor_ The minimum divisor.
      */
     function MIN_DIVISOR() external pure returns (uint256 minDivisor_);
 }
