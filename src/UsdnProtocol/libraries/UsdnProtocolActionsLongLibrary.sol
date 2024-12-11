@@ -269,7 +269,7 @@ library UsdnProtocolActionsLongLibrary {
                 // the tick's imposed penalty is different from the current setting, so the `liqPriceWithoutPenalty` we
                 // got above can't be used to calculate the leverage
                 // we must instead use the tick's penalty to find the new `liqPriceWithoutPenalty` and calculate the
-                // total expo
+                // total exposure
 
                 // note: In case the tick liquidation penalty is lower than the current setting, it might lead to a
                 // leverage that exceeds the max leverage slightly. We allow this behavior in this rare occurrence
@@ -283,12 +283,12 @@ library UsdnProtocolActionsLongLibrary {
                 );
             }
 
-            // move the position to its new tick, update its total expo, and return the new tickVersion and index
+            // move the position to its new tick, update its total exposure, and return the new tickVersion and index
             // remove position from old tick completely
             Long._removeAmountFromPosition(
                 data.action.tick, data.action.index, data.pos, data.pos.amount, data.pos.totalExpo
             );
-            // update position total expo (because of new leverage / liq price)
+            // update position total exposure (because of new leverage / liq price)
             data.pos.totalExpo =
                 Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
             // mark the position as validated
@@ -317,18 +317,18 @@ library UsdnProtocolActionsLongLibrary {
             return (true, false, maxLeverageData.newPosId);
         }
 
-        // calculate the new total expo
+        // calculate the new total exposure
         uint128 expoBefore = data.pos.totalExpo;
         uint128 expoAfter =
             Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenaltyNorFunding);
 
-        // update the total expo of the position
+        // update the total exposure of the position
         data.pos.totalExpo = expoAfter;
         // mark the position as validated
         data.pos.validated = true;
         // SSTORE
         s._longPositions[data.tickHash][data.action.index] = data.pos;
-        // update the total expo by adding the position's new expo and removing the old one
+        // update the total exposure by adding the position's new exposure and removing the old one
         // do not use += or it will underflow
         s._totalExpo = s._totalExpo + expoAfter - expoBefore;
 
