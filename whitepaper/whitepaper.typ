@@ -1,4 +1,9 @@
 #import "template.typ": template
+#import "glossary.typ": glossary
+#import "@preview/glossarium:0.5.1": make-glossary, register-glossary, print-glossary, gls, glspl
+
+#show: make-glossary
+#register-glossary(glossary)
 
 #show: template.with(
   title: [Ultimate Synthetic Delta Neutral],
@@ -11,8 +16,8 @@
     ),
   ),
   abstract: [
-    Dollar-backed stablecoins have long been a cornerstone of the decentralized finance (DeFi) ecosystem, but they are subject to the
-    same value depreciation as the US dollar due to inflation.
+    Dollar-backed stablecoins have long been a cornerstone of the decentralized finance (DeFi) ecosystem, but they are
+    subject to the same value depreciation as the US dollar due to inflation.
     Yield-bearing synthetic dollar tokens have been proposed in the past, but they suffer from centralization and lack
     of transparency.
     We present a novel protocol comprised of two DeFi products: an algorithmic yield-bearing synthetic dollar token
@@ -21,25 +26,47 @@
     This research shows that a fully decentralized and transparent model can be used to support a yield-bearing
     synthetic dollar token while remaining economically viable and gas-efficient.
   ],
-  keywords: ("DeFi", "Blockchain", "Synthetic Assets", "Delta Neutral")
+  keywords: ("DeFi", "Blockchain", "Synthetic Assets", "Delta Neutral"),
 )
 
 = Introduction
 
 The decentralized finance (DeFi) ecosystem has long sought alternatives to fiat-backed tokens, aiming to provide users
-with assets that combine dollar-like stability with yield generation. However, existing solutions, particularly stablecoins, suffer
-from inherent flaws: they are often centralized, opaque, and yield-free for holders.
+with assets that combine dollar-like stability with yield generation. However, existing solutions, particularly
+stablecoins, suffer from inherent flaws: they are often centralized, opaque, and yield-free for holders.
 
 USDN aims to solve this problem by operating a fully decentralized structured product.
 Its architecture eliminates dependencies on centralized exchanges (CEXs) and custodial intermediaries.
 Instead, users interact with smart contracts to mint or redeem USDN tokens, as well as to open long perpetual positions.
-The underlying asset deposited to mint USDN tokens is used as liquidity for the structured product to enable leveraged trading.
-The first deployment of this protocol uses the wrapped staked ETH (wstETH) from #cite(<lido-wsteth>, form: "prose") as underlying asset.
+The underlying asset deposited to mint USDN tokens is used as liquidity for the structured product to enable leveraged
+trading. The first deployment of this protocol uses the @wsteth #cite(<lido-wsteth>) as underlying asset.
 This means that we combine the yield of the protocol with that of staking ETH automatically.
 
-= Protocol architecture
+= Architecture Overview
 
-= USDN Token
+The USDN protocol is comprised of two main components: the _vault_ and the _long side_, each having a balance of the
+underlying asset. The sum of these balances does not change unless a deposit or withdrawal is made towards the vault
+(see @sec:token), a long position was opened, some protocol fees are taken, or liquidation rewards are given out to an
+actor of the protocol. Any change in the long side balance due to a change in the underlying asset price or
+#glspl("funding") is compensated by an equal but opposite change in the vault balance.
+
+The vault holds the amount of underlying assets necessary to back the value of the USDN token (see @sec:token_price).
+For instance, if the price of the USDN token is \$1 and its total supply is 1000 USDN, and if the price of each
+#gls("wsteth") is \$2000, then the vault balance is 0.5 wstETH. Each deposit increases the vault balance an mints new
+USDN tokens.
+
+The long side holds the amount of underlying assets corresponding to the summed value of all the long perpetual
+positions that exist currently. For example (ignoring fees), a newly open position with an initial collateral of
+1 wstETH would increase the long side balance by 1 wstETH, because the position did not lose or gain any value yet,
+the asset price being the same as the entry price of the position. If the price of the underlying asset increases, the
+value of the position increases (with a leverage effect), and a corresponding decrease in the vault balance occurs
+(see @sec:long_pnl).
+
+When the protocol is balanced, the vault balance is exactly equal to the borrowed amount of the long side. To
+incentivize this equilibrium, the protocol charges a funding fee to the side with the higher @tradingexpo, and
+rewards this amount to the other side (see @sec:funding).
+
+= USDN Token <sec:token>
 
 == Overview
 
@@ -49,9 +76,9 @@ slightly above or below this reference value, supported by market forces and the
 
 The value of USDN comes from assets (a specific ERC20 token) stored in the protocol's vault. This can be any token for
 which a price oracle is available and for which the balance does not change over time without transfer. For the first
-release of the protocol, the token is wstETH.
+release of the protocol, the token is #gls("wsteth").
 
-== Price
+== Price <sec:token_price>
 
 Due to the algorithmic nature of the USDN token, its price in dollars $P_"usdn"$ can be calculated using the following
 formula:
@@ -61,7 +88,7 @@ $ P_"usdn" = frac(B_"vault" P_"asset", S_"tot") $ <eq:usdn_price>
 where $B_"vault"$ is the balance of assets held in the protocol's vault, $P_"asset"$ is the price of the asset token in
 USD, and $S_"tot"$ is the total supply of USDN tokens.
 
-== Token Minting <seq:token_minting>
+== Token Minting <sec:token_minting>
 
 USDN tokens are minted whenever a deposit is made into the protocol's vault. The amount of minted USDN $A_"usdn"$ is
 calculated by dividing the dollar value of the deposited assets by the USDN price:
@@ -72,7 +99,7 @@ Taking into account @eq:usdn_price, the minting formula can be rewritten as:
 
 $ A_"usdn" = frac(A_"asset" S_"tot", B_"vault") $
 
-== Token Burning <seq:token_burning>
+== Token Burning <sec:token_burning>
 
 When assets are removed from the protocol's vault, USDN tokens are burned in proportion to the withdrawn amount,
 following @eq:usdn_minting. Thus, for a given amount of USDN to be burned, the corresponding withdrawn assets amount is:
@@ -82,8 +109,8 @@ $ A_"asset" = frac(A_"usdn" P_"usdn", P_"asset") = frac(A_"usdn" B_"vault", S_"t
 == Yield Sources
 
 From @eq:usdn_price, it is clear that the USDN price is influenced by the total assets held in the protocol's vault.
-As such, if the vault balance increases as a result of position fees, losses from long positions, or funding payments,
-the USDN price will rise. When a certain threshold is reached, the token rebases to a price slightly above \$1 by
+As such, if the vault balance increases as a result of position fees, losses from long positions, or @funding payments,
+the USDN price will rise. When a certain threshold is reached, the token #glspl("rebase") to a price slightly above \$1 by
 increasing the total supply and balance of each holder. This increase in balance represents the yield of the USDN token.
 The rebase mechanism ensures that yields do not induce a price that significantly exceeds the value of \$1. There is no
 balance and total supply adjustment (rebase) if the price falls below \$1.
@@ -93,17 +120,24 @@ balance and total supply adjustment (rebase) if the price falls below \$1.
 The vault manages the supply of USDN tokens. The two main actions of the vault are deposits and withdrawals.
 
 The deposit action allows to lock assets into the vault and mint a proportional amount of USDN tokens by providing an oracle price for the asset token.
-It follows the formula described in @seq:token_minting.
+It follows the formula described in @sec:token_minting.
 
 The withdrawal action allows to redeem USDN tokens for an equivalent dollar amount of assets from the vault.
-It follows the formula described in @seq:token_burning.
+It follows the formula described in @sec:token_burning.
 
-= Long
+= Long Side
 
-== Tick
+== Ticks
 
-== PNL
-
-= Funding
+== Position Value, Profits and Losses <sec:long_pnl>
 
 = Imbalance
+
+= Funding <sec:funding>
+
+= Glossary
+
+// reset template styles for the figures in the glossary
+#show figure: set text(9pt)
+#show figure.caption: pad.with(x: -10%)
+#print-glossary(glossary)

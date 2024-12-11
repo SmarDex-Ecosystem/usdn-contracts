@@ -81,7 +81,7 @@ interface IUsdnProtocolTypes {
      * @param validated Whether the position was validated
      * @param timestamp The timestamp of the position start
      * @param user The user's address
-     * @param totalExpo The total exposition of the position (0 for vault deposits). The product of the initial
+     * @param totalExpo The total exposure of the position (0 for vault deposits). The product of the initial
      * collateral and the initial leverage
      * @param amount The amount of initial collateral in the position
      */
