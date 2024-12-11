@@ -26,11 +26,11 @@ library UsdnProtocolActionsLongLibrary {
     using SafeTransferLib for address;
 
     /**
-     * @dev Data structure for the `_validateClosePositionWithAction` function.
-     * @param isLiquidationPending Whether a liquidation is pending
-     * @param priceWithFees The price of the position with fees
-     * @param liquidationPrice The liquidation price of the position
-     * @param positionValue The value of the position. The amount the user will receive when closing the position
+     * @dev Data structure for the {_validateClosePositionWithAction} function.
+     * @param isLiquidationPending Whether a liquidation is pending.
+     * @param priceWithFees The price of the position with fees.
+     * @param liquidationPrice The liquidation price of the position.
+     * @param positionValue The value of the position. The amount the user will receive when closing the position.
      */
     struct ValidateClosePositionWithActionData {
         bool isLiquidationPending;
@@ -40,10 +40,10 @@ library UsdnProtocolActionsLongLibrary {
     }
 
     /**
-     * @dev Data structure for the `_validateOpenPositionWithAction` function
-     * @param currentLiqPenalty The current liquidation penalty parameter value
-     * @param newPosId The new position id
-     * @param liquidationPenalty The liquidation penalty of the tick we are considering
+     * @dev Data structure for the {_validateOpenPositionWithAction} function.
+     * @param currentLiqPenalty The current liquidation penalty parameter value.
+     * @param newPosId The new position id.
+     * @param liquidationPenalty The liquidation penalty of the tick we are considering.
      */
     struct MaxLeverageData {
         uint24 currentLiqPenalty;
