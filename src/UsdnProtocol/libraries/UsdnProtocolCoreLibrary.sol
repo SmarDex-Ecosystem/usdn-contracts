@@ -177,7 +177,7 @@ library UsdnProtocolCoreLibrary {
      * security deposit.
      * @param securityDepositValue The value of the security deposit for the newly created pending action.
      * @param data The open position action data.
-     * @return amountToRefund_ The security deposit value of a stale pending action.
+     * @return amountToRefund_ The security deposit value of a stale pending action, if any was removed.
      */
     function _createOpenPendingAction(
         address to,
@@ -315,7 +315,7 @@ library UsdnProtocolCoreLibrary {
      * @notice Adds a pending action to the queue and removes a possible stale pending action.
      * @dev Reverts if there is already a pending action for this user.
      * @param validator The address which is supposed to validate the position and receive the
-     * security deposit. The validator address may be different from the position owner.
+     * security deposit.
      * @param action The pending action struct.
      * @return amountToRefund_ The security deposit value of a stale pending action, if any was removed.
      */
@@ -340,8 +340,9 @@ library UsdnProtocolCoreLibrary {
      * @notice Removes a blocked pending action and performs the minimal amount of cleanup necessary.
      * @dev This function should only be called by the owner of the protocol, it serves as an escape hatch if a
      * pending action ever gets stuck due to something reverting unexpectedly.
-     * The caller must wait at least 5 minutes after the onchain validator deadline to call this function. This is to
-     * give the chance to normal users to validate the action if possible.
+     * The caller must wait at least `REMOVE_BLOCKED_PENDING_ACTIONS_DELAY` after both `_lowLatencyValidatorDeadline`
+     * and `_onChainValidatorDeadline` to call this function. This is to give the chance to normal users to validate the
+     * action if possible.
      * @param rawIndex The raw index of the pending action in the queue.
      * @param to The recipient of the funds, which may include security deposit, assets and USDN tokens.
      * @param cleanup If `true`, will attempt to perform more cleanup at the risk of reverting. Always try `true` first.
@@ -501,7 +502,7 @@ library UsdnProtocolCoreLibrary {
      * @notice Gets the pending action for a validator.
      * @dev Reverts if there is no pending action for the validator.
      * @param validator The address which is supposed to validate the position and receive the
-     * security deposit. The validator address may be different from the position owner.
+     * security deposit.
      * @return action_ The pending action struct.
      * @return rawIndex_ The raw index of the pending action in the queue.
      */
@@ -651,7 +652,7 @@ library UsdnProtocolCoreLibrary {
      * `Types.ProtocolAction.None`. There is a pending action only if the action is different from
      * `Types.ProtocolAction.None`.
      * @param validator The address of the pending action which is supposed to validate the position and receive the
-     * security deposit. The validator address may be different from the position owner.
+     * security deposit.
      * @return action_ The pending action struct if any, otherwise a zero-initialized struct.
      * @return rawIndex_ The raw index of the pending action in the queue.
      */
