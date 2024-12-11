@@ -9,14 +9,14 @@ import { IRebaseCallback } from "./IRebaseCallback.sol";
  */
 interface IUsdnEvents {
     /**
-     * @notice The divisor is updated, emitted during a rebase.
+     * @notice The divisor was updated, emitted during a rebase.
      * @param oldDivisor The divisor value before the rebase.
      * @param newDivisor The new divisor value.
      */
     event Rebase(uint256 oldDivisor, uint256 newDivisor);
 
     /**
-     * @notice The rebase handler address is updated.
+     * @notice The rebase handler address was updated.
      * @dev The rebase handler is a contract that is called when a rebase occurs.
      * @param newHandler The address of the new rebase handler contract.
      */
