@@ -41,4 +41,11 @@
       proportionally.
     ],
   ),
+  (
+    key: "liquidation_price",
+    short: "liquidation price",
+    description: [
+      The liquidation price of a position is the price at which the position's value is considered too small for it to continue existing. If the price reaches the liquidation price, the position is liquidated in a decentralized way to prevent further losses.
+    ],
+  ),
 )
