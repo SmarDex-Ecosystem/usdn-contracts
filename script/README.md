@@ -192,3 +192,22 @@ you need to run the script with the following arguments:
 ```
 
 You need to provide just the protocol address because the script will automatically fetch the other addresses from the protocol. The script will save the results in 1 csv and json file per contract with access control, and 1 csv and json file total for all the contracts with simple ownership.
+
+
+## Verify contracts
+
+The verifying script will work with a broadcast file, the compiled contracts and an etherscan API key.
+You don't need to be the deployer to verify the contracts.
+Before verifying, you need to compile the contracts :
+
+```forge compile```
+
+Be sure to be in the same version as the deployment to avoid bytecode difference.
+You can then verify by using this cli:
+
+```
+npm run verify -- PATH_TO_BROADCAST_FILE -e ETHERSCAN_API_KEY
+```
+
+To show some extra debug you can add `-d` flag.
+If you are verifying contracts in another platform than Etherscan, you can specify the url with `--verifier-url`  
