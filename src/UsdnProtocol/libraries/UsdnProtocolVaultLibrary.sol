@@ -72,7 +72,7 @@ library UsdnProtocolVaultLibrary {
     /**
      * @dev Parameters for the internal {_initiateWithdrawal} function.
      * @param user The address of the user initiating the withdrawal.
-     * @param to The address that will receive the assets.
+     * @param to The recipient of the assets.
      * @param validator The address that is supposed to validate the withdrawal and receive the security deposit.
      * @param usdnShares The amount of USDN shares to withdraw.
      * @param amountOutMin The minimum amount of assets to receive.
