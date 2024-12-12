@@ -139,7 +139,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdn
-    function sharesOf(address account) public view returns (uint256 shares) {
+    function sharesOf(address account) public view returns (uint256 shares_) {
         return _shares[account];
     }
 
@@ -167,17 +167,17 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /// @inheritdoc IUsdn
-    function divisor() external view returns (uint256) {
+    function divisor() external view returns (uint256 divisor_) {
         return _divisor;
     }
 
     /// @inheritdoc IUsdn
-    function rebaseHandler() external view returns (IRebaseCallback) {
+    function rebaseHandler() external view returns (IRebaseCallback rebaseHandler_) {
         return _rebaseHandler;
     }
 
     /// @inheritdoc IUsdn
-    function maxTokens() public view returns (uint256) {
+    function maxTokens() public view returns (uint256 maxTokens_) {
         return type(uint256).max / _divisor;
     }
 
