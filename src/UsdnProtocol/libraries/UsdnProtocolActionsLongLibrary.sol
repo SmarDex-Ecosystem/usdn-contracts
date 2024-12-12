@@ -476,7 +476,7 @@ library UsdnProtocolActionsLongLibrary {
     }
 
     /**
-     * @notice Updates the protocol balances during `validateOpenPosition` to reflect the new entry price of the
+     * @notice Updates the protocol balances during {validateOpenPosition} to reflect the new entry price of the
      * position.
      * @dev We need to adjust the balances because the position that was created during the {initiateOpenPosition} might
      * have gained or lost some value, and we need to reflect that the position value is now `newPosValue`.
