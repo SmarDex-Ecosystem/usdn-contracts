@@ -138,13 +138,13 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
      * @dev If the provided divisor is larger than or equal to the current divisor value, no rebase will happen
      * If the new divisor is smaller than `MIN_DIVISOR`, the value will be clamped to `MIN_DIVISOR`.
      * Caller must have the `REBASER_ROLE`.
-     * @param divisor The new divisor, should be strictly smaller than the current one and greater or equal to
+     * @param newDivisor The new divisor, should be strictly smaller than the current one and greater or equal to
      * `MIN_DIVISOR`.
      * @return rebased_ Whether a rebase happened.
      * @return oldDivisor_ The previous value of the divisor.
      * @return callbackResult_ The result of the callback, if a rebase happened and a callback handler is defined.
      */
-    function rebase(uint256 divisor)
+    function rebase(uint256 newDivisor)
         external
         returns (bool rebased_, uint256 oldDivisor_, bytes memory callbackResult_);
 
