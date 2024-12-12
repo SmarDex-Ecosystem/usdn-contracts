@@ -28,10 +28,12 @@ library UsdnProtocolVaultLibrary {
     using SignedMath for int256;
 
     /**
-     * @dev Parameters for the internal `_initiateDeposit` function.
+     * @dev Parameters for the internal {_initiateDeposit} function.
+     * The user's input for the minimum amount of shares to receive is not guaranteed due to the price difference
+     * between the initiate and validate actions.
      * @param user The address of the user initiating the deposit.
      * @param to The recipient of the USDN tokens.
-     * @param validator The address that is supposed to validate the deposit.
+     * @param validator The address that is supposed to validate the deposit and receive the security deposit.
      * @param amount The amount of assets to deposit.
      * @param sharesOutMin The minimum amount of USDN shares to receive.
      * @param securityDepositValue The value of the security deposit for the newly created deposit.
@@ -46,7 +48,7 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @dev Structure to hold the transient data during `_initiateDeposit`.
+     * @dev Structure to hold the transient data during {_initiateDeposit}.
      * @param lastPrice The last known price of the asset.
      * @param isLiquidationPending Whether some liquidations still need to be performed.
      * @param feeBps The vault deposit fee (in basis points).
@@ -70,8 +72,8 @@ library UsdnProtocolVaultLibrary {
     /**
      * @dev Parameters for the internal {_initiateWithdrawal} function.
      * @param user The address of the user initiating the withdrawal.
-     * @param to The address to receive the USDN tokens.
-     * @param validator The address that is supposed to validate the withdrawal.
+     * @param to The address that will receive the assets.
+     * @param validator The address that is supposed to validate the withdrawal and receive the security deposit.
      * @param usdnShares The amount of USDN shares to withdraw.
      * @param amountOutMin The minimum amount of assets to receive.
      * @param securityDepositValue The value of the security deposit for the newly created withdrawal.
@@ -89,7 +91,7 @@ library UsdnProtocolVaultLibrary {
      * @dev Structure to hold the transient data during {_initiateWithdrawal}.
      * @param usdnTotalShares The total supply of USDN shares.
      * @param totalExpo The current total exposure.
-     * @param balanceLong The current long balance.
+     * @param balanceLong The balance of the long side.
      * @param balanceVault The balance of the vault including the funding.
      * @param withdrawalAmountAfterFees The predicted amount of assets that will be withdrawn after fees.
      * @param lastPrice The last known price of the asset.
@@ -416,7 +418,8 @@ library UsdnProtocolVaultLibrary {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Executes the first actionable pending action or revert if the price data was not provided.
+     * @notice Executes the first actionable pending action.
+     * @dev Will revert if the corresponding price data is invalid.
      * @param data The price data and corresponding raw indices.
      * @return securityDepositValue_ The security deposit value of the executed action.
      */
@@ -545,7 +548,7 @@ library UsdnProtocolVaultLibrary {
     /**
      * @notice Prepares the data for the {initiateDeposit} function.
      * @dev Updates the protocol's balances if the price is fresh.
-     * @param validator The validator address.
+     * @param validator The address that is supposed to validate the deposit and receive the security deposit.
      * @param amount The amount of asset to deposit.
      * @param sharesOutMin The minimum amount of USDN shares to receive.
      * @param currentPriceData The current price data.
@@ -615,7 +618,7 @@ library UsdnProtocolVaultLibrary {
     /**
      * @notice Prepares the pending action struct for a deposit and adds it to the queue.
      * @param to The recipient of the minted USDN.
-     * @param validator The address that is supposed to validate the deposit.
+     * @param validator The address that is supposed to validate the deposit and receive the security deposit.
      * @param securityDepositValue The value of the security deposit for the newly created pending action.
      * @param amount The amount of assets to deposit (before fees).
      * @param data The deposit action data.
@@ -713,7 +716,7 @@ library UsdnProtocolVaultLibrary {
     /**
      * @notice Attempts to validate the deposit pending action assigned to the given `validator`.
      * @dev If successful, the pending action will be cleared from the queue.
-     * @param validator The address of the validator.
+     * @param validator The address that is supposed to validate the deposit and receive the security deposit.
      * @param priceData The price data for the pending action to validate.
      * @return securityDepositValue_ The value of the security deposit to refund.
      * @return isValidated_ Whether the action is validated.
@@ -818,7 +821,7 @@ library UsdnProtocolVaultLibrary {
     /**
      * @notice Prepares the data for the {initiateWithdrawal} function.
      * @dev Updates the protocol's balances if the price is fresh.
-     * @param validator The validator address.
+     * @param validator The address that is supposed to validate the withdrawal and receive the security deposit.
      * @param usdnShares The amount of USDN shares to burn.
      * @param amountOutMin The estimated minimum amount of assets to receive.
      * @param currentPriceData The current price data.
@@ -961,7 +964,7 @@ library UsdnProtocolVaultLibrary {
     /**
      * @notice Attempts to validate the withdrawal pending action assigned to the given `validator`.
      * @dev If successful, the pending action will be cleared from the queue.
-     * @param validator The address of the validator.
+     * @param validator The address that is supposed to validate the withdrawal and receive the security deposit.
      * @param priceData The corresponding price data.
      * @return securityDepositValue_ The value of the security deposit.
      * @return isValidated_ Whether the action is validated.
