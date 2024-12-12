@@ -95,7 +95,7 @@ for (const transaction of broadcast.transactions.filter(
     if (argumentList === null) {
       execVerify(address, contractName, '', librariesCli);
     } else {
-      let constructorInputs = undefined;
+      let constructorInputs: string[] = [];
       try {
         constructorInputs = compiledContractOut.abi.filter(
           (x: {
