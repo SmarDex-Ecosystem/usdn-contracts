@@ -68,7 +68,7 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @dev Parameters for the internal `_initiateWithdrawal` function.
+     * @dev Parameters for the internal {_initiateWithdrawal} function.
      * @param user The address of the user initiating the withdrawal.
      * @param to The address to receive the USDN tokens.
      * @param validator The address that is supposed to validate the withdrawal.
@@ -86,7 +86,7 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @dev Structure to hold the transient data during `_initiateWithdrawal`.
+     * @dev Structure to hold the transient data during {_initiateWithdrawal}.
      * @param usdnTotalShares The total supply of USDN shares.
      * @param totalExpo The current total exposure.
      * @param balanceLong The current long balance.
@@ -482,10 +482,10 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
+     * @notice This is the mutating version of {getActionablePendingAction}, where empty items at the front of the list
      * are removed.
      * @return action_ The first actionable pending action if any, otherwise a struct with all fields set to zero and
-     * `Types.ProtocolAction.None`.
+     * {IUsdnProtocolTypes.ProtocolAction}'s `None` action.
      * @return rawIndex_ The raw index in the queue for the returned pending action, or zero if empty.
      */
     function _getActionablePendingAction() internal returns (Types.PendingAction memory action_, uint128 rawIndex_) {
@@ -543,7 +543,7 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Prepares the data for the `initiateDeposit` function.
+     * @notice Prepares the data for the {initiateDeposit} function.
      * @dev Updates the protocol's balances if the price is fresh.
      * @param validator The validator address.
      * @param amount The amount of asset to deposit.
@@ -650,8 +650,8 @@ library UsdnProtocolVaultLibrary {
     /**
      * @notice Attempts to initiate a deposit of assets into the vault to mint USDN.
      * @dev Consults the current oracle middleware implementation to know the expected format for the price data, using
-     * the `Types.ProtocolAction.InitiateDeposit` action. The price validation might require payment according to the
-     * return value of the {validationCost} function of the middleware.
+     * the {IUsdnProtocolTypes.ProtocolAction}'s `InitiateDeposit` action. The price validation might require payment
+     * according to the return value of the {IBaseOracleMiddleware.validationCost} function of the middleware.
      * @param params The parameters for the deposit.
      * @param currentPriceData The current price data.
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
@@ -816,7 +816,7 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice Prepares the data for the `initiateWithdrawal` function.
+     * @notice Prepares the data for the {initiateWithdrawal} function.
      * @dev Updates the protocol's balances if the price is fresh.
      * @param validator The validator address.
      * @param usdnShares The amount of USDN shares to burn.
@@ -905,8 +905,8 @@ library UsdnProtocolVaultLibrary {
     /**
      * @notice Initiates a withdrawal of assets from the vault by providing USDN tokens.
      * @dev Consults the current oracle middleware implementation to know the expected format for the price data, using
-     * the `Types.ProtocolAction.InitiateWithdrawal` action. The price validation might require payment according to the
-     * return value of the {validationCost} function of the middleware.
+     * the {IUsdnProtocolTypes.ProtocolAction}'s `InitiateWithdrawal` action. The price validation might require payment
+     * according to the return value of the {IBaseOracleMiddleware.validationCost} function of the middleware.
      * @param params The parameters for the withdrawal.
      * @param currentPriceData The current price data.
      * @return amountToRefund_ If there are pending liquidations we'll refund the sent security deposit,
