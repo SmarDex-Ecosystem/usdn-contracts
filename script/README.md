@@ -104,7 +104,9 @@ export GET_WSTETH=true
 
 ## Upgrade protocol
 
-Before you launch the upgrade script, there are a few things you need to do:
+Each upgrade logic depends on the implementation, so no boilerplate can be used for every upgrade version. This means you need to checkout to the corresponding tag version to see the exact upgrade script used.
+
+Some general rules apply:
 
 - Implement the reinitialization function (ex: `initializeStorageV2`) with the required parameters
   - Make sure it is only callable by the PROXY_UPGRADE_ROLE addresses

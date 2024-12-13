@@ -14,7 +14,7 @@ ledger=false
 read -p $'\n'"Enter the RPC URL : " userRpcUrl
 rpcUrl="$userRpcUrl"
 
-read -p $'\n'"Enter the USDN Protool's address : " usdnProtocolAddress
+read -p $'\n'"Enter the USDN Protocol's address : " usdnProtocolAddress
 usdnProtocol="$usdnProtocolAddress"
 
 while true; do
@@ -69,7 +69,7 @@ done
 if [ $ledger = true ]; then
     forge script -l -f "$rpcUrl" script/50_Upgrade.s.sol:Upgrade --broadcast
 else
-    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/50_Upgrade.s.sol:Upgrade --broadcast
+    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/50_Upgrade.s.sol:Upgrade --broadcast --slow
 fi
 
 popd >/dev/null
