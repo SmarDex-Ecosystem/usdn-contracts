@@ -21,32 +21,35 @@ import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnPro
 
 /**
  * @title Rebalancer
- * @notice The goal of this contract is to re-balance the USDN protocol when liquidations reduce the long trading expo
- * It will manage only one position with enough trading expo to re-balance the protocol after liquidations
- * and close/open again with new and existing funds when the imbalance reaches a certain threshold
+ * @notice The goal of this contract is to keep the imbalance of the USDN protocol to an healthy level when liquidations
+ * reduce the long trading expo, it will manage only one position with enough trading expo to re-balance the
+ * protocol after liquidations and close/open again with new and existing funds when the imbalance reaches a certain
+ * threshold.
  */
 contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback, IRebalancer, EIP712 {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 
     /**
-     * @dev Structure to hold the transient data during `initiateClosePosition`
-     * @param userDepositData The user deposit data
-     * @param remainingAssets The remaining rebalancer assets
-     * @param positionVersion The current rebalancer position version
-     * @param currentPositionData The current rebalancer position data
-     * @param amountToCloseWithoutBonus The user amount to close without bonus
-     * @param amountToClose The user amount to close including bonus
-     * @param protocolPosition The protocol rebalancer position
-     * @param user The address of the user that deposited the funds in the rebalancer
-     * @param balanceOfAssetBefore The balance of asset before the protocol initiateClosePosition
-     * @param balanceOfAssetAfter The balance of asset after the protocol initiateClosePosition
-     * @param amount The amount to close relative to the amount deposited
-     * @param to The address that will receive the assets
-     * @param validator The address that should validate the open position
-     * @param userMinPrice The minimum price at which the position can be closed
-     * @param deadline The deadline of the close position to be initiated
-     * @param closeLockedUntil The timestamp by which a user must wait to perform a {initiateClosePosition}
+     * @dev Structure to hold the transient data during {initiateClosePosition}.
+     * @param userDepositData The user deposit data.
+     * @param remainingAssets The remaining rebalancer assets.
+     * @param positionVersion The current rebalancer position version.
+     * @param currentPositionData The current rebalancer position data.
+     * @param amountToCloseWithoutBonus The user amount to close without bonus.
+     * @param amountToClose The user amount to close including bonus.
+     * @param protocolPosition The protocol rebalancer position.
+     * @param user The address of the user that deposited the funds in the rebalancer.
+     * @param balanceOfAssetBefore The balance of asset before the USDN protocol's
+     * {IUsdnProtocolActions.initiateClosePosition}.
+     * @param balanceOfAssetAfter The balance of asset after the USDN protocol's
+     * {IUsdnProtocolActions.initiateClosePosition}.
+     * @param amount The amount to close relative to the amount deposited.
+     * @param to The recipient of the assets.
+     * @param validator The address that should validate the open position.
+     * @param userMinPrice The minimum price at which the position can be closed.
+     * @param deadline The deadline of the close position to be initiated.
+     * @param closeLockedUntil The timestamp by which a user must wait to perform a {initiateClosePosition}.
      */
     struct InitiateCloseData {
         UserDeposit userDepositData;
@@ -67,7 +70,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         uint256 closeLockedUntil;
     }
 
-    /// @notice Modifier to check if the caller is the USDN protocol or the owner
+    /// @notice Reverts if the caller is not the USDN protocol nor the owner.
     modifier onlyAdmin() {
         if (msg.sender != address(_usdnProtocol) && msg.sender != owner()) {
             revert RebalancerUnauthorized();
@@ -75,7 +78,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         _;
     }
 
-    /// @notice Modifier to check if the caller is the USDN protocol
+    /// @notice Reverts if the caller is not the USDN protocol.
     modifier onlyProtocol() {
         if (msg.sender != address(_usdnProtocol)) {
             revert RebalancerUnauthorized();
@@ -105,38 +108,38 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /*                                 Immutables                                 */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice The address of the asset used by the USDN protocol
+    /// @notice The address of the asset used by the USDN protocol.
     IERC20Metadata internal immutable _asset;
 
-    /// @notice The number of decimals of the asset used by the USDN protocol
+    /// @notice The number of decimals of the asset used by the USDN protocol.
     uint256 internal immutable _assetDecimals;
 
-    /// @notice The address of the USDN protocol
+    /// @notice The address of the USDN protocol.
     IUsdnProtocol internal immutable _usdnProtocol;
 
     /* -------------------------------------------------------------------------- */
     /*                                 Parameters                                 */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice The maximum leverage that a position can have
+    /// @notice The maximum leverage that a position can have.
     uint256 internal _maxLeverage = 3 * 10 ** Constants.LEVERAGE_DECIMALS;
 
-    /// @notice The minimum amount of assets to be deposited by a user
+    /// @notice The minimum amount of assets to be deposited by a user.
     uint256 internal _minAssetDeposit;
 
     /**
-     * @notice The timestamp by which a user must wait to perform a {initiateClosePosition}
-     * @dev This value will be updated each time a new rebalancer long position is created
+     * @notice The timestamp by which a user must wait to perform a {initiateClosePosition}.
+     * @dev This value will be updated each time a new rebalancer long position is created.
      */
     uint256 internal _closeLockedUntil;
 
     /**
-     * @notice The time limits for the initiate/validate process of deposits and withdrawals
+     * @notice The time limits for the initiate/validate process of deposits and withdrawals.
      * @dev The user must wait `validationDelay` after the initiate action to perform the corresponding validate
      * action. If the `validationDeadline` has passed, the user is blocked from interacting until the cooldown duration
      * has elapsed (since the moment of the initiate action). After the cooldown, in case of a deposit action, the user
      * must withdraw their funds with `resetDepositAssets`. After the cooldown, in case of a withdrawal action, the user
-     * can initiate a new withdrawal again
+     * can initiate a new withdrawal again.
      */
     TimeLimits internal _timeLimits = TimeLimits({
         validationDelay: 24 seconds,
@@ -149,28 +152,28 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice The current position version
+    /// @notice The current position version.
     uint128 internal _positionVersion;
 
-    /// @notice The amount of assets waiting to be used in the next version of the position
+    /// @notice The amount of assets waiting to be used in the next version of the position.
     uint128 internal _pendingAssetsAmount;
 
-    /// @notice The version of the last position that got liquidated
+    /// @notice The version of the last position that got liquidated.
     uint128 internal _lastLiquidatedVersion;
 
-    /// @notice The data about the assets deposited in this contract by users
+    /// @notice The data about the assets deposited in this contract by users.
     mapping(address => UserDeposit) internal _userDeposit;
 
-    /// @notice The data for the specific version of the position
+    /// @notice The data for the specific version of the position.
     mapping(uint256 => PositionData) internal _positionData;
 
     /**
-     * @notice The user EIP712 nonce
-     * @dev Check {getNonce} in {IRebalancer} for the documentation
+     * @notice The user EIP712 nonce.
+     * @dev Check {IRebalancer.getNonce} for more information.
      */
     mapping(address => uint256) internal _nonce;
 
-    /// @param usdnProtocol The address of the USDN protocol
+    /// @param usdnProtocol The address of the USDN protocol.
     constructor(IUsdnProtocol usdnProtocol) Ownable(msg.sender) EIP712("Rebalancer", "1") {
         _usdnProtocol = usdnProtocol;
         IERC20Metadata asset = usdnProtocol.getAsset();
@@ -185,26 +188,26 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
         _positionData[0].tick = Constants.NO_POSITION_TICK;
     }
 
-    /// @notice To allow this contract to receive ether refunded by the USDN protocol
+    /// @notice Allows this contract to receive ether sent by the USDN protocol.
     receive() external payable onlyProtocol { }
 
     /// @inheritdoc IRebalancer
-    function getAsset() external view returns (IERC20Metadata) {
+    function getAsset() external view returns (IERC20Metadata asset_) {
         return _asset;
     }
 
     /// @inheritdoc IRebalancer
-    function getUsdnProtocol() external view returns (IUsdnProtocol) {
+    function getUsdnProtocol() external view returns (IUsdnProtocol protocol_) {
         return _usdnProtocol;
     }
 
     /// @inheritdoc IRebalancer
-    function getPendingAssetsAmount() external view returns (uint128) {
+    function getPendingAssetsAmount() external view returns (uint128 pendingAssetsAmount_) {
         return _pendingAssetsAmount;
     }
 
     /// @inheritdoc IRebalancer
-    function getPositionVersion() external view returns (uint128) {
+    function getPositionVersion() external view returns (uint128 version_) {
         return _positionVersion;
     }
 
@@ -236,12 +239,12 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IRebalancer
-    function getLastLiquidatedVersion() external view returns (uint128) {
+    function getLastLiquidatedVersion() external view returns (uint128 version_) {
         return _lastLiquidatedVersion;
     }
 
     /// @inheritdoc IBaseRebalancer
-    function getMinAssetDeposit() external view returns (uint256) {
+    function getMinAssetDeposit() external view returns (uint256 minAssetDeposit_) {
         return _minAssetDeposit;
     }
 
@@ -251,27 +254,27 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IRebalancer
-    function getTimeLimits() external view returns (TimeLimits memory) {
+    function getTimeLimits() external view returns (TimeLimits memory timeLimits_) {
         return _timeLimits;
     }
 
     /// @inheritdoc IBaseRebalancer
-    function getUserDepositData(address user) external view returns (UserDeposit memory) {
+    function getUserDepositData(address user) external view returns (UserDeposit memory data_) {
         return _userDeposit[user];
     }
 
     /// @inheritdoc IRebalancer
-    function getNonce(address user) external view returns (uint256) {
+    function getNonce(address user) external view returns (uint256 nonce_) {
         return _nonce[user];
     }
 
     /// @inheritdoc IRebalancer
-    function domainSeparatorV4() external view returns (bytes32) {
+    function domainSeparatorV4() external view returns (bytes32 domainSeparator_) {
         return _domainSeparatorV4();
     }
 
     /// @inheritdoc IRebalancer
-    function getCloseLockedUntil() external view returns (uint256) {
+    function getCloseLockedUntil() external view returns (uint256 timestamp_) {
         return _closeLockedUntil;
     }
 
@@ -503,8 +506,8 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /**
-     * @notice Refunds any ether in this contract to the caller
-     * @dev This contract should not hold any ether so any sent to it belongs to the current caller
+     * @notice Refunds any ether in this contract to the caller.
+     * @dev This contract should not hold any ether so any sent to it belongs to the current caller.
      */
     function _refundEther() internal {
         uint256 amount = address(this).balance;
@@ -630,7 +633,13 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /// @inheritdoc IERC165
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC165, IERC165)
+        returns (bool isSupported_)
+    {
         if (interfaceId == type(IOwnershipCallback).interfaceId) {
             return true;
         }
@@ -649,10 +658,10 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Check if the validate action happens between the validation delay and the validation deadline
-     * @dev If the block timestamp is before initiateTimestamp + validationDelay, the function will revert
-     * If the block timestamp is after initiateTimestamp + validationDeadline, the function will revert
-     * @param initiateTimestamp The timestamp of the initiate action
+     * @notice Checks if the validate action happens between the validation delay and the validation deadline.
+     * @dev If the block timestamp is before `initiateTimestamp` + `validationDelay`, the function will revert.
+     * If the block timestamp is after `initiateTimestamp` + `validationDeadline`, the function will revert.
+     * @param initiateTimestamp The timestamp of the initiate action.
      */
     function _checkValidationTime(uint40 initiateTimestamp) internal view {
         TimeLimits memory timeLimits = _timeLimits;
@@ -667,15 +676,15 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /**
-     * @notice Performs the {initiateClosePosition} EIP712 delegation signature verification
+     * @notice Performs the {initiateClosePosition} EIP712 delegation signature verification.
      * @dev Reverts if the function arguments don't match those included in the signature
-     * and if the signer isn't the owner of the deposit
-     * @param delegationData The delegation data that should include the depositOwner and the delegation signature
-     * @param amount The amount to close relative to the amount deposited
-     * @param to The address that will receive the assets
-     * @param userMinPrice The minimum price at which the position can be closed
-     * @param deadline The deadline of the close position to be initiated
-     * @return depositOwner_ The owner of the rebalancer deposit position
+     * and if the signer isn't the owner of the deposit.
+     * @param delegationData The delegation data that should include the depositOwner and the delegation signature.
+     * @param amount The amount to close relative to the amount deposited.
+     * @param to The recipient of the assets.
+     * @param userMinPrice The minimum price at which the position can be closed, not guaranteed.
+     * @param deadline The deadline of the close position to be initiated.
+     * @return depositOwner_ The owner of the assets deposited in the rebalancer.
      */
     function _verifyInitiateCloseDelegation(
         uint88 amount,
@@ -705,14 +714,14 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     }
 
     /**
-     * @notice Closes a user deposited amount of the current UsdnProtocol rebalancer position
-     * @param data The structure to hold the transient data during {initiateClosePosition}
+     * @notice Closes a user deposited amount of the current UsdnProtocol rebalancer position.
+     * @param data The structure to hold the transient data during {initiateClosePosition}.
      * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
-     * pending validation)
-     * @param previousActionsData The data needed to validate actionable pending actions
+     * pending validation).
+     * @param previousActionsData The data needed to validate actionable pending actions.
      * @param delegationData An optional delegation data that include the depositOwner and an EIP712 signature to
-     * provide when closing a position on the owner's behalf
-     * @return outcome_ The outcome of the `initiateClosePosition` call to the USDN protocol
+     * provide when closing a position on the owner's behalf.
+     * @return outcome_ The outcome of the {IUsdnProtocolActions.initiateClosePosition} call to the USDN protocol.
      */
     function _initiateClosePosition(
         InitiateCloseData memory data,
