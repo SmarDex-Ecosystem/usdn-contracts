@@ -68,9 +68,9 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
 
     /**
      * @notice Returns the amount of assets deposited and waiting for the next version to be opened.
-     * @return _pendingAssetsAmount The amount of pending assets.
+     * @return pendingAssetsAmount_ The amount of pending assets.
      */
-    function getPendingAssetsAmount() external view returns (uint128 _pendingAssetsAmount);
+    function getPendingAssetsAmount() external view returns (uint128 pendingAssetsAmount_);
 
     /**
      * @notice Returns the data of the provided version of the position.
