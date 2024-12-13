@@ -135,6 +135,31 @@ It follows the formula described in @sec:token_burning.
 
 == Position Value, Profits and Losses <sec:long_pnl>
 
+The value of a long position is determined by the current market price of the asset coupled with @total_expo and a liquidation_price given during the position opening. The position value $V_"asset"$ is calculated as follows:
+
+$ V_"asset" = frac(T_"expo" (P_"asset"-P_"liquidation"), P_"asset") $
+
+Where $V_"asset"$ is the value in asset, $T_"expo"$ is the total exposure of the position, $P_"asset"$ is the current price of the asset, and $P_"liquidation"$ is the liquidation price of the position.
+
+According to this formula, the position's value increases when the asset price rises and decreases when the asset price falls. The position value is used to calculate profits or losses (PnL) relative to the position's collateral.
+
+To calculate the profit or loss of a position, the initial position value ($V_"initial"$) is compared with the value of position at a new market price. The initial value of the position is calculated as:
+
+$ V_"initial" = frac(T_"expo" (P_"asset"-P_"entry"), P_"asset") $
+$ V_"initial" = frac(3 (3000-1000), 3000) = 2 $
+
+If price of the asset increases to 4000:
+
+$ V_"increase" = frac(3 (4000-1000), 4000) = 2.25 $
+$ V_"pnl" = V_"increase" - V_"initial" = 0.25 $
+Your position has a profit of 0.25 asset.
+
+If price of the asset decreases to 2000:
+
+$ V_"decrease" = frac(3 (2000-1000), 2000) = 1.5 $
+$ V_"pnl" = V_"decrease" - V_"initial" = -0.5 $
+Your position has a loss of 0.5 asset.
+
 = Imbalance
 
 = Funding <sec:funding>
