@@ -140,9 +140,19 @@ Liquidation of positions is a critical mechanism, if it's executed too late, the
 If this happen, the position will accumulate bad dept, which will impact the vault.
 To avoid this, liquidation need to be trigger the fastest possible.
 
-We implemented multiple solutions to avoid liquidation delay :
+To track liquidation, we are using ticks, in a similar implementation of Uniswap V3.
 
-To track
+We implemented multiple solutions to avoid late liquidation :
+- A liquidation penalty, which increase the liquidation price of the position.
+- A reward for the sender of the liquidation transaction. The reward isn't principally determined by the collateral remaining in the position but with the gas cost.
+$G_"used"$ is the amount of gas spent for the transaction, $N_"liquidatedTicks"$ is the number of ticks liquidated,
+$P_"gas"$ the price of the gas determined by taking the lower amount between $2 * "block_base_fee"$ and the gas price of the transaction,
+$M_"gas"$ is the gas multiplier, $P_"liquidatedTicks"$ the price of the liquidated tick, $E_"liquidatedTicks"$ the total exposure of the liquidated tick,
+$M_"position"$ is the position multiplier
+
+The formula is
+$ "ETH_rewards" = (G_"used" + G_"tick" * N_"liquidatedTicks") * P_"gas" * M_"gas" + sum_(i=0)^N_"liquidatedTicks" ((P_"liquidatedTicks"_i - P_"asset") * E_"liquidatedTicks"_i )/ P_"asset" * M_"position" $
+
 
 == Position Value, Profits and Losses <sec:long_pnl>
 
