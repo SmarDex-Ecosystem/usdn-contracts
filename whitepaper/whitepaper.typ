@@ -140,7 +140,7 @@ Liquidation of positions is a critical mechanism, if it's executed too late, the
 If this happen, the position will accumulate bad dept, which will impact the vault.
 To avoid this, liquidation need to be trigger the fastest possible.
 
-To track liquidation, we are using ticks, in a similar implementation of Uniswap V3.
+To track liquidation, we are using ticks, in a similar implementation of Uniswap V3 @uniswap-v3[p.~5].
 
 We implemented multiple solutions to avoid late liquidation :
 - A liquidation penalty, which increase the liquidation price of the position.
