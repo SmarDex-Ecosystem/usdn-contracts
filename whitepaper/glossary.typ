@@ -41,4 +41,11 @@
       proportionally.
     ],
   ),
+  (
+    key: "liquidation_price",
+    short: "liquidation price",
+    description: [
+      The liquidation price is the threshold at which a position's value becomes too low to sustain. If the market price hits this level, the position can be liquidated to limit further losses.
+    ],
+  ),
 )

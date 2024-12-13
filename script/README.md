@@ -104,7 +104,9 @@ export GET_WSTETH=true
 
 ## Upgrade protocol
 
-Before you launch the upgrade script, there are a few things you need to do:
+Each upgrade logic depends on the implementation, so no boilerplate can be used for every upgrade version. This means you need to checkout to the corresponding tag version to see the exact upgrade script used.
+
+Some general rules apply:
 
 - Implement the reinitialization function (ex: `initializeStorageV2`) with the required parameters
   - Make sure it is only callable by the PROXY_UPGRADE_ROLE addresses
@@ -192,3 +194,22 @@ you need to run the script with the following arguments:
 ```
 
 You need to provide just the protocol address because the script will automatically fetch the other addresses from the protocol. The script will save the results in 1 csv and json file per contract with access control, and 1 csv and json file total for all the contracts with simple ownership.
+
+
+## Verify contracts
+
+The verifying script will work with a broadcast file, the compiled contracts and an etherscan API key.
+You don't need to be the deployer to verify the contracts.
+Before verifying, you need to compile the contracts :
+
+```forge compile```
+
+Be sure to be in the same version as the deployment to avoid bytecode difference.
+You can then verify by using this cli:
+
+```
+npm run verify -- PATH_TO_BROADCAST_FILE -e ETHERSCAN_API_KEY
+```
+
+To show some extra debug you can add `-d` flag.
+If you are verifying contracts in another platform than Etherscan, you can specify the url with `--verifier-url`  
