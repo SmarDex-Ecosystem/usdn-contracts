@@ -140,13 +140,19 @@ Liquidation of positions is a critical mechanism, if it's executed too late, the
 If this happen, the position will accumulate bad dept, which will impact the vault.
 To avoid this, liquidation need to be trigger the fastest possible.
 
+=== Ticks
+
 To track positions, we are using ticks, in the same implementation of Uniswap V3 @uniswap-v3[p.~5].
 Positions are stored by their liquidation price.
 The price is given by : $ 1.0001^i $
 
-We implemented multiple solutions to avoid late liquidation :
-- A liquidation penalty, which increase the liquidation price of the position.
-- A reward for the sender of the liquidation transaction. The reward isn't principally determined by the collateral remaining in the position but with the gas cost.
+=== Liquidation penalty
+
+A liquidation penalty, which increase the liquidation price of the position.
+
+=== Liquidation reward
+
+A reward is distributed for the sender of the liquidation transaction. The reward isn't principally determined by the collateral remaining in the position but with the gas cost.
 $G_"used"$ is the amount of gas spent for the transaction, $N_"liquidatedTicks"$ is the number of ticks liquidated,
 $P_"gas"$ the price of the gas determined by taking the lower amount between $2 * "block_base_fee"$ and the gas price of the transaction,
 $M_"gas"$ is the gas multiplier, $P_"liquidatedTicks"$ the price of the liquidated tick, $E_"liquidatedTicks"$ the total exposure of the liquidated tick,
