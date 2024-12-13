@@ -141,7 +141,7 @@ When closing a position, users withdraw part or the entirety of the current valu
 
 == Position Value, Profits and Losses <sec:long_pnl>
 
-The value of a long position is determined by the current market price of the asset coupled with @total_expo and a liquidation_price given during the position opening. The position value $V_"asset"$ is calculated as follows:
+The value of a long position is determined by the current market price of the asset coupled with @total_expo and a @liquidation_price given during the position opening. The position value $V_"asset"$ is calculated as follows:
 
 $ V_"asset" = frac(T_"expo" (P_"asset"-P_"liquidation"), P_"asset") $
 
