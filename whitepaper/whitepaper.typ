@@ -154,15 +154,29 @@ Also, the remaining collateral will be distributed inside the protocol.
 
 === Liquidation reward
 
-A reward is distributed for the sender of the liquidation transaction. The reward isn't principally determined by the collateral remaining in the position but with the gas cost.
+A reward is distributed for the sender of the liquidation transaction.
+The reward isn't principally determined by the collateral remaining in the position but with the gas cost.
+It's dividing into multiple parts, first it incentivize regarding of the gas cost.
 $G_"used"$ is the amount of gas spent for the transaction, $N_"liquidatedTicks"$ is the number of ticks liquidated,
 $P_"gas"$ the price of the gas determined by taking the lower amount between $2 * "block_base_fee"$ and the gas price of the transaction,
-$M_"gas"$ is the gas multiplier, $P_"liquidatedTicks"$ the price of the liquidated tick, $E_"liquidatedTicks"$ the total exposure of the liquidated tick,
-$M_"position"$ is the position multiplier
+$M_"gas"$ is the gas multiplier, giving us the gas reward $G_"reward"$:
 
-The formula is
-$ "ETH_rewards" = (G_"used" + G_"tick" * N_"liquidatedTicks") * P_"gas" * M_"gas" + sum_(i=0)^N_"liquidatedTicks" ((P_"liquidatedTicks"_i - P_"asset") * E_"liquidatedTicks"_i )/ P_"asset" * M_"position" $
+$ G_"reward" = (G_"used" + G_"tick" N_"liquidatedTicks") P_"gas" M_"gas" $
 
+The second part of the reward formula is taking the size of the liquidated tick into account.
+More the tick value is big, more we want to incentivize to liquidate quickly.
+$P_"liquidatedTicks"$ is the price of the liquidated tick, $E_"liquidatedTicks"$ the total exposure of the liquidated tick,
+giving us the tick reward $T_"reward"$:
+
+$ T_"reward" = sum_(i=0)^N_"liquidatedTicks" ((P_"liquidatedTicks"_i - P_"asset")  E_"liquidatedTicks"_i )/ P_"asset" $
+
+We can then applying a multiplier $M_"position"$ to this result :
+
+$ T_"reward" = T_"reward" M_"position" $
+
+And we can get the ETH reward $E_"reward"$
+
+$ E_"reward" = T_"reward" + G_"reward" $
 
 == Position Value, Profits and Losses <sec:long_pnl>
 
