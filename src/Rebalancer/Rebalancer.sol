@@ -21,10 +21,10 @@ import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnPro
 
 /**
  * @title Rebalancer
- * @notice The goal of this contract is to keep the imbalance of the USDN protocol to an healthy level when liquidations
- * reduce the long trading expo, it will manage only one position with enough trading expo to re-balance the
- * protocol after liquidations and close/open again with new and existing funds when the imbalance reaches a certain
- * threshold.
+ * @notice The goal of this contract is to push the imbalance of the USDN protocol back to an healthy level when
+ * liquidations reduce long trading exposure. It will manage a single position with sufficient trading exposure to
+ * re-balance the protocol after liquidations. The position will be closed and reopened as needed, utilizing new and
+ * existing funds, whenever the imbalance reaches a defined threshold.
  */
 contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback, IRebalancer, EIP712 {
     using SafeERC20 for IERC20Metadata;
