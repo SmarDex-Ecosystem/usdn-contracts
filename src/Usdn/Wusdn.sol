@@ -26,10 +26,7 @@ contract Wusdn is ERC20Permit, IWusdn {
     /// @inheritdoc IWusdn
     IUsdn public immutable USDN;
 
-    /**
-     * @notice Initializes the WUSDN token contract.
-     * @param usdn The address of the USDN token.
-     */
+    /// @param usdn The address of the USDN token.
     constructor(IUsdn usdn) ERC20(NAME, SYMBOL) ERC20Permit(NAME) {
         USDN = usdn;
         SHARES_RATIO = USDN.MAX_DIVISOR();

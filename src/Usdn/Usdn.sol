@@ -74,7 +74,6 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     IRebaseCallback internal _rebaseHandler;
 
     /**
-     * @notice Initializes the USDN token contract.
      * @param minter Address to be granted the `minter` role (pass zero address to skip).
      * @param rebaser Address to be granted the `rebaser` role (pass zero address to skip).
      */
