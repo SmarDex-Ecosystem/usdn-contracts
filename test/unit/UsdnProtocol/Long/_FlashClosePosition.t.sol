@@ -173,6 +173,6 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
             posId, currentPrice, totalExpo, uint256(balanceLong), uint256(balanceVault), liqMultiplierAccumulator
         );
 
-        assertEq(positionValue, int256(balanceLong), "The returned position value should be the expected one");
+        assertEq(positionValue, int256(balanceLong), "The returned position value should be equal to the long balance");
     }
 }
