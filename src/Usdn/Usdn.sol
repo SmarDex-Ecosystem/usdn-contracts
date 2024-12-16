@@ -125,13 +125,13 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdn
-    function burn(uint256 amount) public override(ERC20Burnable, IUsdn) {
-        super.burn(amount);
+    function burn(uint256 value) public override(ERC20Burnable, IUsdn) {
+        super.burn(value);
     }
 
     /// @inheritdoc IUsdn
-    function burnFrom(address account, uint256 amount) public override(ERC20Burnable, IUsdn) {
-        super.burnFrom(account, amount);
+    function burnFrom(address account, uint256 value) public override(ERC20Burnable, IUsdn) {
+        super.burnFrom(account, value);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -139,12 +139,12 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdn
-    function sharesOf(address account) public view returns (uint256 shares) {
+    function sharesOf(address account) public view returns (uint256 shares_) {
         return _shares[account];
     }
 
     /// @inheritdoc IUsdn
-    function totalShares() external view returns (uint256) {
+    function totalShares() external view returns (uint256 shares_) {
         return _totalShares;
     }
 
@@ -167,29 +167,29 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /// @inheritdoc IUsdn
-    function divisor() external view returns (uint256) {
+    function divisor() external view returns (uint256 divisor_) {
         return _divisor;
     }
 
     /// @inheritdoc IUsdn
-    function rebaseHandler() external view returns (IRebaseCallback) {
+    function rebaseHandler() external view returns (IRebaseCallback rebaseHandler_) {
         return _rebaseHandler;
     }
 
     /// @inheritdoc IUsdn
-    function maxTokens() public view returns (uint256) {
+    function maxTokens() public view returns (uint256 maxTokens_) {
         return type(uint256).max / _divisor;
     }
 
     /// @inheritdoc IUsdn
-    function transferShares(address to, uint256 value) external returns (bool) {
+    function transferShares(address to, uint256 value) external returns (bool success_) {
         address owner = _msgSender();
         _transferShares(owner, to, value, _convertToTokens(value, Rounding.Closest, _divisor));
         return true;
     }
 
     /// @inheritdoc IUsdn
-    function transferSharesFrom(address from, address to, uint256 value) external returns (bool) {
+    function transferSharesFrom(address from, address to, uint256 value) external returns (bool success_) {
         address spender = _msgSender();
         uint256 d = _divisor;
         // in case the number of shares is less than 1 wei of token, we round up to make sure we spend at least 1 wei
@@ -320,7 +320,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @param from The address from which shares are transferred.
      * @param to The address to which shares are transferred.
      * @param value The amount of shares to transfer.
-     * @param tokenValue The converted token value, used for the {Transfer} event.
+     * @param tokenValue The converted token value, used for the {IERC20.Transfer} event.
      */
     function _transferShares(address from, address to, uint256 value, uint256 tokenValue) internal {
         if (from == address(0)) {
@@ -337,7 +337,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @dev Reverts if the `account` address is the zero address.
      * @param account The account from which shares are burned.
      * @param value The amount of shares to burn.
-     * @param tokenValue The converted token value, used for the {Transfer} event.
+     * @param tokenValue The converted token value, used for the {IERC20.Transfer} event.
      */
     function _burnShares(address account, uint256 value, uint256 tokenValue) internal {
         if (account == address(0)) {
@@ -348,13 +348,13 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
 
     /**
      * @notice Updates the shares of accounts during transferShares, mintShares, or burnShares.
-     * @dev Emits a {Transfer} event with the token equivalent of the operation.
+     * @dev Emits a {IERC20.Transfer} event with the token equivalent of the operation.
      * If `from` is the zero address, the operation is a mint.
      * If `to` is the zero address, the operation is a burn.
      * @param from The source address.
      * @param to The destination address.
      * @param value The number of shares to transfer, mint, or burn.
-     * @param tokenValue The converted token value, used for the {Transfer} event.
+     * @param tokenValue The converted token value, used for the {IERC20.Transfer} event.
      */
     function _updateShares(address from, address to, uint256 value, uint256 tokenValue) internal {
         if (from == address(0)) {
@@ -388,7 +388,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
 
     /**
      * @notice Updates the shares of accounts during transfers, mints, or burns.
-     * @dev Emits a {Transfer} event.
+     * @dev Emits a {IERC20.Transfer} event.
      * If `from` is the zero address, the operation is a mint.
      * If `to` is the zero address, the operation is a burn.
      * @param from The source address.

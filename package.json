@@ -1,6 +1,6 @@
 {
   "name": "@smardex/usdn-contracts",
-  "version": "0.24.0",
+  "version": "0.24.1",
   "description": "Contracts for the USDN token and derivatives protocol",
   "repository": "git@github.com:SmarDex-Ecosystem/usdn-contracts.git",
   "author": "RA2 Tech",
@@ -27,7 +27,8 @@
     "slither": "slither .",
     "snapshot:check": "FOUNDRY_PROFILE=ci forge build && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --check --offline",
     "snapshot": "FOUNDRY_PROFILE=ci forge clean && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --offline",
-    "test": "forge test -vvv"
+    "test": "forge test -vvv",
+    "verify": "tsx script/utils/verifyContracts.ts"
   },
   "main": "dist/index.js",
   "files": [

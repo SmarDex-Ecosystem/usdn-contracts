@@ -131,6 +131,12 @@ It follows the formula described in @sec:token_burning.
 
 = Long Side
 
+The long side manages user positions. A position is comprised of the collateral (in assets) that the user deposited, together with a leverage which allows to control a larger position than the collateral. For example, a leverage of 3 times with an initial collateral of 1_wstETH behaves like a position of 3_wstETH. The product of the leverage and the initial collateral is called @total_expo. When the price of the asset reaches the @liquidation_price for a position, its value is considered too small for it to continue existing, and it gets closed (in a decentralized way). Any remaining value goes to the vault pool and forms part of the yield of USDN.
+The two primary actions for the long side are opening new positions and closing (partially or entirely) existing positions.
+
+When opening a new position, the user deposits assets as collateral and indicates their desired liquidation price, which is used to calculate the position's leverage. The entry price is taken from an oracle.
+When closing a position, users withdraw part or the entirety of the current value of their position, including any profit or loss resulting from the asset's price action.
+
 == Liquidation
 
 The down side of leveraged long position is they can be liquidated.

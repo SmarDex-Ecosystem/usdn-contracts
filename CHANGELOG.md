@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.24.1](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.24.0...v0.24.1) (2024-12-11)
+
+
+### Features
+
+* **deployment:** v0.24.0 on tenderly ([#733](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/733)) ([639b268](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/639b268f70a7b086d69b19b7fb93da56bbab0faa))
+* **script:** new script to deploy the USDN token ([#759](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/759)) ([b665277](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/b6652779e71cf62262c9a88a57f33c47d555ea3a))
+* whitepaper headlines ([#745](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/745)) ([7466778](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/74667789ed6b58628212363af079ff9cc510ed12))
+
+
+### Bug Fixes
+
+* **rebalancer:** change condition on block.timestamp when initializing a close position ([#764](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/764)) ([bfb991b](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/bfb991b58ada41a641cd39fb8a1cd4f14f1520a1))
+* **script:** function clashes are now compared to common inheritance ([#730](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/730)) ([5491102](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/5491102a271c6557ec43b922bfa3913c44d7d269))
+* **test:** wrong import path ([#754](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/754)) ([144a83e](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/144a83e8567f4a6b008ae115598171a51f77b8e7))
+* **validate-open:** liquidate the position if start price is below liqPriceWithoutPenaltyNorFunding ([#766](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/766)) ([efd3fba](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/efd3fbaf6e1e69310d82b65f3782ba44e68635bb))
+
+
+### Performance Improvements
+
+* allocate smaller arrays ([#739](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/739)) ([2430900](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/2430900024983b85bb3edc66d93bdc5910d98b8f))
+
+
+### Code Refactoring
+
+* move logic and achieve full coverage for UsdnProtocolLongLibrary ([#736](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/736)) ([b6504c9](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/b6504c9eec85e42d907b5f3b69d24ed9962b707f))
+* **rebalancer:** remove unused attribute in the `InitiateCloseData` struct ([#763](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/763)) ([a5f4871](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a5f48714207ed5a836d21923d84c99960af29993))
+* **setters:** update max limit for SDEX burn ratio ([#771](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/771)) ([cc82961](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/cc82961adbc2efcb2511a8e58c4150092eea15f4))
+
+
+### Build System
+
+* hash constants at compile time ([#737](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/737)) ([05e89dd](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/05e89dd40744e16f4cb526d1ecaff4d396a4073d))
+
 ## [0.24.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.23.0...v0.24.0) (2024-11-26)
 
 
