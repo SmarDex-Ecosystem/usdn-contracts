@@ -148,7 +148,9 @@ The price is given by : $ 1.0001^i $
 
 === Liquidation penalty
 
-A liquidation penalty, which increase the liquidation price of the position.
+A liquidation penalty is added to the liquidation price of the position.
+It's aim to liquidate earlier and avoiding any bad debt for the vault side.
+Also, the remaining collateral will be distributed inside the protocol.
 
 === Liquidation reward
 
