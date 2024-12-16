@@ -98,10 +98,7 @@ contract Wusdn is ERC20Permit, IWusdn {
     /*                              public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @inheritdoc IERC20Permit
-     * @dev This function must be overridden to fix a solidity compiler error.
-     */
+    /// @inheritdoc IERC20Permit
     function nonces(address owner) public view override(IERC20Permit, ERC20Permit) returns (uint256) {
         return super.nonces(owner);
     }
@@ -111,10 +108,10 @@ contract Wusdn is ERC20Permit, IWusdn {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Internal function to wrap USDN into WUSDN.
-     * @dev The caller must have already approved the USDN contract to transfer the required amount of USDN
-     * When calling this function, we always transfer from the `msg.sender`.
-     * @param usdnAmount The amount of USDN to wrap.
+     * @notice Wraps a given USDN token amount into WUSDN.
+     * @dev The caller must have already approved the USDN contract to transfer the required amount of USDN.
+     * When calling this function, the transfer is always initiated from the `msg.sender`.
+     * @param usdnAmount The amount of USDN tokens to wrap.
      * @param to The address to receive the WUSDN.
      * @return wrappedAmount_ The amount of WUSDN received.
      */
@@ -125,8 +122,8 @@ contract Wusdn is ERC20Permit, IWusdn {
         }
 
         uint256 usdnShares = USDN.convertToShares(usdnAmount);
-        // due to rounding in the USDN contract, we may have a small difference in the amount
-        // of shares converted from the amount of USDN and the shares of the user
+        // due to rounding in the USDN contract, there may be a small difference between the amount
+        // of shares converted from the USDN amount and the shares held by the user.
         if (balanceOf == usdnAmount) {
             uint256 sharesOf = USDN.sharesOf(msg.sender);
             if (usdnShares > sharesOf) {
@@ -138,16 +135,16 @@ contract Wusdn is ERC20Permit, IWusdn {
     }
 
     /**
-     * @notice Internal function to wrap USDN shares into WUSDN.
-     * @dev The caller must have already approved the USDN contract to transfer the required amount of USDN shares
-     * When calling this function, we always transfer from the `msg.sender`.
+     * @notice Wraps a given USDN shares amount into WUSDN.
+     * @dev The caller must have already approved the USDN contract to transfer the required amount of USDN shares.
+     * When calling this function, the transfer is always initiated from the `msg.sender`.
      * @param usdnShares The amount of USDN shares to wrap.
      * @param to The address to receive the WUSDN.
      * @return wrappedAmount_ The amount of WUSDN received.
      */
     function _wrapShares(uint256 usdnShares, address to) private returns (uint256 wrappedAmount_) {
-        // we consecutively divide and multiply by `SHARES_RATIO` to have
-        // a share amount that is a multiple of `SHARES_RATIO`
+        // consecutively divide and multiply by `SHARES_RATIO` to ensure the share amount is a multiple of
+        // `SHARES_RATIO`
         // slither-disable-next-line divide-before-multiply
         wrappedAmount_ = usdnShares / SHARES_RATIO;
 
@@ -163,8 +160,8 @@ contract Wusdn is ERC20Permit, IWusdn {
     }
 
     /**
-     * @notice Internal function to unwrap WUSDN into USDN.
-     * @dev When calling this function, we always burn WUSDN tokens from the `msg.sender`.
+     * @notice Unwraps a given WUSDN token amount into USDN.
+     * @dev This function always burns WUSDN tokens from the `msg.sender`.
      * @param wusdnAmount The amount of WUSDN to unwrap.
      * @param to The address to receive the USDN.
      * @return usdnAmount_ The amount of USDN received.
