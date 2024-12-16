@@ -133,8 +133,8 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Flash closing a position with a position value higher than the long balance
-     * @custom:when _flashClosePosition is called with a price is below the liquidation price of the position
-     * @custom:then The returned value is less than 0
+     * @custom:when `_flashClosePosition` is called
+     * @custom:then The returned value is equal to the long balance
      */
     function test_flashClosePositionWithPositionValueHigherThanLongBalance() public {
         balanceVault = protocol.getBalanceVault();
