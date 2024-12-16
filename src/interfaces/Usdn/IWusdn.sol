@@ -36,12 +36,12 @@ interface IWusdn is IERC20Metadata, IERC20Permit, IWusdnEvents, IWusdnErrors {
     function wrap(uint256 usdnAmount) external returns (uint256 wrappedAmount_);
 
     /**
-     * @notice Wraps a specified amount of USDN into WUSDN and sends it to a specified address
+     * @notice Wraps a specified amount of USDN into WUSDN and sends it to a specified address.
      * @dev This function may use slightly less than `usdnAmount` to account for rounding errors.
      * For a more precise operation, use {wrapShares}.
-     * @param usdnAmount The amount of USDN to wrap
-     * @param to The address to receive the WUSDN
-     * @return wrappedAmount_ The amount of WUSDN received
+     * @param usdnAmount The amount of USDN to wrap.
+     * @param to The address to receive the WUSDN.
+     * @return wrappedAmount_ The amount of WUSDN received.
      */
     function wrap(uint256 usdnAmount, address to) external returns (uint256 wrappedAmount_);
 
