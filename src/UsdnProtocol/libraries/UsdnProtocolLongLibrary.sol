@@ -788,7 +788,13 @@ library UsdnProtocolLongLibrary {
         // update the cache
         cache.totalExpo -= pos.totalExpo;
         // cast is safe as positionValue cannot be lower than 0
-        cache.longBalance -= uint256(positionValue_);
+        if (cache.longBalance >= uint256(positionValue_)) {
+            cache.longBalance -= uint256(positionValue_);
+        } else {
+            // case is safe as the long balance is below the position value which is an int256
+            positionValue_ = int256(cache.longBalance);
+            cache.longBalance = 0;
+        }
         cache.tradingExpo = cache.totalExpo - cache.longBalance;
 
         // emit both initiate and validate events

@@ -107,7 +107,7 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Flash closing a position that should be liquidated
-     * @custom:when _flashClosePosition is called with a price is below the liquidation price of the position
+     * @custom:when _flashClosePosition is called with a price below the liquidation price of the position
      * @custom:then The returned value is less than 0
      */
     function test_flashClosePositionWithAPositionWithNegativeValue() public {
@@ -129,5 +129,50 @@ contract TestUsdnProtocolLongFlashClosePosition is UsdnProtocolBaseFixture {
         );
 
         assertLt(positionValue, 0, "The returned value should be less than 0");
+    }
+
+    /**
+     * @custom:scenario Flash closing a position with a position value higher than the long balance
+     * @custom:when _flashClosePosition is called with a price is below the liquidation price of the position
+     * @custom:then The returned value is less than 0
+     */
+    function test_flashClosePositionWithPositionValueHigherThanLongBalance() public {
+        balanceVault = protocol.getBalanceVault();
+        liqMultiplierAccumulator = protocol.getLiqMultiplierAccumulator();
+
+        (Position memory pos,) = protocol.getLongPosition(posId);
+
+        // manipulate the cached values to have a position value higher than the long balance
+        balanceLong = pos.amount;
+        totalExpo = pos.totalExpo;
+
+        // 10% price increase
+        uint128 currentPrice = DEFAULT_PARAMS.initialPrice * 11 / 10;
+        uint128 tickPrice = protocol.getEffectivePriceForTick(
+            protocol.i_calcTickWithoutPenalty(posId.tick, protocol.getLiquidationPenalty()),
+            currentPrice,
+            totalExpo - uint256(balanceLong),
+            liqMultiplierAccumulator
+        );
+        int256 expectedPositionValue = protocol.i_positionValue(pos.totalExpo, currentPrice, tickPrice);
+
+        // sanity check
+        assertLt(
+            int256(balanceLong),
+            expectedPositionValue,
+            "The long balance should be lower than the position value for this test to work, adjust the values of balanceLong and totalExpo"
+        );
+
+        vm.expectEmit();
+        emit InitiatedClosePosition(address(this), address(this), address(this), posId, AMOUNT, AMOUNT, 0);
+        vm.expectEmit();
+        emit ValidatedClosePosition(
+            address(this), address(this), posId, uint256(balanceLong), int256(balanceLong - AMOUNT)
+        );
+        int256 positionValue = protocol.i_flashClosePosition(
+            posId, currentPrice, totalExpo, uint256(balanceLong), uint256(balanceVault), liqMultiplierAccumulator
+        );
+
+        assertEq(positionValue, int256(balanceLong), "The returned position value should be the expected one");
     }
 }
