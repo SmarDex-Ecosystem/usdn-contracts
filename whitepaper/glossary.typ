@@ -48,4 +48,11 @@
       The liquidation price is the threshold at which a position's value becomes too low to sustain. If the market price hits this level, the position can be liquidated to limit further losses.
     ],
   ),
+  (
+    key: "bad_debt",
+    short: "bad debt",
+    description: [
+      Bad debt is a mechanism in leverage trading, when the borrowed amount is worth more than the value of the collateral. The value will be a loss for the protocol instead of the owner of the position becoming insolvent.
+    ],
+  ),
 )

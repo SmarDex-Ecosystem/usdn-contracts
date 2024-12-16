@@ -143,7 +143,7 @@ The downside of a leveraged long position is that it can be liquidated.
 The liquidation occurs when the value of the collateral is insufficient to repay the borrowed amount.
 In this case, the collateral is used to repay the debt, and the owner of the position loses the collateral.
 Liquidation of positions is a critical mechanism, if it's executed too late, the collateral may no longer be sufficient to cover the borrowed amount.
-If this happens, the position will accumulate bad debt, which negatively impacts the vault.
+If this happens, the position will accumulate @bad_debt, which negatively impacts the vault.
 To prevent this, liquidations must be triggered as quickly as possible.
 
 === Ticks
@@ -155,7 +155,7 @@ The price is given by : $ 1.0001^i $
 === Liquidation penalty
 
 A liquidation penalty is added to the liquidation price of the position.
-Its aim is to trigger liquidate earlier and avoiding any bad debt on the vault's side.
+Its aim is to trigger liquidate earlier and avoiding any @bad_debt on the vault's side.
 Additionally, any remaining collateral will be distributed within the protocol.
 
 === Liquidation reward
