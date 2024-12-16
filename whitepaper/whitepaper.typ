@@ -65,9 +65,9 @@ the asset price being the same as the entry price of the position. If the price 
 value of the position increases (with a leverage effect), and a corresponding decrease in the vault balance occurs
 (see @sec:long_pnl).
 
-When the protocol is balanced, the vault balance is exactly equal to the borrowed amount of the long side. To
-incentivize this equilibrium, the protocol charges a funding fee to the side with the higher @trading_expo, and
-rewards this amount to the other side (see @sec:funding).
+When the protocol is balanced, the vault balance is exactly equal to the borrowed amount of the long side
+(@sec:imbalance). To incentivize this equilibrium, the protocol charges a funding fee to the side with the higher
+@trading_expo, and rewards this amount to the other side (see @sec:funding).
 
 = USDN Token <sec:token>
 
@@ -141,7 +141,43 @@ When closing a position, users withdraw part or the entirety of the current valu
 
 == Position Value, Profits and Losses <sec:long_pnl>
 
-= Imbalance
+= Trading Exposure <sec:trading_expo>
+
+The @trading_expo of the vault side is defined as ($B_"vault"$ being the vault balance):
+
+$ E_"vault" = B_"vault" $
+
+The trading exposure of the long side $E_"long"$ is defined as:
+
+$ T_i = c_i l_i $
+$ E_i = T_i - v_i $
+$ T_"long" = sum_i T_i $
+$ B_"long" = sum_i v_i $ <eq:value_balance_invariant>
+$ E_"long" = sum_i E_i = T_"long" - B_"long" $
+
+where $T_i$ is the @total_expo of a long position $i$ (defined as the product of its initial collateral $c_i$ and initial
+leverage $l_i$), $E_i$ is the trading exposure of a position (defined as its total exposure subtracted by its value),
+$T_"long"$ is the total exposure of the long side, and $B_"long"$ is the long side balance.
+The long side trading exposure can be interpreted as the amount of assets borrowed by the long side position holders.
+
+As the price of the asset increases, $B_"long"$ increases and the trading exposure of the long side decreases.
+Inversely, as the price of the asset decreases, $B_"long"$ decreases and the trading exposure of the long side
+increases.
+
+= Imbalance <sec:imbalance>
+
+The protocol is at its optimum when it is balanced, which means its imbalance is zero. The imbalance is defined as
+the relative difference between the #glspl("trading_expo") of both sides (@sec:trading_expo):
+
+$
+  I = cases(
+    -frac(E_"vault" - E_"long", E_"long") "if" E_"vault" < E_"long",
+    frac(E_"long" - E_"vault", E_"vault") "else",
+  )
+$ <eq:imbalance>
+
+From @eq:imbalance, we can see that the imbalance is positive when the long side has a larger trading exposure. We can
+also see that the imbalance is bounded by $[-1, 1]$.
 
 = Funding <sec:funding>
 
