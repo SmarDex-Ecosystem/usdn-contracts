@@ -13,7 +13,7 @@ interface IWusdnErrors {
     error WusdnInsufficientBalance(uint256 usdnAmount);
 
     /**
-     * @dev The user is attempting to wrap an amount of USDN shares that is lower than the minimum {SHARES_RATIO}
+     * @dev The user is attempting to wrap an amount of USDN shares that is lower than the minimum: {SHARES_RATIO},
      * required by the WUSDN token. This results in a wrapped amount of zero WUSDN.
      */
     error WusdnWrapZeroAmount();
