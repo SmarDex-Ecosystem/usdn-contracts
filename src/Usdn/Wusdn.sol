@@ -9,15 +9,15 @@ import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IWusdn } from "../interfaces/Usdn/IWusdn.sol";
 
 /**
- * @title WUSDN token contract
- * @notice The USDN token is a rebasing token that is inflating its users' balances periodically. To allow for
- * stable balances, the WUSDN token was created, it is not inflating, but increasing in value instead
+ * @title WUSDN Token Contract
+ * @notice The WUSDN token is a wrapped version of the USDN token. While USDN is a rebasing token that inflates user
+ * balances periodically, WUSDN provides stable balances by increasing in value instead of rebasing.
  */
 contract Wusdn is ERC20Permit, IWusdn {
-    /// @notice Token name
+    /// @notice The name of the WUSDN token.
     string internal constant NAME = "Wrapped Ultimate Synthetic Delta Neutral";
 
-    /// @notice Token symbol
+    /// @notice The symbol of the WUSDN token.
     string internal constant SYMBOL = "WUSDN";
 
     /// @inheritdoc IWusdn
@@ -27,8 +27,8 @@ contract Wusdn is ERC20Permit, IWusdn {
     IUsdn public immutable USDN;
 
     /**
-     * @notice Construct the WUSDN token
-     * @param usdn The address of the USDN token
+     * @notice Initializes the WUSDN token contract.
+     * @param usdn The address of the USDN token.
      */
     constructor(IUsdn usdn) ERC20(NAME, SYMBOL) ERC20Permit(NAME) {
         USDN = usdn;
@@ -100,7 +100,7 @@ contract Wusdn is ERC20Permit, IWusdn {
 
     /**
      * @inheritdoc IERC20Permit
-     * @dev This function must be overridden to fix a solidity compiler error
+     * @dev This function must be overridden to fix a solidity compiler error.
      */
     function nonces(address owner) public view override(IERC20Permit, ERC20Permit) returns (uint256) {
         return super.nonces(owner);
@@ -111,12 +111,12 @@ contract Wusdn is ERC20Permit, IWusdn {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Internal function to wrap USDN into WUSDN
+     * @notice Internal function to wrap USDN into WUSDN.
      * @dev The caller must have already approved the USDN contract to transfer the required amount of USDN
-     * When calling this function, we always transfer from the `msg.sender`
-     * @param usdnAmount The amount of USDN to wrap
-     * @param to The address to receive the WUSDN
-     * @return wrappedAmount_ The amount of WUSDN received
+     * When calling this function, we always transfer from the `msg.sender`.
+     * @param usdnAmount The amount of USDN to wrap.
+     * @param to The address to receive the WUSDN.
+     * @return wrappedAmount_ The amount of WUSDN received.
      */
     function _wrap(uint256 usdnAmount, address to) private returns (uint256 wrappedAmount_) {
         uint256 balanceOf = USDN.balanceOf(msg.sender);
@@ -138,12 +138,12 @@ contract Wusdn is ERC20Permit, IWusdn {
     }
 
     /**
-     * @notice Internal function to wrap USDN shares into WUSDN
+     * @notice Internal function to wrap USDN shares into WUSDN.
      * @dev The caller must have already approved the USDN contract to transfer the required amount of USDN shares
-     * When calling this function, we always transfer from the `msg.sender`
-     * @param usdnShares The amount of USDN shares to wrap
-     * @param to The address to receive the WUSDN
-     * @return wrappedAmount_ The amount of WUSDN received
+     * When calling this function, we always transfer from the `msg.sender`.
+     * @param usdnShares The amount of USDN shares to wrap.
+     * @param to The address to receive the WUSDN.
+     * @return wrappedAmount_ The amount of WUSDN received.
      */
     function _wrapShares(uint256 usdnShares, address to) private returns (uint256 wrappedAmount_) {
         // we consecutively divide and multiply by `SHARES_RATIO` to have
@@ -163,11 +163,11 @@ contract Wusdn is ERC20Permit, IWusdn {
     }
 
     /**
-     * @notice Internal function to unwrap WUSDN into USDN
-     * @dev When calling this function, we always burn WUSDN tokens from the `msg.sender`
-     * @param wusdnAmount The amount of WUSDN to unwrap
-     * @param to The address to receive the USDN
-     * @return usdnAmount_ The amount of USDN received
+     * @notice Internal function to unwrap WUSDN into USDN.
+     * @dev When calling this function, we always burn WUSDN tokens from the `msg.sender`.
+     * @param wusdnAmount The amount of WUSDN to unwrap.
+     * @param to The address to receive the USDN.
+     * @return usdnAmount_ The amount of USDN received.
      */
     function _unwrap(uint256 wusdnAmount, address to) private returns (uint256 usdnAmount_) {
         uint256 usdnShares = wusdnAmount * SHARES_RATIO;
