@@ -139,38 +139,39 @@ When closing a position, users withdraw part or the entirety of the current valu
 
 == Liquidation
 
-The down side of leveraged long position is they can be liquidated.
-The liquidation can occur when the value of the collateral isn't enough to pay back the borrowing part.
-The collateral is used to pay back the borrowed part, the owner of the position loose the collateral in this case.
-Liquidation of positions is a critical mechanism, if it's executed too late, the position will not have enough collateral to pay back the lend part.
-If this happen, the position will accumulate bad debt, which will impact the vault.
-To avoid this, liquidation need to be trigger the fastest possible.
+The downside of a leveraged long position is that it can be liquidated.
+The liquidation occurs when the value of the collateral is insufficient to repay the borrowed amount.
+In this case, the collateral is used to repay the debt, and the owner of the position loses the collateral.
+Liquidation of positions is a critical mechanism, if it's executed too late, the collateral may no longer be sufficient to cover the borrowed amount.
+If this happens, the position will accumulate bad debt, which negatively impacts the vault.
+To prevent this, liquidations must be triggered as quickly as possible.
 
 === Ticks
 
-To track positions, we are using ticks, in the same implementation of Uniswap V3 @uniswap-v3[p.~5].
+To track positions, we use ticks, following the same implementation as Uniswap V3 @uniswap-v3[p.~5].
 Positions are stored by their liquidation price.
 The price is given by : $ 1.0001^i $
 
 === Liquidation penalty
 
 A liquidation penalty is added to the liquidation price of the position.
-It's aim to liquidate earlier and avoiding any bad debt for the vault side.
-Also, the remaining collateral will be distributed inside the protocol.
+Its aim is to trigger liquidate earlier and avoiding any bad debt on the vault's side.
+Additionally, any remaining collateral will be distributed within the protocol.
 
 === Liquidation reward
 
-A reward is distributed for the sender of the liquidation transaction.
-The reward isn't principally determined by the collateral remaining in the position but with the gas cost.
-It's dividing into multiple parts, first it incentivize regarding of the gas cost.
-$G_"used"$ is the amount of gas spent for the transaction, $N_"liquidatedTicks"$ is the number of ticks liquidated,
-$P_"gas"$ the price of the gas determined by taking the lower amount between $2 * "block_base_fee"$ and the gas price of the transaction,
-$M_"gas"$ is the gas multiplier, giving us the gas reward $G_"reward"$:
+A reward is distributed to the sender of the liquidation transaction.
+The reward isn't principally determined by the collateral remaining in the position but also with the gas cost.
+It's divided into multiple parts.
+First, it incentivizes based on the gas cost.
+$G_"used"$ is the amount of gas spent on the transaction, $N_"liquidatedTicks"$ is the number of ticks liquidated,
+$P_"gas"$ is the gas price, determined as the lower value between $2 * "block_base_fee"$ and the gas price of the transaction,
+$M_"gas"$ is the gas multiplier, using these, we calculate the gas reward $G_"reward"$:
 
 $ G_"reward" = (G_"used" + G_"tick" N_"liquidatedTicks") P_"gas" M_"gas" $
 
-The second part of the reward formula is taking the size of the liquidated tick into account.
-More the tick value is big, more we want to incentivize to liquidate quickly.
+The second part of the reward formula considers the size of each liquidated tick.
+The larger the tick value is, the greater the incentive will be to liquidate it quickly.
 $P_"liquidatedTicks"$ is the price of the liquidated tick, $E_"liquidatedTicks"$ the total exposure of the liquidated tick,
 giving us the tick reward $T_"reward"$:
 
