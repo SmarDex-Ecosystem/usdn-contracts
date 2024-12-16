@@ -166,14 +166,14 @@ It's divided into multiple parts.
 First, it incentivizes based on the gas cost.
 $G_"used"$ is the amount of gas spent on the transaction, $N_"liquidatedTicks"$ is the number of ticks liquidated,
 $P_"gas"$ is the gas price, determined as the lower value between $2 * "block_base_fee"$ and the gas price of the transaction,
-$M_"gas"$ is the gas multiplier, using these, we calculate the gas reward $G_"reward"$:
+$M_"gas"$ is the gas multiplier, using these, we calculate the gas reward $G_"reward"$ :
 
 $ G_"reward" = (G_"used" + G_"tick" N_"liquidatedTicks") P_"gas" M_"gas" $
 
 The second part of the reward formula considers the size of each liquidated tick.
 The larger the tick value is, the greater the incentive will be to liquidate it quickly.
 $P_"liquidatedTicks"$ is the price of the liquidated tick, $E_"liquidatedTicks"$ the total exposure of the liquidated tick,
-giving us the tick reward $T_"reward"$:
+giving us the tick reward $T_"reward"$ :
 
 $ T_"reward" = sum_(i=0)^N_"liquidatedTicks" ((P_"liquidatedTicks"_i - P_"asset")  E_"liquidatedTicks"_i )/ P_"asset" $
 
@@ -181,7 +181,7 @@ We can then applying a multiplier $M_"position"$ to this result :
 
 $ T_"reward" = T_"reward" M_"position" $
 
-And we can get the ETH reward $E_"reward"$
+And we can get the ETH reward $E_"reward"$ :
 
 $ E_"reward" = T_"reward" + G_"reward" $
 
