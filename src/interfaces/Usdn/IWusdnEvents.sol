@@ -2,25 +2,25 @@
 pragma solidity >=0.8.0;
 
 /**
- * @title Events for the WUSDN token contract
- * @notice Contains all custom events emitted by the WUSDN token contract (omitting events from OpenZeppelin)
+ * @title Events for the WUSDN Token Contract
+ * @notice Defines all custom events emitted by the WUSDN token contract.
  */
 interface IWusdnEvents {
     /**
-     * @notice Emitted when a user wraps USDN to mint WUSDN
-     * @param from The address of the user that wrapped the USDN
-     * @param to The address of the user that received the WUSDN
-     * @param usdnAmount The amount of USDN wrapped
-     * @param wusdnAmount The amount of WUSDN minted
+     * @notice The user wraps USDN to mint WUSDN tokens.
+     * @param from The address of the user who wrapped the USDN.
+     * @param to The address of the recipient who received the WUSDN tokens.
+     * @param usdnAmount The amount of USDN tokens wrapped.
+     * @param wusdnAmount The amount of WUSDN tokens minted.
      */
     event Wrap(address indexed from, address indexed to, uint256 usdnAmount, uint256 wusdnAmount);
 
     /**
-     * @notice Emitted when a user unwraps WUSDN to redeem USDN
-     * @param from The address of the user that withdrew the WUSDN
-     * @param to The address of the user that received the USDN
-     * @param wusdnAmount The amount of WUSDN unwrapped
-     * @param usdnAmount The amount of USDN redeemed
+     * @notice The user unwraps WUSDN tokens to redeem USDN.
+     * @param from The address of the user who unwrapped the WUSDN tokens.
+     * @param to The address of the recipient who received the USDN tokens.
+     * @param wusdnAmount The amount of WUSDN tokens unwrapped.
+     * @param usdnAmount The amount of USDN tokens redeemed.
      */
     event Unwrap(address indexed from, address indexed to, uint256 wusdnAmount, uint256 usdnAmount);
 }
