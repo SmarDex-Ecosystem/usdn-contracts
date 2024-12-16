@@ -362,8 +362,7 @@ library UsdnProtocolActionsLongLibrary {
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
      * leverage). The validation operation then updates the entry price and leverage with fresher data.
      * @param params The parameters for the open position initiation.
-     * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
-     * pending validation).
+     * @param currentPriceData The current price data.
      * @return posId_ The unique index of the opened position.
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
      * else we'll only refund the security deposit value of the stale pending action.
