@@ -9,7 +9,7 @@ import { IWusdnErrors } from "./IWusdnErrors.sol";
 import { IWusdnEvents } from "./IWusdnEvents.sol";
 
 /**
- * @title IWusdn Interface
+ * @title Wusdn Interface
  * @notice Interface for the Wrapped Ultimate Synthetic Delta Neutral (WUSDN) token.
  */
 interface IWusdn is IERC20Metadata, IERC20Permit, IWusdnEvents, IWusdnErrors {
