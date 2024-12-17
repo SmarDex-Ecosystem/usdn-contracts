@@ -257,17 +257,22 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture, D
         TransferPositionOwnershipDelegation memory delegation = TransferPositionOwnershipDelegation({
             posIdHash: keccak256(abi.encode(posId)),
             positionOwner: user,
-            newPositionOwner: USER_1,
+            newPositionOwner: address(callbackHandler),
             delegatedAddress: address(this),
             nonce: initialNonce
         });
 
         bytes memory delegationSignature =
             _getTransferPositionDelegationSignature(privateKey, protocol.domainSeparatorV4(), delegation);
-        protocol.transferPositionOwnership(posId, USER_1, delegationSignature);
+
+        vm.expectEmit();
+        emit TestOwnershipCallback(user, posId);
+        vm.expectEmit();
+        emit PositionOwnershipTransferred(posId, user, address(callbackHandler));
+        protocol.transferPositionOwnership(posId, address(callbackHandler), delegationSignature);
 
         (pos,) = protocol.getLongPosition(posId);
-        assertEq(pos.user, USER_1, "the new position user should be `USER_1`");
+        assertEq(pos.user, address(callbackHandler), "the new position user should be the `callbackHandler`");
         assertEq(protocol.getNonce(user), initialNonce + 1, "the user nonce should be incremented");
     }
 }
