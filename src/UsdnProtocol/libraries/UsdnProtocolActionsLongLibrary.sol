@@ -26,11 +26,11 @@ library UsdnProtocolActionsLongLibrary {
     using SafeTransferLib for address;
 
     /**
-     * @notice Data structure for the `_validateClosePositionWithAction` function
-     * @param isLiquidationPending Whether a liquidation is pending
-     * @param priceWithFees The price of the position with fees
-     * @param liquidationPrice The liquidation price of the position
-     * @param positionValue The value of the position. The amount the user will receive when closing the position
+     * @dev Data structure for the {_validateClosePositionWithAction} function.
+     * @param isLiquidationPending Whether a liquidation is pending.
+     * @param priceWithFees The price of the position with fees.
+     * @param liquidationPrice The liquidation price of the position.
+     * @param positionValue The value of the position. The amount the user will receive when closing the position.
      */
     struct ValidateClosePositionWithActionData {
         bool isLiquidationPending;
@@ -40,10 +40,10 @@ library UsdnProtocolActionsLongLibrary {
     }
 
     /**
-     * @notice Data structure for the `_validateOpenPositionWithAction` function
-     * @param currentLiqPenalty The current liquidation penalty parameter value
-     * @param newPosId The new position id
-     * @param liquidationPenalty The liquidation penalty of the tick we are considering
+     * @dev Data structure for the {_validateOpenPositionWithAction} function.
+     * @param currentLiqPenalty The current liquidation penalty parameter value.
+     * @param newPosId The new position id.
+     * @param liquidationPenalty The liquidation penalty of the tick we are considering.
      */
     struct MaxLeverageData {
         uint24 currentLiqPenalty;
@@ -55,7 +55,7 @@ library UsdnProtocolActionsLongLibrary {
     /*                             External functions                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocolActions}
+    /// @notice See {IUsdnProtocolActions.initiateOpenPosition}.
     function initiateOpenPosition(
         Types.InitiateOpenPositionParams memory params,
         bytes calldata currentPriceData,
@@ -97,7 +97,7 @@ library UsdnProtocolActionsLongLibrary {
         Utils._checkPendingFee();
     }
 
-    /// @notice See {IUsdnProtocolActions}
+    /// @notice See {IUsdnProtocolActions.validateOpenPosition}.
     function validateOpenPosition(
         address payable validator,
         bytes calldata openPriceData,
@@ -131,7 +131,7 @@ library UsdnProtocolActionsLongLibrary {
         Utils._checkPendingFee();
     }
 
-    /// @notice See {IUsdnProtocolActions}
+    /// @notice See {IUsdnProtocolActions.initiateClosePosition}.
     function initiateClosePosition(
         Types.InitiateClosePositionParams memory params,
         bytes calldata currentPriceData,
@@ -176,7 +176,7 @@ library UsdnProtocolActionsLongLibrary {
         Utils._checkPendingFee();
     }
 
-    /// @notice See {IUsdnProtocolActions}
+    /// @notice See {IUsdnProtocolActions.validateClosePosition}.
     function validateClosePosition(
         address payable validator,
         bytes calldata closePriceData,
@@ -214,13 +214,13 @@ library UsdnProtocolActionsLongLibrary {
 
     /**
      *
-     * @notice Validate an open position action
-     * @param pending The pending action data
-     * @param priceData The current price data
-     * @return isValidated_ Whether the action is validated
-     * @return isLiquidated_ Whether the pending action has been liquidated
+     * @notice Validates an open position action.
+     * @param pending The pending action's data.
+     * @param priceData The current price data.
+     * @return isValidated_ Whether the action is validated.
+     * @return isLiquidated_ Whether the pending action is liquidated.
      * @return posId_ The (potentially updated) position ID, or `NO_POSITION_TICK` in the `tick` field if the position
-     * was liquidated
+     * was liquidated.
      */
     function _validateOpenPositionWithAction(Types.PendingAction memory pending, bytes calldata priceData)
         public
@@ -269,7 +269,7 @@ library UsdnProtocolActionsLongLibrary {
                 // the tick's imposed penalty is different from the current setting, so the `liqPriceWithoutPenalty` we
                 // got above can't be used to calculate the leverage
                 // we must instead use the tick's penalty to find the new `liqPriceWithoutPenalty` and calculate the
-                // total expo
+                // total exposure
 
                 // note: In case the tick liquidation penalty is lower than the current setting, it might lead to a
                 // leverage that exceeds the max leverage slightly. We allow this behavior in this rare occurrence
@@ -283,12 +283,12 @@ library UsdnProtocolActionsLongLibrary {
                 );
             }
 
-            // move the position to its new tick, update its total expo, and return the new tickVersion and index
+            // move the position to its new tick, update its total exposure, and return the new tickVersion and index
             // remove position from old tick completely
             Long._removeAmountFromPosition(
                 data.action.tick, data.action.index, data.pos, data.pos.amount, data.pos.totalExpo
             );
-            // update position total expo (because of new leverage / liq price)
+            // update position total exposure (because of new leverage / liq price)
             data.pos.totalExpo =
                 Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
             // mark the position as validated
@@ -317,18 +317,18 @@ library UsdnProtocolActionsLongLibrary {
             return (true, false, maxLeverageData.newPosId);
         }
 
-        // calculate the new total expo
+        // calculate the new total exposure
         uint128 expoBefore = data.pos.totalExpo;
         uint128 expoAfter =
             Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenaltyNorFunding);
 
-        // update the total expo of the position
+        // update the total exposure of the position
         data.pos.totalExpo = expoAfter;
         // mark the position as validated
         data.pos.validated = true;
         // SSTORE
         s._longPositions[data.tickHash][data.action.index] = data.pos;
-        // update the total expo by adding the position's new expo and removing the old one
+        // update the total exposure by adding the position's new exposure and removing the old one
         // do not use += or it will underflow
         s._totalExpo = s._totalExpo + expoAfter - expoBefore;
 
@@ -354,20 +354,19 @@ library UsdnProtocolActionsLongLibrary {
     }
 
     /**
-     * @notice Initiate an open position action
+     * @notice Initiates an open position action.
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `Types.ProtocolAction.InitiateOpenPosition` action
+     * the {IUsdnProtocolTypes.ProtocolAction}'s `InitiateOpenPosition` action.
      * The price validation might require payment according to the return value of the {validationCost} function
-     * of the middleware
+     * of the middleware.
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
-     * leverage). The validation operation then updates the entry price and leverage with fresher data
-     * @param params The parameters for the open position initiation
-     * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
-     * pending validation)
-     * @return posId_ The unique index of the opened position
+     * leverage). The validation operation then updates the entry price and leverage with fresher data.
+     * @param params The parameters for the open position initiation.
+     * @param currentPriceData The current price data.
+     * @return posId_ The unique index of the opened position.
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
-     * else we'll only refund the security deposit value of the stale pending action
-     * @return isInitiated_ Whether the action is initiated
+     * else we'll only refund the security deposit value of the stale pending action.
+     * @return isInitiated_ Whether the action is initiated.
      */
     function _initiateOpenPosition(Types.InitiateOpenPositionParams memory params, bytes calldata currentPriceData)
         internal
@@ -444,14 +443,14 @@ library UsdnProtocolActionsLongLibrary {
     }
 
     /**
-     * @notice Get the pending action data of the owner, try to validate it and clear it if successful
-     * @param validator The address of the validator
-     * @param priceData The current price data
-     * @return securityDepositValue_ The value of the security deposit
-     * @return isValidated_ Whether the action is validated
-     * @return isLiquidated_ Whether the pending action has been liquidated
+     * @notice Retrieves the pending action data of the owner, try to validate it and clear it if successful.
+     * @param validator The address of the validator.
+     * @param priceData The price data for the pending action to validate.
+     * @return securityDepositValue_ The value of the security deposit to refund.
+     * @return isValidated_ Whether the action is validated.
+     * @return isLiquidated_ Whether the pending action is liquidated.
      * @return posId_ The (potentially updated) position ID, or `NO_POSITION_TICK` in the `tick` field if the position
-     * was liquidated
+     * was liquidated.
      */
     function _validateOpenPosition(address validator, bytes calldata priceData)
         internal
@@ -476,14 +475,14 @@ library UsdnProtocolActionsLongLibrary {
     }
 
     /**
-     * @notice Update the protocol balances during `validateOpenPosition` to reflect the new entry price of the
-     * position
-     * @dev We need to adjust the balances because the position that was created during the `initiateOpenPosition` might
-     * have gained or lost some value, and we need to reflect that the position value is now `newPosValue`
+     * @notice Updates the protocol balances during {validateOpenPosition} to reflect the new entry price of the
+     * position.
+     * @dev We need to adjust the balances because the position that was created during the {initiateOpenPosition} might
+     * have gained or lost some value, and we need to reflect that the position value is now `newPosValue`.
      * Any potential PnL on that temporary position must be "cancelled" so that it doesn't affect the other positions
-     * and the vault
-     * @param newPosValue The new value of the position
-     * @param oldPosValue The value of the position at the current price, using its old parameters
+     * and the vault.
+     * @param newPosValue The new value of the position.
+     * @param oldPosValue The value of the position at the current price, using its old parameters.
      */
     function _validateOpenPositionUpdateBalances(uint256 newPosValue, uint256 oldPosValue) internal {
         Types.Storage storage s = Utils._getMainStorage();
@@ -517,11 +516,11 @@ library UsdnProtocolActionsLongLibrary {
     }
 
     /**
-     * @notice Update protocol balances, liquidate positions if necessary, then validate the open position action
-     * @param pending The pending action data
-     * @param priceData The current price data
-     * @return data_ The {ValidateOpenPosition} data struct
-     * @return isLiquidated_ Whether the position was liquidated
+     * @notice Updates protocol balances, liquidate positions if necessary, then validate the open position action.
+     * @param pending The pending action data.
+     * @param priceData The price data for the pending action.
+     * @return data_ The {IUsdnProtocolTypes.ValidateOpenPositionData} data structure.
+     * @return isLiquidated_ Whether the position is liquidated.
      */
     function _prepareValidateOpenPositionData(Types.PendingAction memory pending, bytes calldata priceData)
         internal
@@ -635,24 +634,24 @@ library UsdnProtocolActionsLongLibrary {
     }
 
     /**
-     * @notice Initiate a close position action
+     * @notice Initiates a close position action.
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `Types.ProtocolAction.InitiateClosePosition` action
+     * the {IUsdnProtocolTypes.ProtocolAction}'s `InitiateClosePosition` action.
      * The price validation might require payment according to the return value of the {validationCost} function
-     * of the middleware
+     * of the middleware.
      * If the current tick version is greater than the tick version of the position (when it was opened), then the
-     * position has been liquidated and this function will return 0
+     * position has been liquidated and this function will return 0.
      * The position is taken out of the tick and put in a pending state during this operation. Thus, calculations don't
      * consider this position anymore. The exit price (and thus profit) is not yet set definitively and will be done
-     * during the `validate` action
-     * @param params The parameters for the close position initiation
-     * @param currentPriceData The current price data
+     * during the `validate` action.
+     * @param params The parameters for the close position initiation.
+     * @param currentPriceData The current price data.
      * @param delegationSignature An EIP712 signature that proves the caller is authorized by the owner of the position
-     * to close it on their behalf
+     * to close it on their behalf.
      * @return amountToRefund_ If there are pending liquidations we'll refund the `securityDepositValue`,
-     * else we'll only refund the security deposit value of the stale pending action
-     * @return isInitiated_ Whether the action is initiated
-     * @return isLiquidated_ Whether the position got liquidated by this call
+     * else we'll only refund the security deposit value of the stale pending action.
+     * @return isInitiated_ Whether the action is initiated.
+     * @return isLiquidated_ Whether the position got liquidated by this call.
      */
     function _initiateClosePosition(
         Types.InitiateClosePositionParams memory params,
@@ -704,12 +703,12 @@ library UsdnProtocolActionsLongLibrary {
     }
 
     /**
-     * @notice Get the pending action data of the validator, try to validate it and clear it if successful
-     * @param validator The validator of the pending action
-     * @param priceData The current price data
-     * @return securityDepositValue_ The value of the security deposit of the pending action
-     * @return isValidated_ Whether the action is validated
-     * @return isLiquidated_ Whether the pending action has been liquidated
+     * @notice Retrieves the pending action data of the validator, try to validate it and clear it if successful.
+     * @param validator The validator of the pending action.
+     * @param priceData The price data for the validator's pending action.
+     * @return securityDepositValue_ The value of the security deposit of the pending action.
+     * @return isValidated_ Whether the action is validated.
+     * @return isLiquidated_ Whether the pending action is liquidated.
      */
     function _validateClosePosition(address validator, bytes calldata priceData)
         internal
@@ -735,14 +734,14 @@ library UsdnProtocolActionsLongLibrary {
     }
 
     /**
-     * @notice Prepare the pending action struct for the close position action and add it to the queue
-     * @param to The address that will receive the assets
-     * @param validator The validator for the pending action
-     * @param posId The unique identifier of the position
-     * @param amountToClose The amount of collateral to remove from the position's amount
-     * @param securityDepositValue The value of the security deposit for the newly created pending action
-     * @param data The close position data
-     * @return amountToRefund_ Refund The security deposit value of a stale pending action
+     * @notice Prepares the pending action struct for the close position action and add it to the queue.
+     * @param to The address that will receive the assets.
+     * @param validator The validator for the pending action.
+     * @param posId The unique identifier of the position.
+     * @param amountToClose The amount of collateral to remove from the position's amount.
+     * @param securityDepositValue The value of the security deposit for the newly created pending action.
+     * @param data The close position data.
+     * @return amountToRefund_ The security deposit value of a stale pending action.
      */
     function _createClosePendingAction(
         address to,
@@ -771,11 +770,11 @@ library UsdnProtocolActionsLongLibrary {
     }
 
     /**
-     * @notice Update protocol balances, liquidate positions if necessary, then validate the close position action
-     * @param pending The pending action data
-     * @param priceData The current price data
-     * @return isValidated_ Whether the action is validated
-     * @return isLiquidated_ Whether the pending action has been liquidated
+     * @notice Updates protocol balances, liquidate positions if necessary, then validate the close position action.
+     * @param pending The pending action data.
+     * @param priceData The price data for the action to validate.
+     * @return isValidated_ Whether the action is validated.
+     * @return isLiquidated_ Whether the pending action is liquidated.
      */
     function _validateClosePositionWithAction(Types.PendingAction memory pending, bytes calldata priceData)
         internal
