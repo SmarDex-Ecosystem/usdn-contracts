@@ -147,23 +147,23 @@ $ v(p) = frac(T (p-p_"liq"), p) $
 
 where $p$ is the price of the asset (in dollars), $T$ is the total exposure of the position, and $p_"liq"$ is the liquidation price of the position.
 
-According to this formula, the position's value increases when the asset price rises and decreases when the asset price falls. The position value is used to calculate profits or losses (Δv) relative to the position's initial collateral.
+According to this formula, the position's value increases when the asset price rises and decreases when the asset price falls. The position value is used to calculate profits or losses ($Delta v$) relative to the position's initial collateral.
 
-To calculate the profit and loss of a position, the initial position value ($v(p_"entry") = \$3000$) is compared with the value of position at a new market price. The initial value of the position is calculated as:
+To calculate the profit of a position, the initial position value ($p_"entry" = 3000$) is compared with the value of position at a new market price. The initial value of the position is calculated as:
 
 $ v(p_"entry") = v(3000) = frac(3 (3000-1000), 3000) = 2 $
 
 If price of the asset increases to \$4000:
 
 $ v(4000) = frac(3 (4000-1000), 4000) = 2.25 $
-$ "Δv" = v(4000) - v(3000) = 0.25 $
-The position has a profit of 0.25 asset.
+$ Delta v = v(4000) - v(3000) = 0.25 $
+The position has a profit of 0.25_asset.
 
 If price of the asset decreases to \$2000:
 
 $ v(2000) = frac(3 (2000-1000), 2000) = 1.5 $
-$ "Δv" = v(2000) - v(3000) = -0.5 $
-The position has a loss of 0.5 asset.
+$ Delta v = v(2000) - v(3000) = -0.5 $
+The position has a loss of 0.5_asset.
 
 = Imbalance
 
