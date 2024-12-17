@@ -108,14 +108,14 @@ library UsdnProtocolActionsUtilsLibrary {
                 );
             }
         }
-
+        address oldOwner = pos.user;
         pos.user = newOwner;
 
         if (ERC165Checker.supportsInterface(newOwner, type(IOwnershipCallback).interfaceId)) {
-            IOwnershipCallback(newOwner).ownershipCallback(msg.sender, posId);
+            IOwnershipCallback(newOwner).ownershipCallback(oldOwner, posId);
         }
 
-        emit IUsdnProtocolEvents.PositionOwnershipTransferred(posId, msg.sender, newOwner);
+        emit IUsdnProtocolEvents.PositionOwnershipTransferred(posId, oldOwner, newOwner);
     }
 
     /* -------------------------------------------------------------------------- */
