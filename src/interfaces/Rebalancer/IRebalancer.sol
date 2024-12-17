@@ -206,7 +206,7 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @dev This function can only be called by the owner of the contract.
      * @param validationDelay The amount of time to wait before an initiate can be validated.
      * @param validationDeadline The amount of time a user has to validate an initiate.
-     * @param actionCooldown The amount of time to wait before .
+     * @param actionCooldown The amount of time to wait after the deadline has passed before trying again.
      * @param closeDelay The close delay that will be applied to the next long position opening.
      */
     function setTimeLimits(uint64 validationDelay, uint64 validationDeadline, uint64 actionCooldown, uint64 closeDelay)
