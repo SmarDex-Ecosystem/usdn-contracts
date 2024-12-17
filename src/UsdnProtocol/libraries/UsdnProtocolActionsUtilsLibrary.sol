@@ -99,16 +99,17 @@ library UsdnProtocolActionsUtilsLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
 
-        if (msg.sender != pos.user) {
+        address oldOwner = pos.user;
+        if (msg.sender != oldOwner) {
             if (delegationSignature.length == 0) {
                 revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
             } else {
                 _verifyTransferPositionOwnershipDelegation(
-                    posId, pos.user, newOwner, delegationSignature, domainSeparatorV4
+                    posId, oldOwner, newOwner, delegationSignature, domainSeparatorV4
                 );
             }
         }
-        address oldOwner = pos.user;
+
         pos.user = newOwner;
 
         if (ERC165Checker.supportsInterface(newOwner, type(IOwnershipCallback).interfaceId)) {
