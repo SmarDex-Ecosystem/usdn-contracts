@@ -131,25 +131,38 @@ It follows the formula described in @sec:token_burning.
 
 = Long Side
 
-The long side manages user positions. A position is comprised of the collateral (in assets) that the user deposited, together with a leverage which allows to control a larger position than the collateral. For example, a leverage of 3 times with an initial collateral of 1_wstETH behaves like a position of 3_wstETH. The product of the leverage and the initial collateral is called @total_expo. When the price of the asset reaches the @liquidation_price for a position, its value is considered too small for it to continue existing, and it gets closed (in a decentralized way). Any remaining value goes to the vault pool and forms part of the yield of USDN.
-The two primary actions for the long side are opening new positions and closing (partially or entirely) existing positions.
+The long side manages user positions. A position is comprised of the collateral (in assets) that the user deposited,
+together with a leverage which allows to control a larger position than the collateral. For example, a leverage of
+3_times with an initial collateral of 1_wstETH behaves like a position of 3_wstETH. The product of the leverage and the
+initial collateral is called @total_expo. When the price of the asset reaches the @liquidation_price for a position, its
+value is considered too small for it to continue existing, and it gets closed (in a decentralized way). Any remaining
+value goes to the vault pool and forms part of the yield of USDN.
+The two primary actions for the long side are opening new positions and closing (partially or entirely) existing
+positions.
 
-When opening a new position, the user deposits assets as collateral and indicates their desired liquidation price, which is used to calculate the position's leverage. The entry price is taken from an oracle.
-When closing a position, users withdraw part or the entirety of the current value of their position, including any profit and loss resulting from the asset's price action.
+When opening a new position, the user deposits assets as collateral and indicates their desired liquidation price, which
+is used to calculate the position's leverage. The entry price is taken from an oracle.
+When closing a position, users withdraw part or the entirety of the current value of their position, including any
+profit and loss resulting from the asset's price action.
 
 == Liquidation
 
 == Position Value, Profits and Losses <sec:long_pnl>
 
-The value of a long position is determined by the current market price of the asset coupled with its @total_expo and @liquidation_price. The position value $v(p)$ is calculated as follows:
+The value of a long position is determined by the current market price of the asset coupled with its @total_expo and
+@liquidation_price. The position value $v(p)$ is calculated as follows:
 
 $ v(p) = frac(T (p-p_"liq"), p) $
 
-where $p$ is the price of the asset (in dollars), $T$ is the total exposure of the position, and $p_"liq"$ is the liquidation price of the position.
+where $p$ is the price of the asset (in dollars), $T$ is the total exposure of the position, and $p_"liq"$ is the
+liquidation price of the position.
 
-According to this formula, the position's value increases when the asset price rises and decreases when the asset price falls. The position value is used to calculate profits or losses ($Delta v$) relative to the position's initial collateral.
+According to this formula, the position's value increases when the asset price rises and decreases when the asset price
+falls. The position value is used to calculate profits or losses ($Delta v$) relative to the position's initial
+collateral.
 
-To calculate the profit of a position, the initial position value ($p_"entry" = 3000$) is compared with the value of position at a new market price. The initial value of the position is calculated as:
+To calculate the profit of a position, the initial position value ($p_"entry" = 3000$) is compared with the value of
+position at a new market price. The initial value of the position is calculated as:
 
 $ v(p_"entry") = v(3000) = frac(3 (3000-1000), 3000) = 2 $
 
@@ -179,9 +192,9 @@ $ T_"long" = sum_i T_i $
 $ B_"long" = sum_i v_i $ <eq:value_balance_invariant>
 $ E_"long" = sum_i E_i = T_"long" - B_"long" $
 
-where $T_i$ is the @total_expo of a long position $i$ (defined as the product of its initial collateral $c_i$ and initial
-leverage $l_i$), $E_i$ is the trading exposure of a position (defined as its total exposure minus its value $v_i$),
-$T_"long"$ is the total exposure of the long side, and $B_"long"$ is the long side balance.
+where $T_i$ is the @total_expo of a long position $i$ (defined as the product of its initial collateral $c_i$ and
+initial leverage $l_i$), $E_i$ is the trading exposure of a position (defined as its total exposure minus its value
+$v_i$), $T_"long"$ is the total exposure of the long side, and $B_"long"$ is the long side balance.
 The long side trading exposure can be interpreted as the amount of assets borrowed by the long side position owners.
 
 As the price of the asset increases, $B_"long"$ increases and the trading exposure of the long side decreases.
@@ -205,8 +218,8 @@ also see that the imbalance is bounded by $[-1, 1]$.
 
 = Funding <sec:funding>
 
-To incentivize depositors in the protocol side with the lowest @trading_expo, the protocol charges a funding fee to the
-largest side, which is paid to the other side. The fee for a time interval $Delta t$ (in seconds) starting at instant
+To incentivize depositors in the protocol side with the lowest @trading_expo, the protocol charges a @funding to the
+largest side, which is paid to the smaller side. The fee for a time interval $Delta t$ (in seconds) starting at instant
 $t_1$ and ending at $t_2$ is defined as:
 
 $ F_(Delta t) = F_(t_1,t_2) = E_"long"_(t_1) f_(Delta t) $
@@ -243,8 +256,9 @@ $
 
 == Skew Factor
 
-In traditional finance, funding rates are usually positive and serve as a kind of interest rate on the amount borrowed
-by the long side. This means that funding should ideally not be zero even if the protocol is perfectly balanced.
+In traditional finance, #glspl("funding") are usually positive and serve as a kind of interest rate on the amount
+borrowed by the long side. This means that fees should ideally not be zero even if the protocol is perfectly
+balanced.
 
 The dynamic skew factor $sigma$ is introduced to ensure that the funding rate matches the market's accepted interest
 rate when the protocol is balanced. This factor is calculated as an exponential moving average of the daily funding
@@ -261,7 +275,7 @@ factor.
 
 Because this factor is summed with the part of the funding rate which is proportional to the imbalance in
 @eq:funding_rate, it shifts the default funding rate value when the protocol is balanced. In practice, if the imbalance
-remains positive (more trading exposure in the long side) for some time, the daily funding rate will keep increasing.
+remains positive (more @trading_expo in the long side) for some time, the daily funding rate will keep increasing.
 When the funding fees become too important for the long side position owners, they will be incentivized to close their
 positions, which will decrease the imbalance.
 When the imbalance reaches zero, the daily funding rate will stop increasing, and maintain its current value thanks to
