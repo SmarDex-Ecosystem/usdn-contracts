@@ -6,6 +6,7 @@ import { AccessControlDefaultAdminRulesUpgradeable } from
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { IBaseLiquidationRewardsManager } from
     "../interfaces/LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
@@ -32,6 +33,8 @@ contract UsdnProtocolFallback is
     PausableUpgradeable,
     AccessControlDefaultAdminRulesUpgradeable
 {
+    using SafeTransferLib for address;
+
     /// @inheritdoc IUsdnProtocolFallback
     function getActionablePendingActions(address currentUser, uint256 lookAhead, uint256 maxIter)
         external
@@ -104,7 +107,7 @@ contract UsdnProtocolFallback is
         uint256 sdexBalance = sdex.balanceOf(address(this));
 
         if (sdexBalance > 0) {
-            sdex.transfer(Constants.DEAD_ADDRESS, sdexBalance);
+            address(sdex).safeTransfer(Constants.DEAD_ADDRESS, sdexBalance);
             emit SdexBurned(sdexBalance);
         }
     }
