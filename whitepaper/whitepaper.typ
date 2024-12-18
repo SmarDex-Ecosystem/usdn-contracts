@@ -236,7 +236,7 @@ $ <eq:funding_rate>
 
 where $s$ is a scaling factor that can be tuned, $"sgn"(I)$ is the signum function#footnote[The signum function returns
 $-1$ if the sign of its operand is negative, $0$ if its value is zero, and $1$ if it's positive.] applied to the
-imbalance $I_(t_1)$ @eq:imbalance at instant $t_1$ and $sigma$ is a skew factor (see below).
+imbalance $I_(t_1)$ @eq:imbalance at instant $t_1$ and $sigma$ is a skew factor (see @sec:skew).
 The denominator of the fraction refers to the number of seconds in a day, which means that $f_(t-86400,t)$ is the daily
 funding rate for the period ending at $t$.
 It can be observed that the sign of the funding rate matches the sign of the imbalance so long as the $sigma$ term
@@ -254,7 +254,7 @@ $
   B_"long"_(t_2) &= B_"long"_(t_1) - F_(t_1,t_2)
 $
 
-== Skew Factor
+== Skew Factor <sec:skew>
 
 In traditional finance, #glspl("funding") are usually positive and serve as a kind of interest rate on the amount
 borrowed by the long side. This means that fees should ideally not be zero even if the protocol is perfectly
