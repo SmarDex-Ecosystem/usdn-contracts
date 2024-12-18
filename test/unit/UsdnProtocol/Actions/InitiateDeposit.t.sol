@@ -83,10 +83,9 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         uint256 expectedSdexBurnAmount =
             protocol.i_calcSdexToBurn(usdn.convertToTokens(usdnSharesToMint), protocol.getSdexBurnOnDepositRatio());
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
-        address deadAddress = Constants.DEAD_ADDRESS;
 
         vm.expectEmit(address(sdex));
-        emit Transfer(address(this), deadAddress, expectedSdexBurnAmount); // SDEX transfer
+        emit Transfer(address(this), address(protocol), expectedSdexBurnAmount); // SDEX transfer
         vm.expectEmit();
         emit InitiatedDeposit(
             to, validator, depositAmount, protocol.getVaultFeeBps(), block.timestamp, expectedSdexBurnAmount
@@ -109,9 +108,9 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             "The amount of SDEX tokens to be burned should have been subtracted from the balance of the user"
         );
         assertEq(
-            sdex.balanceOf(deadAddress),
+            sdex.balanceOf(address(protocol)),
             expectedSdexBurnAmount,
-            "The amount of SDEX tokens to be burned should have been sent to the dead address"
+            "The amount of SDEX tokens to be paid to the protocol"
         );
         assertEq(
             wstETH.balanceOf(address(protocol)),

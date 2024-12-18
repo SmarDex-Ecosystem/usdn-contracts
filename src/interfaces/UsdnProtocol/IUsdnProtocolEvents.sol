@@ -376,4 +376,10 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param lastUpdateTimestamp The timestamp for which the funding per day was calculated.
      */
     event LastFundingPerDayUpdated(int256 lastFundingPerDay, uint256 lastUpdateTimestamp);
+
+    /**
+     * @notice The protocol balance of SDEX has been burned.
+     * @param amount The amount of SDEX that was burned.
+     */
+    event SdexBurned(uint256 amount);
 }

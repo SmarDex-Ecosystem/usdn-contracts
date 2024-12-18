@@ -692,15 +692,13 @@ library UsdnProtocolVaultLibrary {
 
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             if (data.sdexToBurn > 0) {
-                // This logic must be modified if this protocol is deployed twice, as an attacker could burn SDEX once
-                // for both deposits by re-entering one protocol from the other.
-                Utils._transferCallback(s._sdex, data.sdexToBurn, Constants.DEAD_ADDRESS);
+                Utils._transferCallback(s._sdex, data.sdexToBurn, address(this));
             }
             Utils._transferCallback(s._asset, params.amount, address(this));
         } else {
             if (data.sdexToBurn > 0) {
                 // slither-disable-next-line arbitrary-send-erc20
-                address(s._sdex).safeTransferFrom(params.user, Constants.DEAD_ADDRESS, data.sdexToBurn);
+                address(s._sdex).safeTransferFrom(params.user, address(this), data.sdexToBurn);
             }
             // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(params.user, address(this), params.amount);
