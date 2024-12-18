@@ -68,16 +68,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
         });
     }
 
-    /**
-     * @notice Computes the amount of assets to reward a liquidator.
-     * @dev Parameters `ProtocolAction`, `rebaseCallbackResult`, and `priceData` are not used in the current
-     * implementation.
-     * @param liquidatedTicks Information about the liquidated ticks.
-     * @param currentPrice The current price of the asset.
-     * @param rebased Indicates whether a USDN rebase was performed.
-     * @param rebalancerAction The action performed by the {IUsdnProtocolLongLibrary._triggerRebalancer} function.
-     * @return wstETHRewards_ The amount of asset tokens to reward the liquidator.
-     */
+    /// @inheritdoc IBaseLiquidationRewardsManager
     function getLiquidationRewards(
         Types.LiqTickInfo[] calldata liquidatedTicks,
         uint256 currentPrice,
