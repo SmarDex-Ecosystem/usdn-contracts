@@ -182,7 +182,7 @@ $ E_"long" = sum_i E_i = T_"long" - B_"long" $
 where $T_i$ is the @total_expo of a long position $i$ (defined as the product of its initial collateral $c_i$ and initial
 leverage $l_i$), $E_i$ is the trading exposure of a position (defined as its total exposure minus its value $v_i$),
 $T_"long"$ is the total exposure of the long side, and $B_"long"$ is the long side balance.
-The long side trading exposure can be interpreted as the amount of assets borrowed by the long side position holders.
+The long side trading exposure can be interpreted as the amount of assets borrowed by the long side position owners.
 
 As the price of the asset increases, $B_"long"$ increases and the trading exposure of the long side decreases.
 Inversely, as the price of the asset decreases, $B_"long"$ decreases and the trading exposure of the long side
