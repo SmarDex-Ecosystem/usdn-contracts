@@ -13,6 +13,7 @@ import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracl
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
@@ -25,6 +26,7 @@ import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVault
 
 contract UsdnProtocolFallback is
     IUsdnProtocolErrors,
+    IUsdnProtocolEvents,
     IUsdnProtocolFallback,
     InitializableReentrancyGuard,
     PausableUpgradeable,
@@ -93,6 +95,17 @@ contract UsdnProtocolFallback is
 
         uint256 available = Vault.vaultAssetAvailableWithFunding(price, timestamp);
         assetExpected_ = Utils._calcAmountToWithdraw(usdnShares, available, s._usdn.totalShares(), s._vaultFeeBps);
+    }
+
+    function burnSdex() external whenNotPaused initializedAndNonReentrant {
+        IERC20Metadata sdex = Utils._getMainStorage()._sdex;
+
+        uint256 sdexBalance = sdex.balanceOf(address(this));
+
+        if (sdexBalance > 0) {
+            sdex.transfer(Constants.DEAD_ADDRESS, sdexBalance);
+            emit SdexBurned(sdexBalance);
+        }
     }
 
     /// @inheritdoc IUsdnProtocolFallback
