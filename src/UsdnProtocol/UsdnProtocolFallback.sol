@@ -97,6 +97,7 @@ contract UsdnProtocolFallback is
         assetExpected_ = Utils._calcAmountToWithdraw(usdnShares, available, s._usdn.totalShares(), s._vaultFeeBps);
     }
 
+    /// @inheritdoc IUsdnProtocolFallback
     function burnSdex() external whenNotPaused initializedAndNonReentrant {
         IERC20Metadata sdex = Utils._getMainStorage()._sdex;
 
@@ -151,6 +152,10 @@ contract UsdnProtocolFallback is
     {
         Core._removeBlockedPendingAction(rawIndex, to, false);
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Immutables getters                             */
+    /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolFallback
     function getTickSpacing() external view returns (int24 tickSpacing_) {

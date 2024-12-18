@@ -114,6 +114,9 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
      */
     function refundSecurityDeposit(address payable validator) external;
 
+    /// @notice Sends the accumulated SDEX token fees to the dead address. This function can be called by anyone.
+    function burnSdex() external;
+
     /* -------------------------------------------------------------------------- */
     /*                               Admin functions                              */
     /* -------------------------------------------------------------------------- */
