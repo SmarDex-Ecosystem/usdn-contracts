@@ -209,7 +209,7 @@ library UsdnProtocolSettersLibrary {
     function setSdexRewardsRatioBps(uint16 newRewards) external {
         Types.Storage storage s = Utils._getMainStorage();
 
-        if (newRewards > Constants.MAX_SDEX_CALLER_REWARDS_BPS) {
+        if (newRewards > Constants.MAX_SDEX_REWARDS_RATIO_BPS) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidSdexRewardsRatio();
         }
 

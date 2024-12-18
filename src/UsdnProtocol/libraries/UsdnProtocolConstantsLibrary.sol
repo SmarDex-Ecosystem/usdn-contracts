@@ -89,7 +89,7 @@ library UsdnProtocolConstantsLibrary {
     uint256 internal constant MAX_VAULT_FEE_BPS = 2000;
 
     /// @notice Maximum ratio of SDEX rewards allowed in basis points.
-    uint256 internal constant MAX_SDEX_CALLER_REWARDS_BPS = 1000;
+    uint256 internal constant MAX_SDEX_REWARDS_RATIO_BPS = 1000;
 
     /// @notice Maximum ratio of SDEX to burn per minted USDN on deposit (10%).
     uint256 internal constant MAX_SDEX_BURN_RATIO = SDEX_BURN_ON_DEPOSIT_DIVISOR / 10;

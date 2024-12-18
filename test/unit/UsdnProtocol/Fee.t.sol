@@ -199,7 +199,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         uint256 fees = 500 ether;
         sdex.mintAndApprove(address(this), fees, address(protocol), type(uint256).max);
         sdex.transfer(address(protocol), fees);
-        uint256 rewards = fees * 100 / 10_000;
+        uint256 rewards = fees * protocol.getSdexRewardsRatioBps() / Constants.BPS_DIVISOR;
 
         assertEq(sdex.balanceOf(address(protocol)), fees, "protocol balance before burn");
 
