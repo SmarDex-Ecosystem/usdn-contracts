@@ -106,7 +106,10 @@ contract UsdnProtocolFallback is
 
         uint256 sdexToBurn = sdex.balanceOf(address(this));
         uint256 rewards = FixedPointMathLib.fullMulDiv(sdexToBurn, 100, Constants.BPS_DIVISOR);
-        sdexToBurn -= rewards;
+        // the rewards are capped at 10% of the total SDEX, so the subtraction is safe
+        unchecked {
+            sdexToBurn -= rewards;
+        }
 
         if (rewards > 0) {
             address(sdex).safeTransfer(msg.sender, rewards);
