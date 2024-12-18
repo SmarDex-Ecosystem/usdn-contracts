@@ -105,8 +105,10 @@ contract UsdnProtocolFallback is
         IERC20Metadata sdex = Utils._getMainStorage()._sdex;
 
         uint256 sdexToBurn = sdex.balanceOf(address(this));
-        uint256 rewards = FixedPointMathLib.fullMulDiv(sdexToBurn, 100, Constants.BPS_DIVISOR);
-        // the rewards are capped at 10% of the total SDEX, so the subtraction is safe
+        uint256 rewards = FixedPointMathLib.fullMulDiv(
+            sdexToBurn, Utils._getMainStorage()._sdexCallerRewardsBps, Constants.BPS_DIVISOR
+        );
+        // the rewards are capped at 10% of the total SDEX tokens, so the subtraction is safe
         unchecked {
             sdexToBurn -= rewards;
         }
