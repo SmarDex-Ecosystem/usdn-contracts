@@ -104,11 +104,16 @@ contract UsdnProtocolFallback is
     function burnSdex() external whenNotPaused initializedAndNonReentrant {
         IERC20Metadata sdex = Utils._getMainStorage()._sdex;
 
-        uint256 sdexBalance = sdex.balanceOf(address(this));
+        uint256 sdexToBurn = sdex.balanceOf(address(this));
+        uint256 rewards = FixedPointMathLib.fullMulDiv(sdexToBurn, 100, Constants.BPS_DIVISOR);
+        sdexToBurn -= rewards;
 
-        if (sdexBalance > 0) {
-            address(sdex).safeTransfer(Constants.DEAD_ADDRESS, sdexBalance);
-            emit SdexBurned(sdexBalance);
+        if (rewards > 0) {
+            address(sdex).safeTransfer(msg.sender, rewards);
+        }
+        if (sdexToBurn > 0) {
+            address(sdex).safeTransfer(Constants.DEAD_ADDRESS, sdexToBurn);
+            emit SdexBurned(sdexToBurn, rewards);
         }
     }
 

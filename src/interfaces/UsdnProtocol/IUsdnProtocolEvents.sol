@@ -380,6 +380,7 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     /**
      * @notice The protocol balance of SDEX has been burned.
      * @param amount The amount of SDEX that was burned.
+     * @param rewards The amount of rewards that were distributed to the caller.
      */
-    event SdexBurned(uint256 amount);
+    event SdexBurned(uint256 amount, uint256 rewards);
 }

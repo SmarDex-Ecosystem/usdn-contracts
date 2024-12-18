@@ -196,16 +196,19 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:and The protocol emits `SdexBurned` event with 500 SDEX
      */
     function test_burnSdex() public {
-        sdex.mintAndApprove(address(this), 500 ether, address(protocol), type(uint256).max);
-        sdex.transfer(address(protocol), 500 ether);
+        uint256 fees = 500 ether;
+        sdex.mintAndApprove(address(this), fees, address(protocol), type(uint256).max);
+        sdex.transfer(address(protocol), fees);
+        uint256 rewards = fees * 100 / 10_000;
 
-        assertEq(sdex.balanceOf(address(protocol)), 500 ether, "protocol balance before burn");
+        assertEq(sdex.balanceOf(address(protocol)), fees, "protocol balance before burn");
 
         vm.expectEmit();
-        emit SdexBurned(500 ether);
+        emit SdexBurned(fees - rewards, rewards);
         protocol.burnSdex();
 
         assertEq(sdex.balanceOf(address(protocol)), 0, "protocol balance after burn");
+        assertEq(sdex.balanceOf(address(this)), rewards, "address(this) balance after burn");
     }
 }
 
