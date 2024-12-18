@@ -13,7 +13,7 @@ interface ILiquidationRewardsManager is IBaseLiquidationRewardsManager, ILiquida
     function BPS_DIVISOR() external pure returns (uint32);
 
     /**
-     * @notice Gets the fixed gas amount used as a base for transaction cost calculations.
+     * @notice Gets the fixed gas amount used as a base for transaction cost computations.
      * @dev Stored as a uint256 to prevent overflow during gas usage computations.
      * @return The base gas cost.
      */
@@ -53,11 +53,11 @@ interface ILiquidationRewardsManager is IBaseLiquidationRewardsManager, ILiquida
      * @notice Updates the parameters used for calculating liquidation rewards.
      * @param gasUsedPerTick The gas consumed per tick for liquidation.
      * @param otherGasUsed The gas consumed for all additional computations.
-     * @param rebaseGasUsed The gas consumed for optional USDN rebase operations.
+     * @param rebaseGasUsed The gas consumed for optional USDN rebase operation.
      * @param rebalancerGasUsed The gas consumed for the optional rebalancer trigger.
      * @param baseFeeOffset An offset added to the block's base gas fee.
      * @param gasMultiplierBps Multiplier for the gas usage (in BPS).
-     * @param positionBonusMultiplierBps Multiplier for position size bonuses, expressed in BPS.
+     * @param positionBonusMultiplierBps Multiplier for position size bonus (in BPS).
      * @param fixedReward A fixed reward amount (in native currency, converted to wstETH).
      * @param maxReward The maximum allowable reward amount (in native currency, converted to wstETH).
      */
