@@ -205,6 +205,69 @@ also see that the imbalance is bounded by $[-1, 1]$.
 
 = Funding <sec:funding>
 
+To incentivize depositors in the protocol side with the lowest @trading_expo, the protocol charges a funding fee to the
+largest side, which is paid to the other side. The fee for a time interval $Delta t$ (in seconds) starting at instant
+$t_1$ and ending at $t_2$ is defined as:
+
+$ F_(Delta t) = F_(t_1,t_2) = E_"long"_(t_1) f_(Delta t) $
+
+where $E_"long"_(t_1)$ is the trading exposure of the long side at the beginning of the interval and $f_(Delta t)$ is
+the funding rate for that interval.
+
+The funding rate for that interval is calculated as:
+
+$
+  f_(Delta t) &= f_(t_1,t_2) \
+  &= frac(t_2 - t_1, 86400) (s "sgn"(I_(t_1)) I_(t_1)^2 + sigma_(t_0,t_1))
+$ <eq:funding_rate>
+
+where $s$ is a scaling factor that can be tuned, $"sgn"(I)$ is the signum function#footnote[The signum function returns
+$-1$ if the sign of its operand is negative, $0$ if its value is zero, and $1$ if it's positive.] applied to the
+imbalance $I_(t_1)$ @eq:imbalance at instant $t_1$ and $sigma$ is a skew factor (see below).
+The denominator of the fraction refers to the number of seconds in a day, which means that $f_(t-86400,t)$ is the daily
+funding rate for the period ending at $t$.
+It can be observed that the sign of the funding rate matches the sign of the imbalance so long as the $sigma$ term
+is zero, thus a positive imbalance (more long trading exposure) results in a positive funding rate in that case.
+If the $sigma$ term is largely negative, the funding rate could be negative even if the imbalance is positive.
+
+Note that the funding rate is calculated prior to updating the skew factor (which itself depends on the daily funding
+rate), so the skew factor is always the one calculated for the previous time period.
+
+At the end of the funding period $Delta t$, the vault and long side balances are updated as follows (ignoring profits
+and losses):
+
+$
+  B_"vault"_(t_2) &= B_"vault"_(t_1) + F_(t_1,t_2) \
+  B_"long"_(t_2) &= B_"long"_(t_1) - F_(t_1,t_2)
+$
+
+== Skew Factor
+
+In traditional finance, funding rates are usually positive and serve as a kind of interest rate on the amount borrowed
+by the long side. This means that funding should ideally not be zero even if the protocol is perfectly balanced.
+
+The dynamic skew factor $sigma$ is introduced to ensure that the funding rate matches the market's accepted interest
+rate when the protocol is balanced. This factor is calculated as an exponential moving average of the daily funding
+rate. For a time interval $Delta t$, the skew factor is updated as follows:
+
+$
+  sigma_(Delta t) &= sigma_(t_1,t_2) = alpha f_(t_2-86400,t_2) + (1 - alpha) sigma_(t_0,t_1) \
+  &= frac(Delta t, tau) f_(t_2-86400,t_2) + frac(tau - Delta t, tau) sigma_(t_0,t_1)
+$
+
+where $alpha$ is the smoothing factor of the moving average, $tau$ is the time constant of the moving average,
+$f_(t_2-86400,t_2)$ is the daily funding rate for the last day, and $sigma_(t_0,t_1)$ is the previous value of the skew
+factor.
+
+Because this factor is summed with the part of the funding rate which is proportional to the imbalance in
+@eq:funding_rate, it shifts the default funding rate value when the protocol is balanced. In practice, if the imbalance
+remains positive (more trading exposure in the long side) for some time, the daily funding rate will keep increasing.
+When the funding fees become too important for the long side position owners, they will be incentivized to close their
+positions, which will decrease the imbalance.
+When the imbalance reaches zero, the daily funding rate will stop increasing, and maintain its current value thanks to
+the skew factor. This ensures that the market finds its own daily funding rate which is deemed acceptable by the
+protocol actors.
+
 = Glossary
 
 // reset template styles for the figures in the glossary
