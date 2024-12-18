@@ -1,22 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+/// @notice Interface defining events, structs, and errors for the {LiquidationRewardsManager}.
 interface ILiquidationRewardsManagerErrorsEventsTypes {
     /* -------------------------------------------------------------------------- */
     /*                                   Events                                   */
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Emitted when the rewards parameters are changed
-     * @param gasUsedPerTick Gas used per tick to liquidate
-     * @param otherGasUsed Gas used for the rest of the computation
-     * @param rebaseGasUsed Gas used for the optional USDN rebase
-     * @param rebalancerGasUsed Gas used for the optional rebalancer trigger
-     * @param baseFeeOffset Offset added to the block's base gas fee
-     * @param gasMultiplierBps Multiplier for the amount of gas used in BPS
-     * @param positionBonusMultiplierBps Multiplier for the position size bonus in BPS
-     * @param fixedReward Fixed amount added to the final reward (native currency)
-     * @param maxReward Upper limit for the rewards (native currency)
+     * @notice The rewards parameters are updated.
+     * @param gasUsedPerTick The gas consumed per tick for liquidation.
+     * @param otherGasUsed The gas consumed for all additional computations.
+     * @param rebaseGasUsed The gas consumed for optional USDN rebase operations.
+     * @param rebalancerGasUsed The gas consumed for the optional rebalancer trigger.
+     * @param baseFeeOffset An offset added to the block's base gas fee.
+     * @param gasMultiplierBps Multiplier for the gas usage (in BPS).
+     * @param positionBonusMultiplierBps Multiplier for position size bonuses, expressed in BPS.
+     * @param fixedReward A fixed reward amount (in native currency, converted to wstETH).
+     * @param maxReward The maximum allowable reward amount (in native currency, converted to wstETH).
      */
     event RewardsParametersUpdated(
         uint32 gasUsedPerTick,
@@ -35,16 +36,16 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Parameters for the rewards calculation
-     * @param gasUsedPerTick Gas used per tick to liquidate
-     * @param otherGasUsed Gas used for the rest of the computation
-     * @param rebaseGasUsed Gas used for the optional USDN rebase
-     * @param rebalancerGasUsed Gas used for the optional rebalancer trigger
-     * @param baseFeeOffset Offset added to the block's base gas fee
-     * @param gasMultiplierBps Multiplier for the amount of gas used (max 6.55x)
-     * @param positionBonusMultiplierBps Multiplier for the position size bonus (max 6.55x)
-     * @param fixedReward Fixed amount added to the final reward (native currency)
-     * @param maxReward Upper limit for the rewards (native currency)
+     * @notice The parameters used for calculating rewards.
+     * @param gasUsedPerTick The gas consumed per tick for liquidation.
+     * @param otherGasUsed The gas consumed for all additional computations.
+     * @param rebaseGasUsed The gas consumed for optional USDN rebase operations.
+     * @param rebalancerGasUsed The gas consumed for the optional rebalancer trigger.
+     * @param baseFeeOffset An offset added to the block's base gas fee.
+     * @param gasMultiplierBps Multiplier for the gas usage (in BPS).
+     * @param positionBonusMultiplierBps Multiplier for position size bonuses, expressed in BPS.
+     * @param fixedReward A fixed reward amount (in native currency, converted to wstETH).
+     * @param maxReward The maximum allowable reward amount (in native currency, converted to wstETH).
      */
     struct RewardsParameters {
         uint32 gasUsedPerTick;
@@ -63,32 +64,32 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Indicates that the gasUsedPerTick parameter has been set to a value we consider too high
-     * @param value The wanted value
+     * @notice The `gasUsedPerTick` parameter exceeds the allowable limit.
+     * @param value The given value.
      */
     error LiquidationRewardsManagerGasUsedPerTickTooHigh(uint256 value);
 
     /**
-     * @notice Indicates that the otherGasUsed parameter has been set to a value we consider too high
-     * @param value The wanted value
+     * @notice The `otherGasUsed` parameter exceeds the allowable limit.
+     * @param value The given value.
      */
     error LiquidationRewardsManagerOtherGasUsedTooHigh(uint256 value);
 
     /**
-     * @notice Indicates that the rebaseGasUsed parameter has been set to a value we consider too high
-     * @param value The wanted value
+     * @notice The `rebaseGasUsed` parameter exceeds the allowable limit.
+     * @param value The given value.
      */
     error LiquidationRewardsManagerRebaseGasUsedTooHigh(uint256 value);
 
     /**
-     * @notice Indicates that the rebalancerGasUsed parameter has been set to a value we consider too high
-     * @param value The wanted value
+     * @notice The `rebalancerGasUsed` parameter exceeds the allowable limit.
+     * @param value The given value.
      */
     error LiquidationRewardsManagerRebalancerGasUsedTooHigh(uint256 value);
 
     /**
-     * @notice Indicates that the maxReward parameter has been set to a value considered too low
-     * @param value The wanted value
+     * @notice The `maxReward` parameter is below the allowable minimum.
+     * @param value The given value.
      */
     error LiquidationRewardsManagerMaxRewardTooLow(uint256 value);
 }
