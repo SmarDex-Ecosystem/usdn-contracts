@@ -659,7 +659,7 @@ interface IUsdnProtocolTypes {
         int256 _longImbalanceTargetBps;
         uint16 _positionFeeBps;
         uint16 _vaultFeeBps;
-        uint16 _sdexCallerRewardsBps;
+        uint16 _sdexRewardsRatioBps;
         uint32 _sdexBurnOnDepositRatio;
         address _feeCollector;
         uint64 _securityDepositValue;

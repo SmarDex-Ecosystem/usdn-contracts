@@ -188,6 +188,12 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     event VaultFeeUpdated(uint256 vaultFee);
 
     /**
+     * @notice The SDEX rewards ratio is updated.
+     * @param ratio The new ratio (in basis points).
+     */
+    event SdexRewardsRatioUpdated(uint16 ratio);
+
+    /**
      * @notice The rebalancer bonus is updated.
      * @param bonus The new bonus (in basis points).
      */

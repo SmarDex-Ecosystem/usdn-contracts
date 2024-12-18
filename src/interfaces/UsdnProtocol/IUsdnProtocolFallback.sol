@@ -321,6 +321,12 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function getVaultFeeBps() external view returns (uint16 feeBps_);
 
     /**
+     * @notice Gets the rewards ratio given to the caller when burning SDEX tokens.
+     * @return rewardsBps_ The rewards ratio (in basis points).
+     */
+    function getSdexRewardsRatioBps() external view returns (uint16 rewardsBps_);
+
+    /**
      * @notice Gets the part of the remaining collateral given as a bonus to the Rebalancer upon liquidation of a tick.
      * @return bonusBps_ The fraction of the remaining collateral for the Rebalancer bonus (in basis points).
      */

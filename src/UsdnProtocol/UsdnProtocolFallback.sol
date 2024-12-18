@@ -106,7 +106,7 @@ contract UsdnProtocolFallback is
 
         uint256 sdexToBurn = sdex.balanceOf(address(this));
         uint256 rewards = FixedPointMathLib.fullMulDiv(
-            sdexToBurn, Utils._getMainStorage()._sdexCallerRewardsBps, Constants.BPS_DIVISOR
+            sdexToBurn, Utils._getMainStorage()._sdexRewardsRatioBps, Constants.BPS_DIVISOR
         );
         // the rewards are capped at 10% of the total SDEX tokens, so the subtraction is safe
         unchecked {
@@ -286,6 +286,11 @@ contract UsdnProtocolFallback is
     /// @inheritdoc IUsdnProtocolFallback
     function getVaultFeeBps() external view returns (uint16 feeBps_) {
         return Utils._getMainStorage()._vaultFeeBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function getSdexRewardsRatioBps() external view returns (uint16 rewardsBps_) {
+        return Utils._getMainStorage()._sdexRewardsRatioBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
