@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-/// @notice Interface defining events, structs, and errors for the {LiquidationRewardsManager}.
+/**
+ * @title ILiquidationRewardsManagerErrorsEventsTypes
+ * @notice Interface defining events, structs, and errors for the {LiquidationRewardsManager}.
+ */
 interface ILiquidationRewardsManagerErrorsEventsTypes {
     /* -------------------------------------------------------------------------- */
     /*                                   Events                                   */

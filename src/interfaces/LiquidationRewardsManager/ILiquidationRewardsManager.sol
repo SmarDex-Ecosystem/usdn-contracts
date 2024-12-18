@@ -4,7 +4,10 @@ pragma solidity >=0.8.0;
 import { IBaseLiquidationRewardsManager } from "./IBaseLiquidationRewardsManager.sol";
 import { ILiquidationRewardsManagerErrorsEventsTypes } from "./ILiquidationRewardsManagerErrorsEventsTypes.sol";
 
-/// @notice Interface for managing liquidation rewards within the protocol.
+/**
+ * @title ILiquidationRewardsManager
+ * @notice Interface for managing liquidation rewards within the protocol.
+ */
 interface ILiquidationRewardsManager is IBaseLiquidationRewardsManager, ILiquidationRewardsManagerErrorsEventsTypes {
     /**
      * @notice Gets the denominator used for the reward multipliers.

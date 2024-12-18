@@ -4,6 +4,7 @@ pragma solidity >=0.8.0;
 import { IUsdnProtocolTypes as Types } from "../UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
+ * @title IBaseLiquidationRewardsManager
  * @notice This interface exposes the only function used by the UsdnProtocol.
  * @dev Future implementations of the rewards manager must implement this interface without modifications.
  */
