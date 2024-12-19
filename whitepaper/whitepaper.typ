@@ -298,7 +298,7 @@ liquidated (see @sec:liquidation). This penalty $psi_i$ denominated in number of
 metadata and allows to calculate the _theoretical_ liquidation price (price at which the position value is zero) of a
 position in tick $i$ by retrieving the price of the tick number $(i - psi_i)$.
 
-For instance, if the penalty for tick 1000 is 100 ticks (\~1.05%), the liquidation price of a position in tick 1000 is
+For instance, if the penalty for tick 1000 is 100_ticks (\~1.05%), the liquidation price of a position in tick 1000 is
 the price of tick 900.
 
 == Tick Spacing <sec:tick_spacing>
