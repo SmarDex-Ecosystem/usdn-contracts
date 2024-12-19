@@ -150,7 +150,7 @@ When closing a position, users withdraw part or the entirety of the current valu
 The value of a long position is determined by the current market price of the asset coupled with its @total_expo and
 @liquidation_price. The position value $v(p)$ is calculated as follows:
 
-$ v(p) = frac(T (p-p_"liq"), p) $
+$ v(p) = frac(T (p-p_"liq"), p) $ <eq:pos_value>
 
 where $p$ is the price of the asset (in dollars), $T$ is the total exposure of the position, and $p_"liq"$ is the
 liquidation price of the position.
@@ -201,7 +201,7 @@ executing liquidations is incentivized with a reward paid out to the liquidator.
 
 The reward is mainly derived from the gas cost of a liquidation transaction. The formula is divided into two parts. The
 first component is based on the gas cost and depends on the number $n$ of liquidated transactions (in practice,
-transactions are grouped into buckets and liquidated in batches, see TODO):
+transactions are grouped into buckets and liquidated in batches, see @sec:ticks):
 
 $ r_"gas" = gamma (g_"common" + n g_"pos") $
 
@@ -237,8 +237,8 @@ $ E_"vault" = B_"vault" $
 The trading exposure of the long side $E_"long"$ is defined as:
 
 $ T_i = c_i l_i $
-$ E_i = T_i - v_i $
-$ T_"long" = sum_i T_i $
+$ E_i = T_i - v_i $ <eq:trading_expo>
+$ T_"long" = sum_i T_i $ <eq:total_expo>
 $ B_"long" = sum_i v_i $ <eq:value_balance_invariant>
 $ E_"long" = sum_i E_i = T_"long" - B_"long" $
 
@@ -330,6 +330,122 @@ positions, which will decrease the imbalance.
 When the imbalance reaches zero, the daily funding rate will stop increasing, and maintain its current value thanks to
 the skew factor. This ensures that the market finds its own daily funding rate which is deemed acceptable by the
 protocol actors.
+
+= Liquidation Ticks <sec:ticks>
+
+As previously stated in @sec:liquidation, the long side positions are grouped by @liquidation_price into buckets for
+efficient liquidation. Each bucket is called a liquidation tick and is identified by its number, ranging from
+-322_378 to 980_000.
+
+The tick number of a bucket containing positions can be used to calculate the price at which those positions can be
+liquidated, and this price includes a penalty, such that the position value is greater than zero when it can be first
+liquidated. This penalty $psi_i$ denominated in number of ticks, is stored in the bucket's metadata and allows to
+calculate the _theoretical_ liquidation price (price at which the position value is zero) of a position in tick $i$ by
+retrieving the price of the tick number $(i - psi_i)$.
+
+For instance, if the penalty for tick 1000 is 100_ticks (\~1.05%), then the theoretical liquidation price of a position
+in tick 1000 is the price of tick 900. But the position can be liquidated as soon as the price falls below the price of
+tick 1000.
+
+== Tick Spacing <sec:tick_spacing>
+
+To improve gas performance when iterating over the ticks, we only consider ticks that are multiples of a tick spacing
+$lambda$ for the liquidation buckets. The range of valid ticks is:
+
+#math.equation(block: true, numbering: none)[
+  $R => { lambda k | k in ZZ: lr(ceil.l frac(-322378, lambda) ceil.r) <= k <= lr(floor.l frac(980000, lambda) floor.r) }$
+]
+
+For the Ethereum implementation, the tick spacing is defined as 100 ticks (the price difference between two consecutive
+usable ticks is \~1.05%).
+
+== Unadjusted Price
+
+At the core of the tick system is the equation that dictates the conversion from a tick number to a price that we
+qualify as "unadjusted". This equation is:
+
+$ phi_i = 1.0001^i $ <eq:unadjusted_price>
+
+where $phi_i$ is the unadjusted price for the tick $i$. From this formula, we can see that the unadjusted price
+increases by 0.01% for each tick. This allow to represent a wide range of prices with a small number of ticks. In
+practice, because of the tick number range described above, prices ranging from \$0.000_000_000_000_01 to
+\~\$3_tredecillion ($~3.62 times 10^42$) can be represented.
+
+== Adjusted Price
+
+However, because of the @funding mechanism, the liquidation price of a position can change over time. If the funding
+fee is positive, a position's collateral is slowly eaten away, which in turn increases its liquidation price. The
+"adjusted" price $P_i$ of a tick is thus calculated as:
+
+$ P_i = M phi_i $ <eq:adjusted_price>
+
+where $M$ is a multiplier that represents the accumulated effect of the funding fees. Interestingly, all ticks are
+affected by the funding fees in the same way, which means that the multiplier $M$ is the same for all ticks
+(see @sec:multiplier_proof).
+
+Since it would be imprecise to represent the multiplier $M$ as a fixed-precision number in the implementation, we derive
+an accumulator $A$ from the equations below.
+
+The value of a tick $i$ can be derived from @eq:pos_value:
+
+$ v_i = frac(T_i, l_i) = frac(T_i (p - P_(i - psi_i)), p) $
+
+where $T_i$ is the @total_expo of the positions in the tick, $l_i$ is the effective leverage of the positions in the
+tick (at the current price), $p$ is the current price of the asset and $P_(i-psi_i)$ is
+the theoretical liquidation price of the positions in this tick ($psi_i$ being the penalty of the tick).
+By using @eq:adjusted_price, we can rewrite this equation as:
+
+$ v_i = frac(T_i (p - M phi_(i - psi_i)), p) $ <eq:tick_value_mul>
+
+With the range of valid ticks $R$ defined in @sec:tick_spacing, we define the following invariant (analog to
+@eq:value_balance_invariant for the ticks):
+
+$ B_"long" = sum_(i in R) v_i $ <eq:balance_tick_invariant>
+
+which means that the balance of the long side must be equal to the sum of the value of each tick $i$. We can now combine
+@eq:total_expo, @eq:tick_value_mul and @eq:balance_tick_invariant, then solve for $M$:
+
+$
+  M = frac(p (sum_(i in R) T_i - B_"long"), sum_(i in R) (T_i phi_(i-psi_i))) = frac(p (T_"long" - B_"long"), A)
+$ <eq:liq_multiplier>
+
+$ A = sum_(i in R) (T_i phi_(i-psi_i)) $ <eq:accumulator>
+
+where $A$ is an accumulator that can easily be updated when a position is added or removed from the long side.
+
+Finally, the adjusted price of a tick $P_i$ can be calculated as:
+
+$ P_i = M phi_i = frac(phi_i p (T_"long" - B_"long"), A) = frac(phi_i p E_"long", A) $ <eq:adjusted_price_acc>
+
+=== Multiplier Proof <sec:multiplier_proof>
+
+As proof that multiplier $M$ is the same for all ticks, consider a position with a current value $v_0$ and a liquidation
+price $phi$ that was not subject to funding fees. The liquidation price for a current asset price $p$ is derived from
+@eq:pos_value:
+
+$ phi = p_"liq" (p) = frac(p (T - v_0), T) $
+
+where $T$ is the @total_expo of the position. If the funding rate is $f$, the funding fee for the position is:
+
+$ F = f E = f (T - v_0) $
+
+where $E$ is the @trading_expo of the position.
+The new position value $v_1$ is then:
+
+$
+  v_1 &= v_0 - F = v_0 - f (T - v_0)\
+  &= v_0 (1 + f) - f T
+$
+
+The new adjusted liquidation price $P$ is thus:
+
+$
+  P &= frac(p (T - v_1), T) = frac(p (T - v_0 (1 + f) + f T), T)\
+  &= frac(p (T (1 + f) - v_0 (1 + f)), T)\
+  &= (1 + f) frac(p (T - v_0), T) = (1 + f) phi = M phi & qed
+$
+
+From this result, we can see that all ticks are affected by the funding rate in the same way.
 
 = Glossary
 
