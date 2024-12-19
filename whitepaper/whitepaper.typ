@@ -350,7 +350,7 @@ By using @eq:adjusted_price, we can rewrite this equation as:
 
 $ v_i = frac(T_i (p - M phi_(i - psi_i)), p) $ <eq:tick_value_mul>
 
-The range of valid ticks $R$ defined in @sec:tick_spacing, we define the following invariant (analog to
+With the range of valid ticks $R$ defined in @sec:tick_spacing, we define the following invariant (analog to
 @eq:value_balance_invariant for the ticks):
 
 $ B_"long" = sum_(i in R) v_i $ <eq:balance_tick_invariant>
