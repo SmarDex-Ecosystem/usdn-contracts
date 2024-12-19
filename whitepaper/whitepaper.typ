@@ -175,7 +175,7 @@ The trading exposure of the long side $E_"long"$ is defined as:
 
 $ T_i = c_i l_i $
 $ E_i = T_i - v_i $
-$ T_"long" = sum_i T_i $
+$ T_"long" = sum_i T_i $ <eq:total_expo>
 $ B_"long" = sum_i v_i $ <eq:value_balance_invariant>
 $ E_"long" = sum_i E_i = T_"long" - B_"long" $
 
@@ -262,19 +262,32 @@ The value of a tick $i$ can be derived from @eq:pos_value:
 
 $ v_i = frac(T_i, l_i) = frac(p, p - P_(i-psi_i)) $
 
-where $p$ is the current price of the asset and $P_(i-psi_i)$ is the theoretical liquidation price of the positions in
-this tick ($psi_i$ being the penalty of the tick). By using @eq:adjusted_price, we can rewrite this equation as:
+where $T_i$ is the @total_expo of the positions in the tick, $l_i$ is the effective leverage of the positions in the
+tick (at the current price), $p$ is the current price of the asset and $P_(i-psi_i)$ is
+the theoretical liquidation price of the positions in this tick ($psi_i$ being the penalty of the tick).
+By using @eq:adjusted_price, we can rewrite this equation as:
 
 $ v_i = frac(T_i (p - P_(i - psi_i)), p) = frac(T_i (p - M phi_(i - psi_i)), p) $ <eq:tick_value_mul>
 
-The range of valid ticks $R$ defined in @sec:tick_spacing, we define the following invariant:
+The range of valid ticks $R$ defined in @sec:tick_spacing, we define the following invariant (analog to
+@eq:value_balance_invariant for the ticks):
 
 $ B_"long" = sum_(i in R) v_i $ <eq:balance_tick_invariant>
 
 which means that the balance of the long side must be equal to the sum of the value of each tick $i$. We can now combine
-@eq:tick_value_mul and @eq:balance_tick_invariant to define the accumulator $A$:
+@eq:total_expo, @eq:tick_value_mul and @eq:balance_tick_invariant, then solve for $M$:
 
+$
+  M = frac(p (sum_(i in R) T_i - B_"long"), sum_(i in R) (T_i phi_(i-psi_i))) = frac(p (T_"long" - B_"long"), A)
+$ <eq:liq_multiplier>
 
+$ A = sum_(i in R) (T_i phi_(i-psi_i)) $ <eq:accumulator>
+
+where $A$ is an accumulator that can easily be updated when a position is added or removed from the long side.
+
+Finally, the adjusted price of a tick $P_i$ can be calculated as:
+
+$ P_i = M phi_i = frac(phi_i p (T_"long" - B_"long"), A) $ <eq:adjusted_price_acc>
 
 === Multiplier Proof <sec:multiplier_proof>
 
