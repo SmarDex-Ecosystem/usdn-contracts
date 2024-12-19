@@ -102,13 +102,22 @@ contract UsdnProtocolFallback is
 
     /// @inheritdoc IUsdnProtocolFallback
     function burnSdex() external whenNotPaused initializedAndNonReentrant {
-        IERC20Metadata sdex = Utils._getMainStorage()._sdex;
+        Storage storage s = Utils._getMainStorage();
+        IERC20Metadata sdex = s._sdex;
 
-        uint256 sdexBalance = sdex.balanceOf(address(this));
+        uint256 sdexToBurn = sdex.balanceOf(address(this));
+        uint256 rewards = FixedPointMathLib.fullMulDiv(sdexToBurn, s._sdexRewardsRatioBps, Constants.BPS_DIVISOR);
+        // the rewards are capped at 10% of the total SDEX tokens, so the subtraction is safe
+        unchecked {
+            sdexToBurn -= rewards;
+        }
 
-        if (sdexBalance > 0) {
-            address(sdex).safeTransfer(Constants.DEAD_ADDRESS, sdexBalance);
-            emit SdexBurned(sdexBalance);
+        if (rewards > 0) {
+            address(sdex).safeTransfer(msg.sender, rewards);
+        }
+        if (sdexToBurn > 0) {
+            address(sdex).safeTransfer(Constants.DEAD_ADDRESS, sdexToBurn);
+            emit SdexBurned(sdexToBurn, rewards);
         }
     }
 
@@ -276,6 +285,11 @@ contract UsdnProtocolFallback is
     /// @inheritdoc IUsdnProtocolFallback
     function getVaultFeeBps() external view returns (uint16 feeBps_) {
         return Utils._getMainStorage()._vaultFeeBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function getSdexRewardsRatioBps() external view returns (uint16 rewardsBps_) {
+        return Utils._getMainStorage()._sdexRewardsRatioBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -547,6 +561,11 @@ contract UsdnProtocolFallback is
     /// @inheritdoc IUsdnProtocolFallback
     function setVaultFeeBps(uint16 newVaultFee) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
         Setters.setVaultFeeBps(newVaultFee);
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function setSdexRewardsRatioBps(uint16 newRewardsBps) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Setters.setSdexRewardsRatioBps(newRewardsBps);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
