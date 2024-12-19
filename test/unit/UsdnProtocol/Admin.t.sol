@@ -98,6 +98,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         protocol.setVaultFeeBps(0);
 
         vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
+        protocol.setSdexRewardsRatioBps(0);
+
+        vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setRebalancerBonusBps(0);
 
         vm.expectRevert(customError("PAUSER_ROLE"));
@@ -1005,6 +1008,32 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     function test_RevertWhen_setVaultFeeTooHigh() public adminPrank {
         vm.expectRevert(UsdnProtocolInvalidVaultFee.selector);
         protocol.setVaultFeeBps(2001);
+    }
+
+    /**
+     * @custom:scenario Call `setSdexRewardsRatioBps` as admin
+     * @custom:when The admin sets the ratio between 0 and 1000 bps
+     * @custom:then The ratio should be updated
+     * @custom:and An event should be emitted with the corresponding new value
+     */
+    function test_setSdexRewardsRatioBps() public adminPrank {
+        uint256 newValue = Constants.MAX_SDEX_REWARDS_RATIO_BPS;
+        vm.expectEmit();
+        emit SdexRewardsRatioUpdated(uint16(newValue));
+        protocol.setSdexRewardsRatioBps(uint16(newValue));
+        assertEq(protocol.getSdexRewardsRatioBps(), newValue, "max");
+        protocol.setSdexRewardsRatioBps(0);
+        assertEq(protocol.getSdexRewardsRatioBps(), 0, "zero");
+    }
+
+    /**
+     * @custom:scenario Try to set a ratio higher than the max allowed
+     * @custom:when The admin sets the higher than the max allowed
+     * @custom:then The transaction should revert with {UsdnProtocolInvalidSdexRewardsRatio}
+     */
+    function test_RevertWhen_setSdexRewardsRatioTooHigh() public adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidSdexRewardsRatio.selector);
+        protocol.setSdexRewardsRatioBps(uint16(Constants.MAX_SDEX_REWARDS_RATIO_BPS + 1));
     }
 
     /**

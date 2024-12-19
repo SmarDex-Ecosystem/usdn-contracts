@@ -9,7 +9,6 @@ import { IBaseOracleMiddleware } from "../../interfaces/OracleMiddleware/IBaseOr
 import { IBaseRebalancer } from "../../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolFallback } from "../../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
@@ -204,6 +203,18 @@ library UsdnProtocolSettersLibrary {
 
         s._vaultFeeBps = newVaultFee;
         emit IUsdnProtocolEvents.VaultFeeUpdated(newVaultFee);
+    }
+
+    /// @notice See {UsdnProtocolFallback.setSdexRewardsRatioBps}.
+    function setSdexRewardsRatioBps(uint16 newRewards) external {
+        Types.Storage storage s = Utils._getMainStorage();
+
+        if (newRewards > Constants.MAX_SDEX_REWARDS_RATIO_BPS) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidSdexRewardsRatio();
+        }
+
+        s._sdexRewardsRatioBps = newRewards;
+        emit IUsdnProtocolEvents.SdexRewardsRatioUpdated(newRewards);
     }
 
     /// @notice See {UsdnProtocolFallback.setRebalancerBonusBps}.

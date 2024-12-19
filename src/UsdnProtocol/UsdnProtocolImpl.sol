@@ -79,6 +79,7 @@ contract UsdnProtocolImpl is
         s._longImbalanceTargetBps = 400; // 4%
         s._positionFeeBps = 4; // 0.04%
         s._vaultFeeBps = 4; // 0.04%
+        s._sdexRewardsRatioBps = 100; // 1%
         s._sdexBurnOnDepositRatio = 5e6; // 5%
         s._securityDepositValue = 0.5 ether;
         s._EMA = int256(3 * 10 ** (Constants.FUNDING_RATE_DECIMALS - 4));
