@@ -143,7 +143,7 @@ positions.
 When opening a new position, the user deposits assets as collateral and indicates their desired liquidation price, which
 is used to calculate the position's leverage. The entry price is taken from an oracle.
 When closing a position, users withdraw part or the entirety of the current value of their position, including any
-profit and loss resulting from the asset's price action.
+@pnl resulting from the asset's price action.
 
 == Position Value, Profits and Losses <sec:long_pnl>
 
@@ -296,8 +296,7 @@ If the $sigma$ term is largely negative, the funding rate could be negative even
 Note that the funding rate is calculated prior to updating the skew factor (which itself depends on the daily funding
 rate), so the skew factor is always the one calculated for the previous time period.
 
-At the end of the funding period $Delta t$, the vault and long side balances are updated as follows (ignoring profits
-and losses):
+At the end of the funding period $Delta t$, the vault and long side balances are updated as follows (ignoring @pnl):
 
 $
   B_"vault"_(t_2) &= B_"vault"_(t_1) + F_(t_1,t_2) \
