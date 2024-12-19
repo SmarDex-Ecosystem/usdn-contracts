@@ -52,7 +52,7 @@ contract TestUsdnProtocolActionsInitiateDepositWithCallback is TransferCallback,
         assertTrue(success);
         assertEq(wstETH.balanceOf(address(protocol)), balanceBefore + POSITION_AMOUNT);
         assertLt(sdex.balanceOf(address(this)), balanceSdexBefore);
-        assertGt(sdex.balanceOf(Constants.DEAD_ADDRESS), deadBalanceSdexBefore);
+        assertGt(sdex.balanceOf(address(protocol)), deadBalanceSdexBefore);
     }
 
     /**

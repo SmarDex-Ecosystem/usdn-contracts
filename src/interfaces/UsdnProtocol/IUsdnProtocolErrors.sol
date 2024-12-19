@@ -99,6 +99,9 @@ interface IUsdnProtocolErrors {
     /// @dev The specified vault fee exceeds the allowed maximum.
     error UsdnProtocolInvalidVaultFee();
 
+    /// @dev The specified SDEX rewards ratio exceeds the allowed maximum.
+    error UsdnProtocolInvalidSdexRewardsRatio();
+
     /// @dev The specified rebalancer bonus exceeds the allowed maximum.
     error UsdnProtocolInvalidRebalancerBonus();
 

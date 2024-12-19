@@ -187,6 +187,29 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         );
         assertGe(wstETH.balanceOf(address(feeCollectorRevertCallback)), 0, "fee collector balance after collect");
     }
+
+    /**
+     * @custom:scenario Check that the SDEX tokens hold by the protocol are burned when `burnSdex()` is called
+     * @custom:given The protocol has 500 SDEX
+     * @custom:when `burnSdex()` is called
+     * @custom:then The protocol has 0 SDEX
+     * @custom:and The protocol emits `SdexBurned` event with 500 SDEX
+     */
+    function test_burnSdex() public {
+        uint256 fees = 500 ether;
+        sdex.mintAndApprove(address(this), fees, address(protocol), type(uint256).max);
+        sdex.transfer(address(protocol), fees);
+        uint256 rewards = fees * protocol.getSdexRewardsRatioBps() / Constants.BPS_DIVISOR;
+
+        assertEq(sdex.balanceOf(address(protocol)), fees, "protocol balance before burn");
+
+        vm.expectEmit();
+        emit SdexBurned(fees - rewards, rewards);
+        protocol.burnSdex();
+
+        assertEq(sdex.balanceOf(address(protocol)), 0, "protocol balance after burn");
+        assertEq(sdex.balanceOf(address(this)), rewards, "address(this) balance after burn");
+    }
 }
 
 contract FeeCollectorNoCallback { }

@@ -99,12 +99,13 @@ library UsdnProtocolActionsUtilsLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
 
-        if (msg.sender != pos.user) {
+        address oldOwner = pos.user;
+        if (msg.sender != oldOwner) {
             if (delegationSignature.length == 0) {
                 revert IUsdnProtocolErrors.UsdnProtocolUnauthorized();
             } else {
                 _verifyTransferPositionOwnershipDelegation(
-                    posId, pos.user, newOwner, delegationSignature, domainSeparatorV4
+                    posId, oldOwner, newOwner, delegationSignature, domainSeparatorV4
                 );
             }
         }
@@ -112,10 +113,10 @@ library UsdnProtocolActionsUtilsLibrary {
         pos.user = newOwner;
 
         if (ERC165Checker.supportsInterface(newOwner, type(IOwnershipCallback).interfaceId)) {
-            IOwnershipCallback(newOwner).ownershipCallback(msg.sender, posId);
+            IOwnershipCallback(newOwner).ownershipCallback(oldOwner, posId);
         }
 
-        emit IUsdnProtocolEvents.PositionOwnershipTransferred(posId, msg.sender, newOwner);
+        emit IUsdnProtocolEvents.PositionOwnershipTransferred(posId, oldOwner, newOwner);
     }
 
     /* -------------------------------------------------------------------------- */

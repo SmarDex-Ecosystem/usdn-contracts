@@ -65,9 +65,9 @@ the asset price being the same as the entry price of the position. If the price 
 value of the position increases (with a leverage effect), and a corresponding decrease in the vault balance occurs
 (see @sec:long_pnl).
 
-When the protocol is balanced, the vault balance is exactly equal to the borrowed amount of the long side. To
-incentivize this equilibrium, the protocol charges a funding fee to the side with the higher @trading_expo, and
-rewards this amount to the other side (see @sec:funding).
+When the protocol is balanced, the vault balance is exactly equal to the borrowed amount of the long side
+(@sec:imbalance). To incentivize this equilibrium, the protocol charges a funding fee to the side with the higher
+@trading_expo, and rewards this amount to the other side (see @sec:funding).
 
 = USDN Token <sec:token>
 
@@ -131,11 +131,19 @@ It follows the formula described in @sec:token_burning.
 
 = Long Side
 
-The long side manages user positions. A position is comprised of the collateral (in assets) that the user deposited, together with a leverage which allows to control a larger position than the collateral. For example, a leverage of 3 times with an initial collateral of 1_wstETH behaves like a position of 3_wstETH. The product of the leverage and the initial collateral is called @total_expo. When the price of the asset reaches the @liquidation_price for a position, its value is considered too small for it to continue existing, and it gets closed (in a decentralized way). Any remaining value goes to the vault pool and forms part of the yield of USDN.
-The two primary actions for the long side are opening new positions and closing (partially or entirely) existing positions.
+The long side manages user positions. A position is comprised of the collateral (in assets) that the user deposited,
+together with a leverage which allows to control a larger position than the collateral. For example, a leverage of
+3_times with an initial collateral of 1_wstETH behaves like a position of 3_wstETH. The product of the leverage and the
+initial collateral is called @total_expo. When the price of the asset reaches the @liquidation_price for a position, its
+value is considered too small for it to continue existing, and it gets closed (in a decentralized way). Any remaining
+value goes to the vault pool and forms part of the yield of USDN.
+The two primary actions for the long side are opening new positions and closing (partially or entirely) existing
+positions.
 
-When opening a new position, the user deposits assets as collateral and indicates their desired liquidation price, which is used to calculate the position's leverage. The entry price is taken from an oracle.
-When closing a position, users withdraw part or the entirety of the current value of their position, including any profit or loss resulting from the asset's price action.
+When opening a new position, the user deposits assets as collateral and indicates their desired liquidation price, which
+is used to calculate the position's leverage. The entry price is taken from an oracle.
+When closing a position, users withdraw part or the entirety of the current value of their position, including any
+profit and loss resulting from the asset's price action.
 
 == Liquidation <sec:liquidation>
 
@@ -191,9 +199,138 @@ where $mu$ and $nu$ are fixed multipliers that can be adjusted to ensure profita
 
 == Position Value, Profits and Losses <sec:long_pnl>
 
-= Imbalance
+The value of a long position is determined by the current market price of the asset coupled with its @total_expo and
+@liquidation_price. The position value $v(p)$ is calculated as follows:
+
+$ v(p) = frac(T (p-p_"liq"), p) $
+
+where $p$ is the price of the asset (in dollars), $T$ is the total exposure of the position, and $p_"liq"$ is the
+liquidation price of the position.
+
+According to this formula, the position's value increases when the asset price rises and decreases when the asset price
+falls. The position value is used to calculate profits or losses ($Delta v$) relative to the position's initial
+collateral.
+
+To calculate the profit of a position, the initial position value ($p_"entry" = 3000$) is compared with the value of
+position at a new market price. The initial value of the position is calculated as:
+
+$ v(p_"entry") = v(3000) = frac(3 (3000-1000), 3000) = 2 $
+
+If price of the asset increases to \$4000:
+
+$ v(4000) = frac(3 (4000-1000), 4000) = 2.25 $
+$ Delta v = v(4000) - v(3000) = 0.25 $
+The position has a profit of 0.25_asset.
+
+If price of the asset decreases to \$2000:
+
+$ v(2000) = frac(3 (2000-1000), 2000) = 1.5 $
+$ Delta v = v(2000) - v(3000) = -0.5 $
+The position has a loss of 0.5_asset.
+
+= Trading Exposure <sec:trading_expo>
+
+The @trading_expo of the vault side is defined as ($B_"vault"$ being the vault balance):
+
+$ E_"vault" = B_"vault" $
+
+The trading exposure of the long side $E_"long"$ is defined as:
+
+$ T_i = c_i l_i $
+$ E_i = T_i - v_i $
+$ T_"long" = sum_i T_i $
+$ B_"long" = sum_i v_i $ <eq:value_balance_invariant>
+$ E_"long" = sum_i E_i = T_"long" - B_"long" $
+
+where $T_i$ is the @total_expo of a long position $i$ (defined as the product of its initial collateral $c_i$ and
+initial leverage $l_i$), $E_i$ is the trading exposure of a position (defined as its total exposure minus its value
+$v_i$), $T_"long"$ is the total exposure of the long side, and $B_"long"$ is the long side balance.
+The long side trading exposure can be interpreted as the amount of assets borrowed by the long side position owners.
+
+As the price of the asset increases, $B_"long"$ increases and the trading exposure of the long side decreases.
+Inversely, as the price of the asset decreases, $B_"long"$ decreases and the trading exposure of the long side
+increases.
+
+= Imbalance <sec:imbalance>
+
+The protocol is at its optimum when it is balanced, which means its imbalance is zero. The imbalance is defined as
+the relative difference between the #glspl("trading_expo") of both sides (@sec:trading_expo):
+
+$
+  I = cases(
+    -frac(E_"vault" - E_"long", E_"long") "if" E_"vault" < E_"long",
+    frac(E_"long" - E_"vault", E_"vault") "else",
+  )
+$ <eq:imbalance>
+
+From @eq:imbalance, we can see that the imbalance is positive when the long side has a larger trading exposure. We can
+also see that the imbalance is bounded by $[-1, 1]$.
 
 = Funding <sec:funding>
+
+To incentivize depositors in the protocol side with the lowest @trading_expo, the protocol charges a @funding to the
+largest side, which is paid to the smaller side. The fee for a time interval $Delta t$ (in seconds) starting at instant
+$t_1$ and ending at $t_2$ is defined as:
+
+$ F_(Delta t) = F_(t_1,t_2) = E_"long"_(t_1) f_(Delta t) $
+
+where $E_"long"_(t_1)$ is the trading exposure of the long side at the beginning of the interval and $f_(Delta t)$ is
+the funding rate for that interval.
+
+The funding rate for that interval is calculated as:
+
+$
+  f_(Delta t) &= f_(t_1,t_2) \
+  &= frac(t_2 - t_1, 86400) (s "sgn"(I_(t_1)) I_(t_1)^2 + sigma_(t_0,t_1))
+$ <eq:funding_rate>
+
+where $s$ is a scaling factor that can be tuned, $"sgn"(I)$ is the signum function#footnote[The signum function returns
+$-1$ if the sign of its operand is negative, $0$ if its value is zero, and $1$ if it's positive.] applied to the
+imbalance $I_(t_1)$ @eq:imbalance at instant $t_1$ and $sigma$ is a skew factor (see @sec:skew).
+The denominator of the fraction refers to the number of seconds in a day, which means that $f_(t-86400,t)$ is the daily
+funding rate for the period ending at $t$.
+It can be observed that the sign of the funding rate matches the sign of the imbalance so long as the $sigma$ term
+is zero, thus a positive imbalance (more long trading exposure) results in a positive funding rate in that case.
+If the $sigma$ term is largely negative, the funding rate could be negative even if the imbalance is positive.
+
+Note that the funding rate is calculated prior to updating the skew factor (which itself depends on the daily funding
+rate), so the skew factor is always the one calculated for the previous time period.
+
+At the end of the funding period $Delta t$, the vault and long side balances are updated as follows (ignoring profits
+and losses):
+
+$
+  B_"vault"_(t_2) &= B_"vault"_(t_1) + F_(t_1,t_2) \
+  B_"long"_(t_2) &= B_"long"_(t_1) - F_(t_1,t_2)
+$
+
+== Skew Factor <sec:skew>
+
+In traditional finance, #glspl("funding") are usually positive and serve as a kind of interest rate on the amount
+borrowed by the long side. This means that fees should ideally not be zero even if the protocol is perfectly
+balanced.
+
+The dynamic skew factor $sigma$ is introduced to ensure that the funding rate matches the market's accepted interest
+rate when the protocol is balanced. This factor is calculated as an exponential moving average of the daily funding
+rate. For a time interval $Delta t$, the skew factor is updated as follows:
+
+$
+  sigma_(Delta t) &= sigma_(t_1,t_2) = alpha f_(t_2-86400,t_2) + (1 - alpha) sigma_(t_0,t_1) \
+  &= frac(Delta t, tau) f_(t_2-86400,t_2) + frac(tau - Delta t, tau) sigma_(t_0,t_1)
+$
+
+where $alpha$ is the smoothing factor of the moving average, $tau$ is the time constant of the moving average,
+$f_(t_2-86400,t_2)$ is the daily funding rate for the last day, and $sigma_(t_0,t_1)$ is the previous value of the skew
+factor.
+
+Because this factor is summed with the part of the funding rate which is proportional to the imbalance in
+@eq:funding_rate, it shifts the default funding rate value when the protocol is balanced. In practice, if the imbalance
+remains positive (more @trading_expo in the long side) for some time, the daily funding rate will keep increasing.
+When the funding fees become too important for the long side position owners, they will be incentivized to close their
+positions, which will decrease the imbalance.
+When the imbalance reaches zero, the daily funding rate will stop increasing, and maintain its current value thanks to
+the skew factor. This ensures that the market finds its own daily funding rate which is deemed acceptable by the
+protocol actors.
 
 = Glossary
 

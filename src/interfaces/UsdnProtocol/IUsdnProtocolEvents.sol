@@ -188,6 +188,12 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
     event VaultFeeUpdated(uint256 vaultFee);
 
     /**
+     * @notice The SDEX rewards ratio is updated.
+     * @param ratio The new ratio (in basis points).
+     */
+    event SdexRewardsRatioUpdated(uint16 ratio);
+
+    /**
      * @notice The rebalancer bonus is updated.
      * @param bonus The new bonus (in basis points).
      */
@@ -376,4 +382,11 @@ interface IUsdnProtocolEvents is IUsdnProtocolTypes {
      * @param lastUpdateTimestamp The timestamp for which the funding per day was calculated.
      */
     event LastFundingPerDayUpdated(int256 lastFundingPerDay, uint256 lastUpdateTimestamp);
+
+    /**
+     * @notice The protocol balance of SDEX has been burned.
+     * @param amount The amount of SDEX that was burned.
+     * @param rewards The amount of rewards that were distributed to the caller.
+     */
+    event SdexBurned(uint256 amount, uint256 rewards);
 }

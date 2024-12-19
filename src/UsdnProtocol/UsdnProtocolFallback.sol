@@ -6,6 +6,7 @@ import { AccessControlDefaultAdminRulesUpgradeable } from
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { IBaseLiquidationRewardsManager } from
     "../interfaces/LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
@@ -13,6 +14,7 @@ import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracl
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
@@ -25,11 +27,14 @@ import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVault
 
 contract UsdnProtocolFallback is
     IUsdnProtocolErrors,
+    IUsdnProtocolEvents,
     IUsdnProtocolFallback,
     InitializableReentrancyGuard,
     PausableUpgradeable,
     AccessControlDefaultAdminRulesUpgradeable
 {
+    using SafeTransferLib for address;
+
     /// @inheritdoc IUsdnProtocolFallback
     function getActionablePendingActions(address currentUser, uint256 lookAhead, uint256 maxIter)
         external
@@ -96,6 +101,27 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
+    function burnSdex() external whenNotPaused initializedAndNonReentrant {
+        Storage storage s = Utils._getMainStorage();
+        IERC20Metadata sdex = s._sdex;
+
+        uint256 sdexToBurn = sdex.balanceOf(address(this));
+        uint256 rewards = FixedPointMathLib.fullMulDiv(sdexToBurn, s._sdexRewardsRatioBps, Constants.BPS_DIVISOR);
+        // the rewards are capped at 10% of the total SDEX tokens, so the subtraction is safe
+        unchecked {
+            sdexToBurn -= rewards;
+        }
+
+        if (rewards > 0) {
+            address(sdex).safeTransfer(msg.sender, rewards);
+        }
+        if (sdexToBurn > 0) {
+            address(sdex).safeTransfer(Constants.DEAD_ADDRESS, sdexToBurn);
+            emit SdexBurned(sdexToBurn, rewards);
+        }
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
     function refundSecurityDeposit(address payable validator) external whenNotPaused initializedAndNonReentrant {
         uint256 securityDepositValue = Core._removeStalePendingAction(validator);
         if (securityDepositValue > 0) {
@@ -138,6 +164,10 @@ contract UsdnProtocolFallback is
     {
         Core._removeBlockedPendingAction(rawIndex, to, false);
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Immutables getters                             */
+    /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolFallback
     function getTickSpacing() external view returns (int24 tickSpacing_) {
@@ -255,6 +285,11 @@ contract UsdnProtocolFallback is
     /// @inheritdoc IUsdnProtocolFallback
     function getVaultFeeBps() external view returns (uint16 feeBps_) {
         return Utils._getMainStorage()._vaultFeeBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function getSdexRewardsRatioBps() external view returns (uint16 rewardsBps_) {
+        return Utils._getMainStorage()._sdexRewardsRatioBps;
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -526,6 +561,11 @@ contract UsdnProtocolFallback is
     /// @inheritdoc IUsdnProtocolFallback
     function setVaultFeeBps(uint16 newVaultFee) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
         Setters.setVaultFeeBps(newVaultFee);
+    }
+
+    /// @inheritdoc IUsdnProtocolFallback
+    function setSdexRewardsRatioBps(uint16 newRewardsBps) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Setters.setSdexRewardsRatioBps(newRewardsBps);
     }
 
     /// @inheritdoc IUsdnProtocolFallback

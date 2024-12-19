@@ -593,6 +593,7 @@ interface IUsdnProtocolTypes {
      * A positive value means the rebalancer will compensate but stay below the equilibrium
      * @param _positionFeeBps The position fee in basis points
      * @param _vaultFeeBps The fee for vault deposits and withdrawals, in basis points
+     * @param _sdexRewardsRatioBps The ratio of SDEX rewards to send to the user (in basis points).
      * @param _sdexBurnOnDepositRatio The ratio of USDN to SDEX tokens to burn on deposit
      * @param _feeCollector The fee collector's address
      * @param _securityDepositValue The deposit required for a new position
@@ -659,6 +660,7 @@ interface IUsdnProtocolTypes {
         int256 _longImbalanceTargetBps;
         uint16 _positionFeeBps;
         uint16 _vaultFeeBps;
+        uint16 _sdexRewardsRatioBps;
         uint32 _sdexBurnOnDepositRatio;
         address _feeCollector;
         uint64 _securityDepositValue;

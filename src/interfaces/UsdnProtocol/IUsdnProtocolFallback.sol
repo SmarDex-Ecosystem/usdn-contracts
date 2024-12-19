@@ -114,6 +114,9 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
      */
     function refundSecurityDeposit(address payable validator) external;
 
+    /// @notice Sends the accumulated SDEX token fees to the dead address. This function can be called by anyone.
+    function burnSdex() external;
+
     /* -------------------------------------------------------------------------- */
     /*                               Admin functions                              */
     /* -------------------------------------------------------------------------- */
@@ -316,6 +319,12 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
      * @return feeBps_ The fee applied to a vault action (in basis points).
      */
     function getVaultFeeBps() external view returns (uint16 feeBps_);
+
+    /**
+     * @notice Gets the rewards ratio given to the caller when burning SDEX tokens.
+     * @return rewardsBps_ The rewards ratio (in basis points).
+     */
+    function getSdexRewardsRatioBps() external view returns (uint16 rewardsBps_);
 
     /**
      * @notice Gets the part of the remaining collateral given as a bonus to the Rebalancer upon liquidation of a tick.
@@ -629,6 +638,12 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
      * @param newVaultFee The new vault fee (in basis points).
      */
     function setVaultFeeBps(uint16 newVaultFee) external;
+
+    /**
+     * @notice Sets the rewards ratio given to the caller when burning SDEX tokens.
+     * @param newRewardsBps The new rewards ratio (in basis points).
+     */
+    function setSdexRewardsRatioBps(uint16 newRewardsBps) external;
 
     /**
      * @notice Sets the rebalancer bonus.
