@@ -640,6 +640,12 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     function setVaultFeeBps(uint16 newVaultFee) external;
 
     /**
+     * @notice Sets the rewards ratio given to the caller when burning SDEX tokens.
+     * @param newRewardsBps The new rewards ratio (in basis points).
+     */
+    function setSdexRewardsRatioBps(uint16 newRewardsBps) external;
+
+    /**
      * @notice Sets the rebalancer bonus.
      * @param newBonus The bonus (in basis points).
      */
