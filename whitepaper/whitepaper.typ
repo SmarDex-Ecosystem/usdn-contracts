@@ -145,12 +145,44 @@ is used to calculate the position's leverage. The entry price is taken from an o
 When closing a position, users withdraw part or the entirety of the current value of their position, including any
 profit and loss resulting from the asset's price action.
 
+== Position Value, Profits and Losses <sec:long_pnl>
+
+The value of a long position is determined by the current market price of the asset coupled with its @total_expo and
+@liquidation_price. The position value $v(p)$ is calculated as follows:
+
+$ v(p) = frac(T (p-p_"liq"), p) $
+
+where $p$ is the price of the asset (in dollars), $T$ is the total exposure of the position, and $p_"liq"$ is the
+liquidation price of the position.
+
+According to this formula, the position's value increases when the asset price rises and decreases when the asset price
+falls. The position value is used to calculate the @pnl ($Delta v$) relative to the position's initial
+collateral.
+
+To calculate the profit of a position, the initial position value ($p_"entry" = 3000$) is compared with the value of
+position at a new market price. The initial value of the position is calculated as:
+
+$ v(p_"entry") = v(3000) = frac(3 (3000-1000), 3000) = 2 $
+
+If price of the asset increases to \$4000:
+
+$ v(4000) = frac(3 (4000-1000), 4000) = 2.25 $
+$ Delta v = v(4000) - v(3000) = 0.25 $
+The position has a profit of 0.25_asset.
+
+If price of the asset decreases to \$2000:
+
+$ v(2000) = frac(3 (2000-1000), 2000) = 1.5 $
+$ Delta v = v(2000) - v(3000) = -0.5 $
+The position has a loss of 0.5_asset.
+
 == Liquidation <sec:liquidation>
 
 The risk associated with leveraged trading is that a position can be liquidated.
 A liquidation occurs when the value of the collateral is insufficient to repay the borrowed amount (with a margin).
 In this situation, any remaining value from the position is credited to the vault, and the owner of the position loses
 their collateral.
+
 Liquidations are an essential part of the protocol and should be performed in a timely manner. If a liquidation is
 executed too late (when the current asset price is much below the @liquidation_price of the position), the effective
 position value is negative and would skew the calculations of the #glspl("funding") for other position owners.
@@ -158,9 +190,9 @@ Additionally, a negative position value at the time of its liquidation would aff
 "Dip Accumulator" (not described in this paper) and would make it hard to reward the liquidator without incurring a loss
 to the vault's balance.
 
-Note that thanks to the algorithmic nature of the @pnl calculations, there is no "bad debt" when a liquidation occurs
-too late, because an amount equal and opposite to the negative position value was already credited to the vault side,
-and can be used to repay the debt in the long side automatically.
+Note that thanks to the algorithmic nature of the @pnl calculations (see @sec:long_pnl), there is no "bad debt" when a
+liquidation occurs too late, because an amount equal and opposite to the negative position value was already credited to
+the vault side, and can be used to repay the debt in the long side automatically.
 
 === Liquidation Rewards
 
@@ -169,7 +201,7 @@ executing liquidations is incentivized with a reward paid out to the liquidator.
 
 The reward is mainly derived from the gas cost of a liquidation transaction. The formula is divided into two parts.
 
-The first component is based on the gas cost and depends on the number $n$ of liquidated ticks (see TODO: section ticks):
+The first component is based on the gas cost and depends on the number $n$ of liquidated ticks (see @sec:funding):
 
 $ r_"gas" = gamma (g_"common" + n g_"tick") $
 
@@ -197,36 +229,7 @@ $ r = mu dot.op r_"gas" + nu dot.op r_"value" $
 
 where $mu$ and $nu$ are fixed multipliers that can be adjusted to ensure profitability in most cases.
 
-== Position Value, Profits and Losses <sec:long_pnl>
 
-The value of a long position is determined by the current market price of the asset coupled with its @total_expo and
-@liquidation_price. The position value $v(p)$ is calculated as follows:
-
-$ v(p) = frac(T (p-p_"liq"), p) $
-
-where $p$ is the price of the asset (in dollars), $T$ is the total exposure of the position, and $p_"liq"$ is the
-liquidation price of the position.
-
-According to this formula, the position's value increases when the asset price rises and decreases when the asset price
-falls. The position value is used to calculate profits or losses ($Delta v$) relative to the position's initial
-collateral.
-
-To calculate the profit of a position, the initial position value ($p_"entry" = 3000$) is compared with the value of
-position at a new market price. The initial value of the position is calculated as:
-
-$ v(p_"entry") = v(3000) = frac(3 (3000-1000), 3000) = 2 $
-
-If price of the asset increases to \$4000:
-
-$ v(4000) = frac(3 (4000-1000), 4000) = 2.25 $
-$ Delta v = v(4000) - v(3000) = 0.25 $
-The position has a profit of 0.25_asset.
-
-If price of the asset decreases to \$2000:
-
-$ v(2000) = frac(3 (2000-1000), 2000) = 1.5 $
-$ Delta v = v(2000) - v(3000) = -0.5 $
-The position has a loss of 0.5_asset.
 
 = Trading Exposure <sec:trading_expo>
 
