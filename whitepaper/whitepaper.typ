@@ -187,7 +187,7 @@ $ E_"vault" = B_"vault" $
 The trading exposure of the long side $E_"long"$ is defined as:
 
 $ T_i = c_i l_i $
-$ E_i = T_i - v_i $
+$ E_i = T_i - v_i $ <eq:trading_expo>
 $ T_"long" = sum_i T_i $ <eq:total_expo>
 $ B_"long" = sum_i v_i $ <eq:value_balance_invariant>
 $ E_"long" = sum_i E_i = T_"long" - B_"long" $
@@ -368,7 +368,7 @@ where $A$ is an accumulator that can easily be updated when a position is added 
 
 Finally, the adjusted price of a tick $P_i$ can be calculated as:
 
-$ P_i = M phi_i = frac(phi_i p (T_"long" - B_"long"), A) $ <eq:adjusted_price_acc>
+$ P_i = M phi_i = frac(phi_i p (T_"long" - B_"long"), A) = frac(phi_i p E_"long", A) $ <eq:adjusted_price_acc>
 
 === Multiplier Proof <sec:multiplier_proof>
 
