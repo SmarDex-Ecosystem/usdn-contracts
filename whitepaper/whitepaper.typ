@@ -185,7 +185,8 @@ their collateral.
 
 Liquidations are an essential part of the protocol and should be performed in a timely manner. If a liquidation is
 executed too late (when the current asset price is much below the @liquidation_price of the position), the effective
-position value is negative and would skew the calculations of the #glspl("funding") for other position owners.
+position value is negative and would skew the calculations of the #glspl("funding") for other position owners
+(@sec:funding).
 Additionally, a negative position value at the time of its liquidation would affect other parts of the protocol like the
 "Dip Accumulator" (not described in this paper) and would make it hard to reward the liquidator without incurring a loss
 to the vault's balance.
