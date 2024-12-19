@@ -348,7 +348,7 @@ tick (at the current price), $p$ is the current price of the asset and $P_(i-psi
 the theoretical liquidation price of the positions in this tick ($psi_i$ being the penalty of the tick).
 By using @eq:adjusted_price, we can rewrite this equation as:
 
-$ v_i = frac(T_i (p - P_(i - psi_i)), p) = frac(T_i (p - M phi_(i - psi_i)), p) $ <eq:tick_value_mul>
+$ v_i = frac(T_i (p - M phi_(i - psi_i)), p) $ <eq:tick_value_mul>
 
 The range of valid ticks $R$ defined in @sec:tick_spacing, we define the following invariant (analog to
 @eq:value_balance_invariant for the ticks):
