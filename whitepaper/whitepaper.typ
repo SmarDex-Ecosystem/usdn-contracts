@@ -149,7 +149,7 @@ If an insolvent position is not liquidated, it will accumulate @bad_debt, which 
 
 To track positions, we use ticks, following the same implementation as Uniswap V3 @uniswap-v3[p.~5].
 Positions are stored in those ticks, and every one of them corresponds to a different liquidation price.
-The price of a tick can be calculated as such: $ p_"tick" = 1.0001^"tick" $
+The price of a tick ($i$) can be calculated as such: $ p_i = 1.0001^i $
 
 === Liquidation penalty
 
