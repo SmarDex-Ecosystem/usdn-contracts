@@ -400,7 +400,7 @@ $
   &= (1 + f) frac(p (T - v_0), T) = (1 + f) phi = M phi & qed
 $
 
-From this result, we can see that all ticks are affected the funding rate in the same way.
+From this result, we can see that all ticks are affected by the funding rate in the same way.
 
 = Glossary
 
