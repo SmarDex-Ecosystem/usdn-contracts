@@ -199,28 +199,27 @@ the vault side, and can be used to repay the debt in the long side automatically
 To ensure positions are liquidated as soon as possible, and thus reduce the risk of negative effects on the protocol,
 executing liquidations is incentivized with a reward paid out to the liquidator.
 
-The reward is mainly derived from the gas cost of a liquidation transaction. The formula is divided into two parts.
+The reward is mainly derived from the gas cost of a liquidation transaction. The formula is divided into two parts. The
+first component is based on the gas cost and depends on the number $n$ of liquidated transactions (in practice,
+transactions are grouped into buckets and liquidated in batches, see TODO):
 
-The first component is based on the gas cost and depends on the number $n$ of liquidated ticks (see @sec:funding):
+$ r_"gas" = gamma (g_"common" + n g_"pos") $
 
-$ r_"gas" = gamma (g_"common" + n g_"tick") $
+where $gamma$ is the gas price (in native tokens per gas unit), $g_"common"$ is the constant part of the gas
+units spent in the transaction and $g_"pos"$ is the amount of gas unit spent for processing each position.
 
-where $gamma$ is the gas price (in native tokens per gas unit), $g_"common"$ is the tick-independent part of the gas
-units spent in the transaction and $g_"tick"$ is the amount of gas unit spent for processing each tick.
-
-The sum $(g_"common" + n g_"tick")$ is roughly equal to the total gas used by the liquidation transaction.
+The sum $(g_"common" + n g_"pos")$ is roughly equal to the total gas used by the liquidation transaction.
 
 The gas price $gamma$ is the lowest value between the block base fee @eip-1559 (with a fixed margin added to it to
 account for an average priority fee) and the effective gas price that the liquidator defined for the transaction.
 
-The second component of the reward formula takes into account the @total_expo of the positions in each liquidated tick
-$i$, and the price difference between their liquidation price and $p$, the effective current price used for the
-liquidation:
+The second component of the reward formula takes into account the @total_expo of each liquidated position $i$, and the
+price difference between their liquidation price and $p$, the effective current price used for the liquidation:
 
 $ r_"value" = sum_(i=1)^n ((P_i - p) T_i ) / p $
 
-where $P_i$ is the liquidation price of a tick, $p$ is the asset price at the time of liquidation, and $T_i$ is the
-total exposure of the liquidated tick. As the price different grows (meaning the remaining position value diminishes,
+where $P_i$ is the liquidation price of the position, $p$ is the asset price at the time of liquidation, and $T_i$ is
+the total exposure of the position. As the price difference grows (meaning the remaining position value diminishes),
 the incentive grows as well, ensuring the profitability of executing liquidations regardless of the current gas price.
 
 The resulting rewards in native tokens is calculated as follows:
@@ -228,8 +227,6 @@ The resulting rewards in native tokens is calculated as follows:
 $ r = mu dot.op r_"gas" + nu dot.op r_"value" $
 
 where $mu$ and $nu$ are fixed multipliers that can be adjusted to ensure profitability in most cases.
-
-
 
 = Trading Exposure <sec:trading_expo>
 
