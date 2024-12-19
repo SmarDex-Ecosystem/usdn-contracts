@@ -9,23 +9,23 @@ import { FormattedPythPrice } from "../../interfaces/OracleMiddleware/IOracleMid
 import { IPythOracle } from "../../interfaces/OracleMiddleware/IPythOracle.sol";
 
 /**
- * @title PythOracle contract
- * @notice This contract is used to get the price of an asset from pyth. It is used by the USDN protocol to get the
- * price of the USDN underlying asset
+ * @title Contract To Communicate With The Pyth Oracle
+ * @notice This contract is used to get the price of the asset that corresponds to the stored feed ID.
+ * @dev Is implemented by the {OracleMiddleware} contract.
  */
 abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
-    /// @notice The ID of the Pyth price feed
+    /// @notice The ID of the Pyth price feed.
     bytes32 internal immutable _pythFeedId;
 
-    /// @notice The address of the Pyth contract
+    /// @notice The address of the Pyth contract.
     IPyth internal immutable _pyth;
 
-    /// @notice The maximum age of a recent price to be considered valid
+    /// @notice The maximum age of a recent price to be considered valid.
     uint64 internal _pythRecentPriceDelay = 45 seconds;
 
     /**
-     * @param pythAddress The address of the Pyth contract
-     * @param pythFeedId The ID of the Pyth price feed
+     * @param pythAddress The address of the Pyth contract.
+     * @param pythFeedId The ID of the Pyth price feed.
      */
     constructor(address pythAddress, bytes32 pythFeedId) {
         _pyth = IPyth(pythAddress);
@@ -48,12 +48,13 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
     }
 
     /**
-     * @notice Get the price of the asset from pyth
-     * @param priceUpdateData The data required to update the price feed
-     * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices
-     * @param targetLimit The maximum timestamp when a low-latency price should be used (can be zero if
-     * `targetTimestamp` is zero)
-     * @return price_ The price of the asset
+     * @notice Gets the price of the asset from the stored Pyth price feed.
+     * @param priceUpdateData The data required to update the price feed.
+     * @param targetTimestamp The timestamp of the price in the given `priceUpdateData`.
+     * If zero, then we accept all recent prices.
+     * @param targetLimit The most recent timestamp a price can have.
+     * Can be zero if `targetTimestamp` is zero.
+     * @return price_ The price of the asset.
      */
     function _getPythPrice(bytes calldata priceUpdateData, uint128 targetTimestamp, uint128 targetLimit)
         internal
@@ -102,12 +103,14 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
     }
 
     /**
-     * @notice Get the price of the asset from pyth, formatted to the specified number of decimals
-     * @param priceUpdateData The data required to update the price feed
-     * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices
-     * @param middlewareDecimals The number of decimals to format the price to
-     * @param targetLimit The maximum timestamp when a low-latency price should be used
-     * @return price_ The Pyth price formatted with `middlewareDecimals`
+     * @notice Gets the price of the asset from Pyth, formatted to the specified number of decimals.
+     * @param priceUpdateData The data required to update the price feed.
+     * @param targetTimestamp The timestamp of the price in the given `priceUpdateData`.
+     * If zero, then we accept all recent prices.
+     * @param middlewareDecimals The number of decimals to format the price to.
+     * @param targetLimit The most recent timestamp a price can have.
+     * Can be zero if `targetTimestamp` is zero.
+     * @return price_ The Pyth price formatted with `middlewareDecimals`.
      */
     function _getFormattedPythPrice(
         bytes calldata priceUpdateData,
@@ -126,10 +129,10 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
     }
 
     /**
-     * @notice Format a Pyth price object to normalize to the specified number of decimals
-     * @param pythPrice A Pyth price object
-     * @param middlewareDecimals The number of decimals to format the price to
-     * @return price_ The Pyth price formatted with `middlewareDecimals`
+     * @notice Formats a Pyth price object to normalize to the specified number of decimals.
+     * @param pythPrice A Pyth price object.
+     * @param middlewareDecimals The number of decimals to format the price to.
+     * @return price_ The Pyth price formatted with `middlewareDecimals`.
      */
     function _formatPythPrice(PythStructs.Price memory pythPrice, uint256 middlewareDecimals)
         internal
@@ -146,9 +149,9 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
     }
 
     /**
-     * @notice Get the price of the fee to update the price feed
-     * @param priceUpdateData The data required to update the price feed
-     * @return updateFee_ The price of the fee to update the price feed
+     * @notice Gets the fee required to update the price feed.
+     * @param priceUpdateData The data required to update the price feed.
+     * @return updateFee_ The fee required to update the price feed.
      */
     function _getPythUpdateFee(bytes calldata priceUpdateData) internal view returns (uint256) {
         bytes[] memory pricesUpdateData = new bytes[](1);
@@ -158,9 +161,9 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
     }
 
     /**
-     * @notice Get the latest seen (cached) price from the pyth contract
-     * @param middlewareDecimals The number of decimals for the returned price
-     * @return price_ The formatted cached Pyth price, or all-zero values if there was no valid pyth price on-chain
+     * @notice Gets the latest seen (cached) price from the Pyth contract.
+     * @param middlewareDecimals The number of decimals for the returned price.
+     * @return price_ The formatted cached Pyth price, or all-zero values if there was no valid Pyth price on-chain.
      */
     function _getLatestStoredPythPrice(uint256 middlewareDecimals)
         internal
