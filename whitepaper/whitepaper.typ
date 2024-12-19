@@ -187,9 +187,8 @@ Liquidations are an essential part of the protocol and should be performed in a 
 executed too late (when the current asset price is much below the @liquidation_price of the position), the effective
 position value is negative and would skew the calculations of the #glspl("funding") for other position owners
 (@sec:funding).
-Additionally, a negative position value at the time of its liquidation would affect other parts of the protocol like the
-"Dip Accumulator" (not described in this paper) and would make it hard to reward the liquidator without incurring a loss
-to the vault's balance.
+Additionally, a negative position value at the time of its liquidation would make it hard to reward the liquidator
+without incurring a loss to the vault's balance.
 
 Note that thanks to the algorithmic nature of the @pnl calculations (see @sec:long_pnl), there is no "bad debt" when a
 liquidation occurs too late, because an amount equal and opposite to the negative position value was already credited to
