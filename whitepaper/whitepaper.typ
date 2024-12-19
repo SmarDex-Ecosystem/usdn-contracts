@@ -222,7 +222,7 @@ where $P_i$ is the liquidation price of the position, $p$ is the asset price at 
 the total exposure of the position. As the price difference grows (meaning the remaining position value diminishes),
 the incentive grows as well, ensuring the profitability of executing liquidations regardless of the current gas price.
 
-The resulting rewards in native tokens is calculated as follows:
+The resulting rewards in native tokens are calculated as follows:
 
 $ r = mu dot.op r_"gas" + nu dot.op r_"value" $
 
