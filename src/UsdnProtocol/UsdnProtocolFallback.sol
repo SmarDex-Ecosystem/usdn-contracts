@@ -102,12 +102,11 @@ contract UsdnProtocolFallback is
 
     /// @inheritdoc IUsdnProtocolFallback
     function burnSdex() external whenNotPaused initializedAndNonReentrant {
-        IERC20Metadata sdex = Utils._getMainStorage()._sdex;
+        Storage storage s = Utils._getMainStorage();
+        IERC20Metadata sdex = s._sdex;
 
         uint256 sdexToBurn = sdex.balanceOf(address(this));
-        uint256 rewards = FixedPointMathLib.fullMulDiv(
-            sdexToBurn, Utils._getMainStorage()._sdexRewardsRatioBps, Constants.BPS_DIVISOR
-        );
+        uint256 rewards = FixedPointMathLib.fullMulDiv(sdexToBurn, s._sdexRewardsRatioBps, Constants.BPS_DIVISOR);
         // the rewards are capped at 10% of the total SDEX tokens, so the subtraction is safe
         unchecked {
             sdexToBurn -= rewards;
