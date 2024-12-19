@@ -563,6 +563,10 @@ contract UsdnProtocolFallback is
         Setters.setVaultFeeBps(newVaultFee);
     }
 
+    function setSdexRewardsRatioBps(uint16 newRewardsBps) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Setters.setSdexRewardsRatioBps(newRewardsBps);
+    }
+
     /// @inheritdoc IUsdnProtocolFallback
     function setRebalancerBonusBps(uint16 newBonus) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
         Setters.setRebalancerBonusBps(newBonus);
