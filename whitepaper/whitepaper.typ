@@ -167,7 +167,7 @@ The first one is based on the gas cost.
 $ r(n) = (G_"used" + G_"tick" n) p_"gas" M_"gas" $
 
 Where $G_"used"$ is the amount of gas unit spent by the transaction, $G_"tick"$ is the amount of gas unit spent for each tick, $n$ is the number of ticks liquidated.
-$p_"gas"$ is the gas price, it's the lowest value between $2 * "block_base_fee"$ and the gas price of the transaction set by the user.
+$p_"gas"$ is the gas price, it's the lowest value between 2 times the block base fee @eip-1559 and the gas price of the transaction set by the user.
 $M_"gas"$ is the gas multiplier, using these, we calculate the part of the reward relative to the gas spent $r(n)$.
 
 The second part of the reward formula is takes into account the total exposure each tick contains and the price difference between their liquidation price and the current price.
