@@ -341,7 +341,7 @@ an accumulator $A$ from the equations below.
 
 The value of a tick $i$ can be derived from @eq:pos_value:
 
-$ v_i = frac(T_i, l_i) = frac(p, p - P_(i-psi_i)) $
+$ v_i = frac(T_i, l_i) = frac(T_i (p - P_(i - psi_i)), p) $
 
 where $T_i$ is the @total_expo of the positions in the tick, $l_i$ is the effective leverage of the positions in the
 tick (at the current price), $p$ is the current price of the asset and $P_(i-psi_i)$ is
