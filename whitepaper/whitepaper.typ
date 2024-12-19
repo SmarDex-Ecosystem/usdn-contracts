@@ -292,11 +292,11 @@ As previously stated in @sec:liquidation, the long side positions are grouped by
 efficient liquidation. Each bucket is called a liquidation tick and is identified by its number, ranging from
 -322_378 to 980_000.
 
-The tick number of a bucket containing positions represents the price at which those positions can be liquidated, and
-this price includes a penalty, such that the position value is greater than zero when it can be first liquidated.
-This penalty $psi_i$ denominated in number of ticks, is stored in the bucket's metadata and allows to calculate the
-_theoretical_ liquidation price (price at which the position value is zero) of a position in tick $i$ by retrieving the
-price of the tick number $(i - psi_i)$.
+The tick number of a bucket containing positions can be used to calculate the price at which those positions can be
+liquidated, and this price includes a penalty, such that the position value is greater than zero when it can be first
+liquidated (see @sec:liquidation). This penalty $psi_i$ denominated in number of ticks, is stored in the bucket's
+metadata and allows to calculate the _theoretical_ liquidation price (price at which the position value is zero) of a
+position in tick $i$ by retrieving the price of the tick number $(i - psi_i)$.
 
 For instance, if the penalty for tick 1000 is 100 ticks (\~1.05%), the liquidation price of a position in tick 1000 is
 the price of tick 900.
