@@ -49,10 +49,12 @@
     ],
   ),
   (
-    key: "bad_debt",
-    short: "bad debt",
+    key: "pnl",
+    short: "PnL",
+    long: "profits and losses",
     description: [
-      The bad debt is the amount of borrowed assets that cannot be reimbursed by the collateral. This value will be a loss for the protocol as the losses of the position are greater than the collateral it contained.
+      Profits and losses are the gains and losses of a position. They are calculated as the difference between the
+      current position value and its initial value.
     ],
   ),
 )

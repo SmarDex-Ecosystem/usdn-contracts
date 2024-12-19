@@ -55,7 +55,7 @@ an actor of the protocol. Any change in the long side balance due to a change in
 
 The vault holds the amount of underlying assets necessary to back the value of the USDN token (see @sec:token_price).
 For instance, if the price of the USDN token is \$1 and its total supply is 1000_USDN, and if the price of each
-#gls("wsteth") is \$2000, then the vault balance is 0.5_wstETH. Each deposit increases the vault balance an mints new
+@wsteth is \$2000, then the vault balance is 0.5_wstETH. Each deposit increases the vault balance an mints new
 USDN tokens.
 
 The long side holds the amount of underlying assets corresponding to the summed value of all the long perpetual
@@ -79,7 +79,7 @@ slightly above or below this reference value, supported by market forces and the
 
 The value of USDN comes from assets (a specific ERC20 token) stored in the protocol's vault. This can be any token for
 which a price oracle is available and for which the balance does not change over time without transfer. For the first
-release of the protocol, the token is #gls("wsteth").
+release of the protocol, the token is @wsteth.
 
 == Price <sec:token_price>
 
@@ -137,50 +137,57 @@ The two primary actions for the long side are opening new positions and closing 
 When opening a new position, the user deposits assets as collateral and indicates their desired liquidation price, which is used to calculate the position's leverage. The entry price is taken from an oracle.
 When closing a position, users withdraw part or the entirety of the current value of their position, including any profit or loss resulting from the asset's price action.
 
-== Liquidation
+== Liquidation <sec:liquidation>
 
 The risk associated with leveraged trading is that a position can be liquidated.
-The liquidation occurs when the value of the collateral is insufficient to repay the borrowed amount.
-In this situation, the remaining amount of assets in the position is returned to the vault, and the owner of the position loses its collateral.
-Liquidations are an essential part of leverage trading, and should be done at all cost. If they are executed too late, the collateral in the position may no longer be sufficient to cover the borrowed amount.
-If an insolvent position is not liquidated, it will accumulate @bad_debt, which will be a loss for the vault.
+A liquidation occurs when the value of the collateral is insufficient to repay the borrowed amount (with a margin).
+In this situation, any remaining value from the position is credited to the vault, and the owner of the position loses
+their collateral.
+Liquidations are an essential part of the protocol and should be performed in a timely manner. If a liquidation is
+executed too late (when the current asset price is much below the @liquidation_price of the position), the effective
+position value is negative and would skew the calculations of the #glspl("funding") for other position owners.
+Additionally, a negative position value at the time of its liquidation would affect other parts of the protocol like the
+"Dip Accumulator" (not described in this paper) and would make it hard to reward the liquidator without incurring a loss
+to the vault's balance.
 
-=== Ticks
+Note that thanks to the algorithmic nature of the @pnl calculations, there is no "bad debt" when a liquidation occurs
+too late, because an amount equal and opposite to the negative position value was already credited to the vault side,
+and can be used to repay the debt in the long side automatically.
 
-To track positions, we use ticks, following the same implementation as Uniswap V3 @uniswap-v3[p.~5].
-Positions are stored in those ticks, and every one of them corresponds to a different liquidation price.
-The price of a tick ($i$) can be calculated as such: $ p_i = 1.0001^i $
+=== Liquidation Rewards
 
-=== Liquidation penalty
+To ensure positions are liquidated as soon as possible, and thus reduce the risk of negative effects on the protocol,
+executing liquidations is incentivized with a reward paid out to the liquidator.
 
-To reduce the risk of @bad_debt, a penalty is added to the liquidation price of positions.
-Thanks to it, a tick can be liquidated although there is collateral remaining, which will be distributed among different actors within the protocol.
+The reward is mainly derived from the gas cost of a liquidation transaction. The formula is divided into two parts.
 
-=== Liquidation reward
+The first component is based on the gas cost and depends on the number $n$ of liquidated ticks (see TODO: section ticks):
 
-To ensure positions are liquidated whenever possible, and thus reduce the risk of @bad_debt, executing liquidations is incentivized.
-The reward is principally determined by the gas cost of a liquidation transaction.
-The formula is divided in two parts:
+$ r_"gas" = gamma (g_"common" + n g_"tick") $
 
-The first one is based on the gas cost.
+where $gamma$ is the gas price (in native tokens per gas unit), $g_"common"$ is the tick-independent part of the gas
+units spent in the transaction and $g_"tick"$ is the amount of gas unit spent for processing each tick.
 
-$ r(n) = (G_"used" + G_"tick" n) p_"gas" M_"gas" $
+The sum $(g_"common" + n g_"tick")$ is roughly equal to the total gas used by the liquidation transaction.
 
-Where $G_"used"$ is the amount of gas unit spent by the transaction, $G_"tick"$ is the amount of gas unit spent for each tick, $n$ is the number of ticks liquidated.
-$p_"gas"$ is the gas price, it's the lowest value between 2 times the block base fee @eip-1559 and the gas price of the transaction set by the user.
-$M_"gas"$ is the gas multiplier, using these, we calculate the part of the reward relative to the gas spent $r(n)$.
+The gas price $gamma$ is the lowest value between the block base fee @eip-1559 (with a fixed margin added to it to
+account for an average priority fee) and the effective gas price that the liquidator defined for the transaction.
 
-The second part of the reward formula is takes into account the total exposure each tick contains and the price difference between their liquidation price and the current price.
-The total exposure of the ticks is a constant, but as the price difference grow, so does the incentive, ensuring the profitability of executing transactions even during network congestion.
-For each tick, we have the reward $r(p_"asset")$ :
+The second component of the reward formula takes into account the @total_expo of the positions in each liquidated tick
+$i$, and the price difference between their liquidation price and $p$, the effective current price used for the
+liquidation:
 
-$ r(p_"asset") = M_"pos"  sum_(i=0)^n ((p_"tick"_i - p_"asset")  T_i )/ p_"asset" $
+$ r_"value" = sum_(i=1)^n ((P_i - p) T_i ) / p $
 
-Where $p_"tick"$ is the price of the liquidated tick, $T$ the total exposure of the liquidated tick, $M_"pos"$ is the multiplier to apply to this part of the formula.
+where $P_i$ is the liquidation price of a tick, $p$ is the asset price at the time of liquidation, and $T_i$ is the
+total exposure of the liquidated tick. As the price different grows (meaning the remaining position value diminishes,
+the incentive grows as well, ensuring the profitability of executing liquidations regardless of the current gas price.
 
-And we can get the ETH reward $R$ :
+The resulting rewards in native tokens is calculated as follows:
 
-$ R = r(n) + r(p_"asset") $
+$ r = mu dot.op r_"gas" + nu dot.op r_"value" $
+
+where $mu$ and $nu$ are fixed multipliers that can be adjusted to ensure profitability in most cases.
 
 == Position Value, Profits and Losses <sec:long_pnl>
 
