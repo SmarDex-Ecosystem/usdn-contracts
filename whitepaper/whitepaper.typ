@@ -139,51 +139,48 @@ When closing a position, users withdraw part or the entirety of the current valu
 
 == Liquidation
 
-The downside of a leveraged long position is that it can be liquidated.
+The risk associated with leveraged trading is that a position can be liquidated.
 The liquidation occurs when the value of the collateral is insufficient to repay the borrowed amount.
-In this case, the collateral is used to repay the debt, and the owner of the position loses the collateral.
-Liquidation of positions is a critical mechanism, if it's executed too late, the collateral may no longer be sufficient to cover the borrowed amount.
-If this happens, the position will accumulate @bad_debt, which negatively impacts the vault.
-To prevent this, liquidations must be triggered as quickly as possible.
+In this situation, the remaining amount of assets in the position is returned to the vault, and the owner of the position loses its collateral.
+Liquidations are an essential part of leverage trading, and should be done at all cost. If they are executed too late, the collateral in the position may no longer be sufficient to cover the borrowed amount.
+If an insolvent position is not liquidated, it will accumulate @bad_debt, which will be a loss for the vault.
 
 === Ticks
 
 To track positions, we use ticks, following the same implementation as Uniswap V3 @uniswap-v3[p.~5].
-Positions are stored by their liquidation price.
-The price is given by : $ 1.0001^i $
+Positions are stored in those ticks, and every one of them corresponds to a different liquidation price.
+The price of a tick can be calculated as such: $ p_"tick" = 1.0001^"tick" $
 
 === Liquidation penalty
 
-A liquidation penalty is added to the liquidation price of the position.
-Its aim is to trigger liquidate earlier and avoiding any @bad_debt on the vault's side.
-Additionally, any remaining collateral will be distributed within the protocol.
+To reduce the risk of @bad_debt, a penalty is added to the liquidation price of positions.
+Thanks to it, a tick can be liquidated although there is collateral remaining, which will be distributed among different actors within the protocol.
 
 === Liquidation reward
 
-A reward is distributed to the sender of the liquidation transaction.
-The reward isn't principally determined by the collateral remaining in the position but also with the gas cost.
-It's divided into multiple parts.
-First, it incentivizes based on the gas cost.
-$G_"used"$ is the amount of gas spent on the transaction, $N_"liquidatedTicks"$ is the number of ticks liquidated,
-$P_"gas"$ is the gas price, determined as the lower value between $2 * "block_base_fee"$ and the gas price of the transaction,
-$M_"gas"$ is the gas multiplier, using these, we calculate the gas reward $G_"reward"$ :
+To ensure positions are liquidated whenever possible, and thus reduce the risk of @bad_debt, executing liquidations is incentivized.
+The reward is principally determined by the gas cost of a liquidation transaction.
+The formula is divided in two parts:
 
-$ G_"reward" = (G_"used" + G_"tick" N_"liquidatedTicks") P_"gas" M_"gas" $
+The first one is based on the gas cost.
 
-The second part of the reward formula considers the size of each liquidated tick.
-The larger the tick value is, the greater the incentive will be to liquidate it quickly.
-$P_"liquidatedTicks"$ is the price of the liquidated tick, $E_"liquidatedTicks"$ the total exposure of the liquidated tick,
-giving us the tick reward $T_"reward"$ :
+$ r(n) = (G_"used" + G_"tick" n) p_"gas" M_"gas" $
 
-$ T_"reward" = sum_(i=0)^N_"liquidatedTicks" ((P_"liquidatedTicks"_i - P_"asset")  E_"liquidatedTicks"_i )/ P_"asset" $
+Where $G_"used"$ is the amount of gas unit spent by the transaction, $G_"tick"$ is the amount of gas unit spent for each tick, $n$ is the number of ticks liquidated.
+$p_"gas"$ is the gas price, it's the lowest value between $2 * "block_base_fee"$ and the gas price of the transaction set by the user.
+$M_"gas"$ is the gas multiplier, using these, we calculate the part of the reward relative to the gas spent $r(n)$.
 
-We can then applying a multiplier $M_"position"$ to this result :
+The second part of the reward formula is takes into account the total exposure each tick contains and the price difference between their liquidation price and the current price.
+The total exposure of the ticks is a constant, but as the price difference grow, so does the incentive, ensuring the profitability of executing transactions even during network congestion.
+For each tick, we have the reward $r(p_"asset")$ :
 
-$ T_"reward" = T_"reward" M_"position" $
+$ r(p_"asset") = M_"pos"  sum_(i=0)^n ((p_"tick"_i - p_"asset")  T_i )/ p_"asset" $
 
-And we can get the ETH reward $E_"reward"$ :
+Where $p_"tick"$ is the price of the liquidated tick, $T$ the total exposure of the liquidated tick, $M_"pos"$ is the multiplier to apply to this part of the formula.
 
-$ E_"reward" = T_"reward" + G_"reward" $
+And we can get the ETH reward $R$ :
+
+$ R = r(n) + r(p_"asset") $
 
 == Position Value, Profits and Losses <sec:long_pnl>
 
