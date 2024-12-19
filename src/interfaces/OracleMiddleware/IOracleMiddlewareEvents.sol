@@ -1,50 +1,47 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-/**
- * @title IOracleMiddlewareEvents
- * @notice Events for the oracle middleware
- */
+/// @title Events For The Middleware And Oracle Related Contracts
 interface IOracleMiddlewareEvents {
     /**
-     * @notice Emitted when the time elapsed limit is updated
-     * @param newTimeElapsedLimit The new limit
+     * @notice The time elapsed limit was updated.
+     * @param newTimeElapsedLimit The new limit.
      */
     event TimeElapsedLimitUpdated(uint256 newTimeElapsedLimit);
 
     /**
-     * @notice Emitted when validation delay is updated
-     * @param newValidationDelay The new validation delay
+     * @notice The validation delay was updated.
+     * @param newValidationDelay The new validation delay.
      */
     event ValidationDelayUpdated(uint256 newValidationDelay);
 
     /**
-     * @notice Emitted when Pyth recent price delay is updated
-     * @param newDelay The new recent price delay
+     * @notice The recent price delay for Pyth was updated.
+     * @param newDelay The new recent price delay.
      */
     event PythRecentPriceDelayUpdated(uint64 newDelay);
 
     /**
-     * @notice Emitted when the redstone recent price delay is updated
-     * @param newDelay The new recent price delay
+     * @notice The recent price delay for Redstone was updated.
+     * @param newDelay The new recent price delay.
      */
     event RedstoneRecentPriceDelayUpdated(uint48 newDelay);
 
     /**
-     * @notice Emitted when the confidence ratio is updated
-     * @param newConfRatio The new confidence ratio
+     * @notice The confidence ratio was updated.
+     * @param newConfRatio The new confidence ratio.
      */
     event ConfRatioUpdated(uint256 newConfRatio);
 
     /**
-     * @notice Emitted when the penalty is updated
-     * @param newPenaltyBps The new penalty
+     * @notice The penalty for Redstone prices was updated.
+     * @param newPenaltyBps The new penalty.
      */
     event PenaltyBpsUpdated(uint16 newPenaltyBps);
 
     /**
-     * @notice Emitted when the low latency delay is updated
-     * @param newLowLatencyDelay The new low latency delay
+     * @notice The low latency delay was updated.
+     * @param newLowLatencyDelay The new low latency delay.
      */
     event LowLatencyDelayUpdated(uint16 newLowLatencyDelay);
 }
