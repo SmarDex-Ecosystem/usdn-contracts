@@ -12,7 +12,7 @@ import { ILiquidationRewardsManager } from "../interfaces/LiquidationRewardsMana
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
- * @title LiquidationRewardsManager Contract
+ * @title Liquidation Rewards Manager
  * @notice This contract calculates rewards for liquidators within the USDN protocol.
  * @dev Rewards are computed based on gas costs, position size, and other parameters.
  */
