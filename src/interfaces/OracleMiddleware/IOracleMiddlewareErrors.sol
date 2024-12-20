@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-/// @title Errors For The Middleware Contracts
+/**
+ * @title Errors For The Middleware Contracts
+ * @notice Defines all custom errors thrown by the contract related to the OracleMiddleware.
+ */
 interface IOracleMiddlewareErrors {
     /**
      * @notice The price returned by an oracle is negative.
@@ -39,12 +42,12 @@ interface IOracleMiddlewareErrors {
      */
     error OracleMiddlewarePythFeeSafeguard(uint256 fee);
 
-    /// @notice The redstone price is more than triple or less than a third of the latest chainlink price.
+    /// @notice The Redstone price is to divergent from the Chainlink price.
     error OracleMiddlewareRedstoneSafeguard();
 
     /**
-     * @notice The withdrawal of the ether in the contract failed.
-     * @param to The intended recipient.
+     * @notice The withdrawal of the Ether in the contract failed.
+     * @param to The address of the intended recipient.
      */
     error OracleMiddlewareTransferFailed(address to);
 
