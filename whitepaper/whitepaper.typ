@@ -344,7 +344,7 @@ liquidated. This penalty $psi_i$ denominated in number of ticks, is stored in th
 calculate the _theoretical_ liquidation price (price at which the position value is zero) of a position in tick $i$ by
 retrieving the price of the tick number $(i - psi_i)$.
 
-For instance, if the penalty for tick 1000 is 100_ticks (\~1.05%), then the theoretical liquidation price of a position
+For instance, if the penalty for tick 1000 is 100_ticks (#sym.approx;1.005%), then the theoretical liquidation price of a position
 in tick 1000 is the price of tick 900. But the position can be liquidated as soon as the price falls below the price of
 tick 1000.
 
@@ -358,7 +358,7 @@ $lambda$ for the liquidation buckets. The range of valid ticks is:
 ]
 
 For the Ethereum implementation, the tick spacing is defined as 100 ticks (the price difference between two consecutive
-usable ticks is \~1.05%).
+usable ticks is #sym.approx;1.005%).
 
 == Unadjusted Price
 
@@ -370,7 +370,7 @@ $ phi_i = 1.0001^i $ <eq:unadjusted_price>
 where $phi_i$ is the unadjusted price for the tick $i$. From this formula, we can see that the unadjusted price
 increases by 0.01% for each tick. This allow to represent a wide range of prices with a small number of ticks. In
 practice, because of the tick number range described above, prices ranging from \$0.000_000_000_000_01 to
-\~\$3_tredecillion ($~3.62 times 10^42$) can be represented.
+#sym.approx;\$3_tredecillion ($approx 3.62 times 10^42$) can be represented.
 
 == Adjusted Price
 
