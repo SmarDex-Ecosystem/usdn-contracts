@@ -53,6 +53,7 @@
   #show link: set text(fill: blue.darken(40%))
   // Thin unbreakable space
   #show "_": sym.space.nobreak.narrow
+  #show sym.approx: it => it+sym.wj
 
   // Main body
   #doc
