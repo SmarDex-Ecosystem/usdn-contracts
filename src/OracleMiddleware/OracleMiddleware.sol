@@ -17,10 +17,9 @@ import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
 import { PythOracle } from "./oracles/PythOracle.sol";
 
 /**
- * @title OracleMiddleware contract
- * @notice This contract is used to get the price of an asset from different price oracle
- * It is used by the USDN protocol to get the price of the USDN underlying asset
- * @dev This contract is a middleware between the USDN protocol and the price oracles
+ * @title Middleware Between Oracles And The USDN Protocol
+ * @notice This contract is used to get the price of an asset from different oracles.
+ * It is used by the USDN protocol to get the price of the USDN underlying asset.
  */
 contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, AccessControlDefaultAdminRules {
     /// @inheritdoc IOracleMiddleware
@@ -29,7 +28,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
     /// @inheritdoc IOracleMiddleware
     uint16 public constant MAX_CONF_RATIO = BPS_DIVISOR * 2;
 
-    /// @notice The number of decimals for the returned price
+    /// @notice The number of decimals for the returned price.
     uint8 internal constant MIDDLEWARE_DECIMALS = 18;
 
     /// @inheritdoc IOracleMiddleware
@@ -37,24 +36,24 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
 
     /**
      * @notice The delay (in seconds) between the moment an action is initiated and the timestamp of the
-     * price data used to validate that action
+     * price data used to validate that action.
      */
     uint256 internal _validationDelay = 24 seconds;
 
-    /// @notice confidence ratio in basis points: default 40%
+    /// @notice Ratio to applied to the Pyth confidence interval (in basis points).
     uint16 internal _confRatioBps = 4000; // to divide by BPS_DIVISOR
 
     /**
-     * @notice The delay during which a low latency oracle price validation is available
-     * @dev This value should be greater than or equal to `_lowLatencyValidatorDeadline` of the USDN protocol
+     * @notice The amount of time during which a low latency oracle price validation is available.
+     * @dev This value should be greater than or equal to `_lowLatencyValidatorDeadline` of the USDN protocol.
      */
     uint16 internal _lowLatencyDelay = 20 minutes;
 
     /**
-     * @param pythContract Address of the Pyth contract
-     * @param pythFeedId The Pyth price feed ID for the asset
-     * @param chainlinkPriceFeed Address of the Chainlink price feed
-     * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale
+     * @param pythContract Address of the Pyth contract.
+     * @param pythFeedId The Pyth price feed ID for the asset.
+     * @param chainlinkPriceFeed Address of the Chainlink price feed.
+     * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale.
      */
     constructor(address pythContract, bytes32 pythFeedId, address chainlinkPriceFeed, uint256 chainlinkTimeElapsedLimit)
         PythOracle(pythContract, pythFeedId)
@@ -68,10 +67,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
     /*                           Public view functions                            */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @inheritdoc IBaseOracleMiddleware
-     * @dev In the current implementation, the `actionId` value is not used
-     */
+    /// @inheritdoc IBaseOracleMiddleware
     function parseAndValidatePrice(bytes32, uint128 targetTimestamp, Types.ProtocolAction action, bytes calldata data)
         public
         payable
@@ -119,22 +115,22 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
     }
 
     /// @inheritdoc IBaseOracleMiddleware
-    function getValidationDelay() external view returns (uint256) {
+    function getValidationDelay() external view returns (uint256 delay_) {
         return _validationDelay;
     }
 
     /// @inheritdoc IBaseOracleMiddleware
-    function getDecimals() external pure returns (uint8) {
+    function getDecimals() external pure returns (uint8 decimals_) {
         return MIDDLEWARE_DECIMALS;
     }
 
     /// @inheritdoc IOracleMiddleware
-    function getConfRatioBps() external view returns (uint16) {
+    function getConfRatioBps() external view returns (uint16 ratio_) {
         return _confRatioBps;
     }
 
     /// @inheritdoc IBaseOracleMiddleware
-    function getLowLatencyDelay() external view returns (uint16) {
+    function getLowLatencyDelay() external view returns (uint16 delay_) {
         return _lowLatencyDelay;
     }
 
@@ -150,14 +146,13 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @dev Get the price from the low-latency oracle (Pyth)
-     * @param data The signed price update data
+     * @dev Gets the price from the low-latency oracle (Pyth).
+     * @param data The signed price update data.
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
-     * recent prices according to `_pythRecentPriceDelay`
-     * @param dir The direction for the confidence interval adjusted price
-     * @param targetLimit The maximum timestamp when a low-latency price should be used (can be zero if
-     * `actionTimestamp` is zero)
-     * @return price_ The price from the low-latency oracle, adjusted according to the confidence interval direction
+     * prices younger than {PythOracle._pythRecentPriceDelay}.
+     * @param dir The direction for the confidence interval adjusted price.
+     * @param targetLimit The most recent timestamp a price can have (can be zero if `actionTimestamp` is zero).
+     * @return price_ The price from the low-latency oracle, adjusted according to the confidence interval direction.
      */
     function _getLowLatencyPrice(
         bytes calldata data,
@@ -178,14 +173,14 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
     }
 
     /**
-     * @notice Get the price for an `initiate` action of the protocol
-     * @dev If the data parameter is not empty, validate the price with PythOracle. Else, get the on-chain price from
-     * Chainlink and compare its timestamp with the latest seen Pyth price (cached). If Pyth is more recent, we return
-     * it. Otherwise, we return the chainlink price. In the case of chainlink price, we don't have a confidence interval
-     * and so both `neutralPrice` and `price` are equal
-     * @param data An optional VAA from Pyth
-     * @param dir The direction for applying the confidence interval (in case we use a Pyth price)
-     * @return price_ The price to use for the user action
+     * @notice Gets the price for an `initiate` action of the protocol.
+     * @dev If the data parameter is not empty, validate the price with {PythOracle}. Else, get the on-chain price from
+     * {ChainlinkOracle} and compare its timestamp with the latest seen Pyth price (cached). If Pyth is more recent, we
+     * return it. Otherwise, we return the Chainlink price. For the latter, we don't have a confidence interval, so both
+     * `neutralPrice` and `price` are equal.
+     * @param data An optional VAA from Pyth.
+     * @param dir The direction when applying the confidence interval (when using a Pyth price).
+     * @return price_ The price to use for the user action.
      */
     function _getInitiateActionPrice(bytes calldata data, ConfidenceInterval dir)
         internal
@@ -233,10 +228,10 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
     }
 
     /**
-     * @notice Apply the confidence interval in the `dir` direction, scaling it by the configured `_confRatioBps`
-     * @param pythPrice The formatted Pyth price object
-     * @param dir The direction to apply the confidence interval
-     * @return price_ The adjusted price according to the confidence interval and confidence ratio
+     * @notice Applies the confidence interval in the `dir` direction, scaled by the configured {_confRatioBps}.
+     * @param pythPrice The formatted Pyth price object.
+     * @param dir The direction of the confidence interval to apply.
+     * @return price_ The adjusted price according to the confidence interval and confidence ratio.
      */
     function _adjustPythPrice(FormattedPythPrice memory pythPrice, ConfidenceInterval dir)
         internal
@@ -265,14 +260,14 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
     }
 
     /**
-     * @notice Get the price for a validate action of the protocol
-     * @dev If the low latency delay is not exceeded, validate the price with the low-latency oracle(s)
+     * @notice Gets the price for a validate action of the protocol.
+     * @dev If the low latency delay is not exceeded, validate the price with the low-latency oracle(s).
      * Else, get the specified roundId on-chain price from Chainlink. In case of chainlink price,
-     * we don't have a confidence interval and so both `neutralPrice` and `price` are equal
-     * @param data An optional VAA from Pyth or a chainlink roundId (abi-encoded uint80)
-     * @param targetTimestamp The timestamp of the initiate action
-     * @param dir The direction for applying the confidence interval (in case we use a Pyth price)
-     * @return price_ The price to use for the user action
+     * we don't have a confidence interval and so both `neutralPrice` and `price` are equal.
+     * @param data An optional VAA from Pyth or a chainlink roundId (abi-encoded uint80).
+     * @param targetTimestamp The timestamp of the initiate action.
+     * @param dir The direction for applying the confidence interval (in case we use a Pyth price).
+     * @return price_ The price to use for the user action.
      */
     function _getValidateActionPrice(bytes calldata data, uint128 targetTimestamp, ConfidenceInterval dir)
         internal
@@ -301,10 +296,12 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
     }
 
     /**
-     * @notice Make sure that the given round ID matches with the validation constraints
-     * @param targetLimit The timestamp of the initiate action + _lowLatencyDelay
-     * @param roundId The round ID to validate
-     * @return providedRoundPrice_ The price data of the provided round ID
+     * @notice Checks that the given round ID is valid and returns its corresponding price data.
+     * @dev Round IDs are not necessarily consecutive, so additional computing can be necessary to find
+     * the previous round ID.
+     * @param targetLimit The timestamp of the initiate action + {_lowLatencyDelay}.
+     * @param roundId The round ID to validate.
+     * @return providedRoundPrice_ The price data of the provided round ID.
      */
     function _validateChainlinkRoundId(uint128 targetLimit, uint80 roundId)
         internal
@@ -353,11 +350,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
     }
 
     /**
-     * @notice Check if the passed calldata corresponds to a Pyth message
-     * @param data The calldata pointer to the message
-     * @return Whether the data is for a Pyth message
+     * @notice Checks if the passed calldata corresponds to a Pyth message.
+     * @param data The calldata pointer to the message.
+     * @return isPythData_ Whether the data is a valid Pyth message or not.
      */
-    function _isPythData(bytes calldata data) internal pure returns (bool) {
+    function _isPythData(bytes calldata data) internal pure returns (bool isPythData_) {
         if (data.length <= 32) {
             return false;
         }
