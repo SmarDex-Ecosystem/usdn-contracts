@@ -200,8 +200,8 @@ To ensure positions are liquidated as soon as possible, and thus reduce the risk
 executing liquidations is incentivized with a reward paid out to the liquidator.
 
 The reward is mainly derived from the gas cost of a liquidation transaction. The formula is divided into two parts. The
-first component is based on the gas cost and depends on the number $n$ of liquidated transactions (in practice,
-transactions are grouped into buckets and liquidated in batches, see @sec:ticks):
+first component is based on the gas cost and depends on the number $n$ of liquidated positions (in practice,
+positions are grouped into buckets and liquidated in batches, see @sec:ticks):
 
 $ r_"gas" = gamma (g_"common" + n g_"pos") $
 
