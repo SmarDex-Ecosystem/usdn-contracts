@@ -7,6 +7,7 @@
 
 #show: template.with(
   title: [Ultimate Synthetic Delta Neutral],
+  version: [v1.0],
   authors: (
     (
       name: "TBD",
@@ -55,7 +56,7 @@ an actor of the protocol. Any change in the long side balance due to a change in
 
 The vault holds the amount of underlying assets necessary to back the value of the USDN token (see @sec:token_price).
 For instance, if the price of the USDN token is \$1 and its total supply is 1000_USDN, and if the price of each
-@wsteth is \$2000, then the vault balance is 0.5_wstETH. Each deposit increases the vault balance an mints new
+@wsteth is \$2000, then the vault balance is 0.5_wstETH. Each deposit increases the vault balance and mints new
 USDN tokens.
 
 The long side holds the amount of underlying assets corresponding to the summed value of all the long perpetual
@@ -66,7 +67,7 @@ value of the position increases (with a leverage effect), and a corresponding de
 (see @sec:long_pnl).
 
 When the protocol is balanced, the vault balance is exactly equal to the borrowed amount of the long side
-(@sec:imbalance). To incentivize this equilibrium, the protocol charges a funding fee to the side with the higher
+(@sec:imbalance). To incentivize this equilibrium, the protocol charges a @funding to the side with the higher
 @trading_expo, and rewards this amount to the other side (see @sec:funding).
 
 = USDN Token <sec:token>
@@ -83,31 +84,31 @@ release of the protocol, the token is @wsteth.
 
 == Price <sec:token_price>
 
-Due to the algorithmic nature of the USDN token, its price in dollars $P_"usdn"$ can be calculated using the following
+Due to the algorithmic nature of the USDN token, its price in dollars $p_"usdn"$ can be calculated using the following
 formula:
 
-$ P_"usdn" = frac(B_"vault" P_"asset", S_"tot") $ <eq:usdn_price>
+$ p_"usdn" = frac(B_"vault" p_"asset", S_"tot") $ <eq:usdn_price>
 
-where $B_"vault"$ is the balance of assets held in the protocol's vault, $P_"asset"$ is the price of the asset token in
+where $B_"vault"$ is the balance of assets held in the protocol's vault, $p_"asset"$ is the price of the asset token in
 USD, and $S_"tot"$ is the total supply of USDN tokens.
 
 == Token Minting <sec:token_minting>
 
-USDN tokens are minted whenever a deposit is made into the protocol's vault. The amount of minted USDN $A_"usdn"$ is
+USDN tokens are minted whenever a deposit is made into the protocol's vault. The amount of minted USDN $a_"usdn"$ is
 calculated by dividing the dollar value of the deposited assets by the USDN price:
 
-$ A_"usdn" = frac(A_"asset" P_"asset", P_"usdn") $ <eq:usdn_minting>
+$ a_"usdn" = frac(a_"asset" p_"asset", p_"usdn") $ <eq:usdn_minting>
 
 Taking into account @eq:usdn_price, the minting formula can be rewritten as:
 
-$ A_"usdn" = frac(A_"asset" S_"tot", B_"vault") $
+$ a_"usdn" = frac(a_"asset" S_"tot", B_"vault") $
 
 == Token Burning <sec:token_burning>
 
 When assets are removed from the protocol's vault, USDN tokens are burned in proportion to the withdrawn amount,
 following @eq:usdn_minting. Thus, for a given amount of USDN to be burned, the corresponding withdrawn assets amount is:
 
-$ A_"asset" = frac(A_"usdn" P_"usdn", P_"asset") = frac(A_"usdn" B_"vault", S_"tot") $
+$ a_"asset" = frac(a_"usdn" p_"usdn", p_"asset") = frac(a_"usdn" B_"vault", S_"tot") $
 
 == Yield Sources
 
@@ -446,6 +447,14 @@ $
 $
 
 From this result, we can see that all ticks are affected by the funding rate in the same way.
+
+= Conclusion
+
+While existing yield-bearing synthetic dollar tokens and stablecoins suffer from centralization and opacity, this paper
+demonstrates that it is possible to implement a fully decentralized protocol which is gas-efficient and generates
+consistent yield for its users. This novel algorithmic approach solves the main challenges faced by the constrained
+on-chain nature of decentralized applications and provides a robust, secure and transparent model for the creation of a
+synthetic dollar token.
 
 = Glossary
 
