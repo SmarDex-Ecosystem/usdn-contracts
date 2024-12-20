@@ -56,7 +56,7 @@ an actor of the protocol. Any change in the long side balance due to a change in
 
 The vault holds the amount of underlying assets necessary to back the value of the USDN token (see @sec:token_price).
 For instance, if the price of the USDN token is \$1 and its total supply is 1000_USDN, and if the price of each
-@wsteth is \$2000, then the vault balance is 0.5_wstETH. Each deposit increases the vault balance an mints new
+@wsteth is \$2000, then the vault balance is 0.5_wstETH. Each deposit increases the vault balance and mints new
 USDN tokens.
 
 The long side holds the amount of underlying assets corresponding to the summed value of all the long perpetual
