@@ -447,6 +447,14 @@ $
 
 From this result, we can see that all ticks are affected by the funding rate in the same way.
 
+= Conclusion
+
+While existing yield-bearing synthetic dollar tokens and stablecoins suffer from centralization and opacity, this paper
+demonstrates that it is possible to implement a fully decentralized protocol which is gas-efficient and generates
+consistent yield for its users. This novel algorithmic approach solves the main challenges faced by the constrained
+on-chain nature of decentralized applications and provides a robust, secure and transparent model for the creation of a
+synthetic dollar token.
+
 = Glossary
 
 // reset template styles for the figures in the glossary
