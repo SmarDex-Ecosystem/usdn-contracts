@@ -101,7 +101,7 @@ for (const transaction of broadcast.transactions.filter(
     } else {
       let constructorInputs: AbiParameter[] = [];
       try {
-        constructorInputs = compiledContractOut.abi.filter((x) => x.type === 'constructor')[0].inputs;
+        constructorInputs = compiledContractOut.abi.filter((x: AbiParameter) => x.type === 'constructor')[0].inputs;
         if (DEBUG) {
           console.log('constructorInputs : ');
           for (const x of constructorInputs) {
@@ -138,8 +138,7 @@ for (const transaction of broadcast.transactions.filter(
               if (
                 input.components[j].type === 'address' ||
                 input.components[j].type === 'string' ||
-                input.components[j].type === 'bytes' ||
-                input.components[j].type === 'bytes32'
+                input.components[j].type.startsWith('bytes')
               ) {
                 tupleArgument += `"${input.components[j].name}":"${currentTupleArguments[j].replace(/\s/g, '')}"`;
               } else {
@@ -150,7 +149,7 @@ for (const transaction of broadcast.transactions.filter(
               }
             }
             tupleArgument += '}';
-            if (DEBUG) console.log(`formated tuple argument : ${tupleArgument}`);
+            if (DEBUG) console.log(`formatted tuple argument : ${tupleArgument}`);
             argumentList[i] = JSON.parse(tupleArgument);
           }
         }
