@@ -3,7 +3,6 @@ pragma solidity >=0.8.0;
 
 /**
  * @notice The price and timestamp returned by the oracle middleware.
- * @dev There is no need for optimization here, the struct is only used in memory and not in storage.
  * @param price The validated asset price, potentially adjusted by the middleware.
  * @param neutralPrice The neutral/average price of the asset.
  * @param timestamp The timestamp of the price data.
@@ -16,7 +15,6 @@ struct PriceInfo {
 
 /**
  * @notice The price and timestamp returned by the Chainlink oracle.
- * @dev There is no need for optimization here, the struct is only used in memory and not in storage.
  * @param price The asset price formatted by the middleware.
  * @param timestamp When the price was published on chain.
  */
@@ -39,7 +37,6 @@ struct FormattedPythPrice {
 
 /**
  * @notice The price and timestamp returned by the Redstone oracle.
- * @dev There is no need for optimization here, the struct is only used in memory and not in storage.
  * @param price The asset price formatted by the middleware.
  * @param timestamp The timestamp of the price data.
  */

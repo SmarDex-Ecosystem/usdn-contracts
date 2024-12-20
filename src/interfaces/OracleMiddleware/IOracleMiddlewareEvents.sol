@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-/// @title Events For The Middleware And Oracle Related Contracts
+/**
+ * @title Events For The Middleware And Oracle Related Contracts
+ * @notice Defines all the custom events emitted by the contracts related to the OracleMiddleware contract.
+ */
 interface IOracleMiddlewareEvents {
     /**
      * @notice The time elapsed limit was updated.

@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 
 /**
  * @title Errors For The Middleware Contracts
- * @notice Defines all custom errors thrown by the contract related to the OracleMiddleware.
+ * @notice Defines all the custom errors thrown by the contracts related to the OracleMiddleware contract.
  */
 interface IOracleMiddlewareErrors {
     /**
