@@ -12,13 +12,13 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
 
     /**
      * @notice The rewards parameters are updated.
-     * @param gasUsedPerTick The gas consumed per tick for liquidation.
+     * @param gasUsedPerTick The amount of gas consumed per tick for liquidation.
      * @param otherGasUsed The gas consumed for all additional computations.
      * @param rebaseGasUsed The gas consumed for optional USDN rebase operation.
      * @param rebalancerGasUsed The gas consumed for the optional rebalancer trigger.
      * @param baseFeeOffset An offset added to the block's base gas fee.
-     * @param gasMultiplierBps Multiplier for the gas usage (in BPS).
-     * @param positionBonusMultiplierBps Multiplier for position size bonus (in BPS).
+     * @param gasMultiplierBps The multiplier for the gas usage (in BPS).
+     * @param positionBonusMultiplierBps The multiplier for position size bonus (in BPS).
      * @param fixedReward A fixed reward amount (in native currency, converted to wstETH).
      * @param maxReward The maximum allowable reward amount (in native currency, converted to wstETH).
      */
@@ -45,8 +45,8 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
      * @param rebaseGasUsed The gas consumed for optional USDN rebase operation.
      * @param rebalancerGasUsed The gas consumed for the optional rebalancer trigger.
      * @param baseFeeOffset An offset added to the block's base gas fee.
-     * @param gasMultiplierBps Multiplier for the gas usage (in BPS).
-     * @param positionBonusMultiplierBps Multiplier for position size bonus (in BPS).
+     * @param gasMultiplierBps The multiplier for the gas usage (in BPS).
+     * @param positionBonusMultiplierBps The multiplier for position size bonus (in BPS).
      * @param fixedReward A fixed reward amount (in native currency, converted to wstETH).
      * @param maxReward The maximum allowable reward amount (in native currency, converted to wstETH).
      */

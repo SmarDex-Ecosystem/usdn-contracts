@@ -59,7 +59,7 @@ interface ILiquidationRewardsManager is IBaseLiquidationRewardsManager, ILiquida
      * @param rebaseGasUsed The gas consumed for optional USDN rebase operation.
      * @param rebalancerGasUsed The gas consumed for the optional rebalancer trigger.
      * @param baseFeeOffset An offset added to the block's base gas fee.
-     * @param gasMultiplierBps Multiplier for the gas usage (in BPS).
+     * @param gasMultiplierBps The multiplier for the gas usage (in BPS).
      * @param positionBonusMultiplierBps Multiplier for position size bonus (in BPS).
      * @param fixedReward A fixed reward amount (in native currency, converted to wstETH).
      * @param maxReward The maximum allowable reward amount (in native currency, converted to wstETH).
