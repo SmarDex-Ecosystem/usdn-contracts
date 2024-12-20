@@ -7,6 +7,7 @@
 
 #show: template.with(
   title: [Ultimate Synthetic Delta Neutral],
+  version: [v1.0],
   authors: (
     (
       name: "TBD",

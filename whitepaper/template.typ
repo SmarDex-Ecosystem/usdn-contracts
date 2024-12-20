@@ -3,11 +3,19 @@
 // Customize graceful-genetics template
 #let template(
   title: [],
+  version: [],
   authors: (),
   abstract: [],
   keywords: (),
   doc,
 ) = [
+  #set page(
+    footer: context [
+      #datetime.today().display() - #version
+      #h(1fr)
+      #counter(page).display()
+    ],
+  )
   // invoke base template
   #show: base_template.with(
     title: title,
