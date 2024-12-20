@@ -12,9 +12,9 @@ import { ILiquidationRewardsManager } from "../interfaces/LiquidationRewardsMana
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
- * @title LiquidationRewardsManager contract
- * @notice This contract is used by the USDN protocol to calculate the rewards that need to be paid out to the
- * liquidators
+ * @title Liquidation Rewards Manager
+ * @notice This contract calculates rewards for liquidators within the USDN protocol.
+ * @dev Rewards are computed based on gas costs, position size, and other parameters.
  */
 contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
     /* -------------------------------------------------------------------------- */
@@ -38,20 +38,21 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
 
     /// @inheritdoc ILiquidationRewardsManager
     uint256 public constant MAX_REBALANCER_GAS_USED = 300_000;
+
     /* -------------------------------------------------------------------------- */
     /*                              Storage Variables                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice Address of the wstETH contract
+    /// @notice The address of the wrapped stETH (wstETH) token contract.
     IWstETH private immutable _wstEth;
 
     /**
-     * @notice Parameters for the rewards calculation
-     * @dev Those values need to be updated if the gas cost changes
+     * @notice Holds the parameters used for rewards calculation.
+     * @dev Parameters should be updated to reflect changes in gas costs or protocol adjustments.
      */
     RewardsParameters private _rewardsParameters;
 
-    /// @param wstETH The address of the wstETH token
+    /// @param wstETH The address of the wstETH token.
     constructor(IWstETH wstETH) Ownable(msg.sender) {
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
@@ -67,11 +68,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
         });
     }
 
-    /**
-     * @inheritdoc IBaseLiquidationRewardsManager
-     * @dev In the current implementation, the `ProtocolAction action`, `bytes calldata rebaseCallbackResult` and
-     * `bytes calldata priceData` parameters are not used
-     */
+    /// @inheritdoc IBaseLiquidationRewardsManager
     function getLiquidationRewards(
         Types.LiqTickInfo[] calldata liquidatedTicks,
         uint256 currentPrice,
@@ -81,7 +78,6 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
         bytes calldata,
         bytes calldata
     ) external view returns (uint256 wstETHRewards_) {
-        // do not give rewards if no ticks were liquidated
         if (liquidatedTicks.length == 0) {
             return 0;
         }
@@ -166,10 +162,9 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
     }
 
     /**
-     * @notice Calculate the gas price to use for the liquidation rewards calculation
-     * @dev If the tx gas price is lower than the calculated value, then we use the tx gas price
-     * @param baseFeeOffset The offset to add to the block's base gas fee
-     * @return gasPrice_ The gas price to use for the calculation
+     * @notice Calculates the gas price used for rewards calculations.
+     * @param baseFeeOffset An offset added to the block's base gas fee.
+     * @return gasPrice_ The gas price used for reward calculation.
      */
     function _calcGasPrice(uint64 baseFeeOffset) internal view returns (uint256 gasPrice_) {
         gasPrice_ = block.basefee + baseFeeOffset;
@@ -179,11 +174,11 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
     }
 
     /**
-     * @notice Calculate the size and price-dependent bonus given for liquidating the ticks
-     * @param liquidatedTicks Information about the liquidated ticks
-     * @param currentPrice The current price of the asset
-     * @param multiplier The bonus multiplier
-     * @return bonus_ The bonus for liquidating all the ticks (in _wstEth)
+     * @notice Computes the size and price-dependent bonus given for liquidating the ticks.
+     * @param liquidatedTicks Information about the liquidated ticks.
+     * @param currentPrice The current asset price.
+     * @param multiplier The bonus multiplier (in BPS).
+     * @return bonus_ The calculated bonus (in wstETH).
      */
     function _calcPositionSizeBonus(
         Types.LiqTickInfo[] calldata liquidatedTicks,
@@ -194,11 +189,11 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
         uint256 i;
         do {
             if (currentPrice >= liquidatedTicks[i].tickPrice) {
-                // the currentPrice should never exceed the tick price, we can't liquidate a tick when the current
-                // price is above its price
-                // if that would happen, the bonus is clamped to 0
-                // if the price is equal to the tick price, the bonus is also 0 according to the formula so we can
-                // skip the calculation
+                // the currentPrice should never exceed the tick price, as a tick cannot be liquidated when the current
+                // price is greater than the tick price
+                // if this condition occurs, the bonus is clamped to 0
+                // additionally, when the `currentPrice` equals the tick price, the bonus is 0 by definition of the
+                // formula, so the calculation can be skipped
                 unchecked {
                     i++;
                 }
