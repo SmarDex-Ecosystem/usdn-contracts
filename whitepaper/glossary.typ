@@ -48,4 +48,13 @@
       The liquidation price is the threshold at which a position's value becomes too low to sustain. If the market price hits this level, the position can be liquidated to limit further losses.
     ],
   ),
+  (
+    key: "pnl",
+    short: "PnL",
+    long: "profits and losses",
+    description: [
+      Profits and losses are the gains and losses of a position. They are calculated as the difference between the
+      current position value and its initial value.
+    ],
+  ),
 )

@@ -55,7 +55,7 @@ an actor of the protocol. Any change in the long side balance due to a change in
 
 The vault holds the amount of underlying assets necessary to back the value of the USDN token (see @sec:token_price).
 For instance, if the price of the USDN token is \$1 and its total supply is 1000_USDN, and if the price of each
-#gls("wsteth") is \$2000, then the vault balance is 0.5_wstETH. Each deposit increases the vault balance an mints new
+@wsteth is \$2000, then the vault balance is 0.5_wstETH. Each deposit increases the vault balance an mints new
 USDN tokens.
 
 The long side holds the amount of underlying assets corresponding to the summed value of all the long perpetual
@@ -79,7 +79,7 @@ slightly above or below this reference value, supported by market forces and the
 
 The value of USDN comes from assets (a specific ERC20 token) stored in the protocol's vault. This can be any token for
 which a price oracle is available and for which the balance does not change over time without transfer. For the first
-release of the protocol, the token is #gls("wsteth").
+release of the protocol, the token is @wsteth.
 
 == Price <sec:token_price>
 
@@ -143,9 +143,7 @@ positions.
 When opening a new position, the user deposits assets as collateral and indicates their desired liquidation price, which
 is used to calculate the position's leverage. The entry price is taken from an oracle.
 When closing a position, users withdraw part or the entirety of the current value of their position, including any
-profit and loss resulting from the asset's price action.
-
-== Liquidation <sec:liquidation>
+@pnl resulting from the asset's price action.
 
 == Position Value, Profits and Losses <sec:long_pnl>
 
@@ -158,7 +156,7 @@ where $p$ is the price of the asset (in dollars), $T$ is the total exposure of t
 liquidation price of the position.
 
 According to this formula, the position's value increases when the asset price rises and decreases when the asset price
-falls. The position value is used to calculate profits or losses ($Delta v$) relative to the position's initial
+falls. The position value is used to calculate the @pnl ($Delta v$) relative to the position's initial
 collateral.
 
 To calculate the profit of a position, the initial position value ($p_"entry" = 3000$) is compared with the value of
@@ -177,6 +175,58 @@ If price of the asset decreases to \$2000:
 $ v(2000) = frac(3 (2000-1000), 2000) = 1.5 $
 $ Delta v = v(2000) - v(3000) = -0.5 $
 The position has a loss of 0.5_asset.
+
+== Liquidation <sec:liquidation>
+
+The risk associated with leveraged trading is that a position can be liquidated.
+A liquidation occurs when the value of the collateral is insufficient to repay the borrowed amount (with a margin).
+In this situation, any remaining value from the position is credited to the vault, and the owner of the position loses
+their collateral.
+
+Liquidations are an essential part of the protocol and should be performed in a timely manner. If a liquidation is
+executed too late (when the current asset price is much below the @liquidation_price of the position), the effective
+position value is negative and would skew the calculations of the #glspl("funding") for other position owners
+(@sec:funding).
+Additionally, a negative position value at the time of its liquidation would make it hard to reward the liquidator
+without incurring a loss to the vault's balance.
+
+Note that thanks to the algorithmic nature of the @pnl calculations (see @sec:long_pnl), there is no "bad debt" when a
+liquidation occurs too late, because an amount equal and opposite to the negative position value was already credited to
+the vault side, and can be used to repay the debt in the long side automatically.
+
+=== Liquidation Rewards
+
+To ensure positions are liquidated as soon as possible, and thus reduce the risk of negative effects on the protocol,
+executing liquidations is incentivized with a reward paid out to the liquidator.
+
+The reward is mainly derived from the gas cost of a liquidation transaction. The formula is divided into two parts. The
+first component is based on the gas cost and depends on the number $n$ of liquidated positions (in practice,
+positions are grouped into buckets and liquidated in batches, see @sec:ticks):
+
+$ r_"gas" = gamma (g_"common" + n g_"pos") $
+
+where $gamma$ is the gas price (in native tokens per gas unit), $g_"common"$ is the constant part of the gas
+units spent in the transaction and $g_"pos"$ is the amount of gas unit spent for processing each position.
+
+The sum $(g_"common" + n g_"pos")$ is roughly equal to the total gas used by the liquidation transaction.
+
+The gas price $gamma$ is the lowest value between the block base fee @eip-1559 (with a fixed margin added to it to
+account for an average priority fee) and the effective gas price that the liquidator defined for the transaction.
+
+The second component of the reward formula takes into account the @total_expo of each liquidated position $i$, and the
+price difference between their liquidation price and $p$, the effective current price used for the liquidation:
+
+$ r_"value" = sum_(i=1)^n ((P_i - p) T_i ) / p $
+
+where $P_i$ is the liquidation price of the position, $p$ is the asset price at the time of liquidation, and $T_i$ is
+the total exposure of the position. As the price difference grows (meaning the remaining position value diminishes),
+the incentive grows as well, ensuring the profitability of executing liquidations regardless of the current gas price.
+
+The resulting rewards in native tokens are calculated as follows:
+
+$ r = mu dot.op r_"gas" + nu dot.op r_"value" $
+
+where $mu$ and $nu$ are fixed multipliers that can be adjusted to ensure profitability in most cases.
 
 = Trading Exposure <sec:trading_expo>
 
@@ -216,10 +266,6 @@ $ <eq:imbalance>
 From @eq:imbalance, we can see that the imbalance is positive when the long side has a larger trading exposure. We can
 also see that the imbalance is bounded by $[-1, 1]$.
 
-
-
-
-
 = Funding <sec:funding>
 
 To incentivize depositors in the protocol side with the lowest @trading_expo, the protocol charges a @funding to the
@@ -250,8 +296,7 @@ If the $sigma$ term is largely negative, the funding rate could be negative even
 Note that the funding rate is calculated prior to updating the skew factor (which itself depends on the daily funding
 rate), so the skew factor is always the one calculated for the previous time period.
 
-At the end of the funding period $Delta t$, the vault and long side balances are updated as follows (ignoring profits
-and losses):
+At the end of the funding period $Delta t$, the vault and long side balances are updated as follows (ignoring @pnl):
 
 $
   B_"vault"_(t_2) &= B_"vault"_(t_1) + F_(t_1,t_2) \
@@ -286,7 +331,7 @@ When the imbalance reaches zero, the daily funding rate will stop increasing, an
 the skew factor. This ensures that the market finds its own daily funding rate which is deemed acceptable by the
 protocol actors.
 
-= Liquidation Ticks
+= Liquidation Ticks <sec:ticks>
 
 As previously stated in @sec:liquidation, the long side positions are grouped by @liquidation_price into buckets for
 efficient liquidation. Each bucket is called a liquidation tick and is identified by its number, ranging from
