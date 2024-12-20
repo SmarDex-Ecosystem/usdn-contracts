@@ -370,7 +370,7 @@ $ phi_i = 1.0001^i $ <eq:unadjusted_price>
 where $phi_i$ is the unadjusted price for the tick $i$. From this formula, we can see that the unadjusted price
 increases by 0.01% for each tick. This allow to represent a wide range of prices with a small number of ticks. In
 practice, because of the tick number range described above, prices ranging from \$0.000_000_000_000_01 to
-#sym.approx;\$3_tredecillion ($#sym.approx;3.62 times 10^42$) can be represented.
+#sym.approx;\$3_tredecillion ($approx 3.62 times 10^42$) can be represented.
 
 == Adjusted Price
 
