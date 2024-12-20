@@ -40,7 +40,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
      */
     uint256 internal _validationDelay = 24 seconds;
 
-    /// @notice Ratio to apply the Pyth confidence interval (in basis points).
+    /// @notice Ratio to applied to the Pyth confidence interval (in basis points).
     uint16 internal _confRatioBps = 4000; // to divide by BPS_DIVISOR
 
     /**
@@ -67,10 +67,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
     /*                           Public view functions                            */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @inheritdoc IBaseOracleMiddleware
-     * @dev In the current implementation, the `actionId` value is not used.
-     */
+    /// @inheritdoc IBaseOracleMiddleware
     function parseAndValidatePrice(bytes32, uint128 targetTimestamp, Types.ProtocolAction action, bytes calldata data)
         public
         payable
