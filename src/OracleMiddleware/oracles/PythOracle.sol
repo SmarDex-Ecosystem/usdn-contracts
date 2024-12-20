@@ -54,7 +54,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
      * If zero, then we accept all recent prices.
      * @param targetLimit The most recent timestamp a price can have.
      * Can be zero if `targetTimestamp` is zero.
-     * @return price_ The price of the asset.
+     * @return price_ The raw price of the asset returned by Pyth.
      */
     function _getPythPrice(bytes calldata priceUpdateData, uint128 targetTimestamp, uint128 targetLimit)
         internal
