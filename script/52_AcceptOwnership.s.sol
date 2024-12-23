@@ -8,8 +8,6 @@ import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMidd
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
-import { console } from "forge-std/console.sol";
-
 contract TransferProtocolOwnership is Script {
     IUsdnProtocol internal _usdnProtocol;
     WstEthOracleMiddleware _wstEthOracleMiddleware;
@@ -20,7 +18,6 @@ contract TransferProtocolOwnership is Script {
         _handleEnvVariables();
 
         (address newOwner,) = _usdnProtocol.pendingDefaultAdmin();
-        console.log("new owner: %s", newOwner);
 
         vm.startBroadcast(newOwner);
 
