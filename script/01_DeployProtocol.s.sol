@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { Script } from "forge-std/Script.sol";
 
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { Sdex } from "../test/utils/Sdex.sol";
 import { WstETH } from "../test/utils/WstEth.sol";
@@ -22,6 +23,8 @@ import { UsdnProtocolConstantsLibrary as Constants } from
     "../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "../src/libraries/HugeUint.sol";
 
 contract DeployProtocol is Script {
     address constant WSTETH_MAINNET = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
@@ -65,8 +68,6 @@ contract DeployProtocol is Script {
     {
         _handleEnvVariables();
 
-        _isProdEnv = block.chainid == 1;
-
         // internal validation of the Usdn protocol
         _utils.validateProtocol("UsdnProtocolImpl", "UsdnProtocolFallback");
 
@@ -87,7 +88,11 @@ contract DeployProtocol is Script {
 
         Rebalancer_ = _deployRebalancer(UsdnProtocol_);
 
-        _handlePostDeployment(UsdnProtocol_, Rebalancer_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
+        if (_isProdEnv) {
+            _handlePostDeployment(UsdnProtocol_, Rebalancer_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
+        } else {
+            _initializeUsdnProtocolFork(UsdnProtocol_, WstETH_, WstEthOracleMiddleware_, Usdn_, Rebalancer_);
+        }
 
         vm.stopBroadcast();
     }
@@ -273,6 +278,60 @@ contract DeployProtocol is Script {
     }
 
     /**
+     * @notice Initialize the USDN Protocol by opening a long and depositing the necessary amount
+     * @dev The deposit amount is calculated to reach a balanced state with a leverage of ~2x on the long position
+     * @param usdnProtocol The USDN protocol
+     * @param wstETH The WstETH token
+     * @param wstEthOracleMiddleware The WstETH oracle middleware
+     */
+    function _initializeUsdnProtocolFork(
+        IUsdnProtocol usdnProtocol,
+        WstETH wstETH,
+        WstEthOracleMiddleware wstEthOracleMiddleware,
+        Usdn usdn,
+        Rebalancer rebalancer
+    ) internal {
+        bytes32 ADMIN_SET_EXTERNAL_ROLE = Constants.ADMIN_SET_EXTERNAL_ROLE;
+        bytes32 SET_EXTERNAL_ROLE = Constants.SET_EXTERNAL_ROLE;
+        usdnProtocol.grantRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
+        usdnProtocol.grantRole(SET_EXTERNAL_ROLE, _deployerAddress);
+
+        usdnProtocol.setRebalancer(rebalancer);
+
+        // grant the minter and rebaser roles to the protocol and then renounce the admin role of the deployer
+        usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
+        usdn.renounceRole(usdn.DEFAULT_ADMIN_ROLE(), _deployerAddress);
+
+        uint24 liquidationPenalty = usdnProtocol.getLiquidationPenalty();
+        int24 tickSpacing = usdnProtocol.getTickSpacing();
+        uint256 price = wstEthOracleMiddleware.parseAndValidatePrice(
+            "", uint128(block.timestamp), Types.ProtocolAction.Initialize, ""
+        ).price;
+
+        // we want a leverage of ~2x so we get the current price from the middleware and divide it by two
+        uint128 desiredLiqPrice = uint128(price / 2);
+        // get the liquidation price with the tick rounding
+        uint128 liqPriceWithoutPenalty = usdnProtocol.getLiqPriceFromDesiredLiqPrice(
+            desiredLiqPrice, price, 0, HugeUint.wrap(0), tickSpacing, liquidationPenalty
+        );
+        // get the total exposure of the wanted long position
+        uint256 positionTotalExpo = FixedPointMathLib.fullMulDiv(_longAmount, price, price - liqPriceWithoutPenalty);
+        // get the amount to deposit to reach a balanced state
+        uint256 depositAmount = positionTotalExpo - _longAmount;
+
+        if (vm.envOr("GET_WSTETH", false)) {
+            uint256 ethAmount = (depositAmount + _longAmount + 10_000) * wstETH.stEthPerToken() / 1 ether;
+            (bool result,) = address(wstETH).call{ value: ethAmount }(hex"");
+            require(result, "Failed to mint wstETH");
+        }
+
+        wstETH.approve(address(usdnProtocol), depositAmount + _longAmount);
+
+        usdnProtocol.initialize(uint128(depositAmount), uint128(_longAmount), desiredLiqPrice, "");
+    }
+
+    /**
      * @notice Handle post-deployment tasks
      * @param usdnProtocol The USDN protocol
      * @param rebalancer The rebalancer
@@ -294,6 +353,7 @@ contract DeployProtocol is Script {
         usdnProtocol.revokeRole(SET_EXTERNAL_ROLE, _deployerAddress);
         usdnProtocol.revokeRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
 
+        // transfer the ownership of the contracts to the safe address
         usdnProtocol.beginDefaultAdminTransfer(_safeAddress);
         wstEthOracleMiddleware.beginDefaultAdminTransfer(_safeAddress);
         liquidationRewardsManager.transferOwnership(_safeAddress);
@@ -315,7 +375,7 @@ contract DeployProtocol is Script {
 
     /// @notice Handle the environment variables
     function _handleEnvVariables() internal {
-        // mandatory env variables : DEPLOYER_ADDRESS and INIT_LONG_AMOUNT SAFE_ADDRESS
+        // mandatory env variables : DEPLOYER_ADDRESS, INIT_LONG_AMOUNT, SAFE_ADDRESS and IS_PROD_ENV
         try vm.envAddress("DEPLOYER_ADDRESS") {
             _deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         } catch {
@@ -332,6 +392,12 @@ contract DeployProtocol is Script {
             _safeAddress = vm.envAddress("SAFE_ADDRESS");
         } catch {
             revert("SAFE_ADDRESS is required");
+        }
+
+        try vm.envUint("IS_PROD_ENV") {
+            _isProdEnv = vm.envBool("IS_PROD_ENV");
+        } catch {
+            revert("IS_PROD_ENV is required");
         }
 
         // optional env variables
