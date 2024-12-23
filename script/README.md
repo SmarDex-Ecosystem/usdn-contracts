@@ -9,7 +9,7 @@ The script verifies that the deployer address has a nonce of 0. It then deploys 
 Use the following command to deploy the USDN token:
 
 ```shell
-./script/deployUsdnToken.sh -r YOUR_RPC_URL -s SAFE_ADDRESS
+./script/deployUsdnToken.sh -r RPC_URL -s SAFE_ADDRESS
 ```
 
 It will then prompt you to enter the deployer's private key.
@@ -31,7 +31,7 @@ A test mode is available with the `-t` or `--test` flag. It will deploy the toke
 You can run the forge script directly with the following command:
 
 ```shell
-forge script --private-key YOUR_PRIVATE_KEY -f YOUR_RPC_URL script/00_DeployUsdn.s.sol:DeployUsdn --broadcast --slow
+forge script --private-key PRIVATE_KEY -f RPC_URL script/00_DeployUsdn.s.sol:DeployUsdn --broadcast --slow
 ```
 
 Two environment variables are required: `DEPLOYER_ADDRESS` and `SAFE_ADDRESS`.
@@ -48,10 +48,15 @@ For a mainnet deployment, you have to use the shell script. It will prompt you t
 - the private key of the deployer (or public key if you use a ledger/trezor)
 
 ```shell
-deployMainnet.sh
+deployMainnet.sh -s SAFE_ADDRESS -r RPC_URL -u USDN_ADDRESS
 ```
 
-The script can be run with the following command with `-t` or `--test` flag to deploy with default values. (rpc url: localhost:8545, initial long amount: 100 ethers, get wstETH: true, deployer : 29th account of anvil)
+Two optional flags are available:
+
+- `-w` to get wstETH by sending ether to the wstETH contract
+- `-t` to deploy with a hardware wallet (ledger/trezor)
+
+The script can be run with the following command with `-t` or `--test` flag to deploy with default values. (rpc url: localhost:8545, get wstETH: true, deployer : 29th account of anvil, safe: EthSafeAddr)
 
 ### Fork mode
 
@@ -66,10 +71,10 @@ deployFork.sh
 You can run the forge script directly with the following command:
 
 ```shell
-forge script script/01_DeployProtocol.s.sol:DeployProtocol -f YOUR_RPC_URL --private-key YOUR_PRIVATE_KEY --broadcast
+forge script script/01_DeployProtocol.s.sol:DeployProtocol -f RPC_URL --private-key PRIVATE_KEY --broadcast
 ```
 
-Required environment variables: `INIT_LONG_AMOUNT`, `DEPLOYER_ADDRESS`, `SAFE_ADDRESS` and `IS_PROD_ENV`.
+Required environment variables: `DEPLOYER_ADDRESS` and `IS_PROD_ENV`. `SAFE_ADDRESS` is required only if `IS_PROD_ENV` is set to `true`. And `INIT_LONG_AMOUNT` is required if `IS_PROD_ENV` is set to `false`.
 
 If running on mainnet, remember to deploy the USDN token first with the `00_DeployUSDN.s.sol` script and set the `USDN_ADDRESS` environment variable.
 
@@ -137,7 +142,7 @@ If you want to run the script with foundry directly, in a standalone mode, you n
 - `USDN_PROTOCOL_ADDRESS`: the address of the deployed USDN protocol
 
 ```solidity
-forge script script/03_TransferProtocolOwnership.s.sol -f YOUR_RPC_URL --private-key YOUR_PRIVATE_KEY --broadcast
+forge script script/03_TransferProtocolOwnership.s.sol -f RPC_URL --private-key PRIVATE_KEY --broadcast
 ```
 
 ## Anvil fork configuration

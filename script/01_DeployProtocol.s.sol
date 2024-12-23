@@ -375,7 +375,7 @@ contract DeployProtocol is Script {
 
     /// @notice Handle the environment variables
     function _handleEnvVariables() internal {
-        // mandatory env variables : DEPLOYER_ADDRESS, INIT_LONG_AMOUNT, SAFE_ADDRESS and IS_PROD_ENV
+        // mandatory env variables : DEPLOYER_ADDRESS and IS_PROD_ENV
         try vm.envAddress("DEPLOYER_ADDRESS") {
             _deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         } catch {
