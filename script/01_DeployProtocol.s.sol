@@ -87,7 +87,7 @@ contract DeployProtocol is Script {
 
         Rebalancer_ = _deployRebalancer(UsdnProtocol_);
 
-        _handlePostDeployment(UsdnProtocol_, Rebalancer_);
+        _handlePostDeployment(UsdnProtocol_, Rebalancer_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
 
         vm.stopBroadcast();
     }
@@ -277,7 +277,12 @@ contract DeployProtocol is Script {
      * @param usdnProtocol The USDN protocol
      * @param rebalancer The rebalancer
      */
-    function _handlePostDeployment(IUsdnProtocol usdnProtocol, Rebalancer rebalancer) internal {
+    function _handlePostDeployment(
+        IUsdnProtocol usdnProtocol,
+        Rebalancer rebalancer,
+        WstEthOracleMiddleware wstEthOracleMiddleware,
+        LiquidationRewardsManager liquidationRewardsManager
+    ) internal {
         // grant the necessary roles to the deployer to set the rebalancer and then revoke them
         bytes32 ADMIN_SET_EXTERNAL_ROLE = Constants.ADMIN_SET_EXTERNAL_ROLE;
         bytes32 SET_EXTERNAL_ROLE = Constants.SET_EXTERNAL_ROLE;
@@ -290,6 +295,9 @@ contract DeployProtocol is Script {
         usdnProtocol.revokeRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
 
         usdnProtocol.beginDefaultAdminTransfer(_safeAddress);
+        wstEthOracleMiddleware.beginDefaultAdminTransfer(_safeAddress);
+        liquidationRewardsManager.transferOwnership(_safeAddress);
+        rebalancer.transferOwnership(_safeAddress);
     }
 
     /**
