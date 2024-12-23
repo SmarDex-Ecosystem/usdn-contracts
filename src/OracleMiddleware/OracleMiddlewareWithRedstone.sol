@@ -46,7 +46,7 @@ contract OracleMiddlewareWithRedstone is IOracleMiddlewareWithRedstone, OracleMi
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IOracleMiddlewareWithRedstone
-    function getPenaltyBps() external view returns (uint16) {
+    function getPenaltyBps() external view returns (uint16 penaltyBps_) {
         return _penaltyBps;
     }
 
