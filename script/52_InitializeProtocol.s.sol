@@ -12,22 +12,17 @@ import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol"
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../src/libraries/HugeUint.sol";
 
-contract TransferProtocolOwnership is Script {
-    Usdn internal _usdn;
+contract InitializeProtocol is Script {
+    bool internal _getWstEth;
     IUsdnProtocol internal _usdnProtocol;
+    IWstETH internal _wstETH;
     uint256 internal _longAmount;
-    IWstETH _wstETH;
-    WstEthOracleMiddleware _wstEthOracleMiddleware;
+    Usdn internal _usdn;
+    WstEthOracleMiddleware internal _wstEthOracleMiddleware;
 
-    /**
-     * @notice Transfer protocol ownership to a new owner
-     * @dev The script should be run by the current owner, `NEW_OWNER_ADDRESS` and `USDN_PROTOCOL_ADDRESS` should be set
-     * in the environment
-     * @dev The script will transfer the default admin role to the new owner
-     * @dev To run the script in standalone use : `forge script script/03_TransferProtocolOwnership.s.sol -f
-     * YOUR_RPC_URL --private-key YOUR_PRIVATE_KEY --broadcast`
-     */
     function run() external {
+        vm.startBroadcast();
+
         // grant the minter and rebaser roles to the protocol and then renounce the admin role of the deployer
         _usdn.grantRole(_usdn.MINTER_ROLE(), address(_usdnProtocol));
         _usdn.grantRole(_usdn.REBASER_ROLE(), address(_usdnProtocol));
@@ -58,7 +53,7 @@ contract TransferProtocolOwnership is Script {
         // get the amount to deposit to reach a balanced state
         uint256 depositAmount = positionTotalExpo - _longAmount;
 
-        if (vm.envOr("GET_WSTETH", false)) {
+        if (_getWstEth) {
             uint256 ethAmount = (depositAmount + _longAmount + 10_000) * _wstETH.stEthPerToken() / 1 ether;
             (bool result,) = address(_wstETH).call{ value: ethAmount }(hex"");
             require(result, "Failed to mint wstETH");
@@ -70,17 +65,23 @@ contract TransferProtocolOwnership is Script {
     }
 
     function _handleEnvVariables() internal {
-        // mandatory env variables : USDN_PROTOCOL_ADDRESS and INIT_LONG_AMOUNT SAFE_ADDRESS
+        // mandatory env variables : USDN_PROTOCOL_ADDRESS and INIT_LONG_AMOUNT
         try vm.envAddress("USDN_PROTOCOL_ADDRESS") {
             _usdnProtocol = IUsdnProtocol(vm.envAddress("USDN_PROTOCOL_ADDRESS"));
         } catch {
-            revert("USDN_PROTOCOL_ADDRESS is required");
+            _usdnProtocol = IUsdnProtocol(vm.parseAddress(vm.prompt("enter protocol address: ")));
         }
 
         try vm.envUint("INIT_LONG_AMOUNT") {
             _longAmount = vm.envUint("INIT_LONG_AMOUNT");
         } catch {
-            revert("INIT_LONG_AMOUNT is required");
+            _longAmount = vm.parseUint(vm.prompt("enter long amount: "));
+        }
+
+        try vm.envBool("GET_WSTETH") {
+            _getWstEth = vm.envBool("GET_WSTETH");
+        } catch {
+            _getWstEth = vm.parseBool(vm.prompt("get WstETH (true/false): "));
         }
 
         _usdn = Usdn(address(_usdnProtocol.getUsdn()));
