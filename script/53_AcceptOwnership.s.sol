@@ -8,8 +8,6 @@ import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMidd
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
-import { console } from "forge-std/Test.sol";
-
 contract TransferProtocolOwnership is Script {
     IUsdnProtocol internal _usdnProtocol;
     WstEthOracleMiddleware _wstEthOracleMiddleware;
@@ -20,7 +18,6 @@ contract TransferProtocolOwnership is Script {
         _handleEnvVariables();
 
         (address newOwner,) = _usdnProtocol.pendingDefaultAdmin();
-        console.log("New owner", newOwner);
 
         vm.startBroadcast(newOwner);
 
@@ -31,8 +28,11 @@ contract TransferProtocolOwnership is Script {
     }
 
     function _handleEnvVariables() internal {
-        _usdnProtocol = IUsdnProtocol(vm.parseAddress(vm.prompt("enter protocol address: ")));
-
+        try vm.envAddress("USDN_PROTOCOL_ADDRESS") {
+            _usdnProtocol = IUsdnProtocol(vm.envAddress("USDN_PROTOCOL_ADDRESS"));
+        } catch {
+            _usdnProtocol = IUsdnProtocol(vm.parseAddress(vm.prompt("enter protocol address: ")));
+        }
         _wstEthOracleMiddleware = WstEthOracleMiddleware(address(_usdnProtocol.getOracleMiddleware()));
         _liquidationRewardsManager = LiquidationRewardsManager(address(_usdnProtocol.getLiquidationRewardsManager()));
         _rebalancer = Rebalancer(payable(address(_usdnProtocol.getRebalancer())));
