@@ -1,7 +1,7 @@
 import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { Command } from 'commander';
-import { encodeAbiParameters } from 'viem';
+import { type AbiParameter, encodeAbiParameters, isAddress } from 'viem';
 
 const program = new Command();
 
@@ -21,6 +21,10 @@ function execVerify(address: string, contractName: string, constructorArgs: stri
     console.log(error.stdout.toString());
     console.error(error.stderr.toString());
   }
+}
+
+function isTupleParameter(abiParameter: AbiParameter): abiParameter is AbiParameter & { components: AbiParameter[] } {
+  return (<AbiParameter>abiParameter).type === 'tuple';
 }
 
 program
@@ -95,13 +99,9 @@ for (const transaction of broadcast.transactions.filter(
     if (argumentList === null) {
       execVerify(address, contractName, '', librariesCli);
     } else {
-      let constructorInputs: string[] = [];
+      let constructorInputs: AbiParameter[] = [];
       try {
-        constructorInputs = compiledContractOut.abi.filter(
-          (x: {
-            type: string;
-          }) => x.type === 'constructor',
-        )[0].inputs;
+        constructorInputs = compiledContractOut.abi.filter((x: AbiParameter) => x.type === 'constructor')[0].inputs;
         if (DEBUG) {
           console.log('constructorInputs : ');
           for (const x of constructorInputs) {
@@ -119,7 +119,41 @@ for (const transaction of broadcast.transactions.filter(
         console.error(`Unable to get constructor inputs type for ${contractName}`);
       }
 
-      if (constructorInputs !== undefined) {
+      if (constructorInputs.length) {
+        //format argumentList for tuple parameter
+        for (let i = 0; i < constructorInputs.length; i++) {
+          const input = constructorInputs[i];
+          if (isTupleParameter(input)) {
+            const currentTupleArguments: string[] = argumentList[i].replace('(', '').replace(')', '').split(',');
+            let tupleArgument = '{';
+            if (DEBUG) {
+              console.log(`input.components.length : ${input.components.length}`);
+              console.log(`currentTupleArguments.length : ${currentTupleArguments.length}`);
+            }
+            for (let j = 0; j < input.components.length; j++) {
+              if (DEBUG) {
+                console.log(input.components[j]);
+                console.log(`isAddress() : ${isAddress(currentTupleArguments[j].replace(/\s/g, ''))}`);
+              }
+              if (
+                input.components[j].type === 'address' ||
+                input.components[j].type === 'string' ||
+                input.components[j].type.startsWith('bytes')
+              ) {
+                tupleArgument += `"${input.components[j].name}":"${currentTupleArguments[j].replace(/\s/g, '')}"`;
+              } else {
+                tupleArgument += `"${input.components[j].name}":${currentTupleArguments[j].replace(/\s/g, '')}`;
+              }
+              if (j < input.components.length - 1) {
+                tupleArgument += ',';
+              }
+            }
+            tupleArgument += '}';
+            if (DEBUG) console.log(`formatted tuple argument : ${tupleArgument}`);
+            argumentList[i] = JSON.parse(tupleArgument);
+          }
+        }
+
         //build constructor args
         const encodedConstructorParameters = encodeAbiParameters(constructorInputs, argumentList);
         if (DEBUG) console.log(`encodedConstructorParameters : ${encodedConstructorParameters}`);
