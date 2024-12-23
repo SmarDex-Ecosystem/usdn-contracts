@@ -382,22 +382,24 @@ contract DeployProtocol is Script {
             revert("DEPLOYER_ADDRESS is required");
         }
 
-        try vm.envUint("INIT_LONG_AMOUNT") {
-            _longAmount = vm.envUint("INIT_LONG_AMOUNT");
-        } catch {
-            revert("INIT_LONG_AMOUNT is required");
-        }
-
-        try vm.envUint("SAFE_ADDRESS") {
-            _safeAddress = vm.envAddress("SAFE_ADDRESS");
-        } catch {
-            revert("SAFE_ADDRESS is required");
-        }
-
-        try vm.envUint("IS_PROD_ENV") {
+        try vm.envBool("IS_PROD_ENV") {
             _isProdEnv = vm.envBool("IS_PROD_ENV");
         } catch {
             revert("IS_PROD_ENV is required");
+        }
+
+        if (_isProdEnv) {
+            try vm.envUint("SAFE_ADDRESS") {
+                _safeAddress = vm.envAddress("SAFE_ADDRESS");
+            } catch {
+                revert("SAFE_ADDRESS is required");
+            }
+        } else {
+            try vm.envUint("INIT_LONG_AMOUNT") {
+                _longAmount = vm.envUint("INIT_LONG_AMOUNT");
+            } catch {
+                revert("INIT_LONG_AMOUNT is required");
+            }
         }
 
         // optional env variables

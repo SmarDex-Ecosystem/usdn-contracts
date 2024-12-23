@@ -62,11 +62,11 @@ function parseArguments() {
             exit 1
             ;;
         :)
-            printf "Option -${OPTARG} requires an argument"
+            printf "Option -${OPTARG} requires an argument\n"
             exit 1
             ;;
         ?)
-            printf "Invalid option: -${OPTARG}"
+            printf "Invalid option: -${OPTARG}\n"
             exit 1
             ;;
         esac
@@ -74,7 +74,7 @@ function parseArguments() {
 
     if [[ -z "${rpcUrl}" || -z "${safeAddress}" ]]; then
         printf "\nError: Both -r and -s options are required\n"
-        printf "${USAGE}"
+        printf "${USAGE}\n"
         exit 1
     fi
 }
@@ -94,9 +94,9 @@ if [ "$1" = "-t" ] || [ "$1" = "--test" ]; then
     export DEPLOYER_ADDRESS="0x9DCCe783B6464611f38631e6C851bf441907c710"
     export SAFE_ADDRESS="0x1E3e1128F6bC2264a19D7a065982696d356879c5"
 else
-    parseArguments "$@"
-
     printf "\n$green To run this script in test mode, add \"-t\" or \"--test\"$nc\n"
+
+    parseArguments "$@"
 
     handlePrivateKey
 
