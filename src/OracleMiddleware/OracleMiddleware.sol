@@ -146,7 +146,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @dev Gets the price from the low-latency oracle (Pyth).
+     * @notice Gets the price from the low-latency oracle (Pyth).
      * @param data The signed price update data.
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
      * prices younger than {PythOracle._pythRecentPriceDelay}.

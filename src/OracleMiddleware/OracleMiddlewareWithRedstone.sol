@@ -13,21 +13,22 @@ import { OracleMiddleware } from "./OracleMiddleware.sol";
 import { RedstoneOracle } from "./oracles/RedstoneOracle.sol";
 
 /**
- * @title OracleMiddleware contract
- * @notice This contract is used to get the price of an asset from different price oracle
- * It is used by the USDN protocol to get the price of the USDN underlying asset
- * @dev This contract is a middleware between the USDN protocol and the price oracles
+ * @title Middleware Between Oracles (including Redstone) And The USDN Protocol
+ * @notice This contract is used to get the price of an asset from different oracles.
+ * It is used by the USDN protocol to get the price of the USDN underlying asset.
+ * @dev This contract allows users to use the Redstone oracle and exists in case the Pyth infrastructure fails and we
+ * need a temporary solution. Redstone and Pyth are used concurrently, which could introduce arbitrage opportunities.
  */
 contract OracleMiddlewareWithRedstone is IOracleMiddlewareWithRedstone, OracleMiddleware, RedstoneOracle {
-    /// @notice The penalty for using a non-Pyth price with low latency oracle, in basis points: default 0.25%
-    uint16 internal _penaltyBps = 25; // to divide by BPS_DIVISOR
+    /// @notice The penalty for using a non-Pyth price with low latency oracle (in basis points).
+    uint16 internal _penaltyBps = 25; // 0.25%
 
     /**
-     * @param pythContract Address of the Pyth contract
-     * @param pythFeedId The Pyth price feed ID for the asset
-     * @param redstoneFeedId The Redstone price feed ID for the asset
-     * @param chainlinkPriceFeed Address of the Chainlink price feed
-     * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale
+     * @param pythContract Address of the Pyth contract.
+     * @param pythFeedId The Pyth price feed ID for the asset.
+     * @param redstoneFeedId The Redstone price feed ID for the asset.
+     * @param chainlinkPriceFeed Address of the Chainlink price feed.
+     * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale.
      */
     constructor(
         address pythContract,
@@ -55,14 +56,9 @@ contract OracleMiddlewareWithRedstone is IOracleMiddlewareWithRedstone, OracleMi
 
     /**
      * @inheritdoc OracleMiddleware
-     * @dev Get the price from the low-latency oracle (Pyth or Redstone)
-     * @param data The signed price update data
+     * @notice Gets the price from the low-latency oracle (Pyth or Redstone).
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
-     * recent prices according to `_pythRecentPriceDelay` or `_redstoneRecentPriceDelay`
-     * @param dir The direction for the confidence interval adjusted price
-     * @param targetLimit The maximum timestamp when a low-latency price should be used (can be zero if
-     * `actionTimestamp` is zero)
-     * @return price_ The price from the low-latency oracle, adjusted according to the confidence interval direction
+     * prices younger than {PythOracle._pythRecentPriceDelay} or {RedstoneOracle._redstoneRecentPriceDelay}.
      */
     function _getLowLatencyPrice(
         bytes calldata data,
@@ -102,10 +98,10 @@ contract OracleMiddlewareWithRedstone is IOracleMiddlewareWithRedstone, OracleMi
     }
 
     /**
-     * @notice Apply the confidence interval in the `dir` direction, applying the penalty for non-Pyth oracles
-     * @param redstonePrice The formatted Redstone price object
-     * @param dir The direction to apply the confidence interval
-     * @return price_ The adjusted price according to the confidence interval and penalty
+     * @notice Applies the confidence interval in the `dir` direction, applying the penalty `_penaltyBps`
+     * @param redstonePrice The formatted Redstone price object.
+     * @param dir The direction to apply the penalty.
+     * @return price_ The adjusted price according to the penalty.
      */
     function _adjustRedstonePrice(RedstonePriceInfo memory redstonePrice, ConfidenceInterval dir)
         internal

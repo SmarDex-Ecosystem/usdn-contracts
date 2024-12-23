@@ -13,24 +13,24 @@ interface IOracleMiddlewareWithRedstone is IOracleMiddleware {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Getter for the penalty value
-     * @return The penalty basis points
+     * @notice Gets the penalty for using a non-Pyth price with low latency oracle (in basis points)
+     * @return penaltyBps_ The penalty (in basis points).
      */
-    function getPenaltyBps() external view returns (uint16);
+    function getPenaltyBps() external view returns (uint16 penaltyBps_);
 
     /* -------------------------------------------------------------------------- */
     /*                               Owner features                               */
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Set the redstone recent price delay
-     * @param newDelay The maximum age of a recent price to be considered valid
+     * @notice Sets the Redstone recent price delay.
+     * @param newDelay The maximum age of a price to be considered recent.
      */
     function setRedstoneRecentPriceDelay(uint48 newDelay) external;
 
     /**
-     * @notice Set the penalty basis points
-     * @param newPenaltyBps The new penalty basis points
+     * @notice Sets the penalty (in basis points).
+     * @param newPenaltyBps The new penalty.
      */
     function setPenaltyBps(uint16 newPenaltyBps) external;
 }

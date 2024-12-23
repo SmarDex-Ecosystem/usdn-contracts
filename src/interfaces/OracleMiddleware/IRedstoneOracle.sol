@@ -9,19 +9,19 @@ interface IRedstoneOracle {
     function REDSTONE_HEARTBEAT() external pure returns (uint48 heartbeat_);
 
     /**
-     * @notice Number of decimals for prices contained in Redstone price updates.
+     * @notice Gets the number of decimals for prices contained in Redstone price updates.
      * @return decimals_ The number of decimals.
      */
     function REDSTONE_DECIMALS() external pure returns (uint8 decimals_);
 
     /**
-     * @notice The ID of the Redstone price feed.
+     * @notice Gets the ID of the Redstone price feed.
      * @return feedId_ The feed ID.
      */
     function getRedstoneFeedId() external view returns (bytes32 feedId_);
 
     /**
-     * @notice The maximum age of a price to be considered recent.
+     * @notice Gets the maximum age of a price to be considered recent.
      * @return delay_ The age in seconds.
      */
     function getRedstoneRecentPriceDelay() external view returns (uint48 delay_);
