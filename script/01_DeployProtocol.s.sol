@@ -40,6 +40,7 @@ contract DeployProtocol is Script {
     address internal _feeCollector;
     bool internal _isProdEnv;
     uint256 internal _longAmount;
+    address internal _safeAddress;
 
     /**
      * @notice Deploy the USDN ecosystem
@@ -355,7 +356,7 @@ contract DeployProtocol is Script {
 
     /// @notice Handle the environment variables
     function _handleEnvVariables() internal {
-        // mandatory env variables : DEPLOYER_ADDRESS and INIT_LONG_AMOUNT
+        // mandatory env variables : DEPLOYER_ADDRESS and INIT_LONG_AMOUNT SAFE_ADDRESS
         try vm.envAddress("DEPLOYER_ADDRESS") {
             _deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         } catch {
@@ -366,6 +367,12 @@ contract DeployProtocol is Script {
             _longAmount = vm.envUint("INIT_LONG_AMOUNT");
         } catch {
             revert("INIT_LONG_AMOUNT is required");
+        }
+
+        try vm.envUint("SAFE_ADDRESS") {
+            _safeAddress = vm.envAddress("SAFE_ADDRESS");
+        } catch {
+            revert("SAFE_ADDRESS is required");
         }
 
         // optional env variables
