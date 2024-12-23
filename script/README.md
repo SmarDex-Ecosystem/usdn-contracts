@@ -69,7 +69,7 @@ You can run the forge script directly with the following command:
 forge script script/01_DeployProtocol.s.sol:DeployProtocol -f YOUR_RPC_URL --private-key YOUR_PRIVATE_KEY --broadcast
 ```
 
-Required environment variables: `INIT_LONG_AMOUNT` and `DEPLOYER_ADDRESS`.
+Required environment variables: `INIT_LONG_AMOUNT`, `DEPLOYER_ADDRESS`, `SAFE_ADDRESS` and `IS_PROD_ENV`.
 
 If running on mainnet, remember to deploy the USDN token first with the `00_DeployUSDN.s.sol` script and set the `USDN_ADDRESS` environment variable.
 
@@ -100,6 +100,7 @@ Example using the real wstETH and depositing 10 ETH for both vault side and long
 export INIT_LONG_AMOUNT=10000000000000000000
 export DEPLOYER_ADDRESS=0x1234567890123456789012345678901234567890
 export GET_WSTETH=true
+export IS_PROD_ENV=true
 ```
 
 ## Upgrade protocol
@@ -195,7 +196,6 @@ you need to run the script with the following arguments:
 
 You need to provide just the protocol address because the script will automatically fetch the other addresses from the protocol. The script will save the results in 1 csv and json file per contract with access control, and 1 csv and json file total for all the contracts with simple ownership.
 
-
 ## Verify contracts
 
 The verifying script will work with a broadcast file, the compiled contracts and an etherscan API key.
@@ -207,7 +207,7 @@ Before verifying, you need to compile the contracts :
 Be sure to be in the same version as the deployment to avoid bytecode difference.
 You can then verify by using this cli:
 
-```
+```bash
 npm run verify -- PATH_TO_BROADCAST_FILE -e ETHERSCAN_API_KEY
 ```
 

@@ -167,6 +167,7 @@ else
 
         case $yn in
         [Yy]*)
+            export IS_PROD_ENV=true
             export DEPLOYER_ADDRESS=$address
             export INIT_LONG_AMOUNT=$initialLongAmount
             if [ "$getWstETH" = true ]; then
