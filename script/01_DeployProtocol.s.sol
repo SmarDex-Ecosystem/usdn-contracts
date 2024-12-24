@@ -291,10 +291,8 @@ contract DeployProtocol is Script {
         Usdn usdn,
         Rebalancer rebalancer
     ) internal {
-        bytes32 ADMIN_SET_EXTERNAL_ROLE = Constants.ADMIN_SET_EXTERNAL_ROLE;
-        bytes32 SET_EXTERNAL_ROLE = Constants.SET_EXTERNAL_ROLE;
-        usdnProtocol.grantRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
-        usdnProtocol.grantRole(SET_EXTERNAL_ROLE, _deployerAddress);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
+        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, _deployerAddress);
 
         usdnProtocol.setRebalancer(rebalancer);
 

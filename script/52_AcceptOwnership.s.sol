@@ -33,6 +33,7 @@ contract TransferProtocolOwnership is Script {
         } catch {
             _usdnProtocol = IUsdnProtocol(vm.parseAddress(vm.prompt("enter protocol address: ")));
         }
+
         _wstEthOracleMiddleware = WstEthOracleMiddleware(address(_usdnProtocol.getOracleMiddleware()));
         _liquidationRewardsManager = LiquidationRewardsManager(address(_usdnProtocol.getLiquidationRewardsManager()));
         _rebalancer = Rebalancer(payable(address(_usdnProtocol.getRebalancer())));
