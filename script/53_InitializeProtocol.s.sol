@@ -21,7 +21,10 @@ contract InitializeProtocol is Script {
     WstEthOracleMiddleware internal _wstEthOracleMiddleware;
 
     function run() external {
-        vm.startBroadcast();
+        _handleEnvVariables();
+
+        address admin = _usdnProtocol.defaultAdmin();
+        vm.startBroadcast(admin);
 
         // grant the minter and rebaser roles to the protocol and then renounce the admin role of the deployer
         _usdn.grantRole(_usdn.MINTER_ROLE(), address(_usdnProtocol));
