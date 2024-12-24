@@ -51,12 +51,18 @@ For a mainnet deployment, you have to use the shell script. It will prompt you t
 deployMainnet.sh -s SAFE_ADDRESS -r RPC_URL -u USDN_ADDRESS
 ```
 
+example:
+
+```shell
+./script/deployMainnet.sh -r 127.0.0.1:8545 -s 0x1E3e1128F6bC2264a19D7a065982696d356879c5 -w -u 0xde17a000ba631c5d7c2bd9fb692efea52d90dee2
+```
+
 Two optional flags are available:
 
 - `-w` to get wstETH by sending ether to the wstETH contract
 - `-t` to deploy with a hardware wallet (ledger/trezor)
 
-The script can be run with the following command with `-t` or `--test` flag to deploy with default values. (rpc url: localhost:8545, get wstETH: true, deployer : 29th account of anvil, safe: EthSafeAddr)
+The script can be run with the following command with `--test` flag to deploy with default values. (rpc url: localhost:8545, get wstETH: true, deployer : 29th account of anvil, safe: EthSafeAddr)
 
 ### Fork mode
 
@@ -127,23 +133,6 @@ Some general rules apply:
   - If needed, comment the line that re-deploy the fallback contract
 
 If you are ready to upgrade the protocol, then you can launch the bash script `script/upgrade.sh`. It will prompt you to enter a RPC url, the address of the deployed USDN protocol, and a private key. The address derived from the private key must have the `PROXY_UPGRADE_ROLE` role.
-
-## Transfer ownership
-
-This bash script will prompt you to enter an RPC url, the protocol address, the new owner address and a private key. The address derived from the private key must have the `DEFAULT_ADMIN_ROLE` role.
-
-```bash
-./script/transferProtocolOwnership.sh
-```
-
-If you want to run the script with foundry directly, in a standalone mode, you need to make sure that required environment variable is set:
-
-- `NEW_OWNER_ADDRESS`: the address of the new owner
-- `USDN_PROTOCOL_ADDRESS`: the address of the deployed USDN protocol
-
-```solidity
-forge script script/03_TransferProtocolOwnership.s.sol -f RPC_URL --private-key PRIVATE_KEY --broadcast
-```
 
 ## Anvil fork configuration
 
@@ -218,3 +207,19 @@ npm run verify -- PATH_TO_BROADCAST_FILE -e ETHERSCAN_API_KEY
 
 To show some extra debug you can add `-d` flag.
 If you are verifying contracts in another platform than Etherscan, you can specify the url with `--verifier-url`  
+
+## Test Scripts
+
+Both scripts are designed to be executed using the Forge CLI. They are used to simulate the acceptance of ownership of the protocol contracts by the Safe address and the initialization of the protocol. Parameters can be specified via environment variables or, if not provided, will be prompted for during execution.
+
+- **`AcceptOwnership`**: This script is intended for testing purposes only. It simulates the acceptance of ownership for all protocol-related contracts by the Safe address.
+
+```bash
+forge script script/52_AcceptOwnership.s.sol -f 127.0.0.1:8545 --broadcast --sender 0x1e3e1128f6bc2264a19d7a065982696d356879c5 --unlocked
+```
+
+- **`InitializeProtocol`**: This script is also intended for testing purposes only. It simulates the initialization of the protocol by the Safe address using the specified parameters.
+
+```bash
+forge script script/53_InitializeProtocol.s.sol -f 127.0.0.1:8545 --broadcast --sender 0x1e3e1128f6bc2264a19d7a065982696d356879c5 --unlocked
+```

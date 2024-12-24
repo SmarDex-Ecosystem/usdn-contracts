@@ -106,7 +106,7 @@ checkNodeVersion
 hardwareWallet=false
 getWstETH=false
 
-if [ "$1" = "-t" ] || [ "$1" = "--test" ]; then
+if [ "$1" = "--test" ]; then
     # for test mode we use the local RPC and the 29th account from anvil
     deployerPrivateKey="0x233c86e887ac435d7f7dc64979d7758d69320906a0d340d2b6518b0fd20aa998"
     rpcUrl="127.0.0.1:8545"
