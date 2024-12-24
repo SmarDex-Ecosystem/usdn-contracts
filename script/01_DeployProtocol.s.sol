@@ -376,34 +376,34 @@ contract DeployProtocol is Script {
     /// @notice Handle the environment variables
     function _handleEnvVariables() internal {
         // mandatory env variables : DEPLOYER_ADDRESS and IS_PROD_ENV
-        try vm.envAddress("DEPLOYER_ADDRESS") {
-            _deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
+        try vm.envAddress("DEPLOYER_ADDRESS") returns (address deployerAddress_) {
+            _deployerAddress = deployerAddress_;
         } catch {
             revert("DEPLOYER_ADDRESS is required");
         }
 
-        try vm.envBool("IS_PROD_ENV") {
-            _isProdEnv = vm.envBool("IS_PROD_ENV");
+        try vm.envBool("IS_PROD_ENV") returns (bool isProdEnv_) {
+            _isProdEnv = isProdEnv_;
         } catch {
             revert("IS_PROD_ENV is required");
         }
 
         if (_isProdEnv) {
-            try vm.envUint("SAFE_ADDRESS") {
-                _safeAddress = vm.envAddress("SAFE_ADDRESS");
+            try vm.envAddress("SAFE_ADDRESS") returns (address safeAddress_) {
+                _safeAddress = safeAddress_;
             } catch {
                 revert("SAFE_ADDRESS is required");
             }
+            _feeCollector = vm.envOr("FEE_COLLECTOR", _safeAddress);
         } else {
-            try vm.envUint("INIT_LONG_AMOUNT") {
-                _longAmount = vm.envUint("INIT_LONG_AMOUNT");
+            try vm.envUint("INIT_LONG_AMOUNT") returns (uint256 initLongAmount_) {
+                _longAmount = initLongAmount_;
             } catch {
                 revert("INIT_LONG_AMOUNT is required");
             }
+            _feeCollector = vm.envOr("FEE_COLLECTOR", _deployerAddress);
         }
 
-        // optional env variables
-        _feeCollector = vm.envOr("FEE_COLLECTOR", _deployerAddress);
         string memory etherscanApiKey = vm.envOr("ETHERSCAN_API_KEY", string("XXXXXXXXXXXXXXXXX"));
         vm.setEnv("ETHERSCAN_API_KEY", etherscanApiKey);
     }
