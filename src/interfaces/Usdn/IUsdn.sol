@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
@@ -15,7 +14,7 @@ import { IUsdnEvents } from "./IUsdnEvents.sol";
  * @notice Implements the ERC-20 token standard as well as the EIP-2612 permit extension. Additional functions related
  * to the specifics of this token are included below.
  */
-interface IUsdn is IAccessControl, IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnErrors {
+interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnErrors {
     /**
      * @notice Returns the total number of shares in existence.
      * @return shares_ The number of shares.
