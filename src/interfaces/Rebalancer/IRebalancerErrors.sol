@@ -29,7 +29,7 @@ interface IRebalancerErrors {
     /// @dev Indicates that the caller is not authorized to perform the action.
     error RebalancerUnauthorized();
 
-    /// @dev Indicates that the user cannot initiate or validate a deposit at this time.
+    /// @dev Indicates that the user can't initiate or validate a deposit at this time.
     error RebalancerDepositUnauthorized();
 
     /// @dev Indicates that the user must validate their deposit or withdrawal.
@@ -38,13 +38,13 @@ interface IRebalancerErrors {
     /// @dev Indicates that the user has no pending deposit or withdrawal requiring validation.
     error RebalancerNoPendingAction();
 
-    /// @dev Indicates that validation was attempted too early; the user must wait for `_timeLimits.validationDelay`.
+    /// @dev Indicates that validation was attempted too early, the user must wait for `_timeLimits.validationDelay`.
     error RebalancerValidateTooEarly();
 
-    /// @dev Indicates that validation was attempted too late; the user must wait for `_timeLimits.actionCooldown`.
+    /// @dev Indicates that validation was attempted too late, the user must wait for `_timeLimits.actionCooldown`.
     error RebalancerActionCooldown();
 
-    /// @dev Indicates that the user cannot initiate or validate a withdrawal at this time.
+    /// @dev Indicates that the user can't initiate or validate a withdrawal at this time.
     error RebalancerWithdrawalUnauthorized();
 
     /// @dev Indicates that the address was unable to accept the Ether refund.
@@ -54,7 +54,7 @@ interface IRebalancerErrors {
     error RebalancerInvalidDelegationSignature();
 
     /**
-     * @dev Indicates that the user cannot initiate a close position until the given timestamp has passed.
+     * @dev Indicates that the user can't initiate a close position until the given timestamp has passed.
      * @param closeLockedUntil The timestamp until which the user must wait to perform a close position action.
      */
     error RebalancerCloseLockedUntil(uint256 closeLockedUntil);

@@ -33,7 +33,7 @@ interface IRebalancerTypes {
     }
 
     /**
-     * @notice Defines parameters related to the validation process for Rebalancer deposits and withdrawals.
+     * @notice Defines parameters related to the validation process for rebalancer deposits and withdrawals.
      * @dev If `validationDeadline` has passed, the user is restricted from interacting until the cooldown duration has
      * elapsed. After the cooldown for deposit actions, the user must withdraw funds using {resetDepositAssets}. And for
      * withdrawal actions, the user can initiate a new withdrawal.
@@ -42,8 +42,8 @@ interface IRebalancerTypes {
      * @param validationDeadline The maximum duration in seconds between an initiate action and the corresponding
      * validate action.
      * @param actionCooldown The duration in seconds from the initiate action during which the user can't interact with
-     * the `Rebalancer` if the `validationDeadline` is exceeded.
-     * @param closeDelay The Duration in seconds from the last `Rebalancer` long position opening during which the user
+     * the rebalancer if the `validationDeadline` is exceeded.
+     * @param closeDelay The Duration in seconds from the last rebalancer long position opening during which the user
      * can't perform an {initiateClosePosition}.
      */
     struct TimeLimits {
