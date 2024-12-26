@@ -3,9 +3,13 @@ pragma solidity >=0.8.0;
 
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
+/**
+ * @title Rebalancer Events
+ * @notice Defines all custom events emitted by the Rebalancer contract.
+ */
 interface IRebalancerEvents {
     /**
-     * @notice Emitted when a user initiates a deposit into the Rebalancer.
+     * @notice A user initiates a deposit into the Rebalancer.
      * @param payer The address of the user initiating the deposit.
      * @param to The address the assets will be assigned to.
      * @param amount The amount of assets deposited.
@@ -14,7 +18,7 @@ interface IRebalancerEvents {
     event InitiatedAssetsDeposit(address indexed payer, address indexed to, uint256 amount, uint256 timestamp);
 
     /**
-     * @notice Emitted when assets are successfully deposited into the contract.
+     * @notice Assets are successfully deposited into the contract.
      * @param user The address of the user.
      * @param amount The amount of assets deposited.
      * @param positionVersion The version of the position where the assets will be used.
@@ -22,20 +26,20 @@ interface IRebalancerEvents {
     event AssetsDeposited(address indexed user, uint256 amount, uint256 positionVersion);
 
     /**
-     * @notice Emitted when a deposit fails due to the validation deadline elapsing, and the user retrieves their funds.
+     * @notice A deposit fails due to the validation deadline elapsing, and the user retrieves their funds.
      * @param user The address of the user.
      * @param amount The amount of assets refunded.
      */
     event DepositRefunded(address indexed user, uint256 amount);
 
     /**
-     * @notice Emitted when a user initiates the withdrawal of their pending assets.
+     * @notice A user initiates the withdrawal of their pending assets.
      * @param user The address of the user.
      */
     event InitiatedAssetsWithdrawal(address indexed user);
 
     /**
-     * @notice Emitted when pending assets are withdrawn from the contract.
+     * @notice Pending assets are withdrawn from the contract.
      * @param user The original owner of the position.
      * @param to The address the assets are sent to.
      * @param amount The amount of assets withdrawn.
@@ -43,7 +47,7 @@ interface IRebalancerEvents {
     event AssetsWithdrawn(address indexed user, address indexed to, uint256 amount);
 
     /**
-     * @notice Emitted when a user initiates a close position action through the rebalancer.
+     * @notice A user initiates a close position action through the rebalancer.
      * @param user The address of the rebalancer user.
      * @param rebalancerAmountToClose The amount of rebalancer assets to close.
      * @param amountToClose The amount to close, taking into account the previous versions PnL.
@@ -54,19 +58,19 @@ interface IRebalancerEvents {
     );
 
     /**
-     * @notice Emitted when the maximum leverage is updated.
+     * @notice The maximum leverage is updated.
      * @param newMaxLeverage The updated value for the maximum leverage.
      */
     event PositionMaxLeverageUpdated(uint256 newMaxLeverage);
 
     /**
-     * @notice Emitted when the minimum asset deposit requirement is updated.
+     * @notice The minimum asset deposit requirement is updated.
      * @param minAssetDeposit The updated minimum amount of assets to be deposited by a user.
      */
     event MinAssetDepositUpdated(uint256 minAssetDeposit);
 
     /**
-     * @notice Emitted when the position version is updated.
+     * @notice The position version is updated.
      * @param newPositionVersion The updated version of the position.
      * @param entryAccMultiplier The accumulated multiplier at the opening of the new version.
      * @param amount The amount of assets injected into the position as collateral by the rebalancer.
@@ -77,7 +81,7 @@ interface IRebalancerEvents {
     );
 
     /**
-     * @notice Emitted when the time limits are updated.
+     * @notice Time limits are updated.
      * @param validationDelay The updated validation delay.
      * @param validationDeadline The updated validation deadline.
      * @param actionCooldown The updated action cooldown.

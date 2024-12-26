@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+/**
+ * @title Rebalancer Errors
+ * @notice Defines all custom errors emitted by the Rebalancer contract.
+ */
 interface IRebalancerErrors {
     /// @dev Indicates that the user's assets are not used in a position.
     error RebalancerUserPending();

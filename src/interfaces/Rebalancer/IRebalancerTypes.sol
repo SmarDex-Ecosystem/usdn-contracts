@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+/**
+ * @title Rebalancer Types
+ * @notice Defines all custom types used by the Rebalancer contract.
+ */
 interface IRebalancerTypes {
     /**
      * @notice Represents the deposit data of a user.
