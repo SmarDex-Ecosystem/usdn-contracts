@@ -21,12 +21,12 @@ interface IRebalancerEvents {
      * @notice Assets are successfully deposited into the contract.
      * @param user The address of the user.
      * @param amount The amount of assets deposited.
-     * @param positionVersion The version of the position where the assets will be used.
+     * @param positionVersion The version of the position in which the assets will be used.
      */
     event AssetsDeposited(address indexed user, uint256 amount, uint256 positionVersion);
 
     /**
-     * @notice A deposit fails due to the validation deadline elapsing, and the user retrieves their funds.
+     * @notice A deposit is refunded after failing to meet the validation deadline.
      * @param user The address of the user.
      * @param amount The amount of assets refunded.
      */
