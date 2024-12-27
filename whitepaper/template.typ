@@ -5,15 +5,16 @@
   title: [],
   version: [],
   authors: (),
+  date: (),
   abstract: [],
   keywords: (),
   doc,
 ) = [
   #set page(
     footer: context [
-      #datetime.today().display() - #version
       #h(1fr)
       #counter(page).display()
+      #h(1fr)
     ],
   )
   // invoke base template
@@ -24,6 +25,8 @@
     keywords: keywords,
     make-venue: [],
   )
+  #set text(10pt, font: "TeX Gyre Heros")
+  #align(left)[Version #version #date]
   // Configure equation numbering and spacing.
   #set math.equation(numbering: "(1)")
   // Configure appearance of equation references
