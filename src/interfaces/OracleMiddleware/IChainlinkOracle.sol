@@ -5,7 +5,7 @@ import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/inte
 
 interface IChainlinkOracle {
     /**
-     * @notice Gets the sentinel value returned instead of the price if the data from the oracle is too old.
+     * @notice The sentinel value returned instead of the price if the data from the oracle is too old.
      * @return sentinelValue_ The sentinel value for "price too old".
      */
     function PRICE_TOO_OLD() external pure returns (int256 sentinelValue_);
