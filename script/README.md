@@ -40,12 +40,11 @@ Two environment variables are required: `DEPLOYER_ADDRESS` and `SAFE_ADDRESS`.
 
 ### Production mode
 
-For a mainnet deployment, you have to use the shell script. It will prompt you to enter the required environment variables :
+For a mainnet deployment, you have to use the shell script. The required variables are:
 
+- the safe address (that will be the owner of the protocol)
 - the rpc url
-- the initial long amount
-- the get wstETH flag
-- the private key of the deployer (or public key if you use a ledger/trezor)
+- the USDN token address
 
 ```shell
 deployMainnet.sh -s SAFE_ADDRESS -r RPC_URL -u USDN_ADDRESS
@@ -54,7 +53,7 @@ deployMainnet.sh -s SAFE_ADDRESS -r RPC_URL -u USDN_ADDRESS
 example:
 
 ```shell
-./script/deployMainnet.sh -r 127.0.0.1:8545 -s 0x1E3e1128F6bC2264a19D7a065982696d356879c5 -w -u 0xde17a000ba631c5d7c2bd9fb692efea52d90dee2
+./script/deployMainnet.sh -r 127.0.0.1:8545 -s 0x1E3e1128F6bC2264a19D7a065982696d356879c5 -u 0xde17a000ba631c5d7c2bd9fb692efea52d90dee2
 ```
 
 Two optional flags are available:
@@ -211,6 +210,12 @@ If you are verifying contracts in another platform than Etherscan, you can speci
 ## Test Scripts
 
 Both scripts are designed to be executed using the Forge CLI. They are used to simulate the acceptance of ownership of the protocol contracts by the Safe address and the initialization of the protocol. Parameters can be specified via environment variables or, if not provided, will be prompted for during execution.
+
+- before the acceptance of ownership by the Safe address, it must be funded with ether. This can be done using the `cast` command of the Forge CLI. For example:
+
+```bash
+cast send 0x1E3e1128F6bC2264a19D7a065982696d356879c5 --private-key 0x233c86e887ac435d7f7dc64979d7758d69320906a0d340d2b6518b0fd20aa998 --value 800ether -r 127.0.0.1:8545
+```
 
 - **`AcceptOwnership`**: This script is intended for testing purposes only. It simulates the acceptance of ownership for all protocol-related contracts by the Safe address.
 
