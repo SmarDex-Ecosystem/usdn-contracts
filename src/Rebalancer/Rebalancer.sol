@@ -316,7 +316,11 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
             // update the last liquidated version and delete the user data
             _lastLiquidatedVersion = positionVersion;
-            delete depositData;
+            if (depositData.entryPositionVersion == positionVersion) {
+                delete depositData;
+            } else {
+                amount += depositData.amount;
+            }
         } else if (depositData.entryPositionVersion > 0) {
             // if the user was in a position that got liquidated, we should reset the deposit data
             delete depositData;

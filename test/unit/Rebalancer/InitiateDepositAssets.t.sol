@@ -249,6 +249,28 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
     }
 
+    function test_depositWhenPendingInclusion() public {
+        // create a position for the rebalancer and deposit assets
+        Types.PositionId memory newPosId = Types.PositionId({ tick: 0, tickVersion: 0, index: 0 });
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(newPosId, 0);
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+
+        UserDeposit memory depositData = rebalancer.getUserDepositData(address(this));
+        assertEq(depositData.entryPositionVersion, 2, "The position version should be two");
+
+        // increase the tick version to simulate the tick being liquidated
+        UsdnProtocolMock(address(usdnProtocol)).setTickVersion(0, 1);
+
+        vm.prank(USER_1);
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
+        depositData = rebalancer.getUserDepositData(address(this));
+
+        assertEq(depositData.amount, 2 * INITIAL_DEPOSIT, "The position should be updated with the new deposit");
+    }
+
     /**
      * @custom:scenario The user tries to deposit assets when they are in a position already
      * @custom:given The user has initiated a deposit, validated it, and the rebalancer got triggered
