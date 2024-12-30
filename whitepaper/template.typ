@@ -5,15 +5,16 @@
   title: [],
   version: [],
   authors: (),
+  date: (),
   abstract: [],
   keywords: (),
   doc,
 ) = [
   #set page(
     footer: context [
-      #datetime.today().display() - #version
       #h(1fr)
       #counter(page).display()
+      #h(1fr)
     ],
   )
   // invoke base template
@@ -23,6 +24,46 @@
     abstract: abstract,
     keywords: keywords,
     make-venue: [],
+    make-title: (
+      title,
+      authors,
+      abstract,
+      keywords,
+    ) => {
+      set par(spacing: 1em)
+      set text(font: "TeX Gyre Heros")
+
+      par(
+        justify: false,
+        text(24pt, fill: rgb("004b71"), title, weight: "bold"),
+      )
+
+      text(
+        12pt,
+        authors.enumerate().map(((i, author)) => box[#author.name #super[#(i + 1)]]).join(", "),
+      )
+      parbreak()
+
+      for (i, author) in authors.enumerate() [
+        #set text(8pt)
+        #super[#(i + 1)]
+        #author.institution
+        #link("mailto:" + author.mail) \
+      ]
+
+      v(8pt)
+      set text(10pt)
+      set par(justify: true)
+
+      [
+        #heading(outlined: false, bookmarked: false)[Abstract]
+        #text(font: "TeX Gyre Pagella", abstract)
+        #v(3pt)
+        *Keywords:* #keywords.join(text(font: "TeX Gyre Pagella", "; ")) #h(1fr)
+        Version #(version) #(date)
+      ]
+      v(18pt)
+    },
   )
   // Configure equation numbering and spacing.
   #set math.equation(numbering: "(1)")
@@ -53,7 +94,7 @@
   #show link: set text(fill: blue.darken(40%))
   // Thin unbreakable space
   #show "_": sym.space.nobreak.narrow
-  #show sym.approx: it => it+sym.wj
+  #show sym.approx: it => it + sym.wj
 
   // Main body
   #doc

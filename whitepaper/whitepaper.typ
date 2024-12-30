@@ -6,8 +6,9 @@
 #register-glossary(glossary)
 
 #show: template.with(
-  title: [Ultimate Synthetic Delta Neutral],
-  version: [v1.0],
+  title: [Ultimate Synthetic Delta Neutral], 
+  version: [1.0],
+  date:[January 2025],
   authors: (
     (
       name: "TBD",
