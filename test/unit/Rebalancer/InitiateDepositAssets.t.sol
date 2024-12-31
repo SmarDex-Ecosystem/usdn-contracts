@@ -272,7 +272,6 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
         // increase the tick version to simulate the tick being liquidated
         UsdnProtocolMock(address(usdnProtocol)).setTickVersion(0, 1);
 
-        vm.prank(USER_1);
         vm.expectRevert(RebalancerDepositUnauthorized.selector);
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
     }
