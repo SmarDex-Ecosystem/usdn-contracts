@@ -319,7 +319,8 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             if (depositData.entryPositionVersion == positionVersion) {
                 delete depositData;
             } else {
-                amount += depositData.amount;
+                // if the user has pending funds, we block the deposit
+                revert RebalancerDepositUnauthorized();
             }
         } else if (depositData.entryPositionVersion > 0) {
             // if the user was in a position that got liquidated, we should reset the deposit data
