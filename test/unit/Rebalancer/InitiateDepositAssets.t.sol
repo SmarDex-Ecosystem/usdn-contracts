@@ -250,6 +250,33 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
     }
 
     /**
+     * @custom:scenario The user tries to deposit assets when they have an existing deposit that is pending inclusion
+     * and the tick is liquidated
+     * @custom:given The rebalancer has already been triggered
+     * @custom:and The user has initiated a deposit and validated it
+     * @custom:when The user initiates a new deposit
+     * @custom:then The call reverts with a {RebalancerDepositUnauthorized} error
+     */
+    function test_RevertWhen_depositWhenPendingInclusionAfterLiquidate() public {
+        // create a position for the rebalancer and deposit assets
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId({ tick: 0, tickVersion: 0, index: 0 }), 0);
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+
+        assertEq(
+            rebalancer.getUserDepositData(address(this)).entryPositionVersion, 2, "The position version should be two"
+        );
+
+        // increase the tick version to simulate the tick being liquidated
+        UsdnProtocolMock(address(usdnProtocol)).setTickVersion(0, 1);
+
+        vm.expectRevert(RebalancerDepositUnauthorized.selector);
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
+    }
+
+    /**
      * @custom:scenario The user tries to deposit assets when they are in a position already
      * @custom:given The user has initiated a deposit, validated it, and the rebalancer got triggered
      * @custom:when The user tries to deposit assets
