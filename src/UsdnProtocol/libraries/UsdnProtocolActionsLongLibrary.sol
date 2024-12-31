@@ -272,7 +272,7 @@ library UsdnProtocolActionsLongLibrary {
                 // leverage that exceeds the max leverage slightly. We allow this behavior in this rare occurrence
 
                 // retrieve exact liquidation price without penalty
-                // we consider the liquidation multiplier as it was during the initiation, to account for any funding
+                // we consider the liquidation multiplier as it was during the initiation, to ignore any funding
                 // that was due between the initiation and the validation
                 data.liqPriceWithoutPenaltyNorFunding = Utils._getEffectivePriceForTick(
                     Utils._calcTickWithoutPenalty(maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty),
