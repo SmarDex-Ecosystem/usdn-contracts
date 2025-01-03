@@ -73,18 +73,26 @@ contract TestUsdnProtocolPausable is UsdnProtocolBaseFixture {
      * @custom:and 10 days have passed
      * @custom:and {unpause} is called
      * @custom:then No funding should be possible during the pause period
+     * @custom:when 10 days have passed
+     * @custom:and {liquidate} is called
+     * @custom:then Funding for the period after the unpause should be applied
      */
     function test_NoFundingDuringPausePeriod() public {
-        uint256 balanceVaultBefore = protocol.getBalanceVault();
-        uint256 balanceLongBefore = protocol.getBalanceLong();
         uint256 snapshotId = vm.snapshotState();
 
         vm.prank(ADMIN);
         protocol.pause();
+
+        uint256 balanceVaultBefore = protocol.getBalanceVault();
+        uint256 balanceLongBefore = protocol.getBalanceLong();
+
         skip(10 days);
+
         vm.prank(ADMIN);
         protocol.unpause();
+
         protocol.liquidate(abi.encode(params.initialPrice));
+
         uint256 balanceLong = protocol.getBalanceLong();
         uint256 balanceVault = protocol.getBalanceVault();
         assertEq(balanceVaultBefore, balanceVault, "The vault balance should not change");
@@ -92,6 +100,7 @@ contract TestUsdnProtocolPausable is UsdnProtocolBaseFixture {
 
         vm.revertToState(snapshotId);
         skip(10 days);
+
         protocol.liquidate(abi.encode(params.initialPrice));
         assertTrue(protocol.getBalanceLong() != balanceLong, "The long balance should be different");
         assertTrue(protocol.getBalanceVault() != balanceVault, "The vault balance should be different");
