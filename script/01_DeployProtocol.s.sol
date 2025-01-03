@@ -40,6 +40,7 @@ contract DeployProtocol is Script {
     address internal _feeCollector;
     bool internal _isProdEnv;
     uint256 internal _longAmount;
+    address internal _safeAddress;
 
     /**
      * @notice Deploy the USDN ecosystem
@@ -67,8 +68,6 @@ contract DeployProtocol is Script {
     {
         _handleEnvVariables();
 
-        _isProdEnv = block.chainid == 1;
-
         // internal validation of the Usdn protocol
         _utils.validateProtocol("UsdnProtocolImpl", "UsdnProtocolFallback");
 
@@ -89,9 +88,11 @@ contract DeployProtocol is Script {
 
         Rebalancer_ = _deployRebalancer(UsdnProtocol_);
 
-        _handlePostDeployment(UsdnProtocol_, Usdn_, Rebalancer_);
-
-        _initializeUsdnProtocol(UsdnProtocol_, WstETH_, WstEthOracleMiddleware_);
+        if (_isProdEnv) {
+            _handlePostDeployment(UsdnProtocol_, Rebalancer_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
+        } else {
+            _initializeUsdnProtocolFork(UsdnProtocol_, WstETH_, WstEthOracleMiddleware_, Usdn_, Rebalancer_);
+        }
 
         vm.stopBroadcast();
     }
@@ -283,11 +284,23 @@ contract DeployProtocol is Script {
      * @param wstETH The WstETH token
      * @param wstEthOracleMiddleware The WstETH oracle middleware
      */
-    function _initializeUsdnProtocol(
+    function _initializeUsdnProtocolFork(
         IUsdnProtocol usdnProtocol,
         WstETH wstETH,
-        WstEthOracleMiddleware wstEthOracleMiddleware
+        WstEthOracleMiddleware wstEthOracleMiddleware,
+        Usdn usdn,
+        Rebalancer rebalancer
     ) internal {
+        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
+        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, _deployerAddress);
+
+        usdnProtocol.setRebalancer(rebalancer);
+
+        // grant the minter and rebaser roles to the protocol and then renounce the admin role of the deployer
+        usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
+        usdn.renounceRole(usdn.DEFAULT_ADMIN_ROLE(), _deployerAddress);
+
         uint24 liquidationPenalty = usdnProtocol.getLiquidationPenalty();
         int24 tickSpacing = usdnProtocol.getTickSpacing();
         uint256 price = wstEthOracleMiddleware.parseAndValidatePrice(
@@ -319,10 +332,14 @@ contract DeployProtocol is Script {
     /**
      * @notice Handle post-deployment tasks
      * @param usdnProtocol The USDN protocol
-     * @param usdn The USDN token
      * @param rebalancer The rebalancer
      */
-    function _handlePostDeployment(IUsdnProtocol usdnProtocol, Usdn usdn, Rebalancer rebalancer) internal {
+    function _handlePostDeployment(
+        IUsdnProtocol usdnProtocol,
+        Rebalancer rebalancer,
+        WstEthOracleMiddleware wstEthOracleMiddleware,
+        LiquidationRewardsManager liquidationRewardsManager
+    ) internal {
         // grant the necessary roles to the deployer to set the rebalancer and then revoke them
         bytes32 ADMIN_SET_EXTERNAL_ROLE = Constants.ADMIN_SET_EXTERNAL_ROLE;
         bytes32 SET_EXTERNAL_ROLE = Constants.SET_EXTERNAL_ROLE;
@@ -334,10 +351,11 @@ contract DeployProtocol is Script {
         usdnProtocol.revokeRole(SET_EXTERNAL_ROLE, _deployerAddress);
         usdnProtocol.revokeRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
 
-        // grant the minter and rebaser roles to the protocol and then renounce the admin role of the deployer
-        usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
-        usdn.renounceRole(usdn.DEFAULT_ADMIN_ROLE(), _deployerAddress);
+        // transfer the ownership of the contracts to the safe address
+        usdnProtocol.beginDefaultAdminTransfer(_safeAddress);
+        wstEthOracleMiddleware.beginDefaultAdminTransfer(_safeAddress);
+        liquidationRewardsManager.transferOwnership(_safeAddress);
+        rebalancer.transferOwnership(_safeAddress);
     }
 
     /**
@@ -355,21 +373,35 @@ contract DeployProtocol is Script {
 
     /// @notice Handle the environment variables
     function _handleEnvVariables() internal {
-        // mandatory env variables : DEPLOYER_ADDRESS and INIT_LONG_AMOUNT
-        try vm.envAddress("DEPLOYER_ADDRESS") {
-            _deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
+        // mandatory env variables : DEPLOYER_ADDRESS and IS_PROD_ENV
+        try vm.envAddress("DEPLOYER_ADDRESS") returns (address deployerAddress_) {
+            _deployerAddress = deployerAddress_;
         } catch {
             revert("DEPLOYER_ADDRESS is required");
         }
 
-        try vm.envUint("INIT_LONG_AMOUNT") {
-            _longAmount = vm.envUint("INIT_LONG_AMOUNT");
+        try vm.envBool("IS_PROD_ENV") returns (bool isProdEnv_) {
+            _isProdEnv = isProdEnv_;
         } catch {
-            revert("INIT_LONG_AMOUNT is required");
+            revert("IS_PROD_ENV is required");
         }
 
-        // optional env variables
-        _feeCollector = vm.envOr("FEE_COLLECTOR", _deployerAddress);
+        if (_isProdEnv) {
+            try vm.envAddress("SAFE_ADDRESS") returns (address safeAddress_) {
+                _safeAddress = safeAddress_;
+            } catch {
+                revert("SAFE_ADDRESS is required");
+            }
+            _feeCollector = vm.envOr("FEE_COLLECTOR", _safeAddress);
+        } else {
+            try vm.envUint("INIT_LONG_AMOUNT") returns (uint256 initLongAmount_) {
+                _longAmount = initLongAmount_;
+            } catch {
+                revert("INIT_LONG_AMOUNT is required");
+            }
+            _feeCollector = vm.envOr("FEE_COLLECTOR", _deployerAddress);
+        }
+
         string memory etherscanApiKey = vm.envOr("ETHERSCAN_API_KEY", string("XXXXXXXXXXXXXXXXX"));
         vm.setEnv("ETHERSCAN_API_KEY", etherscanApiKey);
     }

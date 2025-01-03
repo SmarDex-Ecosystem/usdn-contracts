@@ -9,6 +9,8 @@ green='\033[0;32m'
 blue='\033[0;34m'
 nc='\033[0m'
 
+USAGE="Usage: $(basename $0) [-r RPC_URL] [-s SAFE_ADDRESS] [-u USDN_ADDRESS] (-w GET_WSTETH) (-t HARDWARE_WALLET)"
+
 broadcastPath="broadcast/00_DeployUsdn.s.sol/"
 broadcastFile="/run-latest.json"
 
@@ -34,98 +36,64 @@ function checkNodeVersion() {
     fi
 }
 
-# Asks the user if he wants to mint wsETH during the deployment and handles the input
-function handleWstETH() {
-    while true; do
-        read -p $'\n'"Do you want to mint wsETH during the deployment ? (yY/nN) : " yn
-        case $yn in
-        [Yy]*)
-            getWstETH=true
-            break
-            ;;
-        [Nn]*)
-            getWstETH=false
-            break
-            ;;
-        *) printf "\nPlease answer yes (Y/y) or no (N/n).\n" ;;
-        esac
-    done
-}
-
-# Asks the user if he wants to use a hardware wallet or a private key
-# to deploy the contracts and handles the input
-function handleKeys() {
-    while true; do
-        read -p $'\n'"Do you wish to use a hardware wallet? (trezor/ledger/nN) : " yn
-        case $yn in
-        "ledger"*)
-            read -p $'\n'"Enter the deployer address : " deployerAddress
-            address=$deployerAddress
-            printf "\n\n$green Running script in Ledger mode with :\n"
-            hardwareWallet="ledger"
-            break
-            ;;
-        "trezor"*)
-            read -p $'\n'"Enter the deployer address : " deployerAddress
-            address=$deployerAddress
-            printf "\n\n$green Running script in Trezor mode with :\n"
-            hardwareWallet="trezor"
-            break
-            ;;
-        [Nn]*)
-            read -s -p $'\n'"Enter the private key : " privateKey
-            deployerPrivateKey=$privateKey
-
-            address=$(cast wallet address $deployerPrivateKey)
-            if [[ -z $address ]]; then
-                printf "\n$red The private key is invalid$nc\n\n"
-                exit 1
-            fi
-
-            printf "\n\n$green Running script in Non-Ledger mode with :\n"
-
-            break
-            ;;
-        *) printf "\nPlease answer trezor, ledger or no (N/n).\n" ;;
-        esac
-    done
-}
-
-# Deploys the USDN token contract and exports the address
-function deployUsdn() {
-    if [ "$hardwareWallet" = "ledger" ]; then
-        forge script -l -f "$rpcUrl" script/00_DeployUsdn.s.sol:DeployUsdn --broadcast --slow
-    elif [ "$hardwareWallet" = "trezor" ]; then
-        forge script -t -f "$rpcUrl" script/00_DeployUsdn.s.sol:DeployUsdn --broadcast --slow
-    else
-        forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/00_DeployUsdn.s.sol:DeployUsdn --broadcast --slow
-    fi
-
-    # Check if the deployment was successful by checking the return code of the previous command
-    if [ "$?" -ne 0 ]; then
-        echo "Failed to deploy USDN contract"
+# Asks the user for the deployer's private key and checks if it's valid
+# Also calculate the USDN token address
+function handlePrivateKey() {
+    read -s -p $'\n'"Enter the private key : " privateKey
+    deployerPrivateKey=$privateKey
+    address=$(cast wallet address $deployerPrivateKey)
+    if [[ -z $address ]]; then
+        printf "\n$red The private key is invalid$nc\n\n"
         exit 1
     fi
+}
 
-    chainId=$(cast chain-id -r "$rpcUrl")
-    broadcast="$broadcastPath""$chainId""$broadcastFile"
-
-    # Wait for the USDN contract to be mined, and export the address
-    for i in {1..15}; do
-        printf "$green Trying to fetch USDN address... (attempt $i/15)$nc\n"
-        USDN_ADDRESS="$(cat $broadcast | jq -r '.returns.Usdn_.value')"
-        usdnCode=$(cast code -r "$rpcUrl" "$USDN_ADDRESS")
-
-        if [[ ! -z $usdnCode ]]; then
-            printf "\n$green USDN contract found on blockchain$nc\n\n"
-            export USDN_ADDRESS=$USDN_ADDRESS
-            return
-        fi
-
-        sleep 10s
+# Parses the arguments passed to the script
+function parseArguments() {
+    while getopts ":r:s:t:u:hw" opt; do
+        case ${opt} in
+        r)
+            rpcUrl="$OPTARG"
+            ;;
+        s)
+            safeAddress="$OPTARG"
+            export SAFE_ADDRESS=$safeAddress
+            ;;
+        w)
+            getWstETH=true
+            ;;
+        u)
+            usdnAddress="$OPTARG"
+            export USDN_ADDRESS=$usdnAddress
+            ;;
+        t)
+            if [ "$OPTARG" = "ledger" ] || [ "$OPTARG" = "trezor" ]; then
+                hardwareWallet=$OPTARG
+            else
+                printf "$red Invalid hardware wallet option (ledger/trezor): $OPTARG$nc\n"
+                exit 1
+            fi
+            ;;
+        h)
+            printf "$red $USAGE\n"
+            exit 1
+            ;;
+        :)
+            printf "$red Option -${OPTARG} requires an argument\n"
+            exit 1
+            ;;
+        ?)
+            printf "$red Invalid option: -${OPTARG}\n"
+            exit 1
+            ;;
+        esac
     done
-    printf "\n$red Failed to fetch USDN address$nc\n\n"
-    exit 1
+
+    if [[ -z "${rpcUrl}" || -z "${safeAddress}" || -z "${usdnAddress}" ]]; then
+        printf "\nError: All -r, -u and -s options are required\n\n"
+        printf "${USAGE}\n"
+        exit 1
+    fi
 }
 
 # ---------------------------------------------------------------------------- #
@@ -138,35 +106,33 @@ checkNodeVersion
 hardwareWallet=false
 getWstETH=false
 
-if [ "$1" = "-t" ] || [ "$1" = "--test" ]; then
+if [ "$1" = "--test" ]; then
     # for test mode we use the local RPC and the 29th account from anvil
     deployerPrivateKey="0x233c86e887ac435d7f7dc64979d7758d69320906a0d340d2b6518b0fd20aa998"
     rpcUrl="127.0.0.1:8545"
     export DEPLOYER_ADDRESS="0x9DCCe783B6464611f38631e6C851bf441907c710"
-    export INIT_LONG_AMOUNT="100000000000000000000"
     export GET_WSTETH=true
+    export SAFE_ADDRESS="0x1E3e1128F6bC2264a19D7a065982696d356879c5"
 
 else
-    printf "\n$green To run this script in test mode, add \"-t\" or \"--test\"$nc\n"
+    printf "\n$green To run this script in test mode, add \"-t\" or \"--test\"$nc\n\n"
 
-    read -p $'\n'"Enter the RPC URL : " userRpcUrl
-    rpcUrl="$userRpcUrl"
-    read -p $'\n'"Enter the initial long amount : " userLongAmount
-    initialLongAmount="$userLongAmount"
+    parseArguments "$@"
 
-    handleWstETH
-    handleKeys
+    handlePrivateKey
 
     while true; do
-        printf "\n$blue RPC URL     :$nc $rpcUrl"
-        printf "\n$blue Address     :$nc $address"
-        printf "\n$blue Long amount :$nc "$(cast from-wei $initialLongAmount)" ether"
-        printf "\n$blue Get wsETH   :$nc $getWstETH\n"
+        printf "\n$blue RPC URL          :$nc $rpcUrl"
+        printf "\n$blue Deployer address :$nc $address"
+        printf "\n$blue Get wsETH        :$nc $getWstETH"
+        printf "\n$blue Safe address     :$nc $safeAddress"
+        printf "\n$blue USDN address     :$nc $usdnAddress\n"
 
         read -p $'\n'"Do you wish to continue? (Yy/Nn) : " yn
 
         case $yn in
         [Yy]*)
+            export IS_PROD_ENV=true
             export DEPLOYER_ADDRESS=$address
             export INIT_LONG_AMOUNT=$initialLongAmount
             if [ "$getWstETH" = true ]; then
@@ -181,8 +147,6 @@ else
         esac
     done
 fi
-
-deployUsdn
 
 if [ "$hardwareWallet" = "ledger" ]; then
     forge script -l -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast --slow

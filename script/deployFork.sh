@@ -13,6 +13,7 @@ deployerPrivateKey=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f
 export DEPLOYER_ADDRESS=$(cast wallet address --private-key "$deployerPrivateKey") #0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 export INIT_LONG_AMOUNT=1000000000000000000000
 export GET_WSTETH=true
+export IS_PROD_ENV=false
 
 forge script --non-interactive --private-key $deployerPrivateKey -f "$rpcUrl" script/01_DeployProtocol.s.sol:DeployProtocol --broadcast
 
@@ -45,12 +46,9 @@ EOF
 
 echo "Fork environment variables:"
 echo "$FORK_ENV_DUMP"
-echo "$FORK_ENV_DUMP" > .env.fork
+echo "$FORK_ENV_DUMP" >.env.fork
 
-#####
-# Admin set roles
-#####
-
+# Set all roles for the deployer
 rolesArr=(
     "ADMIN_SET_EXTERNAL_ROLE"
     "ADMIN_SET_OPTIONS_ROLE"
@@ -71,10 +69,8 @@ rolesArr=(
 )
 
 for role in "${rolesArr[@]}"; do
-    # Encode role
     encodedRole=$(cast keccak "$role")
-    
-    # Send transaction
+
     echo -e "\nGranting role $role to $DEPLOYER_ADDRESS..."
     cast send $USDN_PROTOCOL_ADDRESS \
         --from $DEPLOYER_ADDRESS \

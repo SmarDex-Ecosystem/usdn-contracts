@@ -9,7 +9,7 @@ The script verifies that the deployer address has a nonce of 0. It then deploys 
 Use the following command to deploy the USDN token:
 
 ```shell
-./script/deployUsdnToken.sh -r YOUR_RPC_URL -s SAFE_ADDRESS
+./script/deployUsdnToken.sh -r RPC_URL -s SAFE_ADDRESS
 ```
 
 It will then prompt you to enter the deployer's private key.
@@ -31,7 +31,7 @@ A test mode is available with the `-t` or `--test` flag. It will deploy the toke
 You can run the forge script directly with the following command:
 
 ```shell
-forge script --private-key YOUR_PRIVATE_KEY -f YOUR_RPC_URL script/00_DeployUsdn.s.sol:DeployUsdn --broadcast --slow
+forge script --private-key PRIVATE_KEY -f RPC_URL script/00_DeployUsdn.s.sol:DeployUsdn --broadcast --slow
 ```
 
 Two environment variables are required: `DEPLOYER_ADDRESS` and `SAFE_ADDRESS`.
@@ -40,18 +40,28 @@ Two environment variables are required: `DEPLOYER_ADDRESS` and `SAFE_ADDRESS`.
 
 ### Production mode
 
-For a mainnet deployment, you have to use the shell script. It will prompt you to enter the required environment variables :
+For a mainnet deployment, you have to use the shell script. The required variables are:
 
+- the safe address (that will be the owner of the protocol)
 - the rpc url
-- the initial long amount
-- the get wstETH flag
-- the private key of the deployer (or public key if you use a ledger/trezor)
+- the USDN token address
 
 ```shell
-deployMainnet.sh
+deployMainnet.sh -s SAFE_ADDRESS -r RPC_URL -u USDN_ADDRESS
 ```
 
-The script can be run with the following command with `-t` or `--test` flag to deploy with default values. (rpc url: localhost:8545, initial long amount: 100 ethers, get wstETH: true, deployer : 29th account of anvil)
+example:
+
+```shell
+./script/deployMainnet.sh -r 127.0.0.1:8545 -s 0x1E3e1128F6bC2264a19D7a065982696d356879c5 -u 0xde17a000ba631c5d7c2bd9fb692efea52d90dee2
+```
+
+Two optional flags are available:
+
+- `-w` to get wstETH by sending ether to the wstETH contract
+- `-t` to deploy with a hardware wallet (ledger/trezor)
+
+The script can be run with the following command with `--test` flag to deploy with default values. (rpc url: localhost:8545, get wstETH: true, deployer : 29th account of anvil, safe: EthSafeAddr)
 
 ### Fork mode
 
@@ -66,10 +76,10 @@ deployFork.sh
 You can run the forge script directly with the following command:
 
 ```shell
-forge script script/01_DeployProtocol.s.sol:DeployProtocol -f YOUR_RPC_URL --private-key YOUR_PRIVATE_KEY --broadcast
+forge script script/01_DeployProtocol.s.sol:DeployProtocol -f RPC_URL --private-key PRIVATE_KEY --broadcast
 ```
 
-Required environment variables: `INIT_LONG_AMOUNT` and `DEPLOYER_ADDRESS`.
+Required environment variables: `DEPLOYER_ADDRESS` and `IS_PROD_ENV`. `SAFE_ADDRESS` is required only if `IS_PROD_ENV` is set to `true`. And `INIT_LONG_AMOUNT` is required if `IS_PROD_ENV` is set to `false`.
 
 If running on mainnet, remember to deploy the USDN token first with the `00_DeployUSDN.s.sol` script and set the `USDN_ADDRESS` environment variable.
 
@@ -100,6 +110,7 @@ Example using the real wstETH and depositing 10 ETH for both vault side and long
 export INIT_LONG_AMOUNT=10000000000000000000
 export DEPLOYER_ADDRESS=0x1234567890123456789012345678901234567890
 export GET_WSTETH=true
+export IS_PROD_ENV=true
 ```
 
 ## Upgrade protocol
@@ -121,23 +132,6 @@ Some general rules apply:
   - If needed, comment the line that re-deploy the fallback contract
 
 If you are ready to upgrade the protocol, then you can launch the bash script `script/upgrade.sh`. It will prompt you to enter a RPC url, the address of the deployed USDN protocol, and a private key. The address derived from the private key must have the `PROXY_UPGRADE_ROLE` role.
-
-## Transfer ownership
-
-This bash script will prompt you to enter an RPC url, the protocol address, the new owner address and a private key. The address derived from the private key must have the `DEFAULT_ADMIN_ROLE` role.
-
-```bash
-./script/transferProtocolOwnership.sh
-```
-
-If you want to run the script with foundry directly, in a standalone mode, you need to make sure that required environment variable is set:
-
-- `NEW_OWNER_ADDRESS`: the address of the new owner
-- `USDN_PROTOCOL_ADDRESS`: the address of the deployed USDN protocol
-
-```solidity
-forge script script/03_TransferProtocolOwnership.s.sol -f YOUR_RPC_URL --private-key YOUR_PRIVATE_KEY --broadcast
-```
 
 ## Anvil fork configuration
 
@@ -195,7 +189,6 @@ you need to run the script with the following arguments:
 
 You need to provide just the protocol address because the script will automatically fetch the other addresses from the protocol. The script will save the results in 1 csv and json file per contract with access control, and 1 csv and json file total for all the contracts with simple ownership.
 
-
 ## Verify contracts
 
 The verifying script will work with a broadcast file, the compiled contracts and an etherscan API key.
@@ -207,9 +200,31 @@ Before verifying, you need to compile the contracts :
 Be sure to be in the same version as the deployment to avoid bytecode difference.
 You can then verify by using this cli:
 
-```
+```bash
 npm run verify -- PATH_TO_BROADCAST_FILE -e ETHERSCAN_API_KEY
 ```
 
 To show some extra debug you can add `-d` flag.
 If you are verifying contracts in another platform than Etherscan, you can specify the url with `--verifier-url`  
+
+## Test Scripts
+
+Both scripts are designed to be executed using the Forge CLI. They are used to simulate the acceptance of ownership of the protocol contracts by the Safe address and the initialization of the protocol. Parameters can be specified via environment variables or, if not provided, will be prompted for during execution.
+
+- before the acceptance of ownership by the Safe address, it must be funded with ether. This can be done using the `cast` command of the Forge CLI. For example:
+
+```bash
+cast send 0x1E3e1128F6bC2264a19D7a065982696d356879c5 --private-key 0x233c86e887ac435d7f7dc64979d7758d69320906a0d340d2b6518b0fd20aa998 --value 800ether -r 127.0.0.1:8545
+```
+
+- **`AcceptOwnership`**: This script is intended for testing purposes only. It simulates the acceptance of ownership for all protocol-related contracts by the Safe address.
+
+```bash
+forge script script/52_AcceptOwnership.s.sol -f 127.0.0.1:8545 --broadcast --sender 0x1e3e1128f6bc2264a19d7a065982696d356879c5 --unlocked
+```
+
+- **`InitializeProtocol`**: This script is also intended for testing purposes only. It simulates the initialization of the protocol by the Safe address using the specified parameters.
+
+```bash
+forge script script/53_InitializeProtocol.s.sol -f 127.0.0.1:8545 --broadcast --sender 0x1e3e1128f6bc2264a19d7a065982696d356879c5 --unlocked
+```
