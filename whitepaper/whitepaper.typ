@@ -6,9 +6,9 @@
 #register-glossary(glossary)
 
 #show: template.with(
-  title: [Ultimate Synthetic Delta Neutral], 
+  title: [Ultimate Synthetic Delta Neutral],
   version: [1.0],
-  date:[January 2025],
+  date: [January 2025],
   authors: (
     (
       name: "TBD",
@@ -88,9 +88,9 @@ release of the protocol, the token is @wsteth.
 Due to the algorithmic nature of the USDN token, its price in dollars $p_"usdn"$ can be calculated using the following
 formula:
 
-$ p_"usdn" = frac(B_"vault" p_"asset", S_"tot") $ <eq:usdn_price>
+$ p_"usdn" = frac(B_"vault" p, S_"tot") $ <eq:usdn_price>
 
-where $B_"vault"$ is the balance of assets held in the protocol's vault, $p_"asset"$ is the price of the asset token in
+where $B_"vault"$ is the balance of assets held in the protocol's vault, $p$ is the price of the asset token in
 USD, and $S_"tot"$ is the total supply of USDN tokens.
 
 == Token Minting <sec:token_minting>
@@ -98,7 +98,7 @@ USD, and $S_"tot"$ is the total supply of USDN tokens.
 USDN tokens are minted whenever a deposit is made into the protocol's vault. The amount of minted USDN $a_"usdn"$ is
 calculated by dividing the dollar value of the deposited assets by the USDN price:
 
-$ a_"usdn" = frac(a_"asset" p_"asset", p_"usdn") $ <eq:usdn_minting>
+$ a_"usdn" = frac(a_"asset" p, p_"usdn") $ <eq:usdn_minting>
 
 Taking into account @eq:usdn_price, the minting formula can be rewritten as:
 
@@ -109,7 +109,7 @@ $ a_"usdn" = frac(a_"asset" S_"tot", B_"vault") $
 When assets are removed from the protocol's vault, USDN tokens are burned in proportion to the withdrawn amount,
 following @eq:usdn_minting. Thus, for a given amount of USDN to be burned, the corresponding withdrawn assets amount is:
 
-$ a_"asset" = frac(a_"usdn" p_"usdn", p_"asset") = frac(a_"usdn" B_"vault", S_"tot") $
+$ a_"asset" = frac(a_"usdn" p_"usdn", p) = frac(a_"usdn" B_"vault", S_"tot") $
 
 == Yield Sources
 
