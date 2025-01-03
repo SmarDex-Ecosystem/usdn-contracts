@@ -107,18 +107,18 @@ contract TestUsdnProtocolPausable is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Ensure that no funding is possible during the pause period
+     * @custom:scenario Funding accumulated before pausing the protocol should be applied
      * @custom:given 1 day has passed
      * @custom:when {pause} is called
-     * @custom:then Fundings should be applied for the period before the pause
+     * @custom:then Funding should be applied for the period before the pause
      */
     function test_fundingAppliedUpBeforePause() public {
         uint256 balanceVaultBefore = protocol.getBalanceVault();
         uint256 balanceLongBefore = protocol.getBalanceLong();
 
+        skip(1 days);
         vm.prank(ADMIN);
         protocol.pause();
-        skip(1 days);
 
         uint256 balanceLong = protocol.getBalanceLong();
         uint256 balanceVault = protocol.getBalanceVault();
