@@ -16,6 +16,7 @@ import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
+import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../libraries/HugeUint.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
@@ -649,7 +650,11 @@ contract UsdnProtocolFallback is
 
     /// @inheritdoc IUsdnProtocolFallback
     function pause() external onlyRole(Constants.PAUSER_ROLE) {
-        Core._applyPnlAndFunding(Utils._getMainStorage()._lastPrice, uint128(block.timestamp));
+        Storage storage s = Utils._getMainStorage();
+
+        Types.ApplyPnlAndFundingData memory data = Core._applyPnlAndFunding(s._lastPrice, uint128(block.timestamp));
+        (s._balanceLong, s._balanceVault) = Long._handleNegativeBalances(data.tempLongBalance, data.tempVaultBalance);
+
         _pause();
     }
 
