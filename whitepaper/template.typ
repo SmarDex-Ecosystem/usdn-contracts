@@ -59,7 +59,7 @@
         #heading(outlined: false, bookmarked: false)[Abstract]
         #text(font: "TeX Gyre Pagella", abstract)
         #v(3pt)
-        *Keywords:* #keywords.join(text(font: "TeX Gyre Pagella", "; ")) #h(1fr)
+        *Keywords:* #text(font: "TeX Gyre Pagella", keywords.join("; ")) #h(1fr)
         Version #(version) #(date)
       ]
       v(18pt)
