@@ -11,7 +11,6 @@ import { IBaseRebalancer } from "../../interfaces/Rebalancer/IBaseRebalancer.sol
 import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolLong } from "../../interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "../../libraries/HugeUint.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
