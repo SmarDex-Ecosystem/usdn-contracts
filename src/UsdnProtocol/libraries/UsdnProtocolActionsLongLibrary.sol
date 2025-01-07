@@ -262,11 +262,13 @@ library UsdnProtocolActionsLongLibrary {
 
             // retrieve the actual penalty for this tick we want to use
             maxLeverageData.liquidationPenalty = Long.getTickLiquidationPenalty(maxLeverageData.newPosId.tick);
+            // check if the penalty for that tick is different from the current setting
+            // if the penalty is the same, then `data.liqPriceWithoutPenaltyNorFunding` is already correct
             if (maxLeverageData.liquidationPenalty != maxLeverageData.currentLiqPenalty) {
-                // the tick's imposed penalty is different from the current setting, so the `liqPriceWithoutPenalty` we
-                // got above can't be used to calculate the leverage
-                // we must instead use the tick's penalty to find the new `liqPriceWithoutPenalty` and calculate the
-                // total exposure
+                // the tick's imposed penalty is different from the current setting, so the
+                // `liqPriceWithoutPenaltyNorFunding` we got above can't be used to calculate the leverage
+                // we must instead use the tick's penalty to find the new `liqPriceWithoutPenaltyNorFunding` and
+                // calculate the total exposure
 
                 // note: In case the tick liquidation penalty is lower than the current setting, it might lead to a
                 // leverage that exceeds the max leverage slightly. We allow this behavior in this rare occurrence
@@ -281,7 +283,6 @@ library UsdnProtocolActionsLongLibrary {
             }
 
             // recalculate the liquidation price of the tick
-            // TODO Optimize? Lots of SLOADs on warm slots, would require a fairly heavy refactoring
             data.liqPriceWithoutPenalty = Utils._getEffectivePriceForTick(
                 Utils._calcTickWithoutPenalty(maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty)
             );
