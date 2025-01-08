@@ -2,7 +2,7 @@
 
 ## Deploy USDN token
 
-### Production mode
+### Production Deployment
 
 The script verifies that the deployer address has a nonce of 0. It then deploys the token. Finally, it grants the `DEFAULT_ADMIN_ROLE` to the safe address and renounces this role from the deployer.
 
@@ -26,7 +26,7 @@ A test mode is available with the `-t` or `--test` flag. It will deploy the toke
 ./script/deployUsdnToken.sh -t
 ```
 
-### Standalone mode
+### Standalone Mode
 
 You can run the forge script directly with the following command:
 
