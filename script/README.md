@@ -26,7 +26,7 @@ A test mode is available with the `-t` or `--test` flag. It will deploy the toke
 ./script/deployUsdnToken.sh -t
 ```
 
-### Standalone Mode
+### Standalone Deployment
 
 You can run the forge script directly with the following command:
 
