@@ -2,10 +2,10 @@
 pragma solidity >=0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
-import { HugeUint } from "../../libraries/HugeUint.sol";
 import { IBaseLiquidationRewardsManager } from "../LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
 import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
@@ -25,7 +26,6 @@ import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/
 import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
 
 /**

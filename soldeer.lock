@@ -34,6 +34,13 @@ checksum = "2c65c8850894b2e6420827cc1c03ab755d832230679be1bf0835c05aaefbc2bc"
 integrity = "91b013140e1099e6e5d92ef741bcffe7ba5642bc412e616b1dca9801cf3acd6e"
 
 [[dependencies]]
+name = "@smardex-solidity-libraries"
+version = "1.0.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/@smardex-solidity-libraries/1_0_1_08-01-2025_10:49:08_solidity-libraries.zip"
+checksum = "01e5cabc6e7f5b7e4300956cf872693a3f04bd7349c0059feb5b98b5c3d9b339"
+integrity = "7edabc9154bf7675c5f947f80c8d91f00ab5b6a4242c9dd0477176f6669be46d"
+
+[[dependencies]]
 name = "@uniswap-permit2"
 version = "1.0.0"
 url = "https://github.com/Uniswap/permit2/archive/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219.zip"

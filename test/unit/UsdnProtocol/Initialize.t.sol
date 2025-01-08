@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { ADMIN, DEPLOYER } from "../../utils/Constants.sol";
@@ -13,7 +14,6 @@ import { UsdnProtocolFallback } from "../../../src/UsdnProtocol/UsdnProtocolFall
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocol } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { HugeUint } from "../../../src/libraries/HugeUint.sol";
 
 /**
  * @custom:feature Test the functions linked to initialization of the protocol

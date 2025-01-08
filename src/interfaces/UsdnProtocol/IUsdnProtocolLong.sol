@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { HugeUint } from "../../libraries/HugeUint.sol";
+import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
+
 import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
