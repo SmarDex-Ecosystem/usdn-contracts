@@ -114,6 +114,7 @@ if [ "$1" = "--test" ]; then
     export GET_WSTETH=true
     export SAFE_ADDRESS="0x1E3e1128F6bC2264a19D7a065982696d356879c5"
     export IS_PROD_ENV=true
+    export WUSDN_ADDRESS="0x1234567890123456789012345678901234567890"
 
 else
     printf "\n$green To run this script in test mode, add \"-t\" or \"--test\"$nc\n\n"
