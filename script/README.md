@@ -36,6 +36,29 @@ forge script --private-key PRIVATE_KEY -f RPC_URL script/00_DeployUsdn.s.sol:Dep
 
 Two environment variables are required: `DEPLOYER_ADDRESS` and `SAFE_ADDRESS`.
 
+## Deploy WUSDN token
+
+Use the following command to deploy the WUSDN token:
+
+```shell
+forge create --rpc-url RPC_URL --constructor-args USDN_ADDRESS \
+    --private-key PRIVATE_KEY src/Usdn/Wusdn.sol:Wusdn
+```
+
+It will then prompt you to enter the deployer's private key.
+
+Help can be displayed with the `-h` flag.
+
+```shell
+./script/deployUsdnToken.sh -h
+```
+
+A test mode is available with the `-t` or `--test` flag. It will deploy the token with default values (rpc url: localhost:8545, deployer: 29th account of anvil, safe: EthSafeAddr).
+
+```shell
+./script/deployUsdnToken.sh -t
+```
+
 ## Deploy protocol
 
 ### Production mode
@@ -89,7 +112,8 @@ Environment variables can be used to control the script execution:
 
 - `INIT_LONG_AMOUNT`: amount to use for the `initialize` function call
 - `DEPLOYER_ADDRESS`: the address of the deployer
-- `USDN_ADDRESS`: required if running `01_Deploy.s.sol` in a production environment (not fork)
+- `USDN_ADDRESS`: the address of the USDN token
+- `WUSDN_ADDRESS`: required if running `01_Deploy.s.sol` in a production environment (not fork)
 - `GET_WSTETH`: whether to get wstETH by sending ether to the wstETH contract or not. Only applicable if `WSTETH_ADDRESS` is given.
 - `FEE_COLLECTOR`: the receiver of all protocol fees (set to `DEPLOYER_ADDRESS` if not set in the environment)
 - `SDEX_ADDRESS`: if provided, skips deployment of the SDEX token
