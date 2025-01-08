@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -11,6 +10,8 @@ import { IPaymentCallback } from "../../interfaces/UsdnProtocol/IPaymentCallback
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
+import { Accumulator, HugeUint } from "../../libraries/Accumulator.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
@@ -20,7 +21,7 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.so
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolActionsLongLibrary {
-    using HugeUint for HugeUint.Uint512;
+    using Accumulator for HugeUint.Uint512;
     using SafeCast for uint256;
     using SafeTransferLib for address;
 

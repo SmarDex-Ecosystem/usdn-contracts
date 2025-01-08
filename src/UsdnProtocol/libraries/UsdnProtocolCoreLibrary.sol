@@ -2,7 +2,6 @@
 pragma solidity 0.8.26;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
@@ -12,6 +11,7 @@ import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Accumulator, HugeUint } from "../../libraries/Accumulator.sol";
 import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
@@ -21,7 +21,7 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.so
 
 library UsdnProtocolCoreLibrary {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
-    using HugeUint for HugeUint.Uint512;
+    using Accumulator for HugeUint.Uint512;
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeTransferLib for address;

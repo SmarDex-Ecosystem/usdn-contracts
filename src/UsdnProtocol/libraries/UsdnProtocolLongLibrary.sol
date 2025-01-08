@@ -13,6 +13,7 @@ import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Accumulator, HugeUint } from "../../libraries/Accumulator.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
@@ -22,7 +23,7 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.so
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolLongLibrary {
-    using HugeUint for HugeUint.Uint512;
+    using Accumulator for HugeUint.Uint512;
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for int256;
     using SafeCast for uint256;
