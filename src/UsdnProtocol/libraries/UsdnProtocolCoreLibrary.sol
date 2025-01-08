@@ -69,7 +69,7 @@ library UsdnProtocolCoreLibrary {
         Utils._refundEther(address(this).balance, payable(msg.sender));
     }
 
-    /// @notice See {IUsdnProtocolFallback.removeBlockedPendingAction(address,address)}.
+    /// @notice See {IUsdnProtocolFallback.removeBlockedPendingAction(address,address payable)}.
     function removeBlockedPendingAction(address validator, address payable to) external {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -83,7 +83,7 @@ library UsdnProtocolCoreLibrary {
         _removeBlockedPendingAction(rawIndex, to, true);
     }
 
-    /// @notice See {IUsdnProtocolFallback.removeBlockedPendingActionNoCleanup(address,address)}.
+    /// @notice See {IUsdnProtocolFallback.removeBlockedPendingActionNoCleanup(address,address payable)}.
     function removeBlockedPendingActionNoCleanup(address validator, address payable to) external {
         Types.Storage storage s = Utils._getMainStorage();
 

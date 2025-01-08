@@ -64,7 +64,10 @@ library UsdnProtocolConstantsLibrary {
     /*                                   Setters                                  */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice Minimum iterations when searching for actionable pending actions in {getActionablePendingActions}.
+    /**
+     * @notice Minimum iterations when searching for actionable pending actions in
+     * {IUsdnProtocolFallback.getActionablePendingActions}.
+     */
     uint256 internal constant MIN_ACTIONABLE_PENDING_ACTIONS_ITER = 20;
 
     /// @notice Minimum validation deadline for validators.
@@ -111,7 +114,7 @@ library UsdnProtocolConstantsLibrary {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice EIP712 typehash for {initiateClosePosition}.
+     * @notice EIP712 typehash for {IUsdnProtocolActions.initiateClosePosition}.
      * @dev Used within EIP712 messages for domain-specific signing, enabling recovery of the signer
      * via [ECDSA-recover](https://docs.openzeppelin.com/contracts/5.x/api/utils#ECDSA).
      */
@@ -120,7 +123,7 @@ library UsdnProtocolConstantsLibrary {
     );
 
     /**
-     * @notice EIP712 typehash for {transferPositionOwnership}.
+     * @notice EIP712 typehash for {IUsdnProtocolActions.transferPositionOwnership}.
      * @dev Used within EIP712 messages for domain-specific signing, enabling recovery of the signer
      * via [ECDSA-recover](https://docs.openzeppelin.com/contracts/5.x/api/utils#ECDSA).
      */

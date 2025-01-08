@@ -14,7 +14,7 @@ interface IBaseLiquidationRewardsManager {
      * @param liquidatedTicks Information about the liquidated ticks.
      * @param currentPrice The current price of the asset.
      * @param rebased Indicates whether a USDN rebase was performed.
-     * @param rebalancerAction The action performed by the {IUsdnProtocolLongLibrary._triggerRebalancer} function.
+     * @param rebalancerAction The action performed by the {UsdnProtocolLongLibrary._triggerRebalancer} function.
      * @param action The type of protocol action that triggered the liquidation.
      * @param rebaseCallbackResult The result of the rebase callback, if any.
      * @param priceData The oracle price data, if any. This can be used to differentiate rewards based on the oracle
