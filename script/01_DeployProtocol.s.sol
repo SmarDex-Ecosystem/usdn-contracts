@@ -218,8 +218,9 @@ contract DeployProtocol is Script {
         } else {
             if (_isProdEnv) {
                 usdn_ = Usdn(USDN_MAINNET);
+            } else {
+                usdn_ = new Usdn(address(0), address(0));
             }
-            usdn_ = new Usdn(address(0), address(0));
         }
 
         if (wusdnAddress != address(0)) {
@@ -227,8 +228,9 @@ contract DeployProtocol is Script {
         } else {
             if (_isProdEnv) {
                 revert("WUSDN_ADDRESS is required on mainnet");
+            } else {
+                wusdn_ = new Wusdn(usdn_);
             }
-            wusdn_ = new Wusdn(usdn_);
         }
     }
 
