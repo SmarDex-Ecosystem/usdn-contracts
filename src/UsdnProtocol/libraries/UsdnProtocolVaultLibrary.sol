@@ -247,7 +247,7 @@ library UsdnProtocolVaultLibrary {
         Utils._checkPendingFee();
     }
 
-    /// @notice See {IUsdnProtocolActions.IUsdnProtocolActions}.
+    /// @notice See {IUsdnProtocolActions.validateWithdrawal}.
     function validateWithdrawal(
         address payable validator,
         bytes calldata withdrawalPriceData,
@@ -385,7 +385,7 @@ library UsdnProtocolVaultLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocolVault.usdnPrice(uint128, uint128)}.
+    /// @notice See {IUsdnProtocolVault.usdnPrice(uint128,uint128)}.
     function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -484,7 +484,7 @@ library UsdnProtocolVaultLibrary {
     }
 
     /**
-     * @notice This is the mutating version of {getActionablePendingAction}, where empty items at the front of the list
+     * @notice This is the mutating version of {getActionablePendingActions}, where empty items at the front of the list
      * are removed.
      * @return action_ The first actionable pending action if any, otherwise a struct with all fields set to zero and
      * {IUsdnProtocolTypes.ProtocolAction}'s `None` action.

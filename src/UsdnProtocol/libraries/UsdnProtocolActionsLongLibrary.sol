@@ -360,8 +360,8 @@ library UsdnProtocolActionsLongLibrary {
      * @notice Initiates an open position action.
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the {IUsdnProtocolTypes.ProtocolAction}'s `InitiateOpenPosition` action.
-     * The price validation might require payment according to the return value of the {validationCost} function
-     * of the middleware.
+     * The price validation might require payment according to the return value of the
+     * {IBaseOracleMiddleware.validationCost} function of the middleware.
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
      * leverage). The validation operation then updates the entry price and leverage with fresher data.
      * @param params The parameters for the open position initiation.
@@ -640,8 +640,8 @@ library UsdnProtocolActionsLongLibrary {
      * @notice Initiates a close position action.
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the {IUsdnProtocolTypes.ProtocolAction}'s `InitiateClosePosition` action.
-     * The price validation might require payment according to the return value of the {validationCost} function
-     * of the middleware.
+     * The price validation might require payment according to the return value of the
+     * {IBaseOracleMiddleware.validationCost} function of the middleware.
      * If the current tick version is greater than the tick version of the position (when it was opened), then the
      * position has been liquidated and this function will return 0.
      * The position is taken out of the tick and put in a pending state during this operation. Thus, calculations don't
