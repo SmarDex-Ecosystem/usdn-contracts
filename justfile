@@ -13,8 +13,8 @@ default:
 
 @trufflehog:
     {{ if config_exists == "false" { "just trufflehog-config" } else {""} }}
-    trufflehog git file://. --no-update --config .trufflehog.yml --exclude-paths=.trufflehog-ignore --only-verified --since-commit HEAD --fail
+    trufflehog git file://. --config .trufflehog.yml --exclude-paths=.trufflehog-ignore --results=verified,unknown --since-commit HEAD --fail
 
 @trufflehog-fs:
     {{ if config_exists == "false" { "just trufflehog-config" } else {""} }}
-    trufflehog filesystem --no-update --config .trufflehog.yml --exclude-paths=.trufflehog-ignore-fs --only-verified --fail .
+    trufflehog filesystem --config .trufflehog.yml --exclude-paths=.trufflehog-ignore-fs --results=verified,unknown --fail .

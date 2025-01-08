@@ -252,7 +252,7 @@ library UsdnProtocolActionsLongLibrary {
             data.liqPriceWithoutPenalty = Utils._getLiquidationPrice(data.startPrice, maxLeverage);
             // find corresponding tick and actual liq price with current penalty setting
             maxLeverageData.currentLiqPenalty = s._liquidationPenalty;
-            (maxLeverageData.newPosId.tick, data.liqPriceWithoutPenalty) = Long._getTickFromDesiredLiqPrice(
+            (maxLeverageData.newPosId.tick, data.liqPriceWithoutPenaltyNorFunding) = Long._getTickFromDesiredLiqPrice(
                 data.liqPriceWithoutPenalty,
                 data.action.liqMultiplier,
                 s._tickSpacing,
@@ -262,25 +262,29 @@ library UsdnProtocolActionsLongLibrary {
             // retrieve the actual penalty for this tick we want to use
             maxLeverageData.liquidationPenalty = Long.getTickLiquidationPenalty(maxLeverageData.newPosId.tick);
             // check if the penalty for that tick is different from the current setting
-            // if the penalty is the same, then the `data.liqPriceWithoutPenalty` is the correct liquidation price
-            // already
+            // if the penalty is the same, then `data.liqPriceWithoutPenaltyNorFunding` is already correct
             if (maxLeverageData.liquidationPenalty != maxLeverageData.currentLiqPenalty) {
-                // the tick's imposed penalty is different from the current setting, so the `liqPriceWithoutPenalty` we
-                // got above can't be used to calculate the leverage
-                // we must instead use the tick's penalty to find the new `liqPriceWithoutPenalty` and calculate the
-                // total exposure
+                // the tick's imposed penalty is different from the current setting, so the
+                // `liqPriceWithoutPenaltyNorFunding` we got above can't be used to calculate the leverage
+                // we must instead use the tick's penalty to find the new `liqPriceWithoutPenaltyNorFunding` and
+                // calculate the total exposure
 
                 // note: In case the tick liquidation penalty is lower than the current setting, it might lead to a
                 // leverage that exceeds the max leverage slightly. We allow this behavior in this rare occurrence
 
                 // retrieve exact liquidation price without penalty
-                // we consider the liquidation multiplier as it was during the initiation, to account for any funding
+                // we consider the liquidation multiplier as it was during the initiation, to ignore any funding
                 // that was due between the initiation and the validation
-                data.liqPriceWithoutPenalty = Utils._getEffectivePriceForTick(
+                data.liqPriceWithoutPenaltyNorFunding = Utils._getEffectivePriceForTick(
                     Utils._calcTickWithoutPenalty(maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty),
                     data.action.liqMultiplier
                 );
             }
+
+            // recalculate the liquidation price of the tick
+            data.liqPriceWithoutPenalty = Utils._getEffectivePriceForTick(
+                Utils._calcTickWithoutPenalty(maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty)
+            );
 
             // move the position to its new tick, update its total exposure, and return the new tickVersion and index
             // remove position from old tick completely
@@ -289,7 +293,7 @@ library UsdnProtocolActionsLongLibrary {
             );
             // update position total exposure (because of new leverage / liq price)
             data.pos.totalExpo =
-                Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
+                Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenaltyNorFunding);
             // mark the position as validated
             data.pos.validated = true;
             // insert position into new tick
@@ -356,8 +360,8 @@ library UsdnProtocolActionsLongLibrary {
      * @notice Initiates an open position action.
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the {IUsdnProtocolTypes.ProtocolAction}'s `InitiateOpenPosition` action.
-     * The price validation might require payment according to the return value of the {validationCost} function
-     * of the middleware.
+     * The price validation might require payment according to the return value of the
+     * {IBaseOracleMiddleware.validationCost} function of the middleware.
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
      * leverage). The validation operation then updates the entry price and leverage with fresher data.
      * @param params The parameters for the open position initiation.
@@ -636,8 +640,8 @@ library UsdnProtocolActionsLongLibrary {
      * @notice Initiates a close position action.
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the {IUsdnProtocolTypes.ProtocolAction}'s `InitiateClosePosition` action.
-     * The price validation might require payment according to the return value of the {validationCost} function
-     * of the middleware.
+     * The price validation might require payment according to the return value of the
+     * {IBaseOracleMiddleware.validationCost} function of the middleware.
      * If the current tick version is greater than the tick version of the position (when it was opened), then the
      * position has been liquidated and this function will return 0.
      * The position is taken out of the tick and put in a pending state during this operation. Thus, calculations don't

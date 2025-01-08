@@ -25,4 +25,4 @@ jobs:
       - name: TruffleHog
         uses: trufflesecurity/trufflehog@main
         with:
-          extra_args: --only-verified --config .trufflehog.yml --exclude-paths=.trufflehog-ignore
+          extra_args: --results=verified,unknown --config .trufflehog.yml --exclude-paths=.trufflehog-ignore
