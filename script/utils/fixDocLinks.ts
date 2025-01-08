@@ -1,5 +1,10 @@
 import fs, { readFileSync, writeFileSync } from 'node:fs';
 
+/* ---------------------------------------------------------------------------------------- */
+/*   This script's purpose it to fix the output of the `forge doc` command.                 */
+/*   It will go through the generated HTML files and attempt to replace the broken links.   */
+/* ---------------------------------------------------------------------------------------- */
+
 const DOCS_BOOK_PATH = './docs/book/src';
 const signaturesPerContract: Map<
   string,
