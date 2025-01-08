@@ -67,24 +67,24 @@ For a mainnet deployment, you have to use the shell script. The required variabl
 
 - the safe address (that will be the owner of the protocol)
 - the rpc url
-- the USDN token address
+- the WUSDN token address
 
 ```shell
-deployMainnet.sh -s SAFE_ADDRESS -r RPC_URL -u USDN_ADDRESS
+deployMainnet.sh -s SAFE_ADDRESS -r RPC_URL -w WUSDN_ADDRESS
 ```
 
 example:
 
 ```shell
-./script/deployMainnet.sh -r 127.0.0.1:8545 -s 0x1E3e1128F6bC2264a19D7a065982696d356879c5 -u 0xde17a000ba631c5d7c2bd9fb692efea52d90dee2
+./script/deployMainnet.sh -r 127.0.0.1:8545 -s 0x1E3e1128F6bC2264a19D7a065982696d356879c5 -w 0x1234567890123456789012345678901234567890
 ```
 
 Two optional flags are available:
 
-- `-w` to get wstETH by sending ether to the wstETH contract
+- `-e` to get wstETH by sending ether to the wstETH contract
 - `-t` to deploy with a hardware wallet (ledger/trezor)
 
-The script can be run with the following command with `--test` flag to deploy with default values. (rpc url: localhost:8545, get wstETH: true, deployer : 29th account of anvil, safe: EthSafeAddr)
+The script can be run with the following command with `--test` flag to deploy with default values. (rpc url: localhost:8545, get wstETH: true, deployer : 29th account of anvil, safe: EthSafeAddr, is prod env: true)
 
 ### Fork mode
 

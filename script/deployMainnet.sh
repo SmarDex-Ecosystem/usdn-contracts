@@ -9,7 +9,7 @@ green='\033[0;32m'
 blue='\033[0;34m'
 nc='\033[0m'
 
-USAGE="Usage: $(basename $0) [-r RPC_URL] [-s SAFE_ADDRESS] [-u USDN_ADDRESS] (-w GET_WSTETH) (-t HARDWARE_WALLET)"
+USAGE="Usage: $(basename $0) [-r RPC_URL] [-s SAFE_ADDRESS] [-w WUSDN_ADDRESS] (-e GET_WSTETH) (-t HARDWARE_WALLET)"
 
 broadcastPath="broadcast/00_DeployUsdn.s.sol/"
 broadcastFile="/run-latest.json"
@@ -50,7 +50,7 @@ function handlePrivateKey() {
 
 # Parses the arguments passed to the script
 function parseArguments() {
-    while getopts ":r:s:t:u:hw" opt; do
+    while getopts ":r:s:t:w:he" opt; do
         case ${opt} in
         r)
             rpcUrl="$OPTARG"
@@ -59,12 +59,12 @@ function parseArguments() {
             safeAddress="$OPTARG"
             export SAFE_ADDRESS=$safeAddress
             ;;
-        w)
+        e)
             getWstETH=true
             ;;
-        u)
-            usdnAddress="$OPTARG"
-            export USDN_ADDRESS=$usdnAddress
+        w)
+            wusdnAddress="$OPTARG"
+            export WUSDN_ADDRESS=$wusdnAddress
             ;;
         t)
             if [ "$OPTARG" = "ledger" ] || [ "$OPTARG" = "trezor" ]; then
@@ -89,8 +89,8 @@ function parseArguments() {
         esac
     done
 
-    if [[ -z "${rpcUrl}" || -z "${safeAddress}" || -z "${usdnAddress}" ]]; then
-        printf "\nError: All -r, -u and -s options are required\n\n"
+    if [[ -z "${rpcUrl}" || -z "${safeAddress}" || -z "${wusdnAddress}" ]]; then
+        printf "\nError: All -r, -w and -s options are required\n\n"
         printf "${USAGE}\n"
         exit 1
     fi
@@ -113,6 +113,7 @@ if [ "$1" = "--test" ]; then
     export DEPLOYER_ADDRESS="0x9DCCe783B6464611f38631e6C851bf441907c710"
     export GET_WSTETH=true
     export SAFE_ADDRESS="0x1E3e1128F6bC2264a19D7a065982696d356879c5"
+    export IS_PROD_ENV=true
 
 else
     printf "\n$green To run this script in test mode, add \"-t\" or \"--test\"$nc\n\n"
@@ -126,7 +127,7 @@ else
         printf "\n$blue Deployer address :$nc $address"
         printf "\n$blue Get wsETH        :$nc $getWstETH"
         printf "\n$blue Safe address     :$nc $safeAddress"
-        printf "\n$blue USDN address     :$nc $usdnAddress\n"
+        printf "\n$blue WUSDN address    :$nc $wusdnAddress\n"
 
         read -p $'\n'"Do you wish to continue? (Yy/Nn) : " yn
 
