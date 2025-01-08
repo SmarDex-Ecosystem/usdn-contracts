@@ -1,12 +1,11 @@
-import fs, { readFileSync, writeFile, writeFileSync } from 'node:fs';
+import fs, { readFileSync, writeFileSync } from 'node:fs';
 
 const DOCS_BOOK_PATH = './docs/book/src';
-
 const signaturesPerContract: Map<
   string,
   {
     path: string;
-    signatures: { [functionSignature: string]: { name: string; href: string } };
+    signatures: { [elementSignature: string]: { name: string; href: string } };
   }
 > = new Map();
 
@@ -31,23 +30,23 @@ function getRelevantDocFiles() {
     }) as string[];
 }
 
-function extractFunctionName(line: string) {
-  const functionName = line.match(/<a[^>]*>([^<]+)<\/a>/)?.[1];
-  const functionHref = line.match(/href="([^"]+)"/)?.[1];
+function extractElementName(line: string) {
+  const elementName = line.match(/<a[^>]*>([^<]+)<\/a>/)?.[1];
+  const elementHref = line.match(/href="([^"]+)"/)?.[1];
 
-  if (!functionName || !functionHref) {
-    throw `extractFunctionName: Unexpected format for line: ${line}`;
+  if (!elementName || !elementHref) {
+    throw `extractElementName: Unexpected format for line: ${line}`;
   }
 
-  return [functionName, functionHref];
+  return [elementName, elementHref];
 }
 
-function extractFunctionParameters(fileContent: string[], startIndex: number) {
+function extractElementParameters(fileContent: string[], startIndex: number) {
   const parameterTypes: string[] = [];
   for (let i = startIndex; i < fileContent.length; i++) {
     const line = fileContent[i];
-    // we are entering the doc of another element, so we should stop the iteration now and return what we got so far
-    if (line.includes('<h3')) {
+    // we are entering the doc of another element or the return types, so we should stop the iteration now and return what we got so far
+    if (line.includes('<h3') || line === '<p><strong>Returns</strong></p>') {
       return parameterTypes;
     }
 
@@ -61,7 +60,7 @@ function extractFunctionParameters(fileContent: string[], startIndex: number) {
   return parameterTypes;
 }
 
-function buildFunctionSignature(name: string, parameterTypes: string[]) {
+function buildElementSignature(name: string, parameterTypes: string[]) {
   return `${name}(${parameterTypes.join(',')})`;
 }
 
@@ -70,39 +69,44 @@ function indexContractElements(docFiles: string[]) {
   for (let i = 0; i < docFiles.length; i++) {
     const docFile = docFiles[i];
 
-    const content = readFileSync(`${DOCS_BOOK_PATH}/${docFile}`, { encoding: 'utf-8' }).split('\n');
+    const lines = readFileSync(`${DOCS_BOOK_PATH}/${docFile}`, { encoding: 'utf-8' }).split('\n');
     const contractName = docFile.split('/').slice(-2, -1)[0].split('.')[0];
 
-    signaturesPerContract.set(contractName, {
-      path: `/src/${docFile}`,
-      signatures: {},
-    });
+    if (!signaturesPerContract.has(contractName)) {
+      signaturesPerContract.set(contractName, {
+        path: `/src/${docFile}`,
+        signatures: {},
+      });
+    }
 
-    for (let i = 0; i < content.length; i++) {
-      const line = content[i];
-      // h3 tags are used only as headers for documenting a function/event/struct/etc.
-      if (line.includes('<h3')) {
-        const [functionName, functionHref] = extractFunctionName(line);
-        const parameterTypes = extractFunctionParameters(content, i + 1);
+    // find where the body of the documentation begins
+    const startIndex = lines.findIndex((lineContent) => lineContent.includes('<main>'));
 
-        // the signature of a function that is found first is always the default choice if parameters are not specified
+    for (let i = startIndex; i < lines.length; i++) {
+      const line = lines[i];
+      // h3 and h1 tags are used only as headers for documenting a function/event/struct/etc.
+      if (line.includes('<h3') || line.includes('<h1')) {
+        const [elementName, elementHref] = extractElementName(line);
+        const parameterTypes = extractElementParameters(lines, i + 1);
+
+        // the signature of an element that is found first is always the default choice if parameters are not specified
         // this helps the script deal with parameters overloading
-        if (signaturesPerContract.get(contractName)?.signatures[functionName] === undefined) {
+        if (signaturesPerContract.get(contractName)?.signatures[elementName] === undefined) {
           // biome-ignore lint/style/noNonNullAssertion: cannot be null because of initialization earlier
           const contractData = signaturesPerContract.get(contractName)!;
-          contractData.signatures[functionName] = {
-            href: `${contractData.path}${functionHref}`,
-            name: functionName,
+          contractData.signatures[elementName] = {
+            href: `${contractData.path}${elementHref}`,
+            name: elementName,
           };
           signaturesPerContract.set(contractName, contractData);
         }
 
-        // save the function signature and its reference
+        // save the element signature and its reference
         // biome-ignore lint/style/noNonNullAssertion: cannot be null because of initialization earlier
         const contractData = signaturesPerContract.get(contractName)!;
-        contractData.signatures[buildFunctionSignature(functionName, parameterTypes)] = {
-          href: `${contractData.path}${functionHref}`,
-          name: functionName,
+        contractData.signatures[buildElementSignature(elementName, parameterTypes)] = {
+          href: `${contractData.path}${elementHref}`,
+          name: elementName,
         };
         signaturesPerContract.set(contractName, contractData);
       }
@@ -113,6 +117,7 @@ function indexContractElements(docFiles: string[]) {
 /** Fix the broken links in the documentation */
 function fixDocFile(docFilePath: string) {
   let content = readFileSync(`${DOCS_BOOK_PATH}/${docFilePath}`, { encoding: 'utf-8' });
+  const contractName = docFilePath.split('/').slice(-2, -1)[0].split('.')[0];
   const lines = content.split('\n');
 
   // find where the body of the documentation begins
@@ -132,12 +137,33 @@ function fixDocFile(docFilePath: string) {
       for (let j = 0; j < matches.length; j++) {
         const match = matches[j];
         const stringToReplace = match[0];
-        const functionSelector = match[1];
-        const [targetContractName, functionName] = functionSelector.split('.');
 
-        // find the target contract and function signature to replace the broken link
-        // if it cannot be found, ignore it
-        const targetSignature = signaturesPerContract.get(targetContractName)?.signatures[functionName];
+        // ignore empty functions that match the regexp
+        if (stringToReplace === '{}') continue;
+
+        const elementSelector = match[1];
+        let [targetContractName, ...signatureElements] = elementSelector.split('.');
+        let elementSignature = signatureElements.join('.');
+
+        // if there is no element name, the broken link has a format of {xxxxx}
+        // meaning that it's either a link to a contract/interface, or a link to an element in the same file
+        if (!elementSignature) {
+          // if the contract name exists in the mapping, then it's a link to a contract
+          if (signaturesPerContract.has(targetContractName)) {
+            // biome-ignore lint/style/noNonNullAssertion: cannot be null because of assertion above
+            const contractData = signaturesPerContract.get(targetContractName)!;
+            isRewriteNecessary = true;
+            content = content.replaceAll(stringToReplace, `<a href="${contractData.path}">${targetContractName}</a>`);
+            continue;
+          }
+
+          // if it doesn't, then it's most probably a link to an  element in the same file
+          elementSignature = targetContractName;
+          targetContractName = contractName;
+        }
+
+        // find the target contract and element signature to replace the broken link
+        const targetSignature = signaturesPerContract.get(targetContractName)?.signatures[elementSignature];
         if (targetSignature) {
           isRewriteNecessary = true;
           content = content.replaceAll(
