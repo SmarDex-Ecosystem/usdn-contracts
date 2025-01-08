@@ -10,7 +10,6 @@ import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 library Accumulator {
     /**
      * @notice Calculate the sum `a + b` of two 512-bit unsigned integers
-     * @dev This function will revert if the result overflows a uint512
      * @param a The first operand
      * @param b The second operand
      * @return res_ The sum of `a` and `b`
@@ -25,7 +24,6 @@ library Accumulator {
 
     /**
      * @notice Calculate the difference `a - b` of two 512-bit unsigned integers
-     * @dev This function will revert if `b > a`
      * @param a The first operand
      * @param b The second operand
      * @return res_ The difference `a - b`
@@ -50,7 +48,6 @@ library Accumulator {
 
     /**
      * @notice Calculate the product `a * b` of a 512-bit unsigned integer and a 256-bit unsigned integer
-     * @dev This function reverts if the result overflows a uint512
      * @param a The first operand
      * @param b The second operand
      * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
@@ -61,7 +58,6 @@ library Accumulator {
 
     /**
      * @notice Calculate the division `floor(a / b)` of a 512-bit unsigned integer by an unsigned 256-bit integer
-     * @dev The call will revert if the result doesn't fit inside a uint256 or if the denominator is zero
      * @param a The numerator as a 512-bit unsigned integer
      * @param b The denominator as a 256-bit unsigned integer
      * @return res_ The division `floor(a / b)` of the operands as an unsigned 256-bit integer
@@ -72,8 +68,6 @@ library Accumulator {
 
     /**
      * @notice Compute the division floor(a/b) of two 512-bit integers, knowing the result fits inside a uint256
-     * @dev Credits chfast (Apache 2.0 License): https://github.com/chfast/intx
-     * This function will revert if the second operand is zero or if the result doesn't fit inside a uint256
      * @param a The numerator as a 512-bit integer
      * @param b The denominator as a 512-bit integer
      * @return res_ The quotient floor(a/b)
