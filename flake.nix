@@ -42,6 +42,7 @@
             gyre-fonts
             just
             lcov
+            mdbook
             nodejs_20
             slither-analyzer
             solc_0_8_26
