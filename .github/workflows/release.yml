@@ -39,11 +39,6 @@ jobs:
           node-version: 20
         if: ${{ steps.release.outputs.release_created }}
 
-      - name: Install mdbook
-        uses: peaceiris/actions-mdbook@v2
-        with:
-          mdbook-version: '0.4.43'
-
       - name: Install dependencies
         run: npm ci && forge soldeer install
         if: ${{ steps.release.outputs.release_created }}
@@ -53,7 +48,7 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Generate documentation
-        run: npm run doc
+        run: forge doc && npx tsx script/utils/fixDocLinks.ts
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Configure AWS credentials
