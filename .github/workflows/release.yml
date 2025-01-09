@@ -47,8 +47,8 @@ jobs:
         run: npm run exportAbi
         if: ${{ steps.release.outputs.release_created }}
 
-      - name: Generate docs
-        run: forge doc
+      - name: Generate documentation
+        run: forge doc && npx tsx script/utils/fixDocLinks.ts
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Configure AWS credentials

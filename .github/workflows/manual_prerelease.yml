@@ -33,8 +33,8 @@ jobs:
       - name: Export ABI
         run: npm run exportAbi
 
-      - name: Generate docs
-        run: forge doc
+      - name: Generate documentation
+        run: forge doc && npx tsx script/utils/fixDocLinks.ts
 
       - name: Configure AWS credentials
         uses: backend-ra2-tech/composite-workflows/aws-login@main
