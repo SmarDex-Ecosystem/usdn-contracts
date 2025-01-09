@@ -29,7 +29,7 @@ function getRelevantDocFiles() {
       const fileName = path.split('/').pop();
       if (fileName === 'README.md') return false;
 
-      // a file without a .html extension is a directory and must be ignored
+      // a file without a .md extension is a directory and must be ignored
       const fileExtension = path.split('.').pop();
       return fileExtension === 'md';
     }) as string[];
@@ -130,12 +130,7 @@ function fixDocFile(docFilePath: string) {
   let isRewriteNecessary = false;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    // this signifies the end of the body of the documentation anything after that is irrelevant
-    if (line.includes('</main>')) {
-      break;
-    }
-
-    // find anything between brackets in the current line
+    // find anything between curly braces in the current line
     const matches = [...line.matchAll(/\{([^}]*)\}/g)];
     if (matches.length > 0) {
       for (let j = 0; j < matches.length; j++) {
