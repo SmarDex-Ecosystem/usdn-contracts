@@ -48,6 +48,9 @@ struct RedstonePriceInfo {
 /**
  * @notice The different confidence interval of a Pyth price.
  * @dev Applied to the neutral price and available as `price`.
+ * @param Up Adjusted price at the upper bound of the confidence interval.
+ * @param Down Adjusted price at the lower bound of the confidence interval.
+ * @param None Neutral price without adjustment.
  */
 enum ConfidenceInterval {
     Up,
