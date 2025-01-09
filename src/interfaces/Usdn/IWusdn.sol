@@ -85,6 +85,12 @@ interface IWusdn is IERC20Metadata, IERC20Permit, IWusdnEvents, IWusdnErrors {
     function previewWrapShares(uint256 usdnShares) external view returns (uint256 wrappedAmount_);
 
     /**
+     * @notice Returns the exchange rate between WUSDN and USDN.
+     * @return usdnAmount_ The amount of USDN that corresponds to 1 WUSDN.
+     */
+    function redemptionRate() external view returns (uint256 usdnAmount_);
+
+    /**
      * @notice Computes the amount of USDN that would be received for a given amount of WUSDN.
      * @dev The actual amount received may differ slightly due to rounding errors.
      * For a precise value, use {previewUnwrapShares}.
@@ -92,8 +98,6 @@ interface IWusdn is IERC20Metadata, IERC20Permit, IWusdnEvents, IWusdnErrors {
      * @return usdnAmount_ The estimated amount of USDN that would be received.
      */
     function previewUnwrap(uint256 wusdnAmount) external view returns (uint256 usdnAmount_);
-
-    function exchangeRate() external view returns (uint256 usdnAmount_);
 
     /**
      * @notice Computes the amount of USDN shares that would be received for a given amount of WUSDN.
