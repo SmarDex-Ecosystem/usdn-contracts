@@ -76,6 +76,10 @@ contract Wusdn is ERC20Permit, IWusdn {
         usdnAmount_ = USDN.convertToTokens(wusdnAmount * SHARES_RATIO);
     }
 
+    function exchangeRate() external view returns (uint256 usdnAmount_) {
+        usdnAmount_ = USDN.convertToTokens(1e18 * SHARES_RATIO);
+    }
+
     /// @inheritdoc IWusdn
     function previewUnwrapShares(uint256 wusdnAmount) external view returns (uint256 usdnSharesAmount_) {
         usdnSharesAmount_ = wusdnAmount * SHARES_RATIO;
