@@ -137,40 +137,38 @@ function fixDocFile(docFilePath: string) {
     const line = lines[i];
     // find anything between curly braces in the current line
     const matches = [...line.matchAll(/\{([^}]+)\}/g)];
-    if (matches.length > 0) {
-      for (let j = 0; j < matches.length; j++) {
-        const match = matches[j];
-        const stringToReplace = match[0];
+    for (let j = 0; j < matches.length; j++) {
+      const match = matches[j];
+      const stringToReplace = match[0];
 
-        const elementSelector = match[1];
-        let [targetContractName, ...signatureParts] = elementSelector.split('.');
-        let elementSignature = signatureParts.join('.');
+      const elementSelector = match[1];
+      let [targetContractName, ...signatureParts] = elementSelector.split('.');
+      let elementSignature = signatureParts.join('.');
 
-        // if there is no element signature, the broken link has a format of {xxxxx}
-        // meaning that it's either a link to a contract/interface, or a link to an element in the same file
-        if (!elementSignature) {
-          // if the contract name exists in the mapping, then it's a link to a contract
-          if (signaturesPerFile.has(targetContractName)) {
-            // biome-ignore lint/style/noNonNullAssertion: cannot be null because of assertion above
-            const contractData = signaturesPerFile.get(targetContractName)!;
-            isRewriteNecessary = true;
-            content = content.replaceAll(stringToReplace, `[${targetContractName}](${contractData.path})`);
-            continue;
-          }
-
-          // if it doesn't, then it's most probably a link to an element in the same file
-          elementSignature = targetContractName;
-          targetContractName = contractName;
-        }
-
-        // find the target contract and element signature to replace the broken link
-        const targetSignature = signaturesPerFile.get(targetContractName)?.signatures[elementSignature];
-        if (targetSignature) {
+      // if there is no element signature, the broken link has a format of {xxxxx}
+      // meaning that it's either a link to a contract/interface, or a link to an element in the same file
+      if (!elementSignature) {
+        // if the contract name exists in the mapping, then it's a link to a contract
+        if (signaturesPerFile.has(targetContractName)) {
+          // biome-ignore lint/style/noNonNullAssertion: cannot be null because of assertion above
+          const contractData = signaturesPerFile.get(targetContractName)!;
           isRewriteNecessary = true;
-          content = content.replaceAll(stringToReplace, `[${targetSignature.name}](${targetSignature.href})`);
-        } else {
-          console.warn(`Could not find signature for link ${stringToReplace} in ${docFilePath}`);
+          content = content.replaceAll(stringToReplace, `[${targetContractName}](${contractData.path})`);
+          continue;
         }
+
+        // if it doesn't, then it's most probably a link to an element in the same file
+        elementSignature = targetContractName;
+        targetContractName = contractName;
+      }
+
+      // find the target contract and element signature to replace the broken link
+      const targetSignature = signaturesPerFile.get(targetContractName)?.signatures[elementSignature];
+      if (targetSignature) {
+        isRewriteNecessary = true;
+        content = content.replaceAll(stringToReplace, `[${targetSignature.name}](${targetSignature.href})`);
+      } else {
+        console.warn(`Could not find signature for link ${stringToReplace} in ${docFilePath}`);
       }
     }
   }
