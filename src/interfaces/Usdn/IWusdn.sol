@@ -93,6 +93,8 @@ interface IWusdn is IERC20Metadata, IERC20Permit, IWusdnEvents, IWusdnErrors {
      */
     function previewUnwrap(uint256 wusdnAmount) external view returns (uint256 usdnAmount_);
 
+    function exchangeRate() external view returns (uint256 usdnAmount_);
+
     /**
      * @notice Computes the amount of USDN shares that would be received for a given amount of WUSDN.
      * @param wusdnAmount The amount of WUSDN to unwrap.
