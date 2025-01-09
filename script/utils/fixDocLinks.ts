@@ -51,8 +51,13 @@ function extractElementParameters(fileContent: string[], startIndex: number) {
   for (let i = startIndex; i < fileContent.length; i++) {
     const line = fileContent[i];
     // we are entering the doc of another element or the return types, so we should stop the iteration now and return what we got so far
-    if (line.includes('###') || line === '**Returns**') {
+    if (line.startsWith('### ') || line === '**Returns**') {
       return parameterTypes;
+    }
+
+    // lines containing a parameter are always part of a table
+    if (!line.startsWith('|')) {
+      continue;
     }
 
     // match parameters inside back quotes
@@ -89,8 +94,8 @@ function indexContractElements(docFiles: string[]) {
       const line = lines[i];
       // function/event/struct/etc in a file which is a contract or an interface always begin with '###'
       // if the struct/enum is not in a contract or an interface, a file will be generated per element
-      // in that case, the name of the element is at the top of the file and begins with a '#'
-      if (line.includes('###') || (!['contract', 'interface'].includes(docType) && line.includes('#'))) {
+      // in that case, the name of the element is at the top of the file and begins with a '# '
+      if (line.startsWith('### ') || (!['contract', 'interface'].includes(docType) && line.startsWith('# '))) {
         const [elementName, elementHref] = extractElementName(line);
         const parameterTypes = extractElementParameters(lines, i + 1);
 
