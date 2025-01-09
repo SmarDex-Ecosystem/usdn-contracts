@@ -136,14 +136,11 @@ function fixDocFile(docFilePath: string) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     // find anything between curly braces in the current line
-    const matches = [...line.matchAll(/\{([^}]*)\}/g)];
+    const matches = [...line.matchAll(/\{([^}]+)\}/g)];
     if (matches.length > 0) {
       for (let j = 0; j < matches.length; j++) {
         const match = matches[j];
         const stringToReplace = match[0];
-
-        // ignore empty functions that match the regexp
-        if (stringToReplace === '{}') continue;
 
         const elementSelector = match[1];
         let [targetContractName, ...signatureParts] = elementSelector.split('.');
