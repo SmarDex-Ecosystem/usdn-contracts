@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
+
 import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
 import { DEPLOYER, SET_PROTOCOL_PARAMS_MANAGER } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
-import { HugeUint } from "../../../src/libraries/HugeUint.sol";
 import { TickMath } from "../../../src/libraries/TickMath.sol";
 
 /**

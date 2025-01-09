@@ -14,8 +14,8 @@ import { IPaymentCallback } from "../../interfaces/UsdnProtocol/IPaymentCallback
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Accumulator, HugeUint } from "../../libraries/Accumulator.sol";
 import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
-import { HugeUint } from "../../libraries/HugeUint.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
@@ -28,7 +28,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstan
  */
 library UsdnProtocolUtilsLibrary {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
-    using HugeUint for HugeUint.Uint512;
+    using Accumulator for HugeUint.Uint512;
     using SafeCast for uint256;
     using SafeTransferLib for address;
     using SignedMath for int256;
@@ -498,7 +498,7 @@ library UsdnProtocolUtilsLibrary {
         // M = assetPrice * longTradingExpo / accumulator
         // with longTradingExpo = totalExpo - balanceLong
         HugeUint.Uint512 memory numerator =
-            HugeUint.mul(10 ** Constants.LIQUIDATION_MULTIPLIER_DECIMALS, assetPrice * longTradingExpo);
+            Accumulator.mul(10 ** Constants.LIQUIDATION_MULTIPLIER_DECIMALS, assetPrice * longTradingExpo);
         multiplier_ = numerator.div(accumulator);
     }
 
@@ -630,7 +630,7 @@ library UsdnProtocolUtilsLibrary {
 
         // price = unadjustedPrice * M
         // with M = assetPrice * (totalExpo - balanceLong) / accumulator
-        HugeUint.Uint512 memory numerator = HugeUint.mul(unadjustedPrice, assetPrice * longTradingExpo);
+        HugeUint.Uint512 memory numerator = Accumulator.mul(unadjustedPrice, assetPrice * longTradingExpo);
         price_ = numerator.div(accumulator).toUint128();
     }
 

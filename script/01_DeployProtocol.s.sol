@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
 
+import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -24,7 +25,6 @@ import { UsdnProtocolConstantsLibrary as Constants } from
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "../src/libraries/HugeUint.sol";
 
 contract DeployProtocol is Script {
     address constant WSTETH_MAINNET = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;

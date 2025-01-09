@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
 
+import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
@@ -10,7 +11,6 @@ import { Usdn } from "../src/Usdn/Usdn.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "../src/libraries/HugeUint.sol";
 
 contract InitializeProtocol is Script {
     bool internal _getWstEth;

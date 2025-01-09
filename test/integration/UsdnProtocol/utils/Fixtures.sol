@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
+import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { MOCK_PYTH_DATA } from "../../../unit/Middlewares/utils/Constants.sol";
@@ -39,7 +40,6 @@ import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMi
 import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
 
 contract UsdnProtocolBaseIntegrationFixture is
     BaseFixture,

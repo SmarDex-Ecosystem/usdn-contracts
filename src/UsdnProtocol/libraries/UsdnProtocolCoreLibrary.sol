@@ -11,8 +11,8 @@ import { IUsdn } from "../../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "../../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Accumulator, HugeUint } from "../../libraries/Accumulator.sol";
 import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
-import { HugeUint } from "../../libraries/HugeUint.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { TickMath } from "../../libraries/TickMath.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
@@ -21,7 +21,7 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.so
 
 library UsdnProtocolCoreLibrary {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
-    using HugeUint for HugeUint.Uint512;
+    using Accumulator for HugeUint.Uint512;
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeTransferLib for address;

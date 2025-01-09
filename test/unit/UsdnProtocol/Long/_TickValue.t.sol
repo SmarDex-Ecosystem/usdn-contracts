@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
+import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 
-import { HugeUint } from "../../../../src/libraries/HugeUint.sol";
+import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 
 /// @custom:feature the _tickValue internal function of the UsdnProtocolLong contract.
 contract TestUsdnProtocolLongTickValue is UsdnProtocolBaseFixture {
