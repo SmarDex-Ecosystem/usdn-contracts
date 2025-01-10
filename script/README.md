@@ -2,13 +2,13 @@
 
 ## Deploy USDN token
 
-### Production mode
+### Production Deployment
 
 The script verifies that the deployer address has a nonce of 0. It then deploys the token. Finally, it grants the `DEFAULT_ADMIN_ROLE` to the safe address and renounces this role from the deployer.
 
 Use the following command to deploy the USDN token:
 
-```shell
+```bash
 ./script/deployUsdnToken.sh -r RPC_URL -s SAFE_ADDRESS
 ```
 
@@ -16,58 +16,67 @@ It will then prompt you to enter the deployer's private key.
 
 Help can be displayed with the `-h` flag.
 
-```shell
+```bash
 ./script/deployUsdnToken.sh -h
 ```
 
 A test mode is available with the `-t` or `--test` flag. It will deploy the token with default values (rpc url: localhost:8545, deployer: 29th account of anvil, safe: EthSafeAddr).
 
-```shell
+```bash
 ./script/deployUsdnToken.sh -t
 ```
 
-### Standalone mode
+### Standalone Deployment
 
 You can run the forge script directly with the following command:
 
-```shell
+```bash
 forge script --private-key PRIVATE_KEY -f RPC_URL script/00_DeployUsdn.s.sol:DeployUsdn --broadcast --slow
 ```
 
 Two environment variables are required: `DEPLOYER_ADDRESS` and `SAFE_ADDRESS`.
 
+## Deploy WUSDN token
+
+Use the following command to deploy the WUSDN token:
+
+```bash
+forge create --rpc-url RPC_URL --constructor-args USDN_ADDRESS \
+    --private-key PRIVATE_KEY src/Usdn/Wusdn.sol:Wusdn
+```
+
 ## Deploy protocol
 
 ### Production mode
 
-For a mainnet deployment, you have to use the shell script. The required variables are:
+For a mainnet deployment, you have to use the bash script. The required variables are:
 
 - the safe address (that will be the owner of the protocol)
 - the rpc url
-- the USDN token address
+- the WUSDN token address
 
-```shell
-deployMainnet.sh -s SAFE_ADDRESS -r RPC_URL -u USDN_ADDRESS
+```bash
+deployMainnet.sh -s SAFE_ADDRESS -r RPC_URL -w WUSDN_ADDRESS
 ```
 
 example:
 
-```shell
-./script/deployMainnet.sh -r 127.0.0.1:8545 -s 0x1E3e1128F6bC2264a19D7a065982696d356879c5 -u 0xde17a000ba631c5d7c2bd9fb692efea52d90dee2
+```bash
+./script/deployMainnet.sh -r 127.0.0.1:8545 -s 0x1E3e1128F6bC2264a19D7a065982696d356879c5 -w 0x1234567890123456789012345678901234567890
 ```
 
 Two optional flags are available:
 
-- `-w` to get wstETH by sending ether to the wstETH contract
+- `-e` to get wstETH by sending ether to the wstETH contract
 - `-t` to deploy with a hardware wallet (ledger/trezor)
 
-The script can be run with the following command with `--test` flag to deploy with default values. (rpc url: localhost:8545, get wstETH: true, deployer : 29th account of anvil, safe: EthSafeAddr)
+The script can be run with the following command with `--test` flag to deploy with default values. (rpc url: localhost:8545, get wstETH: true, deployer : 29th account of anvil, safe: EthSafeAddr, is prod env: true)
 
 ### Fork mode
 
 The deployment script for the fork mode does not require any input:
 
-```shell
+```bash
 deployFork.sh
 ```
 
@@ -75,7 +84,7 @@ deployFork.sh
 
 You can run the forge script directly with the following command:
 
-```shell
+```bash
 forge script script/01_DeployProtocol.s.sol:DeployProtocol -f RPC_URL --private-key PRIVATE_KEY --broadcast
 ```
 
@@ -89,7 +98,8 @@ Environment variables can be used to control the script execution:
 
 - `INIT_LONG_AMOUNT`: amount to use for the `initialize` function call
 - `DEPLOYER_ADDRESS`: the address of the deployer
-- `USDN_ADDRESS`: required if running `01_Deploy.s.sol` in a production environment (not fork)
+- `USDN_ADDRESS`: the address of the USDN token
+- `WUSDN_ADDRESS`: required if running `01_Deploy.s.sol` in a production environment (not fork)
 - `GET_WSTETH`: whether to get wstETH by sending ether to the wstETH contract or not. Only applicable if `WSTETH_ADDRESS` is given.
 - `FEE_COLLECTOR`: the receiver of all protocol fees (set to `DEPLOYER_ADDRESS` if not set in the environment)
 - `SDEX_ADDRESS`: if provided, skips deployment of the SDEX token

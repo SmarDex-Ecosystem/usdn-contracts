@@ -29,6 +29,7 @@ import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsd
 contract DeployProtocol is Script {
     address constant WSTETH_MAINNET = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
     address constant SDEX_MAINNET = 0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF;
+    address constant USDN_MAINNET = 0xde17a000BA631c5d7c2Bd9FB692EFeA52D90DEE2;
     address constant PYTH_MAINNET = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
     bytes32 constant PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
     address constant CHAINLINK_ETH_PRICE_MAINNET = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
@@ -204,23 +205,33 @@ contract DeployProtocol is Script {
     /**
      * @notice Deploy the USDN token and the WUSDN token
      * @dev Will return the already deployed ones if an address is in the env variables
-     * On mainnet the `USDN_ADDRESS` env variable is required
+     * On mainnet the `WUSDN_ADDRESS` env variable is required
      * @return usdn_ The deployed Usdn contract
      * @return wusdn_ The deployed Wusdn contract
      */
     function _deployUsdnAndWusdn() internal returns (Usdn usdn_, Wusdn wusdn_) {
         address usdnAddress = payable(vm.envOr("USDN_ADDRESS", address(0)));
+        address wusdnAddress = payable(vm.envOr("WUSDN_ADDRESS", address(0)));
 
         if (usdnAddress != address(0)) {
             usdn_ = Usdn(usdnAddress);
         } else {
             if (_isProdEnv) {
-                revert("USDN_ADDRESS is required on mainnet");
+                usdn_ = Usdn(USDN_MAINNET);
+            } else {
+                usdn_ = new Usdn(address(0), address(0));
             }
-            usdn_ = new Usdn(address(0), address(0));
         }
 
-        wusdn_ = new Wusdn(usdn_);
+        if (wusdnAddress != address(0)) {
+            wusdn_ = Wusdn(wusdnAddress);
+        } else {
+            if (_isProdEnv) {
+                revert("WUSDN_ADDRESS is required on mainnet");
+            } else {
+                wusdn_ = new Wusdn(usdn_);
+            }
+        }
     }
 
     /**
