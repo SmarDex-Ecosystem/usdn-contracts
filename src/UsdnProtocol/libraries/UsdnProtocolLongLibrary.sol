@@ -1291,6 +1291,14 @@ library UsdnProtocolLongLibrary {
             tempVaultBalance = 0;
         }
 
+        // in case one of the balances is still negative, clamp it to 0
+        if (tempLongBalance < 0) {
+            tempLongBalance = 0;
+        }
+        if (tempVaultBalance < 0) {
+            tempVaultBalance = 0;
+        }
+
         longBalance_ = tempLongBalance.toUint256();
         vaultBalance_ = tempVaultBalance.toUint256();
     }
