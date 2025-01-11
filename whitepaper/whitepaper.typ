@@ -11,10 +11,44 @@
   date: [January 2025],
   authors: (
     (
-      name: "TBD",
-      institution: "RA2 Tech SA",
-      location: "Switzerland",
-      mail: "info@ra2.tech",
+      name: "Jean Rausis",
+      institution: "Co-CEO",
+      mail: "jean@ra2.tech",
+    ),
+    (
+      name: "Eric Rabl",
+      institution: "Co-CEO",
+      mail: "eric@ra2.tech",
+    ),
+    (
+      name: "Blockchain Team(Lilyan Bastien",
+      institution: "",
+      mail: "",
+    ),
+    (
+      name: "Nicolas Decosterd",
+      institution: "",
+      mail: "",
+    ),
+    (
+      name: "Paul-Alexandre Tessier",
+      institution: "",
+      mail: "",
+    ),
+    (
+      name: "Sami Darnaud",
+      institution: "",
+      mail: "",
+    ),
+    (
+      name: "Valentin Bersier",
+      institution: "",
+      mail: "",
+    ),
+    (
+      name: "Yoan Capron)",
+      institution: "",
+      mail: "blockchain@ra2.tech",
     ),
   ),
   abstract: [
@@ -463,3 +497,25 @@ synthetic dollar token.
 #show figure: set text(9pt)
 #show figure.caption: pad.with(x: -10%)
 #print-glossary(glossary)
+
+= Acknowledgment
+
+Thank you to everyone who made this project possible in any way :
+- Abdel Mecheri
+- Alfred Gaillard
+- Antoine Duez
+- Bilel Oural
+- Brice Belkadi
+- Carl Cronsioe
+- Diogo Estima
+- Esteban Gonzalez
+- Fecri Al-Fakeri
+- Flavio Roth
+- Julien Chiappinelli
+- Lorena Feijoo
+- Marylou Kronauer
+- Matthieu Guerra
+- Mikael Cruchon
+- Sebastien Mansour
+- Simon Lussi
+- Vicente Guedes

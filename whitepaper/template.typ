@@ -38,18 +38,36 @@
         text(24pt, fill: rgb("004b71"), title, weight: "bold"),
       )
 
+      let super_index = 1
       text(
         12pt,
-        authors.enumerate().map(((i, author)) => box[#author.name #super[#(i + 1)]]).join(", "),
+        for (i, author) in authors.enumerate() {
+          if author.mail != "" {
+            box[#author.name #super[#super_index]]
+            super_index = super_index + 1
+          } else [
+            #author.name
+          ]
+
+          if i != authors.len()-1 {
+            [,]
+          }
+        }
       )
       parbreak()
 
-      for (i, author) in authors.enumerate() [
-        #set text(8pt)
-        #super[#(i + 1)]
-        #author.institution
-        #link("mailto:" + author.mail) \
-      ]
+      let index = 1
+      for author in authors {
+        if author.mail != "" {
+          set text(8pt)
+          super[#(index)]
+          author.institution
+          text(" ")
+          link("mailto:" + author.mail)
+          index = index + 1
+          linebreak()
+        }
+      }
 
       v(8pt)
       set text(10pt)
