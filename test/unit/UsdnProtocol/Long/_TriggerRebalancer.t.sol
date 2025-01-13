@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { Vm } from "forge-std/Vm.sol";
+
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
 import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { MockRebalancer } from "../utils/MockRebalancer.sol";
@@ -124,7 +128,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             })
         );
 
-        mockedRebalancer.setCurrentStateData(0, protocol.getMaxLeverage(), posId);
+        mockedRebalancer.setCurrentStateData(0, protocol.getMaxLeverage(), 0, 0, posId);
 
         vm.prank(ADMIN);
         protocol.setMinLongPosition(10 ** assetDecimals);
@@ -143,6 +147,63 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             "The value of the closed position should have been transferred to the vault"
         );
 
+        assertTrue(rebalancerAction == Types.RebalancerAction.Closed, "The rebalancer should only close the position");
+    }
+
+    /**
+     * @custom:scenario The rebalancer is triggered but the new accumulated multiplier is less than 10_000
+     * @custom:given A rebalancer that was already triggered and has a position
+     * @custom:when The rebalancer is triggered again
+     * @custom:and The value of the new accMultiplier is less than 10_000
+     * @custom:then The position is closed
+     * @custom:and The value of the closed position is added to the vault
+     */
+    function test_NewAccMultiplier_LT10_000() public {
+        uint128 amount = 1 ether;
+        uint128 prevPositionAmount = 10 ether;
+        uint256 entryAccMultiplier = 1;
+        vaultBalance *= 2;
+
+        PositionId memory posId = setUpUserPositionInLong(
+            OpenParams({
+                user: address(mockedRebalancer),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: amount,
+                desiredLiqPrice: DEFAULT_PARAMS.initialPrice / 2,
+                price: DEFAULT_PARAMS.initialPrice
+            })
+        );
+
+        mockedRebalancer.setCurrentStateData(
+            0, protocol.getMaxLeverage(), prevPositionAmount, entryAccMultiplier, posId
+        );
+
+        vm.recordLogs();
+        (uint256 newLongBalance, uint256 newVaultBalance, Types.RebalancerAction rebalancerAction) =
+            protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        assertTrue(logs[0].topics[0] == InitiatedClosePosition.selector, "First event should be InitiatedClosePosition");
+        assertTrue(
+            logs[1].topics[0] == ValidatedClosePosition.selector, "Second event should be ValidatedClosePosition"
+        );
+        (, uint256 posValue,) = abi.decode(logs[1].data, (PositionId, uint256, int256));
+
+        assertLt(
+            FixedPointMathLib.fullMulDiv(posValue, entryAccMultiplier, prevPositionAmount),
+            10_000,
+            "The value of newAccMultiplier should be less than 10_000"
+        );
+        assertEq(
+            newVaultBalance - vaultBalance,
+            posValue,
+            "The value of the closed position should have been added to the vault"
+        );
+        assertEq(
+            longBalance - newLongBalance,
+            posValue,
+            "The value of the closed position should have been removed from the long balance"
+        );
         assertTrue(rebalancerAction == Types.RebalancerAction.Closed, "The rebalancer should only close the position");
     }
 
@@ -171,7 +232,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             })
         );
 
-        mockedRebalancer.setCurrentStateData(0, protocol.getMaxLeverage(), posId);
+        mockedRebalancer.setCurrentStateData(0, protocol.getMaxLeverage(), 0, 0, posId);
 
         (uint256 newLongBalance, uint256 newVaultBalance, Types.RebalancerAction rebalancerAction) =
             protocol.i_triggerRebalancer(DEFAULT_PARAMS.initialPrice, longBalance, vaultBalance, remainingCollateral);
@@ -203,7 +264,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         wstETH.mintAndApprove(address(mockedRebalancer), pendingAssets, address(protocol), type(uint256).max);
 
         mockedRebalancer.setCurrentStateData(
-            pendingAssets, protocol.getMaxLeverage(), PositionId(Constants.NO_POSITION_TICK, 0, 0)
+            pendingAssets, protocol.getMaxLeverage(), 0, 0, PositionId(Constants.NO_POSITION_TICK, 0, 0)
         );
 
         (uint256 newLongBalance, uint256 newVaultBalance, Types.RebalancerAction rebalancerAction) =
@@ -253,7 +314,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         vm.prank(address(mockedRebalancer));
         wstETH.mintAndApprove(address(mockedRebalancer), pendingAssets, address(protocol), type(uint256).max);
 
-        mockedRebalancer.setCurrentStateData(pendingAssets, protocol.getMaxLeverage(), posId);
+        mockedRebalancer.setCurrentStateData(pendingAssets, protocol.getMaxLeverage(), 0, 0, posId);
 
         (uint256 newLongBalance, uint256 newVaultBalance, Types.RebalancerAction rebalancerAction) =
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
@@ -290,7 +351,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         wstETH.mintAndApprove(address(mockedRebalancer), pendingAssets, address(protocol), type(uint256).max);
 
         mockedRebalancer.setCurrentStateData(
-            pendingAssets, protocol.getMaxLeverage(), PositionId(Constants.NO_POSITION_TICK, 0, 0)
+            pendingAssets, protocol.getMaxLeverage(), 0, 0, PositionId(Constants.NO_POSITION_TICK, 0, 0)
         );
 
         // initiate a withdrawal to have a negative pending vault balance

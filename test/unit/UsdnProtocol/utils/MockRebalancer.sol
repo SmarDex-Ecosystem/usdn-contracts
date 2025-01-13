@@ -31,11 +31,17 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
         _positionData[0].tick = Constants.NO_POSITION_TICK;
     }
 
-    function setCurrentStateData(uint128 pendingAssets, uint256 maxLeverage, Types.PositionId memory currentPosId)
-        external
-    {
+    function setCurrentStateData(
+        uint128 pendingAssets,
+        uint256 maxLeverage,
+        uint128 positionAmount,
+        uint256 entryAccMultiplier,
+        Types.PositionId memory currentPosId
+    ) external {
         _pendingAssets = pendingAssets;
         _maxLeverage = maxLeverage;
+        _positionData[_positionVersion].amount = positionAmount;
+        _positionData[_positionVersion].entryAccMultiplier = entryAccMultiplier;
         _positionData[_positionVersion].tick = currentPosId.tick;
         _positionData[_positionVersion].tickVersion = currentPosId.tickVersion;
         _positionData[_positionVersion].index = currentPosId.index;
