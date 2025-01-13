@@ -409,7 +409,9 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
 
-        return (s._balanceLong + s._balanceVault) - Core.longAssetAvailableWithFunding(currentPrice, timestamp);
+        (uint256 longAvailable, int256 fee) = Core.longAssetAvailableWithFunding(currentPrice, timestamp);
+
+        return (s._balanceLong + s._balanceVault - FixedPointMathLib.abs(fee)) - longAvailable;
     }
 
     /* -------------------------------------------------------------------------- */
