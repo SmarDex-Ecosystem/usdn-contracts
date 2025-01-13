@@ -40,14 +40,18 @@
 
       text(
         12pt,
-        authors.enumerate().map(((i, author)) => box[#author.name #super[#(i + 1)]]).join(", "),
+        authors.enumerate().map(((i, author)) => [#author.name~#super[#(i + 1)]]).join(", "),
       )
       parbreak()
 
       for (i, author) in authors.enumerate() [
         #set text(8pt)
         #super[#(i + 1)]
-        #author.institution
+        #{
+          if author.institution != "" {
+            [#author.institution ]
+          }
+        }
         #link("mailto:" + author.mail) \
       ]
 
