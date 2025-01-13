@@ -41,10 +41,16 @@ contract MockRebalancer is IBaseRebalancer, IRebalancerTypes {
         _positionData[_positionVersion].index = currentPosId.index;
     }
 
-    function getCurrentStateData() external view returns (uint128, uint256, Types.PositionId memory) {
+    function getCurrentStateData()
+        external
+        view
+        returns (uint128, uint256, uint128, uint256, Types.PositionId memory)
+    {
         return (
             _pendingAssets,
             _maxLeverage,
+            _positionData[_positionVersion].amount,
+            _positionData[_positionVersion].entryAccMultiplier,
             Types.PositionId(
                 _positionData[_positionVersion].tick,
                 _positionData[_positionVersion].tickVersion,

@@ -667,14 +667,19 @@ library UsdnProtocolLongLibrary {
             return (longBalance_, vaultBalance_, Types.RebalancerAction.NoCloseNoOpen);
         }
 
-        data.newAccMultiplier =
-            FixedPointMathLib.fullMulDiv(data.positionValue, data.entryAccMultiplier, data.prevPositionAmount);
+        if (data.prevPositionAmount > 0) {
+            data.newAccMultiplier =
+                FixedPointMathLib.fullMulDiv(data.positionValue, data.entryAccMultiplier, data.prevPositionAmount);
+        }
         // if the amount in the position we wanted to open is below a fraction of the `_minLongPosition` setting,
         // we are dealing with dust
         // if the new rewards accumulated multiplier is below 10_000, it means the position is very small and the
         // rebalancer will not be able to compute rewards properly
         // for both cases, we should stop the process and gift the remaining value to the vault
-        if (data.positionAmount <= s._minLongPosition / 10_000 || data.newAccMultiplier < 10_000) {
+        if (
+            data.positionAmount <= s._minLongPosition / 10_000
+                || (data.prevPositionAmount > 0 && data.newAccMultiplier < 10_000)
+        ) {
             // make the rebalancer believe that the previous position was liquidated,
             // and inform it that no new position was open so it can start anew
             rebalancer.updatePosition(Types.PositionId(Constants.NO_POSITION_TICK, 0, 0), 0);
