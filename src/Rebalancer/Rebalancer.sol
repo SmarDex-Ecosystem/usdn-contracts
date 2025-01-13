@@ -224,12 +224,20 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     function getCurrentStateData()
         external
         view
-        returns (uint128 pendingAssets_, uint256 maxLeverage_, Types.PositionId memory currentPosId_)
+        returns (
+            uint128 pendingAssets_,
+            uint256 maxLeverage_,
+            uint128 positionAmount_,
+            uint256 entryAccMultiplier,
+            Types.PositionId memory currentPosId_
+        )
     {
         PositionData storage positionData = _positionData[_positionVersion];
         return (
             _pendingAssetsAmount,
             _maxLeverage,
+            positionData.amount,
+            positionData.entryAccMultiplier,
             Types.PositionId({
                 tick: positionData.tick,
                 tickVersion: positionData.tickVersion,
@@ -564,7 +572,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
                 tick: newPosId.tick
             });
 
-            // Reset the pending assets amount as they are all used in the new position
+            // reset the pending assets amount as they are all used in the new position
             _pendingAssetsAmount = 0;
             _closeLockedUntil = block.timestamp + _timeLimits.closeDelay;
         } else {
@@ -834,8 +842,8 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             emit ClosePositionInitiated(data.user, data.amount, data.amountToClose, data.remainingAssets);
         }
 
-        // If the rebalancer received assets, it means it was rewarded for liquidating positions
-        // So we need to forward those rewards to the msg.sender
+        // if the rebalancer received assets, it means it was rewarded for liquidating positions
+        // so we need to forward those rewards to the msg.sender
         if (data.balanceOfAssetAfter > data.balanceOfAssetBefore) {
             _asset.safeTransfer(msg.sender, data.balanceOfAssetAfter - data.balanceOfAssetBefore);
         }
