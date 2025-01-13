@@ -156,10 +156,9 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
      * @custom:when The rebalancer is triggered again
      * @custom:and The value of the new accMultiplier is less than 10_000
      * @custom:then The position is closed
-     * @custom:and The value of the closed position is added to the vault
+     *
      */
     function test_NewAccMultiplier_LT10_000() public {
-        uint128 amount = 1 ether;
         uint128 prevPositionAmount = 10 ether;
         uint256 entryAccMultiplier = 1;
         vaultBalance *= 2;
@@ -168,7 +167,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             OpenParams({
                 user: address(mockedRebalancer),
                 untilAction: ProtocolAction.ValidateOpenPosition,
-                positionSize: amount,
+                positionSize: 1 ether,
                 desiredLiqPrice: DEFAULT_PARAMS.initialPrice / 2,
                 price: DEFAULT_PARAMS.initialPrice
             })
@@ -192,7 +191,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         assertLt(
             FixedPointMathLib.fullMulDiv(posValue, entryAccMultiplier, prevPositionAmount),
             10_000,
-            "The value of newAccMultiplier should be less than 10_000"
+            "The value of the newAccMultiplier should be less than 10_000"
         );
         assertEq(
             newVaultBalance - vaultBalance,

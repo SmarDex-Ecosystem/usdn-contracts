@@ -228,7 +228,7 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
             uint128 pendingAssets_,
             uint256 maxLeverage_,
             uint128 positionAmount_,
-            uint256 entryAccMultiplier,
+            uint256 entryAccMultiplier_,
             Types.PositionId memory currentPosId_
         )
     {

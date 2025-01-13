@@ -81,8 +81,8 @@ library UsdnProtocolLongLibrary {
      * @param rebalancerMaxLeverage The maximum leverage of the rebalancer.
      * @param rebalancerPosId The ID of the rebalancer's position.
      * @param positionValue The value of the rebalancer's position.
-     * @param prevPositionAmount The amount of assets used as collateral to open the position.
-     * @param entryAccMultiplier The entry accumulation multiplier of the rebalancer.
+     * @param prevPositionAmount The amount of assets used as collateral to open the previous position.
+     * @param entryAccMultiplier The entry accumulation multiplier of the previous rebalancer's position.
      * @param newAccMultiplier The new accumulation multiplier of the rebalancer.
      */
     struct TriggerRebalancerData {
@@ -638,7 +638,7 @@ library UsdnProtocolLongLibrary {
         }
 
         TriggerRebalancerData memory data;
-        // the default value of `positionAmount` is the amount of pendingAssets in the rebalancer
+        // the default value of `positionAmount` is the amount of pending assets in the rebalancer
         (
             data.positionAmount,
             data.rebalancerMaxLeverage,
