@@ -129,8 +129,10 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setMinLongPosition(10 ** assetDecimals);
 
+        // we trigger the rebalancer with a very small remaining collateral to make sure that the bonus and the position
+        // amount will not be enough to open a new position
         (uint256 newLongBalance, uint256 newVaultBalance, Types.RebalancerAction rebalancerAction) =
-            protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
+            protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, 0.0001 ether);
 
         assertEq(
             newLongBalance,
