@@ -21,32 +21,7 @@
       mail: "eric@ra2.tech",
     ),
     (
-      name: "Blockchain Team(Lilyan Bastien",
-      institution: "",
-      mail: "",
-    ),
-    (
-      name: "Nicolas Decosterd",
-      institution: "",
-      mail: "",
-    ),
-    (
-      name: "Paul-Alexandre Tessier",
-      institution: "",
-      mail: "",
-    ),
-    (
-      name: "Sami Darnaud",
-      institution: "",
-      mail: "",
-    ),
-    (
-      name: "Valentin Bersier",
-      institution: "",
-      mail: "",
-    ),
-    (
-      name: "Yoan Capron)",
+      name: [Blockchain Team (#box[Lilyan Bastien], #box[Nicolas Decosterd], #box[Paul-Alexandre Tessier], #box[Sami Darnaud], #box[Valentin Bersier], #box[Yoan Capron])],
       institution: "",
       mail: "blockchain@ra2.tech",
     ),
