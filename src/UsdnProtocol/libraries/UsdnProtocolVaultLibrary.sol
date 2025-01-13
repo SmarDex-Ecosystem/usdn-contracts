@@ -590,10 +590,10 @@ library UsdnProtocolVaultLibrary {
         uint128 amountAfterFees = amount - fees;
 
         data_.totalExpo = s._totalExpo;
+        data_.lastPrice = s._lastPrice;
         // extrapolate balances to block.timestamp to avoid that the user pays funding prior to initiating the deposit
         int256 protocolFee;
         (data_.balanceLong, protocolFee) = Core.longAssetAvailableWithFunding(data_.lastPrice, uint128(block.timestamp));
-        data_.lastPrice = s._lastPrice;
         // gas optimization, same formula as `vaultAssetAvailableWithFunding`
         data_.balanceVault = (s._balanceLong + s._balanceVault - FixedPointMathLib.abs(protocolFee)) - data_.balanceLong;
         if (data_.balanceVault == 0) {
@@ -858,11 +858,11 @@ library UsdnProtocolVaultLibrary {
         }
 
         data_.totalExpo = s._totalExpo;
+        data_.lastPrice = s._lastPrice;
         // extrapolate balances to block.timestamp to ensure that the user pays funding up to the initiation of the
         // withdrawal
         int256 protocolFee;
         (data_.balanceLong, protocolFee) = Core.longAssetAvailableWithFunding(data_.lastPrice, uint128(block.timestamp));
-        data_.lastPrice = s._lastPrice;
         // gas optimization, same formula as `vaultAssetAvailableWithFunding`
         data_.balanceVault = (s._balanceLong + s._balanceVault - FixedPointMathLib.abs(protocolFee)) - data_.balanceLong;
         data_.usdnTotalShares = s._usdn.totalShares();
