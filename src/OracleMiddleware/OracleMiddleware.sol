@@ -413,9 +413,6 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
 
     /// @inheritdoc IOracleMiddleware
     function setLowLatencyDelay(uint16 newLowLatencyDelay, IUsdnProtocol usdnProtocol) external onlyRole(ADMIN_ROLE) {
-        if (newLowLatencyDelay < 15 minutes) {
-            revert OracleMiddlewareInvalidLowLatencyDelay();
-        }
         if (newLowLatencyDelay > 90 minutes) {
             revert OracleMiddlewareInvalidLowLatencyDelay();
         }

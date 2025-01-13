@@ -46,16 +46,6 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `setLowLatencyDelay` lower than minimum
-     * @custom:when The function is called with a value that is below the minimum allowed
-     * @custom:then It should revert with `OracleMiddlewareInvalidLowLatencyDelay`
-     */
-    function test_RevertWhen_setLowLatencyDelayMin() public {
-        vm.expectRevert(IOracleMiddlewareErrors.OracleMiddlewareInvalidLowLatencyDelay.selector);
-        oracleMiddleware.setLowLatencyDelay(15 minutes - 1, usdnProtocol);
-    }
-
-    /**
      * @custom:scenario Call `setLowLatencyDelay` higher than maximum
      * @custom:when The function is called with a value that is above the maximum allowed
      * @custom:then It should revert with `OracleMiddlewareInvalidLowLatencyDelay`
