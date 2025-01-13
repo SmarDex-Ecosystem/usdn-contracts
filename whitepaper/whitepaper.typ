@@ -21,7 +21,7 @@
       mail: "eric@ra2.tech",
     ),
     (
-      name: [Blockchain Team (#box[Lilyan Bastien], #box[Nicolas Decosterd], #box[Paul-Alexandre Tessier], #box[Sami Darnaud], #box[Valentin Bersier], #box[Yoan Capron])],
+      name: [Blockchain Team (#box[Lilyan Bastien], #box[Valentin Bersier], #box[Yoan Capron], #box[Sami Darnaud], #box[Nicolas Decosterd], #box[Paul-Alexandre Tessier])],
       institution: "",
       mail: "blockchain@ra2.tech",
     ),
@@ -476,21 +476,21 @@ synthetic dollar token.
 = Acknowledgment
 
 Thank you to everyone who made this project possible in any way :
-- Abdel Mecheri
-- Alfred Gaillard
-- Antoine Duez
-- Bilel Oural
-- Brice Belkadi
-- Carl Cronsioe
-- Diogo Estima
-- Esteban Gonzalez
 - Fecri Al-Fakeri
-- Flavio Roth
+- Brice Belkadi
 - Julien Chiappinelli
-- Lorena Feijoo
-- Marylou Kronauer
-- Matthieu Guerra
+- Carl Cronsioe
 - Mikael Cruchon
-- Sebastien Mansour
-- Simon Lussi
+- Antoine Duez
+- Diogo Estima
+- Lorena Feijoo
+- Alfred Gaillard
+- Esteban Gonzalez
 - Vicente Guedes
+- Matthieu Guerra
+- Marylou Kronauer
+- Simon Lussi
+- Sebastien Mansour
+- Abdel Mecheri
+- Bilel Oural
+- Flavio Roth
