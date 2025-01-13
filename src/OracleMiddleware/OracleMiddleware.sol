@@ -329,12 +329,6 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
                 revert OracleMiddlewareInvalidRoundId();
             }
 
-            (uint80 latestRoundId,,,,) = _priceFeed.latestRoundData();
-            // if the provided round ID does not belong to the latest phase, revert
-            if (latestRoundId >> 64 != roundPhaseId) {
-                revert OracleMiddlewareInvalidRoundId();
-            }
-
             // make sure that the provided round ID is not newer than it should be
             if (providedRoundPrice_.timestamp > targetLimit + _timeElapsedLimit) {
                 revert OracleMiddlewareInvalidRoundId();
