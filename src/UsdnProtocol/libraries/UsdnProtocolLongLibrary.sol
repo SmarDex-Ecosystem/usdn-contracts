@@ -683,6 +683,7 @@ library UsdnProtocolLongLibrary {
             vaultBalance_ += data.positionValue;
             return (longBalance_, vaultBalance_, Types.RebalancerAction.Closed);
         }
+        // in case of accMultiplier < 10_000, a position will be opened with the pending assets and bonus
         if (data.prevPositionAmount > 0 && data.newAccMultiplier < 10_000) {
             vaultBalance_ += data.positionValue;
             data.positionValue = 0;

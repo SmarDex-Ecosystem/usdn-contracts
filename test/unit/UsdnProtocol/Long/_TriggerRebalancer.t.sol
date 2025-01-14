@@ -187,11 +187,17 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             protocol.i_triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
+        // first event: InitiatedClosePosition
         assertTrue(logs[0].topics[0] == InitiatedClosePosition.selector, "First event should be InitiatedClosePosition");
+        // second event: ClosedPosition
         assertTrue(
             logs[1].topics[0] == ValidatedClosePosition.selector, "Second event should be ValidatedClosePosition"
         );
         (, uint256 posValue,) = abi.decode(logs[1].data, (PositionId, uint256, int256));
+        // fourth event: InitiatedOpenPosition
+        assertTrue(logs[3].topics[0] == InitiatedOpenPosition.selector, "Third event should be InitiatedOpenPosition");
+        // fifth event: ValidatedOpenPosition
+        assertTrue(logs[4].topics[0] == ValidatedOpenPosition.selector, "Fourth event should be ValidatedOpenPosition");
 
         assertEq(
             newVaultBalance - vaultBalance,
