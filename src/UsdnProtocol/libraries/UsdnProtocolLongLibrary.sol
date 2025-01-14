@@ -722,7 +722,7 @@ library UsdnProtocolLongLibrary {
 
         if (data.positionValue > 0) {
             action_ = Types.RebalancerAction.ClosedOpened;
-        } else if (data.newAccMultiplier < 10_000) {
+        } else if (data.newAccMultiplier < 10_000 && data.prevPositionAmount > 0) {
             action_ = Types.RebalancerAction.LiquidatedOpened;
         } else {
             action_ = Types.RebalancerAction.Opened;

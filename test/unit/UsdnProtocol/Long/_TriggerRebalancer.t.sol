@@ -210,7 +210,7 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             "The value of the pending assets and the bonus should have been added to the long balance and the closed position value removed"
         );
         assertTrue(
-            rebalancerAction == Types.RebalancerAction.ClosedOpened,
+            rebalancerAction == Types.RebalancerAction.LiquidatedOpened,
             "The rebalancer should have closed and opened a position"
         );
     }
