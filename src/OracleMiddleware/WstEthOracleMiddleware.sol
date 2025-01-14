@@ -16,8 +16,8 @@ contract WstEthOracleMiddleware is OracleMiddleware {
 
     /**
      * @param pythContract The address of the Pyth contract.
-     * @param pythPriceID The ID of the wstETH Pyth price feed.
-     * @param chainlinkPriceFeed The address of the wstETH Chainlink price feed.
+     * @param pythPriceID The ID of the ETH Pyth price feed.
+     * @param chainlinkPriceFeed The address of the ETH Chainlink price feed.
      * @param wstETH The address of the wstETH contract.
      * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale.
      */
