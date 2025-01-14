@@ -10,7 +10,7 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 interface IFeeCollectorCallback is IERC165 {
     /**
      * @notice Function called by the protocol to notify the fee collector that a fee has been collected.
-     * @param feeAmount The amount of the fee collected.
+     * @param feeAmount The amount of fee collected.
      */
     function feeCollectorCallback(uint256 feeAmount) external;
 }
