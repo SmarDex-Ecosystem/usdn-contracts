@@ -294,9 +294,10 @@ library UsdnProtocolActionsLongLibrary {
                 data.action.tick, data.action.index, data.pos, data.pos.amount, data.pos.totalExpo
             );
 
-            // If the last price is below the liquidation price with penalty of the new position, the position is
-            // already underwater and might be unable to calculate the new position value if we are further below
-            // `liqPriceWithoutPenalty`. We have no other choice but to liquidate it
+            // ff the last price is below the liquidation price with penalty of the new position, the position is
+            // already underwater and we might be unable to calculate the new position value if we are further below
+            // `liqPriceWithoutPenalty`
+            // this is extremely unlikely, but we have no other choice but to liquidate it it if happens
             if (data.lastPrice <= liqPriceWithPenalty) {
                 s._balanceLong -= data.oldPosValue;
                 s._balanceVault += data.oldPosValue;
@@ -596,7 +597,7 @@ library UsdnProtocolActionsLongLibrary {
 
         data_.lastPrice = s._lastPrice;
         uint128 liqPriceWithPenalty = Utils._getEffectivePriceForTick(data_.action.tick);
-        // A user that triggers this condition will be stuck in a validation loop until it liquidates its own position
+        // a user that triggers this condition will be stuck in a validation loop until it liquidates its own position
         // with the stored `_lastPrice`
         if (data_.lastPrice <= liqPriceWithPenalty) {
             data_.isLiquidationPending = true;
