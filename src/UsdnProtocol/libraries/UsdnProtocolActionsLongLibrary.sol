@@ -285,12 +285,37 @@ library UsdnProtocolActionsLongLibrary {
             data.liqPriceWithoutPenalty = Utils._getEffectivePriceForTick(
                 Utils._calcTickWithoutPenalty(maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty)
             );
+            // must calculate before removing the position from the tick which affects the trading expo
+            uint128 liqPriceWithPenalty = Utils._getEffectivePriceForTick(maxLeverageData.newPosId.tick);
 
             // move the position to its new tick, update its total exposure, and return the new tickVersion and index
             // remove position from old tick completely
             Long._removeAmountFromPosition(
                 data.action.tick, data.action.index, data.pos, data.pos.amount, data.pos.totalExpo
             );
+
+            // if the last price is below the liquidation price with penalty of the new position, the position is
+            // already underwater and we might be unable to calculate the new position value if we are further below
+            // `liqPriceWithoutPenalty`
+            // this is extremely unlikely, but we have no other choice but to liquidate if it happens
+            if (data.lastPrice <= liqPriceWithPenalty) {
+                s._balanceLong -= data.oldPosValue;
+                s._balanceVault += data.oldPosValue;
+                // position was already removed from the tick above
+
+                emit IUsdnProtocolEvents.LiquidatedPosition(
+                    data.action.validator,
+                    Types.PositionId({
+                        tick: data.action.tick,
+                        tickVersion: data.action.tickVersion,
+                        index: data.action.index
+                    }),
+                    data.lastPrice,
+                    liqPriceWithPenalty
+                );
+                return (false, true, Types.PositionId({ tick: Constants.NO_POSITION_TICK, tickVersion: 0, index: 0 }));
+            }
+
             // update position total exposure (because of new leverage / liq price)
             data.pos.totalExpo =
                 Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenaltyNorFunding);
@@ -572,7 +597,7 @@ library UsdnProtocolActionsLongLibrary {
 
         data_.lastPrice = s._lastPrice;
         uint128 liqPriceWithPenalty = Utils._getEffectivePriceForTick(data_.action.tick);
-        // A user that triggers this condition will be stuck in a validation loop until it liquidates its own position
+        // a user that triggers this condition will be stuck in a validation loop until it liquidates its own position
         // with the stored `_lastPrice`
         if (data_.lastPrice <= liqPriceWithPenalty) {
             data_.isLiquidationPending = true;
