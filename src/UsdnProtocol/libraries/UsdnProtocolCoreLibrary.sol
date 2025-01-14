@@ -181,6 +181,42 @@ library UsdnProtocolCoreLibrary {
     /* -------------------------------------------------------------------------- */
 
     /**
+     * @notice Prepares the pending action struct for the close position action and add it to the queue.
+     * @param to The address that will receive the assets.
+     * @param validator The validator for the pending action.
+     * @param posId The unique identifier of the position.
+     * @param amountToClose The amount of collateral to remove from the position's amount.
+     * @param securityDepositValue The value of the security deposit for the newly created pending action.
+     * @param data The close position data.
+     * @return amountToRefund_ The security deposit value of a stale pending action.
+     */
+    function _createClosePendingAction(
+        address to,
+        address validator,
+        Types.PositionId memory posId,
+        uint128 amountToClose,
+        uint64 securityDepositValue,
+        Types.ClosePositionData memory data
+    ) external returns (uint256 amountToRefund_) {
+        Types.LongPendingAction memory action = Types.LongPendingAction({
+            action: Types.ProtocolAction.ValidateClosePosition,
+            timestamp: uint40(block.timestamp),
+            closeLiqPenalty: data.liquidationPenalty,
+            to: to,
+            validator: validator,
+            securityDepositValue: securityDepositValue,
+            tick: posId.tick,
+            closeAmount: amountToClose,
+            closePosTotalExpo: data.totalExpoToClose,
+            tickVersion: posId.tickVersion,
+            index: posId.index,
+            liqMultiplier: Utils._calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
+            closeBoundedPositionValue: data.tempPositionValue
+        });
+        amountToRefund_ = _addPendingAction(validator, Utils._convertLongPendingAction(action));
+    }
+
+    /**
      * @notice Checks if the position's leverage is in the authorized range of values.
      * @param adjustedPrice The adjusted price of the asset.
      * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty.
