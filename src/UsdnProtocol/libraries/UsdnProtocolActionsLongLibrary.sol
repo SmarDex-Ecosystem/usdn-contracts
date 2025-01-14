@@ -294,7 +294,7 @@ library UsdnProtocolActionsLongLibrary {
                 data.action.tick, data.action.index, data.pos, data.pos.amount, data.pos.totalExpo
             );
 
-            // ff the last price is below the liquidation price with penalty of the new position, the position is
+            // if the last price is below the liquidation price with penalty of the new position, the position is
             // already underwater and we might be unable to calculate the new position value if we are further below
             // `liqPriceWithoutPenalty`
             // this is extremely unlikely, but we have no other choice but to liquidate it it if happens
