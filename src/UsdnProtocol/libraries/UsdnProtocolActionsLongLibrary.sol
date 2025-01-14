@@ -297,7 +297,7 @@ library UsdnProtocolActionsLongLibrary {
             // if the last price is below the liquidation price with penalty of the new position, the position is
             // already underwater and we might be unable to calculate the new position value if we are further below
             // `liqPriceWithoutPenalty`
-            // this is extremely unlikely, but we have no other choice but to liquidate it it if happens
+            // this is extremely unlikely, but we have no other choice but to liquidate if it happens
             if (data.lastPrice <= liqPriceWithPenalty) {
                 s._balanceLong -= data.oldPosValue;
                 s._balanceVault += data.oldPosValue;
