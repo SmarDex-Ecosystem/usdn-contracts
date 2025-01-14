@@ -10,7 +10,7 @@ import { IUsdnProtocolImpl } from "./IUsdnProtocolImpl.sol";
  */
 interface IUsdnProtocol is IUsdnProtocolImpl, IUsdnProtocolFallback {
     /**
-     * @notice Function to upgrade the protocol to a new implementation (check
+     * @notice Upgrades the protocol to a new implementation (check
      * [UUPSUpgradeable](https://docs.openzeppelin.com/contracts/5.x/api/proxy#UUPSUpgradeable)).
      * @dev This function should be called by the role with the PROXY_UPGRADE_ROLE.
      * @param newImplementation The address of the new implementation.
