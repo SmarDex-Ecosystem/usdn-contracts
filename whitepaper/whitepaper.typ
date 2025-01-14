@@ -127,7 +127,7 @@ As such, if the vault balance increases as a result of position fees, losses fro
 the USDN price will rise. When a certain threshold is reached, the token #glspl("rebase") to a price slightly above \$1
 by increasing the total supply and balance of each holder. This increase in balance represents the yield of the USDN
 token. The rebase mechanism ensures that yields do not induce a price that significantly exceeds the value of \$1.
-There is no balance and total supply adjustment (rebase) if the price falls below \$1.
+There is no balance and total supply adjustment (debase) if the price falls below \$1.
 
 = Vault
 
@@ -163,29 +163,30 @@ The value of a long position is determined by the current market price of the as
 
 $ v(p) = frac(T (p-p_"liq"), p) $ <eq:pos_value>
 
-where $p$ is the price of the asset (in dollars), $T$ is the total exposure of the position, and $p_"liq"$ is the
-liquidation price of the position.
+where $p$ is the price of the asset (in dollars), $T$ is the total exposure of the position (see @eq:total_expo_pos),
+and $p_"liq"$ is the liquidation price of the position.
 
 According to this formula, the position's value increases when the asset price rises and decreases when the asset price
 falls. The position value is used to calculate the @pnl ($Delta v$) relative to the position's initial
 collateral.
 
-To calculate the profit of a position, the initial position value ($p_"entry" = 3000$) is compared with the value of
-position at a new market price. The initial value of the position is calculated as:
+To calculate the profit of a position with an initial collateral of 1 and an initial leverage of 3x, the initial
+position value ($p_"entry" = 3000$) is compared with the value of position at a new market price. The initial value of
+the position is calculated as:
 
-$ v(p_"entry") = v(3000) = frac(3 (3000-1000), 3000) = 2 $
+$ v(p_"entry") = v(3000) = frac(3 (3000-2000), 3000) = 1 $
 
 If price of the asset increases to \$4000:
 
-$ v(4000) = frac(3 (4000-1000), 4000) = 2.25 $
-$ Delta v = v(4000) - v(3000) = 0.25 $
-The position has a profit of 0.25_asset.
+$ v(4000) = frac(3 (4000-2000), 4000) = 1.5 $
+$ Delta v = v(4000) - v(3000) = 0.5 $
+The position has a profit of 0.5_asset.
 
-If price of the asset decreases to \$2000:
+If price of the asset decreases to \$2500:
 
-$ v(2000) = frac(3 (2000-1000), 2000) = 1.5 $
-$ Delta v = v(2000) - v(3000) = -0.5 $
-The position has a loss of 0.5_asset.
+$ v(2500) = frac(3 (2500-2000), 2500) = 0.6 $
+$ Delta v = v(2500) - v(3000) = -0.4 $
+The position has a loss of 0.4_asset.
 
 == Liquidation <sec:liquidation>
 
@@ -247,7 +248,7 @@ $ E_"vault" = B_"vault" $
 
 The trading exposure of the long side $E_"long"$ is defined as:
 
-$ T_i = c_i l_i $
+$ T_i = c_i l_i $ <eq:total_expo_pos>
 $ E_i = T_i - v_i $ <eq:trading_expo>
 $ T_"long" = sum_i T_i $ <eq:total_expo>
 $ B_"long" = sum_i v_i $ <eq:value_balance_invariant>
