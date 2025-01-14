@@ -143,6 +143,69 @@ library UsdnProtocolActionsUtilsLibrary {
     /* -------------------------------------------------------------------------- */
 
     /**
+     * @notice Checks and reverts if the withdrawn value breaks the imbalance limits.
+     * @param withdrawalValue The withdrawal value in asset.
+     * @param totalExpo The current total exposure of the long side.
+     */
+    function _checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) external view {
+        Types.Storage storage s = Utils._getMainStorage();
+
+        int256 withdrawalExpoImbalanceLimitBps = s._withdrawalExpoImbalanceLimitBps;
+
+        // early return in case limit is disabled
+        if (withdrawalExpoImbalanceLimitBps == 0) {
+            return;
+        }
+
+        int256 newVaultExpo =
+            s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeSub(withdrawalValue.toInt256());
+
+        // an imbalance cannot be calculated if the new vault exposure is zero or negative
+        if (newVaultExpo <= 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
+        }
+
+        int256 imbalanceBps = (totalExpo - s._balanceLong).toInt256().safeSub(newVaultExpo).safeMul(
+            int256(Constants.BPS_DIVISOR)
+        ).safeDiv(newVaultExpo);
+
+        if (imbalanceBps > withdrawalExpoImbalanceLimitBps) {
+            revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
+        }
+    }
+
+    /**
+     * @notice Checks and reverts if the deposited value breaks the imbalance limits.
+     * @param depositValue The deposit value in asset.
+     */
+    function _checkImbalanceLimitDeposit(uint256 depositValue) external view {
+        Types.Storage storage s = Utils._getMainStorage();
+
+        int256 depositExpoImbalanceLimitBps = s._depositExpoImbalanceLimitBps;
+
+        // early return in case limit is disabled
+        if (depositExpoImbalanceLimitBps == 0) {
+            return;
+        }
+
+        int256 currentLongExpo = (s._totalExpo - s._balanceLong).toInt256();
+
+        // cannot be calculated
+        if (currentLongExpo == 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo();
+        }
+
+        int256 newVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(int256(depositValue));
+
+        int256 imbalanceBps =
+            newVaultExpo.safeSub(currentLongExpo).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(currentLongExpo);
+
+        if (imbalanceBps > depositExpoImbalanceLimitBps) {
+            revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
+        }
+    }
+
+    /**
      * @notice Updates the protocol state, then prepares the data for the initiate close position action.
      * @dev Reverts if the imbalance limit is reached, or if any checks in {_checkInitiateClosePosition} fail.
      * Returns without creating a pending action if the position gets liquidated in this transaction or if there are

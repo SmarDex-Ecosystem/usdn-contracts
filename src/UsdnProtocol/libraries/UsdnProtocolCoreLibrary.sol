@@ -18,6 +18,7 @@ import { TickMath } from "../../libraries/TickMath.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
 
 library UsdnProtocolCoreLibrary {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
@@ -178,6 +179,42 @@ library UsdnProtocolCoreLibrary {
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Prepares the pending action struct for a withdrawal and adds it to the queue.
+     * @param to The recipient of the assets.
+     * @param validator The address that is supposed to validate the withdrawal and receive the security deposit.
+     * @param usdnShares The amount of USDN shares to burn.
+     * @param securityDepositValue The value of the security deposit for the newly created pending action.
+     * @param data The withdrawal action data.
+     * @return amountToRefund_ Refund The security deposit value of a stale pending action.
+     */
+    function _createWithdrawalPendingAction(
+        address to,
+        address validator,
+        uint152 usdnShares,
+        uint64 securityDepositValue,
+        Vault.WithdrawalData memory data
+    ) external returns (uint256 amountToRefund_) {
+        Types.PendingAction memory action = Utils._convertWithdrawalPendingAction(
+            Types.WithdrawalPendingAction({
+                action: Types.ProtocolAction.ValidateWithdrawal,
+                timestamp: uint40(block.timestamp),
+                feeBps: data.feeBps,
+                to: to,
+                validator: validator,
+                securityDepositValue: securityDepositValue,
+                sharesLSB: Vault._calcWithdrawalAmountLSB(usdnShares),
+                sharesMSB: Vault._calcWithdrawalAmountMSB(usdnShares),
+                assetPrice: data.lastPrice,
+                totalExpo: data.totalExpo,
+                balanceVault: data.balanceVault,
+                balanceLong: data.balanceLong,
+                usdnTotalShares: data.usdnTotalShares
+            })
+        );
+        amountToRefund_ = _addPendingAction(validator, action);
+    }
 
     /**
      * @notice Prepares the pending action struct for an open position and adds it to the queue.

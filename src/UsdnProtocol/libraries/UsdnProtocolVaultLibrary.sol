@@ -15,6 +15,7 @@ import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdn
 import { DoubleEndedQueue } from "../../libraries/DoubleEndedQueue.sol";
 import { SignedMath } from "../../libraries/SignedMath.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from "./UsdnProtocolActionsLongLibrary.sol";
+import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from "./UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
@@ -582,7 +583,7 @@ library UsdnProtocolVaultLibrary {
             return data_;
         }
 
-        _checkImbalanceLimitDeposit(amount);
+        ActionsUtils._checkImbalanceLimitDeposit(amount);
 
         // apply fees on amount
         data_.feeBps = s._vaultFeeBps;
@@ -872,43 +873,7 @@ library UsdnProtocolVaultLibrary {
         if (data_.withdrawalAmountAfterFees < amountOutMin) {
             revert IUsdnProtocolErrors.UsdnProtocolAmountReceivedTooSmall();
         }
-        _checkImbalanceLimitWithdrawal(data_.withdrawalAmountAfterFees, data_.totalExpo);
-    }
-
-    /**
-     * @notice Prepares the pending action struct for a withdrawal and adds it to the queue.
-     * @param to The recipient of the assets.
-     * @param validator The address that is supposed to validate the withdrawal and receive the security deposit.
-     * @param usdnShares The amount of USDN shares to burn.
-     * @param securityDepositValue The value of the security deposit for the newly created pending action.
-     * @param data The withdrawal action data.
-     * @return amountToRefund_ Refund The security deposit value of a stale pending action.
-     */
-    function _createWithdrawalPendingAction(
-        address to,
-        address validator,
-        uint152 usdnShares,
-        uint64 securityDepositValue,
-        WithdrawalData memory data
-    ) internal returns (uint256 amountToRefund_) {
-        Types.PendingAction memory action = Utils._convertWithdrawalPendingAction(
-            Types.WithdrawalPendingAction({
-                action: Types.ProtocolAction.ValidateWithdrawal,
-                timestamp: uint40(block.timestamp),
-                feeBps: data.feeBps,
-                to: to,
-                validator: validator,
-                securityDepositValue: securityDepositValue,
-                sharesLSB: _calcWithdrawalAmountLSB(usdnShares),
-                sharesMSB: _calcWithdrawalAmountMSB(usdnShares),
-                assetPrice: data.lastPrice,
-                totalExpo: data.totalExpo,
-                balanceVault: data.balanceVault,
-                balanceLong: data.balanceLong,
-                usdnTotalShares: data.usdnTotalShares
-            })
-        );
-        amountToRefund_ = Core._addPendingAction(validator, action);
+        ActionsUtils._checkImbalanceLimitWithdrawal(data_.withdrawalAmountAfterFees, data_.totalExpo);
     }
 
     /**
@@ -945,7 +910,7 @@ library UsdnProtocolVaultLibrary {
             return (params.securityDepositValue, false);
         }
 
-        amountToRefund_ = _createWithdrawalPendingAction(
+        amountToRefund_ = Core._createWithdrawalPendingAction(
             params.to, params.validator, params.usdnShares, params.securityDepositValue, data
         );
 
@@ -1120,69 +1085,6 @@ library UsdnProtocolVaultLibrary {
         } else {
             // the validation must happen with an on-chain oracle
             actionable_ = block.timestamp > initiateTimestamp + lowLatencyDelay + onChainDeadline;
-        }
-    }
-
-    /**
-     * @notice Checks and reverts if the deposited value breaks the imbalance limits.
-     * @param depositValue The deposit value in asset.
-     */
-    function _checkImbalanceLimitDeposit(uint256 depositValue) internal view {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        int256 depositExpoImbalanceLimitBps = s._depositExpoImbalanceLimitBps;
-
-        // early return in case limit is disabled
-        if (depositExpoImbalanceLimitBps == 0) {
-            return;
-        }
-
-        int256 currentLongExpo = (s._totalExpo - s._balanceLong).toInt256();
-
-        // cannot be calculated
-        if (currentLongExpo == 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo();
-        }
-
-        int256 newVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(int256(depositValue));
-
-        int256 imbalanceBps =
-            newVaultExpo.safeSub(currentLongExpo).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(currentLongExpo);
-
-        if (imbalanceBps > depositExpoImbalanceLimitBps) {
-            revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
-        }
-    }
-
-    /**
-     * @notice Checks and reverts if the withdrawn value breaks the imbalance limits.
-     * @param withdrawalValue The withdrawal value in asset.
-     * @param totalExpo The current total exposure of the long side.
-     */
-    function _checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) internal view {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        int256 withdrawalExpoImbalanceLimitBps = s._withdrawalExpoImbalanceLimitBps;
-
-        // early return in case limit is disabled
-        if (withdrawalExpoImbalanceLimitBps == 0) {
-            return;
-        }
-
-        int256 newVaultExpo =
-            s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeSub(withdrawalValue.toInt256());
-
-        // an imbalance cannot be calculated if the new vault exposure is zero or negative
-        if (newVaultExpo <= 0) {
-            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
-        }
-
-        int256 imbalanceBps = (totalExpo - s._balanceLong).toInt256().safeSub(newVaultExpo).safeMul(
-            int256(Constants.BPS_DIVISOR)
-        ).safeDiv(newVaultExpo);
-
-        if (imbalanceBps > withdrawalExpoImbalanceLimitBps) {
-            revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
 
