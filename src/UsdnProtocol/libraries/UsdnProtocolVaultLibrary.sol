@@ -409,7 +409,9 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
 
-        return (s._balanceLong + s._balanceVault) - Core.longAssetAvailableWithFunding(currentPrice, timestamp);
+        (uint256 longAvailable, int256 fee) = Core.longAssetAvailableWithFunding(currentPrice, timestamp);
+
+        return (s._balanceLong + s._balanceVault - FixedPointMathLib.abs(fee)) - longAvailable;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -588,9 +590,12 @@ library UsdnProtocolVaultLibrary {
         uint128 amountAfterFees = amount - fees;
 
         data_.totalExpo = s._totalExpo;
-        data_.balanceLong = s._balanceLong;
         data_.lastPrice = s._lastPrice;
-        data_.balanceVault = vaultAssetAvailableWithFunding(data_.lastPrice, uint128(block.timestamp));
+        // extrapolate balances to block.timestamp to avoid that the user pays funding prior to initiating the deposit
+        int256 protocolFee;
+        (data_.balanceLong, protocolFee) = Core.longAssetAvailableWithFunding(data_.lastPrice, uint128(block.timestamp));
+        // gas optimization, same formula as `vaultAssetAvailableWithFunding`
+        data_.balanceVault = (s._balanceLong + s._balanceVault - FixedPointMathLib.abs(protocolFee)) - data_.balanceLong;
         if (data_.balanceVault == 0) {
             // can't mint USDN if the vault is empty
             revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
@@ -853,9 +858,13 @@ library UsdnProtocolVaultLibrary {
         }
 
         data_.totalExpo = s._totalExpo;
-        data_.balanceLong = s._balanceLong;
         data_.lastPrice = s._lastPrice;
-        data_.balanceVault = vaultAssetAvailableWithFunding(data_.lastPrice, uint128(block.timestamp));
+        // extrapolate balances to block.timestamp to ensure that the user pays funding up to the initiation of the
+        // withdrawal
+        int256 protocolFee;
+        (data_.balanceLong, protocolFee) = Core.longAssetAvailableWithFunding(data_.lastPrice, uint128(block.timestamp));
+        // gas optimization, same formula as `vaultAssetAvailableWithFunding`
+        data_.balanceVault = (s._balanceLong + s._balanceVault - FixedPointMathLib.abs(protocolFee)) - data_.balanceLong;
         data_.usdnTotalShares = s._usdn.totalShares();
         data_.feeBps = s._vaultFeeBps;
         data_.withdrawalAmountAfterFees =

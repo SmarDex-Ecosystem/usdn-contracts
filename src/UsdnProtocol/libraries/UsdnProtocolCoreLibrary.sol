@@ -117,11 +117,20 @@ library UsdnProtocolCoreLibrary {
     /*                              Public functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice See {IUsdnProtocolLong.longAssetAvailableWithFunding}.
+    /**
+     * @notice Gets the predicted value of the long balance for the given asset price and timestamp.
+     * @dev The effects of the funding and any PnL of the long positions since the last contract state
+     * update is taken into account, as well as the fees. If the provided timestamp is older than the last state
+     * update, the function reverts with `UsdnProtocolTimestampTooOld`. The value cannot be below 0.
+     * @param currentPrice The given asset price.
+     * @param timestamp The timestamp corresponding to the given price.
+     * @return available_ The long balance value in assets.
+     * @return fee_ The protocol fees in asset units, either positive or negative.
+     */
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
-        returns (uint256 available_)
+        returns (uint256 available_, int256 fee_)
     {
         Types.Storage storage s = Utils._getMainStorage();
 
@@ -130,14 +139,14 @@ library UsdnProtocolCoreLibrary {
         }
 
         (int256 fundAsset,) = _fundingAsset(timestamp, s._EMA);
+        fee_ = fundAsset * Utils._toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
 
         int256 tempAvailable;
         if (fundAsset > 0) {
             tempAvailable = Utils._longAssetAvailable(currentPrice).safeSub(fundAsset);
         } else {
-            int256 fee = fundAsset * Utils._toInt256(s._protocolFeeBps) / int256(Constants.BPS_DIVISOR);
             // fees have the same sign as fundAsset (negative here), so we need to sub them
-            tempAvailable = Utils._longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
+            tempAvailable = Utils._longAssetAvailable(currentPrice).safeSub(fundAsset - fee_);
         }
 
         // clamp the value to 0
@@ -151,7 +160,7 @@ library UsdnProtocolCoreLibrary {
             available_ = maxLongBalance;
         }
 
-        uint256 totalBalance = s._balanceLong + s._balanceVault;
+        uint256 totalBalance = s._balanceLong + s._balanceVault - FixedPointMathLib.abs(fee_);
         if (available_ > totalBalance) {
             available_ = totalBalance;
         }
@@ -161,7 +170,9 @@ library UsdnProtocolCoreLibrary {
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) public view returns (uint256 expo_) {
         Types.Storage storage s = Utils._getMainStorage();
 
-        expo_ = s._totalExpo - longAssetAvailableWithFunding(currentPrice, timestamp);
+        (uint256 available,) = longAssetAvailableWithFunding(currentPrice, timestamp);
+
+        expo_ = s._totalExpo - available;
     }
 
     /* -------------------------------------------------------------------------- */
