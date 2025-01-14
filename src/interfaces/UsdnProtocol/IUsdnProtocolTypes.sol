@@ -71,9 +71,10 @@ interface IUsdnProtocolTypes {
         NoImbalance,
         PendingLiquidation,
         NoCloseNoOpen,
-        Closed,
+        Liquidated,
         Opened,
-        ClosedOpened
+        ClosedOpened,
+        LiquidatedOpened
     }
 
     /**

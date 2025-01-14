@@ -3,8 +3,6 @@ pragma solidity 0.8.26;
 
 import { Vm } from "forge-std/Vm.sol";
 
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
-
 import { ADMIN } from "../../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "../utils/Fixtures.sol";
 import { MockRebalancer } from "../utils/MockRebalancer.sol";
@@ -147,7 +145,9 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
             "The value of the closed position should have been transferred to the vault"
         );
 
-        assertTrue(rebalancerAction == Types.RebalancerAction.Closed, "The rebalancer should only close the position");
+        assertTrue(
+            rebalancerAction == Types.RebalancerAction.Liquidated, "The rebalancer should only close the position"
+        );
     }
 
     /**
