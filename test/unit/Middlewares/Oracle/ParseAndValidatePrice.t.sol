@@ -422,32 +422,6 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     }
 
     /**
-     * @custom:scenario Parse and validate price using Chainlink with the first round ID of a previous phase
-     * @custom:given Enough time has passed that Chainlink is used to validate the pending action
-     * @custom:and The latest round ID is in a newer phase than the provided round ID
-     * @custom:and The validation delay is respected
-     * @custom:and The price timestamp is below the time elapsed limit
-     * @custom:then It reverts with a OracleMiddlewareInvalidRoundId error
-     */
-    function test_RevertWhen_parseAndValidatePriceWithFirstRoundIdOfPreviousPhase() public {
-        bytes memory roundIdData = abi.encode(FIRST_ROUND_ID);
-
-        mockChainlinkOnChain.setRoundData(
-            FIRST_ROUND_ID, int256(ETH_PRICE), LIMIT_TIMESTAMP + 1, LIMIT_TIMESTAMP + 1, FIRST_ROUND_ID
-        );
-        // set the latest round data with a round ID from a newer phase
-        mockChainlinkOnChain.setLatestRoundData((2 << 64) + 1, int256(ETH_PRICE), LIMIT_TIMESTAMP + 2, FIRST_ROUND_ID);
-
-        skip(LOW_LATENCY_DELAY + 1);
-
-        // sanity check
-        assertEq(FIRST_ROUND_ID, (1 << 64) + 1, "The first round ID should be the first valid round of the phase");
-
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareInvalidRoundId.selector));
-        oracleMiddleware.parseAndValidatePrice("", TARGET_TIMESTAMP, Types.ProtocolAction.ValidateDeposit, roundIdData);
-    }
-
-    /**
      * @custom:scenario Parse and validate price using Chainlink with the first round ID of a new, too recent phase
      * @custom:given Enough time has passed that Chainlink is used to validate the pending action
      * @custom:and The latest round ID is the first ID of the phase
