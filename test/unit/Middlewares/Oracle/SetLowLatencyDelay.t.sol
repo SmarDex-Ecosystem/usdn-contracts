@@ -5,16 +5,20 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 
 import { USER_1 } from "../../../utils/Constants.sol";
 import { OracleMiddlewareBaseFixture } from "../utils/Fixtures.sol";
+import { MockUsdnProtocol } from "../utils/MockUsdnProtocol.sol";
 
 import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
+import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /// @custom:feature The `setLowLatencyDelay` function of `OracleMiddleware`
 contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
     uint16 constant DEFAULT_LOW_LATENCY_DELAY = 20 minutes;
+    IUsdnProtocol internal usdnProtocol;
 
     function setUp() public override {
         super.setUp();
+        usdnProtocol = IUsdnProtocol(address(new MockUsdnProtocol()));
     }
 
     /**
@@ -38,17 +42,7 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
             )
         );
         vm.prank(USER_1);
-        oracleMiddleware.setLowLatencyDelay(DEFAULT_LOW_LATENCY_DELAY);
-    }
-
-    /**
-     * @custom:scenario Call `setLowLatencyDelay` lower than minimum
-     * @custom:when The function is called with a value that is below the minimum allowed
-     * @custom:then It should revert with `OracleMiddlewareInvalidLowLatencyDelay`
-     */
-    function test_RevertWhen_setLowLatencyDelayMin() public {
-        vm.expectRevert(IOracleMiddlewareErrors.OracleMiddlewareInvalidLowLatencyDelay.selector);
-        oracleMiddleware.setLowLatencyDelay(15 minutes - 1);
+        oracleMiddleware.setLowLatencyDelay(DEFAULT_LOW_LATENCY_DELAY, usdnProtocol);
     }
 
     /**
@@ -58,7 +52,7 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
      */
     function test_RevertWhen_setLowLatencyDelayMax() public {
         vm.expectRevert(IOracleMiddlewareErrors.OracleMiddlewareInvalidLowLatencyDelay.selector);
-        oracleMiddleware.setLowLatencyDelay(90 minutes + 1);
+        oracleMiddleware.setLowLatencyDelay(90 minutes + 1, usdnProtocol);
     }
 
     /**
@@ -69,9 +63,21 @@ contract TestOracleMiddlewareSetLowLatencyDelay is OracleMiddlewareBaseFixture {
     function test_setLowLatencyDelay() public {
         vm.expectEmit();
         emit IOracleMiddlewareEvents.LowLatencyDelayUpdated(DEFAULT_LOW_LATENCY_DELAY);
-        oracleMiddleware.setLowLatencyDelay(DEFAULT_LOW_LATENCY_DELAY);
+        oracleMiddleware.setLowLatencyDelay(DEFAULT_LOW_LATENCY_DELAY, usdnProtocol);
         assertEq(
             oracleMiddleware.getLowLatencyDelay(), DEFAULT_LOW_LATENCY_DELAY, "Low latency delay should be updated"
         );
+    }
+
+    /**
+     * @custom:scenario Call `setLowLatencyDelay` reverts with a value that is below validatorDeadline
+     * @custom:when The function is called with validatorDeadline - 1
+     * @custom:then It should revert with `OracleMiddlewareInvalidLowLatencyDelay`
+     */
+    function test_RevertWhen_setLowLatencyDelayBellowDeadline() public {
+        uint128 validatorDeadline = 20 minutes;
+        MockUsdnProtocol(address(usdnProtocol)).setLowLatencyValidatorDeadline(validatorDeadline);
+        vm.expectRevert(IOracleMiddlewareErrors.OracleMiddlewareInvalidLowLatencyDelay.selector);
+        oracleMiddleware.setLowLatencyDelay(uint16(validatorDeadline) - 1, usdnProtocol);
     }
 }

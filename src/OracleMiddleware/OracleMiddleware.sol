@@ -12,6 +12,7 @@ import {
     FormattedPythPrice,
     PriceInfo
 } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
 import { PythOracle } from "./oracles/PythOracle.sol";
@@ -405,11 +406,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
     }
 
     /// @inheritdoc IOracleMiddleware
-    function setLowLatencyDelay(uint16 newLowLatencyDelay) external onlyRole(ADMIN_ROLE) {
-        if (newLowLatencyDelay < 15 minutes) {
+    function setLowLatencyDelay(uint16 newLowLatencyDelay, IUsdnProtocol usdnProtocol) external onlyRole(ADMIN_ROLE) {
+        if (newLowLatencyDelay > 90 minutes) {
             revert OracleMiddlewareInvalidLowLatencyDelay();
         }
-        if (newLowLatencyDelay > 90 minutes) {
+        if (newLowLatencyDelay < usdnProtocol.getLowLatencyValidatorDeadline()) {
             revert OracleMiddlewareInvalidLowLatencyDelay();
         }
         _lowLatencyDelay = newLowLatencyDelay;
