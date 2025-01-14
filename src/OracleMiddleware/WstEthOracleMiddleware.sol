@@ -7,19 +7,19 @@ import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnPro
 import { OracleMiddleware } from "./OracleMiddleware.sol";
 
 /**
- * @title Contract to apply and return wsteth price
- * @notice This contract is used to get the price of wsteth from the eth price oracle
+ * @title Middleware Implementation For WstETH Price
+ * @notice This contract is used to get the price of wstETH from the eth price oracle.
  */
 contract WstEthOracleMiddleware is OracleMiddleware {
-    /// @notice wsteth instance
+    /// @notice The wstETH contract.
     IWstETH internal immutable _wstEth;
 
     /**
-     * @param pythContract The address of the Pyth contract
-     * @param pythPriceID The ID of the Pyth price feed
-     * @param chainlinkPriceFeed The address of the Chainlink price feed
-     * @param wstETH The address of the wstETH contract
-     * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale
+     * @param pythContract The address of the Pyth contract.
+     * @param pythPriceID The ID of the wstETH Pyth price feed.
+     * @param chainlinkPriceFeed The address of the wstETH Chainlink price feed.
+     * @param wstETH The address of the wstETH contract.
+     * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale.
      */
     constructor(
         address pythContract,
@@ -33,9 +33,20 @@ contract WstEthOracleMiddleware is OracleMiddleware {
 
     /**
      * @inheritdoc OracleMiddleware
-     * @notice Parses and validates price data by applying eth/wsteth ratio
-     * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata
-     * Wsteth price is calculated as follows: ethPrice x stEthPerToken / 1 ether
+     * @notice Parses and validates `data`, returns the corresponding price data by applying eth/wstETH ratio.
+     * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata.
+     * Wsteth price is calculated as follows: `ethPrice x stEthPerToken / 1 ether`.
+     * A fee amounting to exactly {validationCost} (with the same `data` and `action`) must be sent or the transaction
+     * will revert.
+     * @param actionId A unique identifier for the current action. This identifier can be used to link an `Initiate`
+     * call with the corresponding `Validate` call.
+     * @param targetTimestamp The target timestamp for validating the price data. For validation actions, this is the
+     * timestamp of the initiation.
+     * @param action Type of action for which the price is requested. The middleware may use this to alter the
+     * validation of the price or the returned price.
+     * @param data The data to be used to communicate with oracles, the format varies from middleware to middleware and
+     * can be different depending on the action.
+     * @return result_ The price and timestamp as {IOracleMiddlewareTypes.PriceInfo}.
      */
     function parseAndValidatePrice(
         bytes32 actionId,
@@ -43,13 +54,9 @@ contract WstEthOracleMiddleware is OracleMiddleware {
         Types.ProtocolAction action,
         bytes calldata data
     ) public payable virtual override returns (PriceInfo memory) {
-        // fetched eth price
         PriceInfo memory ethPrice = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
-
-        // stEth ratio for one wstEth
         uint256 stEthPerToken = _wstEth.stEthPerToken();
 
-        // wsteth price
         return PriceInfo({
             price: ethPrice.price * stEthPerToken / 1 ether,
             neutralPrice: ethPrice.neutralPrice * stEthPerToken / 1 ether,
