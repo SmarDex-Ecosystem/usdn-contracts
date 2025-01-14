@@ -676,15 +676,16 @@ library UsdnProtocolLongLibrary {
         // if the new rewards accumulated multiplier is below 10_000, it means the position is very small and the
         // rebalancer will not be able to compute rewards properly
         // for both cases, we should stop the process and gift the remaining value to the vault
-        if (
-            data.positionAmount <= s._minLongPosition / 10_000
-                || (data.prevPositionAmount > 0 && data.newAccMultiplier < 10_000)
-        ) {
+        if (data.positionAmount <= s._minLongPosition / 10_000) {
             // make the rebalancer believe that the previous position was liquidated,
             // and inform it that no new position was open so it can start anew
             rebalancer.updatePosition(Types.PositionId(Constants.NO_POSITION_TICK, 0, 0), 0);
             vaultBalance_ += data.positionValue;
             return (longBalance_, vaultBalance_, Types.RebalancerAction.Closed);
+        }
+        if (data.prevPositionAmount > 0 && data.newAccMultiplier < 10_000) {
+            vaultBalance_ += data.positionValue;
+            data.positionValue = 0;
         }
 
         // transfer the pending assets from the rebalancer to this contract
@@ -717,7 +718,7 @@ library UsdnProtocolLongLibrary {
         // call the rebalancer to update the public bookkeeping
         rebalancer.updatePosition(posId, data.positionValue);
 
-        if (data.positionValue > 0) {
+        if (data.positionValue > 0 || (data.positionValue == 0 && data.newAccMultiplier < 10_000)) {
             action_ = Types.RebalancerAction.ClosedOpened;
         } else {
             action_ = Types.RebalancerAction.Opened;

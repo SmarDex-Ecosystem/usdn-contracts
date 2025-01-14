@@ -161,6 +161,9 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
     function test_NewAccMultiplier_LT10_000() public {
         uint128 prevPositionAmount = 10 ether;
         uint256 entryAccMultiplier = 1;
+        uint256 bonus = uint256(remainingCollateral) * protocol.getRebalancerBonusBps() / Constants.BPS_DIVISOR;
+        uint128 pendingAssets = 10 ether;
+
         vaultBalance *= 2;
 
         PositionId memory posId = setUpUserPositionInLong(
@@ -172,9 +175,11 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
                 price: DEFAULT_PARAMS.initialPrice
             })
         );
+        vm.prank(address(mockedRebalancer));
+        wstETH.mintAndApprove(address(mockedRebalancer), type(uint128).max, address(protocol), type(uint128).max);
 
         mockedRebalancer.setCurrentStateData(
-            0, protocol.getMaxLeverage(), prevPositionAmount, entryAccMultiplier, posId
+            pendingAssets, protocol.getMaxLeverage(), prevPositionAmount, entryAccMultiplier, posId
         );
 
         vm.recordLogs();
@@ -188,22 +193,20 @@ contract TestUsdnProtocolLongTriggerRebalancer is UsdnProtocolBaseFixture {
         );
         (, uint256 posValue,) = abi.decode(logs[1].data, (PositionId, uint256, int256));
 
-        assertLt(
-            FixedPointMathLib.fullMulDiv(posValue, entryAccMultiplier, prevPositionAmount),
-            10_000,
-            "The value of the newAccMultiplier should be less than 10_000"
-        );
         assertEq(
             newVaultBalance - vaultBalance,
-            posValue,
-            "The value of the closed position should have been added to the vault"
+            posValue - bonus,
+            "The value of the closed position should have been added to the vault and the bonus removed"
         );
         assertEq(
-            longBalance - newLongBalance,
-            posValue,
-            "The value of the closed position should have been removed from the long balance"
+            newLongBalance - longBalance,
+            pendingAssets + bonus,
+            "The value of the pending assets and the bonus should have been added to the long balance"
         );
-        assertTrue(rebalancerAction == Types.RebalancerAction.Closed, "The rebalancer should only close the position");
+        assertTrue(
+            rebalancerAction == Types.RebalancerAction.ClosedOpened,
+            "The rebalancer should have closed and opened a position"
+        );
     }
 
     /**
