@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+import { IUsdnProtocol } from "../UsdnProtocol/IUsdnProtocol.sol";
 import { IBaseOracleMiddleware } from "./IBaseOracleMiddleware.sol";
 import { IChainlinkOracle } from "./IChainlinkOracle.sol";
 import { IOracleMiddlewareErrors } from "./IOracleMiddlewareErrors.sol";
@@ -90,8 +91,9 @@ interface IOracleMiddleware is
     /**
      * @notice Sets the new low latency delay.
      * @param newLowLatencyDelay The new low latency delay.
+     * @param usdnProtocol The address of the USDN protocol.
      */
-    function setLowLatencyDelay(uint16 newLowLatencyDelay) external;
+    function setLowLatencyDelay(uint16 newLowLatencyDelay, IUsdnProtocol usdnProtocol) external;
 
     /**
      * @notice Withdraws the ether balance of this contract.

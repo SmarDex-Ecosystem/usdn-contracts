@@ -870,4 +870,12 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     {
         Long._checkOpenPositionLeverage(adjustedPrice, liqPriceWithoutPenalty, userMaxLeverage);
     }
+
+    function i_handleNegativeBalances(int256 tempLongBalance, int256 tempVaultBalance)
+        external
+        pure
+        returns (uint256 longBalance_, uint256 vaultBalance_)
+    {
+        (longBalance_, vaultBalance_) = Long._handleNegativeBalances(tempLongBalance, tempVaultBalance);
+    }
 }

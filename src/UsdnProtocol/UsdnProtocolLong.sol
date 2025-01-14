@@ -73,7 +73,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong {
         view
         returns (uint256 available_)
     {
-        return Core.longAssetAvailableWithFunding(currentPrice, timestamp);
+        (available_,) = Core.longAssetAvailableWithFunding(currentPrice, timestamp);
     }
 
     /// @inheritdoc IUsdnProtocolLong

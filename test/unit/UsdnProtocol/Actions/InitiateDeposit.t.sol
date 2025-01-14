@@ -23,6 +23,8 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enableSdexBurnOnDeposit = true;
+        params.flags.enableFunding = true;
+        params.flags.enableProtocolFees = true;
         super._setUp(params);
 
         // Sanity check
@@ -78,8 +80,11 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             uint128(depositAmount - uint256(depositAmount) * protocol.getVaultFeeBps() / BPS_DIVISOR);
         uint128 price = 2000 ether;
         bytes memory currentPrice = abi.encode(price); // only used to apply PnL + funding
-        uint256 usdnSharesToMint =
-            Utils._calcMintUsdnShares(amountAfterFees, protocol.getBalanceVault(), protocol.getUsdn().totalShares());
+        uint256 usdnSharesToMint = Utils._calcMintUsdnShares(
+            amountAfterFees,
+            protocol.vaultAssetAvailableWithFunding(params.initialPrice, uint128(block.timestamp)),
+            protocol.getUsdn().totalShares()
+        );
         uint256 expectedSdexBurnAmount =
             protocol.i_calcSdexToBurn(usdn.convertToTokens(usdnSharesToMint), protocol.getSdexBurnOnDepositRatio());
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));

@@ -12,6 +12,7 @@ import {
     FormattedPythPrice,
     PriceInfo
 } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
 import { PythOracle } from "./oracles/PythOracle.sol";
@@ -329,12 +330,6 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
                 revert OracleMiddlewareInvalidRoundId();
             }
 
-            (uint80 latestRoundId,,,,) = _priceFeed.latestRoundData();
-            // if the provided round ID does not belong to the latest phase, revert
-            if (latestRoundId >> 64 != roundPhaseId) {
-                revert OracleMiddlewareInvalidRoundId();
-            }
-
             // make sure that the provided round ID is not newer than it should be
             if (providedRoundPrice_.timestamp > targetLimit + _timeElapsedLimit) {
                 revert OracleMiddlewareInvalidRoundId();
@@ -411,11 +406,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
     }
 
     /// @inheritdoc IOracleMiddleware
-    function setLowLatencyDelay(uint16 newLowLatencyDelay) external onlyRole(ADMIN_ROLE) {
-        if (newLowLatencyDelay < 15 minutes) {
+    function setLowLatencyDelay(uint16 newLowLatencyDelay, IUsdnProtocol usdnProtocol) external onlyRole(ADMIN_ROLE) {
+        if (newLowLatencyDelay > 90 minutes) {
             revert OracleMiddlewareInvalidLowLatencyDelay();
         }
-        if (newLowLatencyDelay > 90 minutes) {
+        if (newLowLatencyDelay < usdnProtocol.getLowLatencyValidatorDeadline()) {
             revert OracleMiddlewareInvalidLowLatencyDelay();
         }
         _lowLatencyDelay = newLowLatencyDelay;
