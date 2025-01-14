@@ -67,9 +67,9 @@ abstract contract InitializableReentrancyGuard {
     /**
      * @notice Reverts if the contract is not initialized or in case of a reentrancy.
      * @dev Prevents a contract from calling itself, directly or indirectly, or using it in an uninitialized state.
-     * Calling an {initializedAndNonReentrant} function before the {IUsdnProtocol.initialize} function was called will
-     * revert. Calling an {initializedAndNonReentrant} function from another {initializedAndNonReentrant} function is
-     * not supported.
+     * Calling an {initializedAndNonReentrant} function before the {IUsdnProtocolCore.initialize} function was called
+     * will revert. Calling an {initializedAndNonReentrant} function from another {initializedAndNonReentrant} function
+     * is not supported.
      */
     modifier initializedAndNonReentrant() {
         _checkInitialized();
