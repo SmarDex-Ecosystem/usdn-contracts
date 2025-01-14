@@ -56,7 +56,7 @@ library UsdnProtocolCoreLibrary {
         (int24 tickWithPenalty, uint128 liqPriceWithoutPenalty) =
             Long._getTickFromDesiredLiqPrice(desiredLiqPrice, s._liquidationPenalty);
 
-        Long._checkOpenPositionLeverage(currentPrice.price.toUint128(), liqPriceWithoutPenalty, s._maxLeverage);
+        _checkOpenPositionLeverage(currentPrice.price.toUint128(), liqPriceWithoutPenalty, s._maxLeverage);
 
         uint128 positionTotalExpo =
             Utils._calcPositionTotalExpo(longAmount, currentPrice.price.toUint128(), liqPriceWithoutPenalty);
@@ -179,6 +179,36 @@ library UsdnProtocolCoreLibrary {
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Checks if the position's leverage is in the authorized range of values.
+     * @param adjustedPrice The adjusted price of the asset.
+     * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty.
+     * @param userMaxLeverage The maximum leverage allowed by the user for the newly created position.
+     */
+    function _checkOpenPositionLeverage(uint128 adjustedPrice, uint128 liqPriceWithoutPenalty, uint256 userMaxLeverage)
+        public
+        view
+    {
+        Types.Storage storage s = Utils._getMainStorage();
+
+        // calculate position leverage
+        // reverts if liquidationPrice >= entryPrice
+        uint256 leverage = Utils._getLeverage(adjustedPrice, liqPriceWithoutPenalty);
+
+        if (leverage < s._minLeverage) {
+            revert IUsdnProtocolErrors.UsdnProtocolLeverageTooLow();
+        }
+
+        uint256 protocolMaxLeverage = s._maxLeverage;
+        if (userMaxLeverage > protocolMaxLeverage) {
+            userMaxLeverage = protocolMaxLeverage;
+        }
+
+        if (leverage > userMaxLeverage) {
+            revert IUsdnProtocolErrors.UsdnProtocolLeverageTooHigh();
+        }
+    }
 
     /**
      * @notice Prepares the pending action struct for a withdrawal and adds it to the queue.
