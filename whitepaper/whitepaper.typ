@@ -269,7 +269,7 @@ the relative difference between the #glspl("trading_expo") of both sides (@sec:t
 
 $
   I = cases(
-    -frac(E_"vault" - E_"long", E_"long") "if" E_"vault" < E_"long",
+    frac(E_"long" - E_"vault", E_"long") "if" E_"vault" < E_"long",
     frac(E_"long" - E_"vault", E_"vault") "else",
   )
 $ <eq:imbalance>
