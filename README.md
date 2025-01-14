@@ -50,7 +50,7 @@ To automatically activate the dev shell when opening the workspace, install [`di
 (available on nixpkgs) and run the following command inside this folder:
 
 ```console
-$ direnv allow
+direnv allow
 ```
 
 The environment provides the following tools:
@@ -62,6 +62,10 @@ The environment provides the following tools:
 - lcov
 - Node 20 + Typescript
 - Rust toolchain
+- just
+- mdbook
+- trufflehog
+- typist (with gyre-fonts)
 - `test_utils` dependencies
 
 ## Usage
@@ -79,17 +83,18 @@ everything.
 
 To run tests, use `forge test -vvv` or `npm run test`.
 
-### Snapshots
-
-The CI checks that there was no unintended regression in gas usage. To do so, it relies on the `.gas-snapshot` file
-which records gas usage for all tests. When tests have changed, a new snapshot should be generated with the
-`npm run snapshot` command and commited to the repo.
-
 ### Deployment scripts
 
 Deployment for anvil forks should be done with a custom bash script at `script/deployFork.sh` which can be run without
 arguments. It must set up any environment variable required by the foundry deployment script.
-Deployment for mainnet should be done with a custom bash script at `script/deployMainnet.sh` which can be run without arguments. You will be prompted to enter the `RPC_URL` of the network you want to deploy to. If you are deploying with a Ledger, you will also be prompted for the deployer address. And without a Ledger, you will be prompted for the deployer private key.
+
+Deployment for mainnet should be done with a custom bash script at `script/deployMainnet.sh`. To know which variables are required, run the following command:
+
+```bash
+script/deployMainnet.sh --help
+```
+
+All information about the script can be found `script/` folder's README.
 
 ### Docker Anvil Fork
 
@@ -127,7 +132,7 @@ number_underscore = "thousands" # add underscore separators in large numbers
 ### Husky
 
 The pre-commit configuration for Husky runs `forge fmt --check` to check the code formatting before each commit. It also
-checks the gas snapshot and prevents committing if it has changed.
+checks for any private key in the codebase with `trufflehog`.
 
 In order to setup the git pre-commit hook, run `npm install`.
 
