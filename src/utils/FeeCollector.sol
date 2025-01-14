@@ -7,8 +7,8 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 import { IFeeCollectorCallback } from "./../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
 
 /**
- * @title FeeCollector
- * @dev Minimum implementation of the fee collector contract
+ * @title Example Fee Collector
+ * @dev Minimum implementation of the fee collector contract.
  */
 contract FeeCollector is IFeeCollectorCallback, ERC165 {
     /// @inheritdoc ERC165
