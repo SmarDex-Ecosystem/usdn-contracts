@@ -1,5 +1,56 @@
 # Changelog
 
+## [0.24.2](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.24.1...v0.24.2) (2025-01-15)
+
+
+### Features
+
+* **_triggerRebalancer:** add a minimum acceptable value for the accMultiplier ([#828](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/828)) ([12d21a4](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/12d21a47d71c165b2dc02f4c62d448154c5fffbd))
+* add initial wsteth price on mock middleware ([#822](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/822)) ([a8edb49](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a8edb49ffb33968595feec5a20290fc9c5cc697b))
+* add verification in setLowLatencyDelay ([#827](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/827)) ([d158b45](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/d158b45fd2071690890627899143421511bfc818))
+* **deployment:** update script to handle early wUSDN deployment ([#818](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/818)) ([d5f2663](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/d5f26638a6f93d36b1aa143cebb6f3a702ae6e34))
+* **doc:** add a script to fix the generated doc ([#816](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/816)) ([bd06319](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/bd063194d62d4fdedd544d6b7d78e87c22a6433c))
+* **protocol:** add rewards for the burnSdex() caller ([#794](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/794)) ([68a188d](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/68a188d771ae05358cdeae7cff4ab715d8533ba4))
+* **protocol:** change default SDEX burn ratio to 5% ([#782](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/782)) ([6fb341d](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/6fb341d88d816dd4c8a27eced8a7e9a14b2f3e1d))
+* reduce library sizes ([#840](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/840)) ([d88ecb1](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/d88ecb121133acbd0b9aeb4c267d0efeafa7d407))
+* **script:** update deployment script to handle safe ownership ([#803](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/803)) ([cd865c2](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/cd865c29fafceafe4dafc6b5f3dac15577eceab2))
+* **script:** upgrade script for tenderly v0.24.0 deployment ([#776](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/776)) ([30413c5](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/30413c5af47be4e158a2ef017beded58083502c1))
+* **sdex-fees:** SDEX fees are now held by the protocol ([#790](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/790)) ([95abb9f](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/95abb9fe5dbc97c0d7922f63f611bf813d79cf30))
+* small fixes ([#812](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/812)) ([382a15b](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/382a15bc4636c58f5146ca0b29f08a963ca0d8e0))
+* **wusdn:** add redemption rate function ([#821](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/821)) ([7e21277](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/7e212779ec80b77953aad880ba35a5686a20066b))
+
+
+### Bug Fixes
+
+* callback argument ([#789](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/789)) ([6c4a956](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/6c4a9565a57ce717aeea975b1a692e2c2b483f97))
+* **handleNegativeBalances:** add check if balances are still negative ([#823](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/823)) ([02d59df](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/02d59df2e43e8148c5eaf25609aecc64bee5e1e3))
+* **long:** avoid edge case underflow in validateOpenPosition above max leverage ([#832](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/832)) ([ebf0e67](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/ebf0e67cc50315a6d09abb2e368be037c3c005ec))
+* **middleware:** relax round ID check ([#825](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/825)) ([e270e09](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/e270e0997aff408dd34e70192b3420c207970b7b))
+* **open-max-leverage:** fix wrong values being used for calculating the new pos value and total expo ([#810](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/810)) ([e50a324](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/e50a324af29e8b612d838206474cf0acda15acba))
+* **pause:** apply the funding for the period between the last update timestamp and the pause ([#811](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/811)) ([2856203](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/28562034ad980a0c3973dbf4670dab89ff0959ab))
+* **rebalancer:** add amounts when position is pending and rebalancer liquidated ([#809](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/809)) ([378c425](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/378c425d8ee7d0d79ef3200a49428339ab4f37cd))
+* **rebalancer:** set the long balance to 0 if subtracting the pos value would underflow ([#784](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/784)) ([9f24ad2](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/9f24ad26433bf8d7b65166c072fccd7733993161))
+* remove unused imports throughout the codebase ([#813](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/813)) ([9898a54](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/9898a547adb1f600b3d66311f2af9f637d2ae72f))
+* **triggerRebalancer:** add the bonus when calculating the minimum position amount ([#829](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/829)) ([d12cf1e](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/d12cf1ea076462cf817bbd47e21ac9f72b8802dd))
+* vault asset available with funding, deposit, withdrawal ([#826](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/826)) ([dd4308b](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/dd4308bcd63b9c7f173d28307454ab7eaa830803))
+
+
+### Miscellaneous Chores
+
+* **deploy:** usdn token mainnet ([#798](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/798)) ([15c2e3e](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/15c2e3e326eb92c0fb46a09c4b51687d9f25ee57))
+* remove unused files and fix natspec in utils ([#838](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/838)) ([b9a0228](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/b9a02289907e392bdaed9c91cce0ae09d8d322bd))
+* update flake and trufflehog commands ([#815](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/815)) ([7709b36](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/7709b36cda29388da3ccb5e97e92defc3a9d5fb6))
+* update licence year ([#814](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/814)) ([622b7c5](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/622b7c550c8b125b99e35d45d202bad0a67f2f6d))
+* **upgrade:** upgrade on tenderly from v0.24.0 to v0.24.1 ([#788](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/788)) ([d79e83b](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/d79e83b685c3b3183162559c41852cb63692a89f))
+* v2 add version and date on first page only ([#808](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/808)) ([a10ad74](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a10ad7412df9246088adf07a4723e38cad49cac6))
+* verify script ([#662](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/662)) ([7340e1a](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/7340e1a009a5fd58d874743b3b6317eadb1fcc37))
+* verify script handle tuple parameter ([#795](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/795)) ([45a3374](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/45a3374a56408977bae4830f9ebdaf4255892700))
+
+
+### Code Refactoring
+
+* use solidity-libraries package for `HugeUint` ([#819](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/819)) ([d711c06](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/d711c0628d58f68326112f62e09b74e5faf38d67))
+
 ## [0.24.1](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.24.0...v0.24.1) (2024-12-11)
 
 
