@@ -2,49 +2,48 @@
 pragma solidity ^0.8.20;
 
 /**
- * @title SignedMath
- * @notice Perform signed math operations safely, reverting with a custom error in case of overflow
+ * @notice Performs signed math operations safely, reverting with a custom error in case of overflow.
  */
 library SignedMath {
     /**
-     * @dev Indicates that the signed `add` operation overflowed
-     * @param lhs The left-hand side operand
-     * @param rhs The right-hand side operand
+     * @dev The signed `add` operation overflowed.
+     * @param lhs The left-hand side operand.
+     * @param rhs The right-hand side operand.
      */
     error SignedMathOverflowedAdd(int256 lhs, int256 rhs);
 
     /**
-     * @dev Indicates that the signed `sub` operation overflowed
-     * @param lhs The left-hand side operand
-     * @param rhs The right-hand side operand
+     * @dev The signed `sub` operation overflowed.
+     * @param lhs The left-hand side operand.
+     * @param rhs The right-hand side operand.
      */
     error SignedMathOverflowedSub(int256 lhs, int256 rhs);
 
     /**
-     * @dev Indicates that the signed `mul` operation overflowed
-     * @param lhs The left-hand side operand
-     * @param rhs The right-hand side operand
+     * @dev The signed `mul` operation overflowed.
+     * @param lhs The left-hand side operand.
+     * @param rhs The right-hand side operand.
      */
     error SignedMathOverflowedMul(int256 lhs, int256 rhs);
 
     /**
-     * @dev Indicates that the signed `div` operation overflowed
-     * @param lhs The left-hand side operand
-     * @param rhs The right-hand side operand
+     * @dev The signed `div` operation overflowed.
+     * @param lhs The left-hand side operand.
+     * @param rhs The right-hand side operand.
      */
     error SignedMathOverflowedDiv(int256 lhs, int256 rhs);
 
     /**
-     * @dev Indicates that a division by zero occurred
-     * @param lhs The left-hand side operand
+     * @dev A division by zero occurred.
+     * @param lhs The left-hand side operand.
      */
     error SignedMathDivideByZero(int256 lhs);
 
     /**
-     * @notice Safely add two signed integers, reverting on overflow
-     * @param lhs The left-hand side operand
-     * @param rhs The right-hand side operand
-     * @return res_ The result of lhs + rhs
+     * @notice Safely adds two signed integers, reverting on overflow.
+     * @param lhs The left-hand side operand.
+     * @param rhs The right-hand side operand.
+     * @return res_ The result of `lhs + rhs`.
      */
     function safeAdd(int256 lhs, int256 rhs) internal pure returns (int256 res_) {
         unchecked {
@@ -59,10 +58,10 @@ library SignedMath {
     }
 
     /**
-     * @notice Safely subtract two signed integers, reverting on overflow
-     * @param lhs The left-hand side operand
-     * @param rhs The right-hand side operand
-     * @return res_ The result of lhs - rhs
+     * @notice Safely subtracts two signed integers, reverting on overflow.
+     * @param lhs The left-hand side operand.
+     * @param rhs The right-hand side operand.
+     * @return res_ The result of `lhs - rhs`.
      */
     function safeSub(int256 lhs, int256 rhs) internal pure returns (int256 res_) {
         unchecked {
@@ -77,10 +76,10 @@ library SignedMath {
     }
 
     /**
-     * @notice Safely multiply two signed integers, reverting on overflow
-     * @param lhs The left-hand side operand
-     * @param rhs The right-hand side operand
-     * @return res_ The result of lhs * rhs
+     * @notice Safely multiplies two signed integers, reverting on overflow.
+     * @param lhs The left-hand side operand.
+     * @param rhs The right-hand side operand.
+     * @return res_ The result of `lhs * rhs`.
      */
     function safeMul(int256 lhs, int256 rhs) internal pure returns (int256 res_) {
         unchecked {
@@ -101,10 +100,10 @@ library SignedMath {
     }
 
     /**
-     * @notice Safely divide two signed integers, reverting on division by zero
-     * @param lhs The left-hand side operand
-     * @param rhs The right-hand side operand
-     * @return res_ The result of lhs / rhs
+     * @notice Safely divides two signed integers, reverting on division by zero.
+     * @param lhs The left-hand side operand.
+     * @param rhs The right-hand side operand.
+     * @return res_ The result of `lhs / rhs`.
      */
     function safeDiv(int256 lhs, int256 rhs) internal pure returns (int256 res_) {
         unchecked {
