@@ -47,7 +47,7 @@ interface IUsdnProtocolTypes {
      * An initiate close has been completed / a pending action was validated.
      * @param Liquidated The position has been liquidated by this call.
      * @param PendingLiquidations The call cannot be completed because of pending liquidations.
-     * Try calling the `liquidate` function with a fresh price to unblock the situation.
+     * Try calling the {IUsdnProtocolActions.liquidate} function with a fresh price to unblock the situation.
      */
     enum LongActionOutcome {
         Processed,
@@ -99,7 +99,7 @@ interface IUsdnProtocolTypes {
      * @notice A pending action in the queue.
      * @param action The action type.
      * @param timestamp The timestamp of the initiate action.
-     * @param var0 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
+     * @param var0 See {DepositPendingAction}, {WithdrawalPendingAction} and {LongPendingAction}.
      * @param to The target of the action.
      * @param validator The address that is supposed to validate the action.
      * @param securityDepositValue The security deposit of the pending action.
@@ -206,8 +206,8 @@ interface IUsdnProtocolTypes {
      * @param index The index of the position in the tick list.
      * @param liqMultiplier A fixed precision representation of the liquidation multiplier (with
      * `LIQUIDATION_MULTIPLIER_DECIMALS` decimals) used to calculate the effective price for a given tick number.
-     * @param closeBoundedPositionValue The amount that was removed from the long balance on `initiateClosePosition`
-     * (only used when closing a position).
+     * @param closeBoundedPositionValue The amount that was removed from the long balance on
+     * {IUsdnProtocolActions.initiateClosePosition} (only used when closing a position).
      */
     struct LongPendingAction {
         ProtocolAction action; // 1 byte
@@ -544,7 +544,7 @@ interface IUsdnProtocolTypes {
      * 100 is equivalent to a ~1.005% increase in liquidation price between ticks.
      * @param _asset The asset ERC20 contract.
      * Assets with a blacklist are not supported because the protocol would be DoS if transfers revert.
-     * @param _assetDecimals The `_assetDecimals`.
+     * @param _assetDecimals The number of decimals used by the `_asset`.
      * @param _priceFeedDecimals The price feed decimals (18).
      * @param _usdn The USDN ERC20 contract.
      * @param _sdex The SDEX ERC20 contract.
@@ -574,7 +574,7 @@ interface IUsdnProtocolTypes {
      * As soon as the difference between the vault expo and the long expo exceeds this basis point limit in favor
      * of long the open rebalancing mechanism is triggered, preventing the opening of a new long position.
      * @param _withdrawalExpoImbalanceLimitBps The imbalance limit of the long expo for withdrawal actions (in basis
-     * points).As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of
+     * points). As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of
      * long, the withdrawal rebalancing mechanism is triggered, preventing the withdrawal of the existing vault
      * position.
      * @param _depositExpoImbalanceLimitBps The imbalance limit of the vault expo for deposit actions (in basis points).
@@ -609,7 +609,7 @@ interface IUsdnProtocolTypes {
      * The value stored is an index into the `pendingActionsQueue` deque, shifted by one. A value of 0 means no
      * pending action. Since the deque uses uint128 indices, the highest index will not overflow when adding one.
      * @param _pendingActionsQueue The queue of pending actions.
-     * @param _balanceVault  The balance of deposits (with `_assetDecimals`).
+     * @param _balanceVault The balance of deposits (with `_assetDecimals`).
      * @param _pendingBalanceVault The unreflected balance change due to pending vault actions (with `_assetDecimals`).
      * @param _EMA The exponential moving average of the funding (0.0003 at initialization).
      * @param _balanceLong The balance of long positions (with `_assetDecimals`).
