@@ -347,7 +347,7 @@ interface IUsdnProtocolTypes {
 
     /**
      * @notice Parameters for the internal {UsdnProtocolActionsUtilsLibrary._prepareClosePositionData} function.
-     * @param to The address that will receive the assets.
+     * @param to The recipient of the funds.
      * @param validator The address that is supposed to validate the action.
      * @param posId The unique identifier of the position.
      * @param amountToClose The amount of collateral to remove from the position's amount.
@@ -372,7 +372,7 @@ interface IUsdnProtocolTypes {
 
     /**
      * @notice Parameters for the internal {UsdnProtocolActionsLongLibrary._initiateClosePosition} function.
-     * @param to The address that will receive the closed amount.
+     * @param to The recipient of the funds.
      * @param validator The address that is supposed to validate the action.
      * @param posId The unique identifier of the position.
      * @param amountToClose The amount to close.
