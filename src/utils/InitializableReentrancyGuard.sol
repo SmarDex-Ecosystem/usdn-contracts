@@ -28,7 +28,7 @@ abstract contract InitializableReentrancyGuard {
     }
 
     /**
-     * @notice The storage slot of the {InitializableReentrancyGuardStorage} struct
+     * @notice The storage slot of the {InitializableReentrancyGuardStorage} struct.
      * @dev `keccak256(abi.encode(uint256(keccak256("InitializableReentrancyGuard.storage.status")) - 1)) &
      * ~bytes32(uint256(0xff))`
      */
