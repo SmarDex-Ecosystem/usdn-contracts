@@ -103,13 +103,13 @@ interface IUsdnProtocolTypes {
      * @param to The target of the action.
      * @param validator The address that is supposed to validate the action.
      * @param securityDepositValue The security deposit of the pending action.
-     * @param var1 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
-     * @param var2 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
-     * @param var3 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
-     * @param var4 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
-     * @param var5 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
-     * @param var6 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
-     * @param var7 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
+     * @param var1 See {DepositPendingAction}, {WithdrawalPendingAction} and {LongPendingAction}.
+     * @param var2 See {DepositPendingAction}, {WithdrawalPendingAction} and {LongPendingAction}.
+     * @param var3 See {DepositPendingAction}, {WithdrawalPendingAction} and {LongPendingAction}.
+     * @param var4 See {DepositPendingAction}, {WithdrawalPendingAction} and {LongPendingAction}.
+     * @param var5 See {DepositPendingAction}, {WithdrawalPendingAction} and {LongPendingAction}.
+     * @param var6 See {DepositPendingAction}, {WithdrawalPendingAction} and {LongPendingAction}.
+     * @param var7 See {DepositPendingAction}, {WithdrawalPendingAction} and {LongPendingAction}.
      */
     struct PendingAction {
         ProtocolAction action; // 1 byte
