@@ -50,10 +50,6 @@ library UsdnProtocolActionsLongLibrary {
         uint24 liquidationPenalty;
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                             External functions                             */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice See {IUsdnProtocolActions.initiateOpenPosition}.
     function initiateOpenPosition(
         Types.InitiateOpenPositionParams memory params,
@@ -206,10 +202,6 @@ library UsdnProtocolActionsLongLibrary {
         Utils._refundExcessEther(0, amountToRefund, balanceBefore);
         Utils._checkPendingFee();
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                             Internal functions                             */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Validates an open position action.

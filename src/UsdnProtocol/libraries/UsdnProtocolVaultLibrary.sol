@@ -109,10 +109,6 @@ library UsdnProtocolVaultLibrary {
         bool isLiquidationPending;
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                             External functions                             */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice See {IUsdnProtocolActions.initiateDeposit}.
     function initiateDeposit(
         uint128 amount,
@@ -382,10 +378,6 @@ library UsdnProtocolVaultLibrary {
         price_ = usdnPrice(currentPrice, uint128(block.timestamp));
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                              Public functions                              */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice See {IUsdnProtocolVault.usdnPrice(uint128,uint128)}.
     function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
         Types.Storage storage s = Utils._getMainStorage();
@@ -414,10 +406,6 @@ library UsdnProtocolVaultLibrary {
 
         return (s._balanceLong + s._balanceVault - FixedPointMathLib.abs(fee)) - longAvailable;
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                              Internal function                             */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Executes the first actionable pending action.

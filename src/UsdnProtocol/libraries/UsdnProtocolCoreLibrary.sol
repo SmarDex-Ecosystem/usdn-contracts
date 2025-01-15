@@ -28,10 +28,6 @@ library UsdnProtocolCoreLibrary {
     using SafeTransferLib for address;
     using SignedMath for int256;
 
-    /* -------------------------------------------------------------------------- */
-    /*                             External functions                             */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice See {IUsdnProtocolCore.initialize}.
     function initialize(
         uint128 depositAmount,
@@ -98,6 +94,78 @@ library UsdnProtocolCoreLibrary {
         _removeBlockedPendingAction(rawIndex, to, false);
     }
 
+    /**
+     * @notice Prepares the pending action struct for the close position action and add it to the queue.
+     * @param to The address that will receive the assets.
+     * @param validator The validator for the pending action.
+     * @param posId The unique identifier of the position.
+     * @param amountToClose The amount of collateral to remove from the position's amount.
+     * @param securityDepositValue The value of the security deposit for the newly created pending action.
+     * @param data The close position data.
+     * @return amountToRefund_ The security deposit value of a stale pending action.
+     */
+    function _createClosePendingAction(
+        address to,
+        address validator,
+        Types.PositionId memory posId,
+        uint128 amountToClose,
+        uint64 securityDepositValue,
+        Types.ClosePositionData memory data
+    ) external returns (uint256 amountToRefund_) {
+        Types.LongPendingAction memory action = Types.LongPendingAction({
+            action: Types.ProtocolAction.ValidateClosePosition,
+            timestamp: uint40(block.timestamp),
+            closeLiqPenalty: data.liquidationPenalty,
+            to: to,
+            validator: validator,
+            securityDepositValue: securityDepositValue,
+            tick: posId.tick,
+            closeAmount: amountToClose,
+            closePosTotalExpo: data.totalExpoToClose,
+            tickVersion: posId.tickVersion,
+            index: posId.index,
+            liqMultiplier: Utils._calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
+            closeBoundedPositionValue: data.tempPositionValue
+        });
+        amountToRefund_ = _addPendingAction(validator, Utils._convertLongPendingAction(action));
+    }
+
+    /**
+     * @notice Prepares the pending action struct for a withdrawal and adds it to the queue.
+     * @param to The recipient of the assets.
+     * @param validator The address that is supposed to validate the withdrawal and receive the security deposit.
+     * @param usdnShares The amount of USDN shares to burn.
+     * @param securityDepositValue The value of the security deposit for the newly created pending action.
+     * @param data The withdrawal action data.
+     * @return amountToRefund_ Refund The security deposit value of a stale pending action.
+     */
+    function _createWithdrawalPendingAction(
+        address to,
+        address validator,
+        uint152 usdnShares,
+        uint64 securityDepositValue,
+        Vault.WithdrawalData memory data
+    ) external returns (uint256 amountToRefund_) {
+        Types.PendingAction memory action = Utils._convertWithdrawalPendingAction(
+            Types.WithdrawalPendingAction({
+                action: Types.ProtocolAction.ValidateWithdrawal,
+                timestamp: uint40(block.timestamp),
+                feeBps: data.feeBps,
+                to: to,
+                validator: validator,
+                securityDepositValue: securityDepositValue,
+                sharesLSB: Vault._calcWithdrawalAmountLSB(usdnShares),
+                sharesMSB: Vault._calcWithdrawalAmountMSB(usdnShares),
+                assetPrice: data.lastPrice,
+                totalExpo: data.totalExpo,
+                balanceVault: data.balanceVault,
+                balanceLong: data.balanceLong,
+                usdnTotalShares: data.usdnTotalShares
+            })
+        );
+        amountToRefund_ = _addPendingAction(validator, action);
+    }
+
     /// @notice See {IUsdnProtocolFallback.getUserPendingAction}.
     function getUserPendingAction(address validator) external view returns (Types.PendingAction memory action_) {
         (action_,) = _getPendingAction(validator);
@@ -113,10 +181,6 @@ library UsdnProtocolCoreLibrary {
 
         (funding_, fundingPerDay_, oldLongExpo_) = _funding(timestamp, s._EMA);
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                              Public functions                              */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Gets the predicted value of the long balance for the given asset price and timestamp.
@@ -176,46 +240,6 @@ library UsdnProtocolCoreLibrary {
         expo_ = s._totalExpo - available;
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                             Internal functions                             */
-    /* -------------------------------------------------------------------------- */
-
-    /**
-     * @notice Prepares the pending action struct for the close position action and add it to the queue.
-     * @param to The address that will receive the assets.
-     * @param validator The validator for the pending action.
-     * @param posId The unique identifier of the position.
-     * @param amountToClose The amount of collateral to remove from the position's amount.
-     * @param securityDepositValue The value of the security deposit for the newly created pending action.
-     * @param data The close position data.
-     * @return amountToRefund_ The security deposit value of a stale pending action.
-     */
-    function _createClosePendingAction(
-        address to,
-        address validator,
-        Types.PositionId memory posId,
-        uint128 amountToClose,
-        uint64 securityDepositValue,
-        Types.ClosePositionData memory data
-    ) external returns (uint256 amountToRefund_) {
-        Types.LongPendingAction memory action = Types.LongPendingAction({
-            action: Types.ProtocolAction.ValidateClosePosition,
-            timestamp: uint40(block.timestamp),
-            closeLiqPenalty: data.liquidationPenalty,
-            to: to,
-            validator: validator,
-            securityDepositValue: securityDepositValue,
-            tick: posId.tick,
-            closeAmount: amountToClose,
-            closePosTotalExpo: data.totalExpoToClose,
-            tickVersion: posId.tickVersion,
-            index: posId.index,
-            liqMultiplier: Utils._calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
-            closeBoundedPositionValue: data.tempPositionValue
-        });
-        amountToRefund_ = _addPendingAction(validator, Utils._convertLongPendingAction(action));
-    }
-
     /**
      * @notice Checks if the position's leverage is in the authorized range of values.
      * @param adjustedPrice The adjusted price of the asset.
@@ -244,42 +268,6 @@ library UsdnProtocolCoreLibrary {
         if (leverage > userMaxLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolLeverageTooHigh();
         }
-    }
-
-    /**
-     * @notice Prepares the pending action struct for a withdrawal and adds it to the queue.
-     * @param to The recipient of the assets.
-     * @param validator The address that is supposed to validate the withdrawal and receive the security deposit.
-     * @param usdnShares The amount of USDN shares to burn.
-     * @param securityDepositValue The value of the security deposit for the newly created pending action.
-     * @param data The withdrawal action data.
-     * @return amountToRefund_ Refund The security deposit value of a stale pending action.
-     */
-    function _createWithdrawalPendingAction(
-        address to,
-        address validator,
-        uint152 usdnShares,
-        uint64 securityDepositValue,
-        Vault.WithdrawalData memory data
-    ) external returns (uint256 amountToRefund_) {
-        Types.PendingAction memory action = Utils._convertWithdrawalPendingAction(
-            Types.WithdrawalPendingAction({
-                action: Types.ProtocolAction.ValidateWithdrawal,
-                timestamp: uint40(block.timestamp),
-                feeBps: data.feeBps,
-                to: to,
-                validator: validator,
-                securityDepositValue: securityDepositValue,
-                sharesLSB: Vault._calcWithdrawalAmountLSB(usdnShares),
-                sharesMSB: Vault._calcWithdrawalAmountMSB(usdnShares),
-                assetPrice: data.lastPrice,
-                totalExpo: data.totalExpo,
-                balanceVault: data.balanceVault,
-                balanceLong: data.balanceLong,
-                usdnTotalShares: data.usdnTotalShares
-            })
-        );
-        amountToRefund_ = _addPendingAction(validator, action);
     }
 
     /**

@@ -41,10 +41,6 @@ library UsdnProtocolActionsUtilsLibrary {
         bool liq;
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                             External functions                             */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice See {IUsdnProtocolActions.liquidate}.
     function liquidate(bytes calldata currentPriceData)
         external
@@ -118,30 +114,6 @@ library UsdnProtocolActionsUtilsLibrary {
         emit IUsdnProtocolEvents.PositionOwnershipTransferred(posId, oldOwner, newOwner);
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                              Public functions                              */
-    /* -------------------------------------------------------------------------- */
-
-    /// @notice See {IUsdnProtocolLong.getLongPosition}.
-    function getLongPosition(Types.PositionId memory posId)
-        public
-        view
-        returns (Types.Position memory pos_, uint24 liquidationPenalty_)
-    {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        (bytes32 tickHash, uint256 version) = Utils._tickHash(posId.tick);
-        if (posId.tickVersion != version) {
-            revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
-        }
-        pos_ = s._longPositions[tickHash][posId.index];
-        liquidationPenalty_ = s._tickData[tickHash].liquidationPenalty;
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /*                             Internal functions                             */
-    /* -------------------------------------------------------------------------- */
-
     /**
      * @notice Checks and reverts if the withdrawn value breaks the imbalance limits.
      * @param withdrawalValue The withdrawal value in asset.
@@ -203,6 +175,22 @@ library UsdnProtocolActionsUtilsLibrary {
         if (imbalanceBps > depositExpoImbalanceLimitBps) {
             revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
+    }
+
+    /// @notice See {IUsdnProtocolLong.getLongPosition}.
+    function getLongPosition(Types.PositionId memory posId)
+        public
+        view
+        returns (Types.Position memory pos_, uint24 liquidationPenalty_)
+    {
+        Types.Storage storage s = Utils._getMainStorage();
+
+        (bytes32 tickHash, uint256 version) = Utils._tickHash(posId.tick);
+        if (posId.tickVersion != version) {
+            revert IUsdnProtocolErrors.UsdnProtocolOutdatedTick(version, posId.tickVersion);
+        }
+        pos_ = s._longPositions[tickHash][posId.index];
+        liquidationPenalty_ = s._tickData[tickHash].liquidationPenalty;
     }
 
     /**

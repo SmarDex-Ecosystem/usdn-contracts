@@ -95,10 +95,6 @@ library UsdnProtocolLongLibrary {
         uint256 newAccMultiplier;
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                             External functions                             */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice See {IUsdnProtocolLong.getPositionValue}.
     function getPositionValue(Types.PositionId calldata posId, uint128 price, uint128 timestamp)
         external
@@ -127,10 +123,6 @@ library UsdnProtocolLongLibrary {
         );
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                              Public functions                              */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice See {IUsdnProtocolLong.minTick}.
     function minTick() public view returns (int24 tick_) {
         Types.Storage storage s = Utils._getMainStorage();
@@ -157,10 +149,6 @@ library UsdnProtocolLongLibrary {
         // round down to the next valid tick according to _tickSpacing (towards negative infinity)
         tick_ = _roundTickDown(tick_, tickSpacing);
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                             Internal functions                             */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Applies PnL, funding, and liquidates positions if necessary.
