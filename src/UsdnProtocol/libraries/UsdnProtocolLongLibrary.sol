@@ -21,6 +21,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from "./UsdnProtocolConstan
 import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
+import { console2 } from "forge-std/Test.sol";
 
 library UsdnProtocolLongLibrary {
     using Accumulator for HugeUint.Uint512;
@@ -296,6 +297,7 @@ library UsdnProtocolLongLibrary {
             conversionData.tradingExpo,
             conversionData.accumulator
         );
+
         _checkOpenPositionLeverage(data_.adjustedPrice, liqPriceWithoutPenalty, params.userMaxLeverage);
 
         data_.positionTotalExpo =
@@ -967,6 +969,9 @@ library UsdnProtocolLongLibrary {
         // calculate position leverage
         // reverts if liquidationPrice >= entryPrice
         uint256 leverage = Utils._getLeverage(adjustedPrice, liqPriceWithoutPenalty);
+        console2.log("leverage", leverage);
+        console2.log("s._minLeverage", s._minLeverage);
+        console2.log("s._maxLeverage", s._maxLeverage);
 
         if (leverage < s._minLeverage) {
             revert IUsdnProtocolErrors.UsdnProtocolLeverageTooLow();

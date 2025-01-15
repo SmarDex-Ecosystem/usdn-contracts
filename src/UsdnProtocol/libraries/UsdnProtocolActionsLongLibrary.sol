@@ -18,6 +18,7 @@ import { UsdnProtocolCoreLibrary as Core } from "./UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "./UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "./UsdnProtocolVaultLibrary.sol";
+import { console2 } from "forge-std/Test.sol";
 
 library UsdnProtocolActionsLongLibrary {
     using Accumulator for HugeUint.Uint512;
@@ -229,6 +230,8 @@ library UsdnProtocolActionsLongLibrary {
 
         (Types.ValidateOpenPositionData memory data, bool liquidated) =
             _prepareValidateOpenPositionData(pending, priceData);
+        console2.log("liquidated", liquidated);
+        console2.log("data.isLiquidationPending", data.isLiquidationPending);
 
         if (liquidated) {
             posId_.tick = Constants.NO_POSITION_TICK;
@@ -246,6 +249,11 @@ library UsdnProtocolActionsLongLibrary {
         // however, if the leverage exceeds max leverage, then we adjust the liquidation price (tick) to have a leverage
         // of _maxLeverage
         uint128 maxLeverage = uint128(s._maxLeverage);
+
+        console2.log("data.leverage", data.leverage);
+        console2.log("maxLeverage", maxLeverage);
+        console2.log("data.leverage > maxLeverage", data.leverage > maxLeverage);
+
         if (data.leverage > maxLeverage) {
             MaxLeverageData memory maxLeverageData;
             // theoretical liquidation price for _maxLeverage
@@ -293,6 +301,10 @@ library UsdnProtocolActionsLongLibrary {
             Long._removeAmountFromPosition(
                 data.action.tick, data.action.index, data.pos, data.pos.amount, data.pos.totalExpo
             );
+
+            console2.log("data.lastPrice", data.lastPrice);
+            console2.log("liqPriceWithPenalty", liqPriceWithPenalty);
+            console2.log("data.lastPrice <= liqPriceWithPenalty", data.lastPrice <= liqPriceWithPenalty);
 
             // if the last price is below the liquidation price with penalty of the new position, the position is
             // already underwater and we might be unable to calculate the new position value if we are further below
