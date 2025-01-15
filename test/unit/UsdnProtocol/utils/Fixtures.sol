@@ -45,7 +45,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors
         bool enableRebalancer;
         bool enableLiquidationRewards;
         bool enableRoles;
-        bool enableLiqPenalty;
     }
 
     struct SetUpParams {
@@ -75,8 +74,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors
             enableLongLimit: false,
             enableRebalancer: false,
             enableLiquidationRewards: false,
-            enableRoles: false,
-            enableLiqPenalty: true
+            enableRoles: false
         })
     });
 
@@ -193,11 +191,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors
         // disable open position limit
         if (!testParams.flags.enableLongLimit) {
             protocol.setMinLongPosition(0);
-        }
-
-        // disable liq penalty
-        if (!testParams.flags.enableLiqPenalty) {
-            protocol.setLiquidationPenalty(0);
         }
         vm.stopPrank();
 
