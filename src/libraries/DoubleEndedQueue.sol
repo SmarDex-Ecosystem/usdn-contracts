@@ -9,8 +9,8 @@ import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnPro
  * of the sequence (called front and back).
  * @dev Storage use is optimized, and all operations are O(1) constant time.
  *
- * The struct is called `Deque` and holds `PendingAction`s. This data structure can only be used in storage, and not in
- * memory.
+ * The struct is called `Deque` and holds {IUsdnProtocolTypes.PendingAction}'s. This data structure can only be used in
+ * storage, and not in memory.
  */
 library DoubleEndedQueue {
     /// @dev An operation (e.g. {front}) couldn't be completed due to the queue being empty.
@@ -29,7 +29,7 @@ library DoubleEndedQueue {
      * directly. Use the functions provided below instead. Modifying the struct manually may violate assumptions and
      * lead to unexpected behavior.
      *
-     * The first item is at data[begin] and the last item is at data[end - 1]. This range can wrap around.
+     * The first item is at `data[begin]` and the last item is at `data[end - 1]`. This range can wrap around.
      * @param _begin The index of the first item in the queue.
      * @param _end The index of the item after the last item in the queue.
      * @param _data The items in the queue.
@@ -97,7 +97,7 @@ library DoubleEndedQueue {
 
     /**
      * @dev Removes the item at the beginning of the queue and returns it.
-     * Reverts with `QueueEmpty` if the queue is empty.
+     * Reverts with {QueueEmpty} if the queue is empty.
      * @param deque The queue.
      * @return value_ The removed item.
      */
@@ -115,7 +115,7 @@ library DoubleEndedQueue {
 
     /**
      * @dev Returns the item at the beginning of the queue.
-     * Reverts with `QueueEmpty` if the queue is empty.
+     * Reverts with {QueueEmpty} if the queue is empty.
      * @param deque The queue.
      * @return value_ The item at the front of the queue.
      * @return rawIndex_ The raw index of the returned item.
@@ -130,7 +130,7 @@ library DoubleEndedQueue {
 
     /**
      * @dev Returns the item at the end of the queue.
-     * Reverts with `QueueEmpty` if the queue is empty.
+     * Reverts with {QueueEmpty} if the queue is empty.
      * @param deque The queue.
      * @return value_ The item at the back of the queue.
      * @return rawIndex_ The raw index of the returned item.
@@ -148,7 +148,7 @@ library DoubleEndedQueue {
     /**
      * @dev Returns the item at a position in the queue given by `index`, with the first item at 0 and the last item at
      * `length(deque) - 1`.
-     * Reverts with `QueueOutOfBounds` if the index is out of bounds.
+     * Reverts with {QueueOutOfBounds} if the index is out of bounds.
      * @param deque The queue.
      * @param index The index of the item to return.
      * @return value_ The item at the given index.
@@ -173,7 +173,7 @@ library DoubleEndedQueue {
     /**
      * @dev Returns the item at a position in the queue given by `rawIndex`, indexing into the underlying storage array
      * directly.
-     * Reverts with `QueueOutOfBounds` if the index is out of bounds.
+     * Reverts with {QueueOutOfBounds} if the index is out of bounds.
      * @param deque The queue.
      * @param rawIndex The index of the item to return.
      * @return value_ The item at the given index.
