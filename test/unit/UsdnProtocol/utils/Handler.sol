@@ -156,7 +156,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         uint64 securityDepositValue,
         Vault.WithdrawalData memory data
     ) external returns (uint256 amountToRefund_) {
-        return Vault._createWithdrawalPendingAction(to, validator, usdnShares, securityDepositValue, data);
+        return Core._createWithdrawalPendingAction(to, validator, usdnShares, securityDepositValue, data);
     }
 
     function i_createDepositPendingAction(
@@ -186,7 +186,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         uint64 securityDepositValue,
         ClosePositionData memory data
     ) external returns (uint256 amountToRefund_) {
-        return ActionsLong._createClosePendingAction(to, validator, posId, amountToClose, securityDepositValue, data);
+        return Core._createClosePendingAction(to, validator, posId, amountToClose, securityDepositValue, data);
     }
 
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
@@ -423,11 +423,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     }
 
     function i_checkImbalanceLimitDeposit(uint256 depositValue) external view {
-        Vault._checkImbalanceLimitDeposit(depositValue);
+        ActionsUtils._checkImbalanceLimitDeposit(depositValue);
     }
 
     function i_checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) external view {
-        Vault._checkImbalanceLimitWithdrawal(withdrawalValue, totalExpo);
+        ActionsUtils._checkImbalanceLimitWithdrawal(withdrawalValue, totalExpo);
     }
 
     function i_checkImbalanceLimitOpen(
@@ -868,7 +868,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         external
         view
     {
-        Long._checkOpenPositionLeverage(adjustedPrice, liqPriceWithoutPenalty, userMaxLeverage);
+        Core._checkOpenPositionLeverage(adjustedPrice, liqPriceWithoutPenalty, userMaxLeverage);
     }
 
     function i_handleNegativeBalances(int256 tempLongBalance, int256 tempVaultBalance)

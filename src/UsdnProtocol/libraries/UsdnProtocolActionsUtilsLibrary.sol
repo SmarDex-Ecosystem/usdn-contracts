@@ -41,10 +41,6 @@ library UsdnProtocolActionsUtilsLibrary {
         bool liq;
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                             External functions                             */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice See {IUsdnProtocolActions.liquidate}.
     function liquidate(bytes calldata currentPriceData)
         external
@@ -118,9 +114,68 @@ library UsdnProtocolActionsUtilsLibrary {
         emit IUsdnProtocolEvents.PositionOwnershipTransferred(posId, oldOwner, newOwner);
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                              Public functions                              */
-    /* -------------------------------------------------------------------------- */
+    /**
+     * @notice Checks and reverts if the withdrawn value breaks the imbalance limits.
+     * @param withdrawalValue The withdrawal value in asset.
+     * @param totalExpo The current total exposure of the long side.
+     */
+    function _checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) external view {
+        Types.Storage storage s = Utils._getMainStorage();
+
+        int256 withdrawalExpoImbalanceLimitBps = s._withdrawalExpoImbalanceLimitBps;
+
+        // early return in case limit is disabled
+        if (withdrawalExpoImbalanceLimitBps == 0) {
+            return;
+        }
+
+        int256 newVaultExpo =
+            s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeSub(withdrawalValue.toInt256());
+
+        // an imbalance cannot be calculated if the new vault exposure is zero or negative
+        if (newVaultExpo <= 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolEmptyVault();
+        }
+
+        int256 imbalanceBps = (totalExpo - s._balanceLong).toInt256().safeSub(newVaultExpo).safeMul(
+            int256(Constants.BPS_DIVISOR)
+        ).safeDiv(newVaultExpo);
+
+        if (imbalanceBps > withdrawalExpoImbalanceLimitBps) {
+            revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
+        }
+    }
+
+    /**
+     * @notice Checks and reverts if the deposited value breaks the imbalance limits.
+     * @param depositValue The deposit value in asset.
+     */
+    function _checkImbalanceLimitDeposit(uint256 depositValue) external view {
+        Types.Storage storage s = Utils._getMainStorage();
+
+        int256 depositExpoImbalanceLimitBps = s._depositExpoImbalanceLimitBps;
+
+        // early return in case limit is disabled
+        if (depositExpoImbalanceLimitBps == 0) {
+            return;
+        }
+
+        int256 currentLongExpo = (s._totalExpo - s._balanceLong).toInt256();
+
+        // cannot be calculated
+        if (currentLongExpo == 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo();
+        }
+
+        int256 newVaultExpo = s._balanceVault.toInt256().safeAdd(s._pendingBalanceVault).safeAdd(int256(depositValue));
+
+        int256 imbalanceBps =
+            newVaultExpo.safeSub(currentLongExpo).safeMul(int256(Constants.BPS_DIVISOR)).safeDiv(currentLongExpo);
+
+        if (imbalanceBps > depositExpoImbalanceLimitBps) {
+            revert IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached(imbalanceBps);
+        }
+    }
 
     /// @notice See {IUsdnProtocolLong.getLongPosition}.
     function getLongPosition(Types.PositionId memory posId)
@@ -137,10 +192,6 @@ library UsdnProtocolActionsUtilsLibrary {
         pos_ = s._longPositions[tickHash][posId.index];
         liquidationPenalty_ = s._tickData[tickHash].liquidationPenalty;
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                             Internal functions                             */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Updates the protocol state, then prepares the data for the initiate close position action.

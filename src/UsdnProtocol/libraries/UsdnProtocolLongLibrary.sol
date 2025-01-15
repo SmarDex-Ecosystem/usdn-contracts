@@ -95,10 +95,6 @@ library UsdnProtocolLongLibrary {
         uint256 newAccMultiplier;
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                             External functions                             */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice See {IUsdnProtocolLong.getPositionValue}.
     function getPositionValue(Types.PositionId calldata posId, uint128 price, uint128 timestamp)
         external
@@ -127,10 +123,6 @@ library UsdnProtocolLongLibrary {
         );
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                              Public functions                              */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice See {IUsdnProtocolLong.minTick}.
     function minTick() public view returns (int24 tick_) {
         Types.Storage storage s = Utils._getMainStorage();
@@ -157,10 +149,6 @@ library UsdnProtocolLongLibrary {
         // round down to the next valid tick according to _tickSpacing (towards negative infinity)
         tick_ = _roundTickDown(tick_, tickSpacing);
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                             Internal functions                             */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Applies PnL, funding, and liquidates positions if necessary.
@@ -302,7 +290,7 @@ library UsdnProtocolLongLibrary {
             conversionData.tradingExpo,
             conversionData.accumulator
         );
-        _checkOpenPositionLeverage(data_.adjustedPrice, liqPriceWithoutPenalty, params.userMaxLeverage);
+        Core._checkOpenPositionLeverage(data_.adjustedPrice, liqPriceWithoutPenalty, params.userMaxLeverage);
 
         data_.positionTotalExpo =
             Utils._calcPositionTotalExpo(params.amount, data_.adjustedPrice, liqPriceWithoutPenalty);
@@ -978,36 +966,6 @@ library UsdnProtocolLongLibrary {
         // transfer remaining collateral to vault or pay bad debt
         data.tempLongBalance -= effects.remainingCollateral;
         data.tempVaultBalance += effects.remainingCollateral;
-    }
-
-    /**
-     * @notice Checks if the position's leverage is in the authorized range of values.
-     * @param adjustedPrice The adjusted price of the asset.
-     * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty.
-     * @param userMaxLeverage The maximum leverage allowed by the user for the newly created position.
-     */
-    function _checkOpenPositionLeverage(uint128 adjustedPrice, uint128 liqPriceWithoutPenalty, uint256 userMaxLeverage)
-        internal
-        view
-    {
-        Types.Storage storage s = Utils._getMainStorage();
-
-        // calculate position leverage
-        // reverts if liquidationPrice >= entryPrice
-        uint256 leverage = Utils._getLeverage(adjustedPrice, liqPriceWithoutPenalty);
-
-        if (leverage < s._minLeverage) {
-            revert IUsdnProtocolErrors.UsdnProtocolLeverageTooLow();
-        }
-
-        uint256 protocolMaxLeverage = s._maxLeverage;
-        if (userMaxLeverage > protocolMaxLeverage) {
-            userMaxLeverage = protocolMaxLeverage;
-        }
-
-        if (leverage > userMaxLeverage) {
-            revert IUsdnProtocolErrors.UsdnProtocolLeverageTooHigh();
-        }
     }
 
     /**
