@@ -3,7 +3,7 @@ pragma solidity 0.8.26;
 
 import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 
-import { SET_PROTOCOL_PARAMS_MANAGER } from "../../utils/Constants.sol";
+import { SET_PROTOCOL_PARAMS_MANAGER, USER_1 } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 import { UsdnProtocolConstantsLibrary } from "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
@@ -32,8 +32,14 @@ contract MaxLeverageFundingLiquidation is UsdnProtocolBaseIntegrationFixture {
         _setUp(params);
 
         (bool success,) = address(wstETH).call{ value: 1000 ether }("");
+        require(success, "Could not mint wstETH to user");
+        wstETH.approve(address(protocol), type(uint256).max);
+
+        vm.startPrank(USER_1);
+        (success,) = address(wstETH).call{ value: 1000 ether }("");
         require(success, "Could not mint wstETH to USER_1");
         wstETH.approve(address(protocol), type(uint256).max);
+        vm.stopPrank();
 
         securityDepositValue = protocol.getSecurityDepositValue();
     }
@@ -74,12 +80,13 @@ contract MaxLeverageFundingLiquidation is UsdnProtocolBaseIntegrationFixture {
         );
 
         assertTrue(isInitiated, "Not initiated");
-        minLeverage = protocol.getMinLeverage();
+        // minLeverage = protocol.getMinLeverage();
 
         vm.prank(SET_PROTOCOL_PARAMS_MANAGER);
-        protocol.setMaxLeverage(minLeverage + 1);
+        protocol.setMaxLeverage(maxLeverage * 8 / 10);
 
-        skip(365 days * 10);
+        // skip(365 days * 88 / 100);
+        skip(365 days * 89 / 100);
 
         (uint80 roundId, int256 answer,,,) = mockChainlinkOnChain.latestRoundData();
 
@@ -104,10 +111,27 @@ contract MaxLeverageFundingLiquidation is UsdnProtocolBaseIntegrationFixture {
             roundId + 3
         );
 
-        uint256 validatedActions =
-            protocol.validateActionablePendingActions(PreviousActionsData(priceData, rawIndices), 1);
+        mockChainlinkOnChain.setLatestRoundData(roundId + 4, answer, block.timestamp - 10 minutes, roundId + 4);
 
-        emit log_named_uint("validatedActions", validatedActions);
+        vm.startPrank(USER_1);
+        (isInitiated, /* PositionId memory posId_ */ ) = protocol.initiateOpenPosition{ value: securityDepositValue }(
+            2 ether,
+            params.initialLiqPrice,
+            type(uint128).max,
+            maxLeverage,
+            address(this),
+            USER_1,
+            type(uint256).max,
+            "",
+            PreviousActionsData(priceData, rawIndices)
+        );
+
+        vm.stopPrank();
+
+        // uint256 validatedActions =
+        //     protocol.validateActionablePendingActions(PreviousActionsData(priceData, rawIndices), 1);
+
+        // emit log_named_uint("validatedActions", validatedActions);
     }
 
     receive() external payable { }
