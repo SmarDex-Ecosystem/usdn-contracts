@@ -36,11 +36,9 @@ jobs:
       - name: Run tests
         run: forge test -vvv --no-match-test \"(FFI|Fork|Fuzz|invariant)\" --no-match-contract Fork --offline
         #run: forge test --no-match-test "(FFI|Fork)" --no-match-contract Fork
-
-      - name: Notify on failure
+        
+      - name: Send Discord message on failure
         if: failure()
-
-      - name: send Discord message with args
         uses: appleboy/discord-action@master
         with:
           webhook_id: ${{ secrets.DISCORD_BC_CI_WEBHOOK_ID }}
