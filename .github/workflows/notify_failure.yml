@@ -19,7 +19,6 @@ jobs:
           username: ${{ github.repository }}
           message: | 
             PR ${{ github.event.pull_request.number }}
-            
             ${{ github.triggering_actor }} broke the workflow \"${{ github.workflow }}\"
+
             https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}
-            [link](https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }})
