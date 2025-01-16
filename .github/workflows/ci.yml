@@ -37,15 +37,15 @@ jobs:
         run: forge test -vvv --no-match-test \"(FFI|Fork|Fuzz|invariant)\" --no-match-contract Fork --offline
         #run: forge test --no-match-test "(FFI|Fork)" --no-match-contract Fork
         
-      - name: Send Discord message on failure
-        if: failure()
-        uses: appleboy/discord-action@master
-        with:
-          webhook_id: ${{ secrets.DISCORD_BC_CI_WEBHOOK_ID }}
-          webhook_token: ${{ secrets.DISCORD_BC_CI_WEBHOOK_TOKEN }}
-          color: "#ff0000"
-          username: "Pere Fouettard"
-          message: ${{ github.triggering_actor }} has been added to the naughty list for breaking the CI ${{ github.event_name }} in ${{ github.ref_name }}
+      # - name: Send Discord message on failure
+      #   if: failure()
+      #   uses: appleboy/discord-action@master
+      #   with:
+      #     webhook_id: ${{ secrets.DISCORD_BC_CI_WEBHOOK_ID }}
+      #     webhook_token: ${{ secrets.DISCORD_BC_CI_WEBHOOK_TOKEN }}
+      #     color: "#ff0000"
+      #     username: "Pere Fouettard"
+      #     message: ${{ github.triggering_actor }} has been added to the naughty list for breaking the CI ${{ github.event_name }} in ${{ github.ref_name }}
 
   run-slither:
     runs-on: ubuntu-latest
@@ -75,3 +75,8 @@ jobs:
       - name: Run slither
         run: |
           slither --fail-none --json - . | jq '.results.detectors[] | .elements[0].source_mapping as $src | "::\( if .impact == "High" then "error" elif .impact == "Medium" then "warning" else "notice" end ) file=\( $src.filename_relative ),col=\( $src.starting_column ),endColumn=\( $src.ending_column ),line=\( $src.lines[0] )\( if $src.lines[0] == $src.lines[-1] then "" else ",endLine=" + "\( $src.lines[-1] )" end )::\( .description )"' | xargs -n1 echo
+
+  notify-on-failure:
+    needs: [run-ci, run-slither]
+    if: failure()
+    uses: ./.github/workflows/notify_failure.yml
