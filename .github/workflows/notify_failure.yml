@@ -16,7 +16,9 @@ jobs:
           webhook_id: ${{ secrets.DISCORD_BC_CI_WEBHOOK_ID }}
           webhook_token: ${{ secrets.DISCORD_BC_CI_WEBHOOK_TOKEN }}
           color: "#ff0000"
-          username: "Pere Fouettard"
+          username: ${{ github.repository }}
+          args: test test [test link](https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }})
           message: | 
             PR ${{ github.event.pull_request.number }}: https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}
-            ${{ github.triggering_actor }} has been added to the naughty list for breaking the CI \"${{ github.workflow }}\"
+            
+            ${{ github.triggering_actor }} broke the workflow \"${{ github.workflow }}\"
