@@ -4,13 +4,13 @@ pragma solidity >=0.8.0;
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
- * @title Interface For The Fee Collector Callback
- * @dev The contract must implement the ERC-165 interface detection mechanism.
+ * @notice Interface for a fee collector contract to receive callbacks from the USDN protocol upon fee collection.
+ * @dev Implementing contracts must support the ERC-165 interface detection mechanism.
  */
 interface IFeeCollectorCallback is IERC165 {
     /**
-     * @notice Function called by the protocol to notify the fee collector that a fee has been collected.
-     * @param feeAmount The amount of fee collected.
+     * @notice Called by the USDN protocol on the fee collector contract when the fee threshold is reached.
+     * @param feeAmount The amount of the fee that was transferred to the fee collector.
      */
     function feeCollectorCallback(uint256 feeAmount) external;
 }
