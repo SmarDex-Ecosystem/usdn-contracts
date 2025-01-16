@@ -6,6 +6,10 @@ jobs:
   notify-on-failure:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
       - name: send Discord message with args
         uses: appleboy/discord-action@master
         with:
