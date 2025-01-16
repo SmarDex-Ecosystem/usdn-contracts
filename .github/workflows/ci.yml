@@ -80,3 +80,4 @@ jobs:
     needs: [run-ci, run-slither]
     if: ${{ always() && contains(needs.*.result, 'failure') }}
     uses: ./.github/workflows/notify_failure.yml
+    secrets: inherit
