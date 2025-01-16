@@ -153,9 +153,9 @@ value is considered too small for it to continue existing, and it gets closed (i
 primary actions for the long side are opening new positions and closing (partially or entirely) existing positions.
 
 When opening a new position, the user deposits assets as collateral and indicates their desired liquidation price, which
-is used to calculate the position's leverage. The entry price is taken from an oracle. When closing a position, users
-withdraw part or the entirety of the current value of their position, including any @pnl resulting from the asset's
-price action.
+is used to calculate the position's leverage. The entry price is taken from an oracle.
+When closing a position, users withdraw part or the entirety of the current value of their position, including any
+@pnl resulting from the asset's price action.
 
 == Position Value, Profits and Losses <sec:long_pnl>
 
