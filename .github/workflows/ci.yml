@@ -34,8 +34,7 @@ jobs:
       #  run: npm run snapshot:check
 
       - name: Run tests
-        run: forge test -vvv --no-match-test \"(FFI|Fork|Fuzz|invariant)\" --no-match-contract Fork --offline
-        #run: forge test --no-match-test "(FFI|Fork)" --no-match-contract Fork
+        run: forge test --no-match-test "(FFI|Fork)" --no-match-contract Fork
 
   run-slither:
     runs-on: ubuntu-latest
