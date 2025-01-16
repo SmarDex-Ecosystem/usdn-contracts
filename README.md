@@ -94,7 +94,7 @@ Deployment for mainnet should be done with a custom bash script at `script/deplo
 script/deployMainnet.sh --help
 ```
 
-All information about the script can be found `script/` folder's README.
+All information about the script can be found in the `script/` folder's README.
 
 ### Docker Anvil Fork
 
@@ -132,10 +132,19 @@ number_underscore = "thousands" # add underscore separators in large numbers
 ### Husky
 
 The pre-commit configuration for Husky runs `forge fmt --check` to check the code formatting before each commit. It also
-checks for any private key in the codebase with `trufflehog`.
+checks for any private key in the codebase with [trufflehog](https://github.com/trufflesecurity/trufflehog).
 
 In order to setup the git pre-commit hook, run `npm install`.
 
 ### Slither
 
 Slither is integrated into a GitHub workflow and runs on every push to the master branch.
+
+## Authors
+
+- [Beeb](https://github.com/beeb)
+- [Fireboss777](https://github.com/fireboss777)
+- [KirienzoEth](https://github.com/KirienzoEth)
+- [LilyanB](https://github.com/lilyanB)
+- [Paulalex85](https://github.com/Paulalex85)
+- [Samooyo](https://github.com/samooyo)
