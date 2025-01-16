@@ -139,12 +139,3 @@ In order to setup the git pre-commit hook, run `npm install`.
 ### Slither
 
 Slither is integrated into a GitHub workflow and runs on every push to the master branch.
-
-## Authors
-
-- [Beeb](https://github.com/beeb)
-- [Fireboss777](https://github.com/fireboss777)
-- [KirienzoEth](https://github.com/KirienzoEth)
-- [LilyanB](https://github.com/lilyanB)
-- [Paulalex85](https://github.com/Paulalex85)
-- [Samooyo](https://github.com/samooyo)
