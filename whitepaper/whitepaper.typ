@@ -21,7 +21,8 @@
       mail: "eric@ra2.tech",
     ),
     (
-      name: [Blockchain Team (#box[Lilyan Bastien], #box[Valentin Bersier], #box[Yoan Capron], #box[Sami Darnaud], #box[Nicolas Decosterd], #box[Paul-Alexandre Tessier])],
+      name: [Blockchain Team (#box[Lilyan Bastien], #box[Valentin Bersier], #box[Yoan Capron], #box[Sami Darnaud],
+        #box[Nicolas Decosterd], #box[Paul-Alexandre Tessier])],
       institution: "",
       mail: "blockchain@ra2.tech",
     ),
@@ -60,9 +61,9 @@ This means that we combine the yield of the protocol with that of staking ETH au
 
 The USDN protocol is comprised of two main components: the _vault_ and the _long side_, each having a balance of the
 underlying asset. The sum of these balances does not change unless a deposit or withdrawal is made towards the vault
-(see @sec:token), a new long position is opened, some protocol fees are taken, or liquidation rewards are given out to
-an actor of the protocol. Any change in the long side balance due to a change in the underlying asset price or
-#glspl("funding") is compensated by an equal but opposite change in the vault balance.
+(see @sec:token), a new long position is opened or closed (see @sec:long_side), some protocol fees are taken, or
+liquidation rewards are given out to an actor of the protocol. Any change in the long side balance due to a change in
+the underlying asset price or #glspl("funding") is compensated by an equal but opposite change in the vault balance.
 
 The vault holds the amount of underlying assets necessary to back the value of the USDN token (see @sec:token_price).
 For instance, if the price of the USDN token is \$1 and its total supply is 1000_USDN, and if the price of each
@@ -127,7 +128,8 @@ As such, if the vault balance increases as a result of position fees, losses fro
 the USDN price will rise. When a certain threshold is reached, the token #glspl("rebase") to a price slightly above \$1
 by increasing the total supply and balance of each holder. This increase in balance represents the yield of the USDN
 token. The rebase mechanism ensures that yields do not induce a price that significantly exceeds the value of \$1.
-There is no balance and total supply adjustment (debase) if the price falls below \$1.
+There is no balance and total supply adjustment (debase) if the price falls below \$1, as the yield is expected to bring
+it back up relatively quickly.
 
 = Vault
 
@@ -140,21 +142,20 @@ It follows the formula described in @sec:token_minting.
 The withdrawal action allows to redeem USDN tokens for an equivalent dollar amount of assets from the vault.
 It follows the formula described in @sec:token_burning.
 
-= Long Side
+= Long Side <sec:long_side>
 
 The long side manages user positions. A position is comprised of the collateral (in assets) that the user deposited,
 together with a leverage which allows to control a larger position than the collateral. For example, a leverage of
 3_times with an initial collateral of 1_wstETH behaves like a position of 3_wstETH. The product of the leverage and the
 initial collateral is called @total_expo. When the price of the asset reaches the @liquidation_price for a position, its
-value is considered too small for it to continue existing, and it gets closed (in a decentralized way). Any remaining
-value goes to the vault pool and forms part of the yield of USDN.
-The two primary actions for the long side are opening new positions and closing (partially or entirely) existing
-positions.
+value is considered too small for it to continue existing, and it gets closed (in a decentralized way, see
+@sec:liquidation_rewards). Any remaining value goes to the vault pool and forms part of the yield of USDN. The two
+primary actions for the long side are opening new positions and closing (partially or entirely) existing positions.
 
 When opening a new position, the user deposits assets as collateral and indicates their desired liquidation price, which
-is used to calculate the position's leverage. The entry price is taken from an oracle.
-When closing a position, users withdraw part or the entirety of the current value of their position, including any
-@pnl resulting from the asset's price action.
+is used to calculate the position's leverage. The entry price is taken from an oracle. When closing a position, users
+withdraw part or the entirety of the current value of their position, including any @pnl resulting from the asset's
+price action.
 
 == Position Value, Profits and Losses <sec:long_pnl>
 
@@ -206,7 +207,7 @@ Note that thanks to the algorithmic nature of the @pnl calculations (see @sec:lo
 liquidation occurs too late, because an amount equal and opposite to the negative position value was already credited to
 the vault side, and can be used to repay the debt in the long side automatically.
 
-=== Liquidation Rewards
+=== Liquidation Rewards <sec:liquidation_rewards>
 
 To ensure positions are liquidated as soon as possible, and thus reduce the risk of negative effects on the protocol,
 executing liquidations is incentivized with a reward paid out to the liquidator.
@@ -476,22 +477,9 @@ synthetic dollar token.
 
 = Acknowledgment
 
-Thank you to everyone who made this project possible in any way :
-- Fecri Al-Fakeri
-- Brice Belkadi
-- Julien Chiappinelli
-- Carl Cronsioe
-- Mikael Cruchon
-- Antoine Duez
-- Diogo Estima
-- Lorena Feijoo
-- Alfred Gaillard
-- Esteban Gonzalez
-- Vicente Guedes
-- Matthieu Guerra
-- Marylou Kronauer
-- Simon Lussi
-- Sebastien Mansour
-- Abdel Mecheri
-- Bilel Oural
-- Flavio Roth
+#set par(justify: false)
+Thank you to everyone who made this project possible in any way:
+#box[Brice Belkadi], #box[Julien Chiappinelli], #box[Carl Cronsioe], #box[Mikael Cruchon], #box[Antoine Duez],
+#box[Diogo Estima], #box[Lorena Feijoo], #box[Alfred Gaillard], #box[Esteban Gonzalez], #box[Vicente Guedes],
+#box[Matthieu Guerra], #box[Marylou Kronauer], #box[Simon Lussi], #box[Sebastien Mansour], #box[Abdel Mecheri],
+#box[Bilel Oural], #box[Flavio Roth].
