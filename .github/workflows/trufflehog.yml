@@ -26,3 +26,9 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           extra_args: --results=verified,unknown --config .trufflehog.yml --exclude-paths=.trufflehog-ignore
+
+  notify-on-failure:
+    needs: trufflehog
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    uses: ./.github/workflows/notify_failure.yml
+    secrets: inherit

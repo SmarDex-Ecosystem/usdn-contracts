@@ -45,3 +45,9 @@ jobs:
 
       - name: Run tests
         run: forge test --no-match-test "(ForkGasUsage)"
+
+  notify-on-failure:
+    needs: heavy-ci
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    uses: ./.github/workflows/notify_failure.yml
+    secrets: inherit
