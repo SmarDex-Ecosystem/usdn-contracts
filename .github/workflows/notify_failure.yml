@@ -10,7 +10,7 @@ jobs:
         with:
           submodules: recursive
 
-      - name: send Discord message with args
+      - name: Send Discord message
         uses: appleboy/discord-action@master
         with:
           webhook_id: ${{ secrets.DISCORD_BC_CI_WEBHOOK_ID }}
@@ -18,6 +18,8 @@ jobs:
           color: "#ff0000"
           username: ${{ github.repository }}
           message: | 
-            PR ${{ github.event.pull_request.number }}: https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}
+            PR ${{ github.event.pull_request.number }}
             
             ${{ github.triggering_actor }} broke the workflow \"${{ github.workflow }}\"
+            https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}
+            [link](https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }})
