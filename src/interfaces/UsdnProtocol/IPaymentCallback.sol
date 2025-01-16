@@ -21,7 +21,8 @@ interface IPaymentCallback is IERC165 {
     function transferCallback(IERC20Metadata token, uint256 amount, address to) external;
 
     /**
-     * @notice Triggered by the USDN protocol during the `initiateWithdrawal` process to transfer USDN shares.
+     * @notice Triggered by the USDN protocol during the {IUsdnProtocolActions.initiateWithdrawal} process to transfer
+     * USDN shares.
      * @dev Implementations must verify that the `msg.sender` is the USDN protocol.
      * @param usdn The address of the USDN protocol.
      * @param shares The number of USDN shares to transfer to the protocol (`msg.sender`).
