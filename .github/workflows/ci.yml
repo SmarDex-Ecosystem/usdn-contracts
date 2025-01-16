@@ -36,16 +36,6 @@ jobs:
       - name: Run tests
         run: forge test -vvv --no-match-test \"(FFI|Fork|Fuzz|invariant)\" --no-match-contract Fork --offline
         #run: forge test --no-match-test "(FFI|Fork)" --no-match-contract Fork
-        
-      # - name: Send Discord message on failure
-      #   if: failure()
-      #   uses: appleboy/discord-action@master
-      #   with:
-      #     webhook_id: ${{ secrets.DISCORD_BC_CI_WEBHOOK_ID }}
-      #     webhook_token: ${{ secrets.DISCORD_BC_CI_WEBHOOK_TOKEN }}
-      #     color: "#ff0000"
-      #     username: "Pere Fouettard"
-      #     message: ${{ github.triggering_actor }} has been added to the naughty list for breaking the CI ${{ github.event_name }} in ${{ github.ref_name }}
 
   run-slither:
     runs-on: ubuntu-latest
