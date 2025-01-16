@@ -36,9 +36,9 @@ jobs:
       - name: Run tests
         run: forge test --no-match-test "(FFI|Fork)" --no-match-contract Fork
 
-  notify-on-failure:
-    if: failure()
-    uses: ./.github/workflows/notify_failure.yml
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/workflows/notify_failure.yml
 
   run-slither:
     runs-on: ubuntu-latest
