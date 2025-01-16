@@ -7,24 +7,25 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 import { IUsdn } from "../Usdn/IUsdn.sol";
 
 /**
- * @notice This interface can be implemented by contracts that wish to transfer tokens during initiate actions
- * @dev The contract must implement the ERC-165 interface detection mechanism
+ * @notice This interface can be implemented by contracts that wish to transfer tokens during initiate actions.
+ * @dev The contract must implement the ERC-165 interface detection mechanism.
  */
 interface IPaymentCallback is IERC165 {
     /**
-     * @notice Callback function to be called during initiate functions to transfer asset tokens
-     * @dev The implementation must ensure that the `msg.sender` is the protocol contract
-     * @param token The token to transfer
-     * @param amount The amount to transfer
-     * @param to The address of the recipient
+     * @notice Triggered by the USDN protocol to transfer asset tokens during `initiate` actions.
+     * @dev Implementations must ensure that the `msg.sender` is the USDN protocol for security purposes.
+     * @param token The address of the ERC20 token to be transferred.
+     * @param amount The amount of tokens to transfer.
+     * @param to The recipient's address.
      */
     function transferCallback(IERC20Metadata token, uint256 amount, address to) external;
 
     /**
-     * @notice Callback function to be called during `initiateWithdrawal` to transfer USDN shares to the protocol
-     * @dev The implementation must ensure that the `msg.sender` is the protocol contract
-     * @param usdn The USDN contract address
-     * @param shares The amount of USDN shares to transfer to the `msg.sender`
+     * @notice Triggered by the USDN protocol during the {IUsdnProtocolActions.initiateWithdrawal} process to transfer
+     * USDN shares.
+     * @dev Implementations must verify that the `msg.sender` is the USDN protocol.
+     * @param usdn The address of the USDN protocol.
+     * @param shares The number of USDN shares to transfer to the protocol (`msg.sender`).
      */
     function usdnTransferCallback(IUsdn usdn, uint256 shares) external;
 }
