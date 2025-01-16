@@ -39,7 +39,15 @@ jobs:
 
       - name: Notify on failure
         if: failure()
-        uses: ./.github/workflows/notify_failure.yml
+
+      - name: send Discord message with args
+        uses: appleboy/discord-action@master
+        with:
+          webhook_id: ${{ secrets.DISCORD_BC_CI_WEBHOOK_ID }}
+          webhook_token: ${{ secrets.DISCORD_BC_CI_WEBHOOK_TOKEN }}
+          color: "#ff0000"
+          username: "Pere Fouettard"
+          message: ${{ github.triggering_actor }} has been added to the naughty list for breaking the CI ${{ github.event_name }} in ${{ github.ref_name }}
 
   run-slither:
     runs-on: ubuntu-latest
