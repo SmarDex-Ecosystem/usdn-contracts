@@ -103,5 +103,6 @@
   // Main body
   #doc
 
+  #set text(9pt)
   #bibliography("refs.bib", title: "References", full: true)
 ]
