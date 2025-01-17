@@ -343,8 +343,6 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:and That tick has a higher price than after the initiate
      */
     function test_validateOpenPositionMaxLeverageFunding() public {
-        TestData memory testData;
-
         // set aggressive funding
         vm.prank(ADMIN);
         protocol.setFundingSF(10 ** Constants.FUNDING_SF_DECIMALS);
@@ -361,53 +359,31 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             EMPTY_PREVIOUS_DATA
         );
 
+        (PendingAction memory pendingAction,) = protocol.i_getPendingAction(address(this));
+        LongPendingAction memory longPendingAction = protocol.i_toLongPendingAction(pendingAction);
+
         uint128 firstTickPrice = protocol.getEffectivePriceForTick(posId.tick);
-        testData.validatePrice = CURRENT_PRICE - 100 ether;
-        testData.originalLiqPenalty = protocol.getLiquidationPenalty();
-        uint128 newLiqPrice = protocol.i_getLiquidationPrice(testData.validatePrice, uint128(protocol.getMaxLeverage()));
+        uint128 validationPrice = CURRENT_PRICE - 100 ether;
+        uint128 newLiqPrice = protocol.i_getLiquidationPrice(validationPrice, uint128(protocol.getMaxLeverage()));
 
-        uint128 liqPriceWithoutPenaltyNorFunding;
-        {
-            (PendingAction memory pendingAction,) = protocol.i_getPendingAction(address(this));
-            uint256 initLiqMultiplier = (protocol.i_toLongPendingAction(pendingAction)).liqMultiplier;
-            (testData.validateTick, liqPriceWithoutPenaltyNorFunding) = protocol.i_getTickFromDesiredLiqPrice(
-                newLiqPrice, initLiqMultiplier, protocol.getTickSpacing(), testData.originalLiqPenalty
-            );
-        }
-        assertLt(testData.validateTick, posId.tick, "tick");
+        (int24 validationTick,) = protocol.i_getTickFromDesiredLiqPrice(
+            newLiqPrice, longPendingAction.liqMultiplier, protocol.getTickSpacing(), protocol.getLiquidationPenalty()
+        );
 
-        // estimate the value of the new position for later comparison
-        uint256 newPosTotalExpo = protocol.i_calcPositionTotalExpo(
-            uint128(LONG_AMOUNT), testData.validatePrice, liqPriceWithoutPenaltyNorFunding
-        );
-        uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
-            protocol.i_calcTickWithoutPenalty(testData.validateTick, testData.originalLiqPenalty),
-            testData.validatePrice,
-            protocol.longTradingExpoWithFunding(testData.validatePrice, uint128(block.timestamp + 24)),
-            protocol.getLiqMultiplierAccumulator()
-        );
-        testData.expectedPosValue =
-            uint256(protocol.i_positionValue(uint128(newPosTotalExpo), testData.validatePrice, liqPriceWithoutPenalty));
+        assertLt(validationTick, posId.tick, "tick");
+        PositionId memory newPos = PositionId(validationTick, 0, 0);
+        uint128 newTickPriceBefore = protocol.getEffectivePriceForTick(validationTick);
 
         // validation
         _waitDelay();
-        uint128 newTickPrice = protocol.getEffectivePriceForTick(testData.validateTick);
-        testData.tempPosId = PositionId(testData.validateTick, 0, 0);
+
         vm.expectEmit();
-        emit LiquidationPriceUpdated(posId, testData.tempPosId);
-        protocol.validateOpenPosition(payable(this), abi.encode(testData.validatePrice), EMPTY_PREVIOUS_DATA);
+        emit LiquidationPriceUpdated(posId, newPos);
+        protocol.validateOpenPosition(payable(this), abi.encode(validationPrice), EMPTY_PREVIOUS_DATA);
 
         // check that all ticks have now a higher price
-        assertGt(protocol.getEffectivePriceForTick(testData.validateTick), newTickPrice, "new tick price");
+        assertGt(protocol.getEffectivePriceForTick(validationTick), newTickPriceBefore, "new tick price");
         assertGt(protocol.getEffectivePriceForTick(posId.tick), firstTickPrice, "first tick price");
-
-        // check the value of the tick is as calculated during the max leverage re-calculation
-        assertEq(
-            // - 1 because we are at T+25 but calculations were done for T+24
-            protocol.getPositionValue(testData.tempPosId, testData.validatePrice, uint128(block.timestamp - 1)),
-            int256(testData.expectedPosValue),
-            "new position value"
-        );
     }
 
     /**

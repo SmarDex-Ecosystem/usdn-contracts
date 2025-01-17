@@ -243,7 +243,7 @@ library UsdnProtocolActionsLongLibrary {
             data.liqPriceWithoutPenalty = Utils._getLiquidationPrice(data.startPrice, maxLeverage);
             // find corresponding tick and actual liq price with current penalty setting
             maxLeverageData.currentLiqPenalty = s._liquidationPenalty;
-            (maxLeverageData.newPosId.tick, data.liqPriceWithoutPenaltyNorFunding) = Long._getTickFromDesiredLiqPrice(
+            (maxLeverageData.newPosId.tick, data.liqPriceWithoutPenalty) = Long._getTickFromDesiredLiqPrice(
                 data.liqPriceWithoutPenalty,
                 data.action.liqMultiplier,
                 s._tickSpacing,
@@ -253,12 +253,12 @@ library UsdnProtocolActionsLongLibrary {
             // retrieve the actual penalty for this tick we want to use
             maxLeverageData.liquidationPenalty = Long.getTickLiquidationPenalty(maxLeverageData.newPosId.tick);
             // check if the penalty for that tick is different from the current setting
-            // if the penalty is the same, then `data.liqPriceWithoutPenaltyNorFunding` is already correct
+            // if the penalty is the same, then `data.liqPriceWithoutPenalty` is already correct
             if (maxLeverageData.liquidationPenalty != maxLeverageData.currentLiqPenalty) {
-                // the tick's imposed penalty is different from the current setting, so the
-                // `liqPriceWithoutPenaltyNorFunding` we got above can't be used to calculate the leverage
-                // we must instead use the tick's penalty to find the new `liqPriceWithoutPenaltyNorFunding` and
-                // calculate the total exposure
+                // the tick's imposed penalty is different from the current setting, so the `liqPriceWithoutPenalty` we
+                // got above can't be used to calculate the leverage
+                // we must instead use the tick's penalty to find the new `liqPriceWithoutPenalty` and calculate the
+                // total exposure
 
                 // note: In case the tick liquidation penalty is lower than the current setting, it might lead to a
                 // leverage that exceeds the max leverage slightly. We allow this behavior in this rare occurrence
@@ -266,16 +266,12 @@ library UsdnProtocolActionsLongLibrary {
                 // retrieve exact liquidation price without penalty
                 // we consider the liquidation multiplier as it was during the initiation, to ignore any funding
                 // that was due between the initiation and the validation
-                data.liqPriceWithoutPenaltyNorFunding = Utils._getEffectivePriceForTick(
+                data.liqPriceWithoutPenalty = Utils._getEffectivePriceForTick(
                     Utils._calcTickWithoutPenalty(maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty),
                     data.action.liqMultiplier
                 );
             }
 
-            // recalculate the liquidation price of the tick
-            data.liqPriceWithoutPenalty = Utils._getEffectivePriceForTick(
-                Utils._calcTickWithoutPenalty(maxLeverageData.newPosId.tick, maxLeverageData.liquidationPenalty)
-            );
             // must calculate before removing the position from the tick which affects the trading expo
             uint128 liqPriceWithPenalty = Utils._getEffectivePriceForTick(maxLeverageData.newPosId.tick);
 
@@ -309,7 +305,7 @@ library UsdnProtocolActionsLongLibrary {
 
             // update position total exposure (because of new leverage / liq price)
             data.pos.totalExpo =
-                Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenaltyNorFunding);
+                Utils._calcPositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
             // mark the position as validated
             data.pos.validated = true;
             // insert position into new tick
