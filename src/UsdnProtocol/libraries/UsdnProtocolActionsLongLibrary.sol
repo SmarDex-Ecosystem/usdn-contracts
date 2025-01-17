@@ -272,20 +272,16 @@ library UsdnProtocolActionsLongLibrary {
                 );
             }
 
-            // must calculate before removing the position from the tick which affects the trading expo
-            uint128 liqPriceWithPenalty = Utils._getEffectivePriceForTick(maxLeverageData.newPosId.tick);
-
             // move the position to its new tick, update its total exposure, and return the new tickVersion and index
             // remove position from old tick completely
             Long._removeAmountFromPosition(
                 data.action.tick, data.action.index, data.pos, data.pos.amount, data.pos.totalExpo
             );
 
-            // if the last price is below the liquidation price with penalty of the new position, the position is
-            // already underwater and we might be unable to calculate the new position value if we are further below
-            // `liqPriceWithoutPenalty`
+            // if the last price is below the liquidation price without penalty of the new position, we are unable to
+            // calculate the new position's value
             // this is extremely unlikely, but we have no other choice but to liquidate if it happens
-            if (data.lastPrice <= liqPriceWithPenalty) {
+            if (data.lastPrice <= data.liqPriceWithoutPenalty) {
                 s._balanceLong -= data.oldPosValue;
                 s._balanceVault += data.oldPosValue;
                 // position was already removed from the tick above
@@ -298,7 +294,7 @@ library UsdnProtocolActionsLongLibrary {
                         index: data.action.index
                     }),
                     data.lastPrice,
-                    liqPriceWithPenalty
+                    data.liqPriceWithoutPenalty
                 );
                 return (false, true, Types.PositionId({ tick: Constants.NO_POSITION_TICK, tickVersion: 0, index: 0 }));
             }
