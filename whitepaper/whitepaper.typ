@@ -479,7 +479,7 @@ synthetic dollar token.
 
 #set par(justify: false)
 Thank you to everyone who made this project possible in any way:
-#box[Brice Belkadi], #box[Julien Chiappinelli], #box[Carl Cronsioe], #box[Mikael Cruchon], #box[Antoine Duez],
-#box[Diogo Estima], #box[Lorena Feijoo], #box[Alfred Gaillard], #box[Esteban Gonzalez], #box[Vicente Guedes],
-#box[Matthieu Guerra], #box[Marylou Kronauer], #box[Simon Lussi], #box[Sebastien Mansour], #box[Abdel Mecheri],
-#box[Bilel Oural], #box[Flavio Roth].
+#box[Fecri Al-Fakeri], #box[Brice Belkadi], #box[Julien Chiappinelli], #box[Carl Cronsioe], #box[Mikael Cruchon],
+#box[Antoine Duez], #box[Diogo Estima], #box[Lorena Feijoo], #box[Alfred Gaillard], #box[Esteban Gonzalez],
+#box[Vicente Guedes], #box[Matthieu Guerra], #box[Marylou Kronauer], #box[Simon Lussi], #box[Sebastien Mansour],
+#box[Abdel Mecheri], #box[Bilel Oural], #box[Flavio Roth].
