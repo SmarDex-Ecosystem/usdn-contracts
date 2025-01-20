@@ -694,5 +694,20 @@ interface IUsdnProtocolTypes {
         address _protocolFallbackAddr;
         // EIP712
         mapping(address => uint256) _nonce;
+        /*
+         *
+         * FUZZING SUITE STATE CHECK VARS
+         *
+         */
+        bool _positionLiquidated;
+        bool _liquidationPending;
+        bool _positionWasLiquidatedInTheMeantime;
+        int256 _positionProfit;
+        address _fuzz_liquidator;
+        uint256 _fuzz_liquidationRewards;
+        int24 _lowestLiquidatedTick;
+        int24 _latestPosIdTIck;
+        bool _rebalancerTriggered;
+        uint256 _withdrawAssetToTransferAfterFees;
     }
 }

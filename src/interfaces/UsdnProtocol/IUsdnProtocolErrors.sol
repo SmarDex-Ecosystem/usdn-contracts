@@ -231,4 +231,7 @@ interface IUsdnProtocolErrors {
      * deposit.
      */
     error UsdnProtocolInvalidRebalancerMinAssetDeposit();
+
+    //@dev NOTE:added by fuzzer
+    error Fuzzing_ExpectedBehavior();
 }

@@ -1,0 +1,818 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.26;
+
+import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
+
+import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
+import { IUsdnProtocolActions } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
+import { IUsdnProtocolCore } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
+import { IUsdnProtocolFallback } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
+import { IUsdnProtocolLong } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
+import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolVault } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
+
+import { FuzzStorageVariables } from "../helper/FuzzStorageVariables.sol";
+import { FuzzActors } from "./FuzzActors.sol";
+
+contract FunctionCalls is FuzzStorageVariables, FuzzActors {
+    event MinTickCall();
+    event GetPositionValueCall(IUsdnProtocolTypes.PositionId posId, uint128 price, uint128 timestamp);
+    event GetEffectiveTickForPriceCall(uint128 price);
+    event GetEffectiveTickForPriceExtendedCall(
+        uint128 price, uint256 assetPrice, uint256 longTradingExpo, HugeUint.Uint512 accumulator, int24 tickSpacing
+    );
+    event GetTickLiquidationPenaltyCall(int24 tick);
+
+    // Events for UsdnProtocolCore
+    event InitializeCall(uint128 depositAmount, uint128 longAmount, uint128 desiredLiqPrice, bytes currentPriceData);
+    event FundingCall(uint128 timestamp);
+    event GetUserPendingActionCall(address user);
+    event LongAssetAvailableWithFundingCall(uint128 currentPrice, uint128 timestamp);
+    event LongTradingExpoWithFundingCall(uint128 currentPrice, uint128 timestamp);
+
+    event ValidateDepositCall(
+        address validator, bytes depositPriceData, IUsdnProtocolTypes.PreviousActionsData previousActionsData
+    );
+    event InitiateWithdrawalCall(
+        uint152 usdnShares,
+        uint256 amountOutMin,
+        address to,
+        address validator,
+        uint256 deadline,
+        bytes currentPriceData,
+        IUsdnProtocolTypes.PreviousActionsData previousActionsData
+    );
+    event ValidateWithdrawalCall(
+        address validator, bytes withdrawalPriceData, IUsdnProtocolTypes.PreviousActionsData previousActionsData
+    );
+    event GetActionablePendingActionsCall(address currentUser);
+    event UsdnPriceCall(uint128 currentPrice, uint128 timestamp);
+    event UsdnPriceSimpleCall(uint128 currentPrice);
+    event VaultAssetAvailableWithFundingCall(uint128 currentPrice, uint128 timestamp);
+
+    // Events for UsdnProtocolActions
+    event InitiateOpenPositionCall(
+        uint128 amount,
+        uint128 desiredLiqPrice,
+        uint128 userMaxPrice,
+        uint256 userMaxLeverage,
+        address to,
+        address validator,
+        uint256 deadline,
+        bytes currentPriceData,
+        IUsdnProtocolTypes.PreviousActionsData previousActionsData
+    );
+    event ValidateOpenPositionCall(
+        address validator, bytes openPriceData, IUsdnProtocolTypes.PreviousActionsData previousActionsData
+    );
+    event InitiateClosePositionCall(
+        IUsdnProtocolTypes.PositionId posId,
+        uint128 amountToClose,
+        uint256 userMinPrice,
+        address to,
+        address validator,
+        uint256 deadline,
+        bytes currentPriceData,
+        IUsdnProtocolTypes.PreviousActionsData previousActionsData
+    );
+    event InitiateClosePositionCallInRebalancer(uint88 amount, address to, uint256 userMinPrice);
+
+    event ValidateClosePositionCall(
+        address validator, bytes closePriceData, IUsdnProtocolTypes.PreviousActionsData previousActionsData
+    );
+    event LiquidateCall(bytes currentPriceData);
+    event ValidateActionablePendingActionsCall(
+        IUsdnProtocolTypes.PreviousActionsData previousActionsData, uint256 maxValidations
+    );
+    event TransferPositionOwnershipCall(IUsdnProtocolTypes.PositionId posId, address newOwner);
+    event TickHashCall(int24 tick, uint256 version);
+    event GetLongPositionCall(IUsdnProtocolTypes.PositionId posId);
+
+    // Additional events for UsdnProtocolFallback
+    event RemoveBlockedPendingActionNoCleanupCall(address validator, address to);
+    event RemoveBlockedPendingActionByIndexCall(uint128 rawIndex, address to);
+    event RemoveBlockedPendingActionNoCleanupByIndexCall(uint128 rawIndex, address to);
+    event GetLeverageDecimalsCall();
+    event GetFundingRateDecimalsCall();
+    event GetRebalancerMinLeverageCall();
+    event GetTokensDecimalsCall();
+    event GetLiquidationMultiplierDecimalsCall();
+    event GetFundingSfDecimalsCall();
+    event GetSdexBurnOnDepositDivisorCall();
+    event GetBpsDivisorCall();
+    event GetMaxLiquidationIterationCall();
+    event GetNoPositionTickCall();
+    event GetDeadAddressCall();
+    event GetMinUsdnSupplyCall();
+    event GetMaxActionablePendingActionsCall();
+    event GetMinLongTradingExpoBpsCall();
+    event GetTickSpacingCall();
+    event GetAssetCall();
+    event GetSdexCall();
+    event GetPriceFeedDecimalsCall();
+    event GetAssetDecimalsCall();
+    event GetUsdnCall();
+    event GetUsdnMinDivisorCall();
+    event GetOracleMiddlewareCall();
+    event GetLiquidationRewardsManagerCall();
+    event GetRebalancerCall();
+    event GetMinLeverageCall();
+    event GetMaxLeverageCall();
+    event GetLowLatencyValidatorDeadlineCall();
+    event GetOnChainValidatorDeadlineCall();
+    event GetLiquidationPenaltyCall();
+    event GetSafetyMarginBpsCall();
+    event GetLiquidationIterationCall();
+    event GetEmaPeriodCall();
+    event GetFundingSfCall();
+    event GetProtocolFeeBpsCall();
+    event GetPositionFeeBpsCall();
+    event GetVaultFeeBpsCall();
+    event GetRebalancerBonusBpsCall();
+    event GetSdexBurnOnDepositRatioCall();
+    event GetSecurityDepositValueCall();
+    event GetFeeThresholdCall();
+    event GetFeeCollectorCall();
+    event GetMiddlewareValidationDelayCall();
+    event GetTargetUsdnPriceCall();
+    event GetUsdnRebaseThresholdCall();
+    event GetUsdnRebaseIntervalCall();
+    event GetMinLongPositionCall();
+    event GetLastFundingPerDayCall();
+    event GetLastPriceCall();
+    event GetLastUpdateTimestampCall();
+    event GetPendingProtocolFeeCall();
+    event GetBalanceVaultCall();
+    event GetPendingBalanceVaultCall();
+    event GetLastRebaseCheckCall();
+    event GetEmaCall();
+    event GetBalanceLongCall();
+    event GetTotalExpoCall();
+    event GetLiqMultiplierAccumulatorCall();
+    event GetTickVersionCall(int24 tick);
+    event GetTickDataCall(int24 tick);
+    event GetCurrentLongPositionCall(int24 tick, uint256 index);
+    event GetHighestPopulatedTickCall();
+    event GetTotalLongPositionsCall();
+    event GetDepositExpoImbalanceLimitBpsCall();
+    event GetWithdrawalExpoImbalanceLimitBpsCall();
+    event GetOpenExpoImbalanceLimitBpsCall();
+    event GetCloseExpoImbalanceLimitBpsCall();
+    event GetRebalancerCloseExpoImbalanceLimitBpsCall();
+    event GetLongImbalanceTargetBpsCall();
+    event GetFallbackAddressCall();
+    event IsPausedCall();
+    event SetOracleMiddlewareCall(address newOracleMiddleware);
+    event SetLiquidationRewardsManagerCall(address newLiquidationRewardsManager);
+    event SetRebalancerCall(address newRebalancer);
+    event SetFeeCollectorCall(address newFeeCollector);
+    event SetValidatorDeadlinesCall(uint128 newLowLatencyValidatorDeadline, uint128 newOnChainValidatorDeadline);
+    event SetMinLeverageCall(uint256 newMinLeverage);
+    event SetMaxLeverageCall(uint256 newMaxLeverage);
+    event SetLiquidationPenaltyCall(uint24 newLiquidationPenalty);
+    event SetEmaPeriodCall(uint128 newEmaPeriod);
+    event SetFundingSfCall(uint256 newFundingSf);
+    event SetProtocolFeeBpsCall(uint16 newProtocolFeeBps);
+    event SetPositionFeeBpsCall(uint16 newPositionFee);
+    event SetVaultFeeBpsCall(uint16 newVaultFee);
+    event SetRebalancerBonusBpsCall(uint16 newBonus);
+    event SetSdexBurnOnDepositRatioCall(uint32 newRatio);
+    event SetSecurityDepositValueCall(uint64 securityDepositValue);
+    event SetExpoImbalanceLimitsCall(
+        uint256 newOpenLimitBps,
+        uint256 newDepositLimitBps,
+        uint256 newWithdrawalLimitBps,
+        uint256 newCloseLimitBps,
+        uint256 newRebalancerCloseLimitBps,
+        int256 newLongImbalanceTargetBps
+    );
+    event SetMinLongPositionCall(uint256 newMinLongPosition);
+    event SetSafetyMarginBpsCall(uint256 newSafetyMarginBps);
+    event SetLiquidationIterationCall(uint16 newLiquidationIteration);
+    event SetFeeThresholdCall(uint256 newFeeThreshold);
+    event SetTargetUsdnPriceCall(uint128 newPrice);
+    event SetUsdnRebaseThresholdCall(uint128 newThreshold);
+    event SetUsdnRebaseIntervalCall(uint256 newInterval);
+    event PauseCall();
+    event UnpauseCall();
+
+    // UsdnProtocolLong function calls
+    function _minTickCall() internal returns (bool success, bytes memory returnData) {
+        emit MinTickCall();
+        (success, returnData) = address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolLong.minTick.selector));
+    }
+
+    function _getPositionValueCall(IUsdnProtocolTypes.PositionId memory posId, uint128 price, uint128 timestamp)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        emit GetPositionValueCall(posId, price, timestamp);
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolLong.getPositionValue.selector, posId, price, timestamp)
+        );
+    }
+
+    function _getEffectiveTickForPriceCall(uint128 price) internal returns (bool success, bytes memory returnData) {
+        emit GetEffectiveTickForPriceCall(price);
+        (success, returnData) = address(usdnProtocol).call(abi.encodeWithSelector(bytes4(0x4c187765), price));
+    }
+
+    function _getTickLiquidationPenaltyCall(int24 tick) internal returns (bool success, bytes memory returnData) {
+        emit GetTickLiquidationPenaltyCall(tick);
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolLong.getTickLiquidationPenalty.selector, tick)
+        );
+    }
+
+    // UsdnProtocolCore function calls
+    function _initializeCall(
+        uint128 depositAmount,
+        uint128 longAmount,
+        uint128 desiredLiqPrice,
+        bytes memory currentPriceData
+    ) internal returns (bool success, bytes memory returnData) {
+        emit InitializeCall(depositAmount, longAmount, desiredLiqPrice, currentPriceData);
+        (success, returnData) = address(usdnProtocol).call{ value: msg.value }(
+            abi.encodeWithSelector(
+                IUsdnProtocolCore.initialize.selector, depositAmount, longAmount, desiredLiqPrice, currentPriceData
+            )
+        );
+    }
+
+    function _fundingCall(uint128 timestamp) internal returns (bool success, bytes memory returnData) {
+        emit FundingCall(timestamp);
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolCore.funding.selector, timestamp));
+    }
+
+    // UsdnProtocolVault function calls
+    function _initiateDepositCall(
+        uint128 amount,
+        uint256 sharesOutMin,
+        address to,
+        address payable validator,
+        uint256 deadline,
+        bytes memory currentPriceData,
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+        uint256 txValue
+    ) internal returns (bool success, bytes memory returnData) {
+        vm.prank(currentActor);
+        (success, returnData) = address(usdnProtocol).call{ value: txValue }(
+            abi.encodeWithSelector(
+                IUsdnProtocolActions.initiateDeposit.selector,
+                amount,
+                sharesOutMin,
+                to,
+                validator,
+                deadline,
+                currentPriceData,
+                previousActionsData
+            )
+        );
+    }
+
+    function _validateDepositCall(
+        address payable validator,
+        bytes memory depositPriceData,
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData
+    ) internal returns (bool success, bytes memory returnData) {
+        emit ValidateDepositCall(validator, depositPriceData, previousActionsData);
+        vm.prank(currentActor);
+        (success, returnData) = address(usdnProtocol).call{ value: msg.value }(
+            abi.encodeWithSelector(
+                IUsdnProtocolActions.validateDeposit.selector, validator, depositPriceData, previousActionsData
+            )
+        );
+    }
+
+    function _initiateWithdrawalCall(
+        uint152 usdnShares,
+        uint256 amountOutMin,
+        address to,
+        address payable validator,
+        uint256 deadline,
+        bytes memory currentPriceData,
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+        uint256 txValue
+    ) internal returns (bool success, bytes memory returnData) {
+        emit InitiateWithdrawalCall(
+            usdnShares, amountOutMin, to, validator, deadline, currentPriceData, previousActionsData
+        );
+        vm.prank(currentActor);
+        (success, returnData) = address(usdnProtocol).call{ value: txValue }(
+            abi.encodeWithSelector(
+                IUsdnProtocolActions.initiateWithdrawal.selector,
+                usdnShares,
+                amountOutMin,
+                to,
+                validator,
+                deadline,
+                currentPriceData,
+                previousActionsData
+            )
+        );
+    }
+
+    function _validateWithdrawalCall(
+        address payable validator,
+        bytes memory withdrawalPriceData,
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData
+    ) internal returns (bool success, bytes memory returnData) {
+        emit ValidateWithdrawalCall(validator, withdrawalPriceData, previousActionsData);
+        vm.prank(currentActor);
+        (success, returnData) = address(usdnProtocol).call{ value: msg.value }(
+            abi.encodeWithSelector(
+                IUsdnProtocolActions.validateWithdrawal.selector, validator, withdrawalPriceData, previousActionsData
+            )
+        );
+    }
+
+    function _usdnPriceCall(uint128 currentPrice, uint128 timestamp)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        emit UsdnPriceCall(currentPrice, timestamp);
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(bytes4(0xa63563cf), currentPrice, timestamp));
+    }
+
+    function _usdnPriceSimpleCall(uint128 currentPrice) internal returns (bool success, bytes memory returnData) {
+        emit UsdnPriceSimpleCall(currentPrice);
+        (success, returnData) = address(usdnProtocol).call(abi.encodeWithSelector(bytes4(0x7aeabd99), currentPrice));
+    }
+
+    function _vaultAssetAvailableWithFundingCall(uint128 currentPrice, uint128 timestamp)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        emit VaultAssetAvailableWithFundingCall(currentPrice, timestamp);
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolVault.vaultAssetAvailableWithFunding.selector, currentPrice, timestamp)
+        );
+    }
+
+    // UsdnProtocolActions function calls
+    function _initiateOpenPositionCall(
+        uint128 amount,
+        uint128 desiredLiqPrice,
+        uint128 userMaxPrice,
+        uint256 userMaxLeverage,
+        address to,
+        address payable validator,
+        uint256 deadline,
+        bytes memory currentPriceData,
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+        uint256 txValue
+    ) internal returns (bool success, bytes memory returnData) {
+        emit InitiateOpenPositionCall(
+            amount,
+            desiredLiqPrice,
+            userMaxPrice,
+            userMaxLeverage,
+            to,
+            validator,
+            deadline,
+            currentPriceData,
+            previousActionsData
+        );
+        vm.prank(currentActor);
+        (success, returnData) = address(usdnProtocol).call{ value: txValue }(
+            abi.encodeWithSelector(
+                IUsdnProtocolActions.initiateOpenPosition.selector,
+                amount,
+                desiredLiqPrice,
+                userMaxPrice,
+                userMaxLeverage,
+                to,
+                validator,
+                deadline,
+                currentPriceData,
+                previousActionsData
+            )
+        );
+    }
+
+    function _initiateClosePositionCall(
+        IUsdnProtocolTypes.PositionId memory posId,
+        uint128 amountToClose,
+        uint256 userMinPrice,
+        address to,
+        address validator,
+        uint256 deadline,
+        bytes memory currentPriceData,
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+        uint256 txValue
+    ) internal returns (bool success, bytes memory returnData) {
+        emit InitiateClosePositionCall(
+            posId, amountToClose, userMinPrice, to, validator, deadline, currentPriceData, previousActionsData
+        );
+        vm.prank(currentActor);
+
+        (success, returnData) = address(usdnProtocol).call{ value: txValue }(
+            abi.encodeWithSelector(
+                IUsdnProtocolActions.initiateClosePosition.selector,
+                posId,
+                amountToClose,
+                userMinPrice,
+                to,
+                validator,
+                deadline,
+                currentPriceData,
+                previousActionsData
+            )
+        );
+    }
+
+    function _validateOpenPositionCall(
+        address payable validator,
+        bytes memory openPriceData,
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+        uint256 txValue
+    ) internal returns (bool success, bytes memory returnData) {
+        emit ValidateOpenPositionCall(validator, openPriceData, previousActionsData);
+        vm.prank(currentActor);
+
+        (success, returnData) = address(usdnProtocol).call{ value: txValue }(
+            abi.encodeWithSelector(
+                IUsdnProtocolActions.validateOpenPosition.selector, validator, openPriceData, previousActionsData
+            )
+        );
+    }
+
+    function _validateClosePositionCall(
+        address payable validator,
+        bytes memory closePriceData,
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+        uint256 txValue
+    ) internal returns (bool success, bytes memory returnData) {
+        emit ValidateClosePositionCall(validator, closePriceData, previousActionsData);
+        vm.prank(currentActor);
+
+        (success, returnData) = address(usdnProtocol).call{ value: txValue }(
+            abi.encodeWithSelector(
+                IUsdnProtocolActions.validateClosePosition.selector, validator, closePriceData, previousActionsData
+            )
+        );
+    }
+
+    function _liquidateCall(bytes memory currentPriceData) internal returns (bool success, bytes memory returnData) {
+        emit LiquidateCall(currentPriceData);
+        vm.prank(currentActor);
+        (success, returnData) = address(usdnProtocol).call{ value: pythPrice }(
+            abi.encodeWithSelector(IUsdnProtocolActions.liquidate.selector, currentPriceData)
+        );
+    }
+
+    function _validateActionablePendingActionsCall(
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+        uint256 maxValidations,
+        uint256 txValue
+    ) internal returns (bool success, bytes memory returnData) {
+        emit ValidateActionablePendingActionsCall(previousActionsData, maxValidations);
+        vm.prank(currentActor);
+        (success, returnData) = address(usdnProtocol).call{ value: txValue }(
+            abi.encodeWithSelector(
+                IUsdnProtocolActions.validateActionablePendingActions.selector, previousActionsData, maxValidations
+            )
+        );
+    }
+
+    function _transferPositionOwnershipCall(IUsdnProtocolTypes.PositionId memory posId, address newOwner)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        emit TransferPositionOwnershipCall(posId, newOwner);
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolActions.transferPositionOwnership.selector, posId, newOwner)
+        );
+    }
+
+    // UsdnProtocolFallback function calls
+    function _getEffectivePriceForTickCall(int24 tick) internal returns (bool success, bytes memory returnData) {
+        (success, returnData) = address(usdnProtocol).call(abi.encodeWithSelector(bytes4(0x81ebaa8a), tick));
+    }
+
+    function _previewDepositCall(uint256 amount, uint128 price, uint128 timestamp)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.previewDeposit.selector, amount, price, timestamp)
+        );
+    }
+
+    function _previewWithdrawCall(uint256 usdnShares, uint128 price, uint128 timestamp)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.previewWithdraw.selector, usdnShares, price, timestamp)
+        );
+    }
+
+    function _refundSecurityDepositCall(address payable validator)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.refundSecurityDeposit.selector, validator)
+        );
+    }
+
+    function _removeBlockedPendingActionCall(address validator, address payable to)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        (success, returnData) = address(usdnProtocol).call(abi.encodeWithSelector(bytes4(0xc58aaa96), validator, to));
+    }
+
+    // Additional functions for UsdnProtocolFallback
+    function _removeBlockedPendingActionNoCleanupCall(address validator, address payable to)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        emit RemoveBlockedPendingActionNoCleanupCall(validator, to);
+        (success, returnData) = address(usdnProtocol).call(abi.encodeWithSelector(bytes4(0xb82ee8b6), validator, to));
+    }
+
+    function _removeBlockedPendingActionByIndexCall(uint128 rawIndex, address payable to)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        emit RemoveBlockedPendingActionByIndexCall(rawIndex, to);
+        (success, returnData) = address(usdnProtocol).call(abi.encodeWithSelector(bytes4(0xf980a965), rawIndex, to));
+    }
+
+    function _removeBlockedPendingActionNoCleanupByIndexCall(uint128 rawIndex, address payable to)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        emit RemoveBlockedPendingActionNoCleanupByIndexCall(rawIndex, to);
+        (success, returnData) = address(usdnProtocol).call(abi.encodeWithSelector(bytes4(0xa2dac055), rawIndex, to));
+    }
+
+    function _getTickSpacingCall() internal returns (bool success, bytes memory returnData) {
+        emit GetTickSpacingCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getTickSpacing.selector));
+    }
+
+    function _getAssetCall() internal returns (bool success, bytes memory returnData) {
+        emit GetAssetCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getAsset.selector));
+    }
+
+    function _getSdexCall() internal returns (bool success, bytes memory returnData) {
+        emit GetSdexCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getSdex.selector));
+    }
+
+    function _getPriceFeedDecimalsCall() internal returns (bool success, bytes memory returnData) {
+        emit GetPriceFeedDecimalsCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getPriceFeedDecimals.selector));
+    }
+
+    function _getAssetDecimalsCall() internal returns (bool success, bytes memory returnData) {
+        emit GetAssetDecimalsCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getAssetDecimals.selector));
+    }
+
+    function _getUsdnCall() internal returns (bool success, bytes memory returnData) {
+        emit GetUsdnCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getUsdn.selector));
+    }
+
+    function _getUsdnMinDivisorCall() internal returns (bool success, bytes memory returnData) {
+        emit GetUsdnMinDivisorCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getUsdnMinDivisor.selector));
+    }
+
+    function _getOracleMiddlewareCall() internal returns (bool success, bytes memory returnData) {
+        emit GetOracleMiddlewareCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getOracleMiddleware.selector));
+    }
+
+    function _getLiquidationRewardsManagerCall() internal returns (bool success, bytes memory returnData) {
+        emit GetLiquidationRewardsManagerCall();
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.getLiquidationRewardsManager.selector)
+        );
+    }
+
+    function _getRebalancerCall() internal returns (bool success, bytes memory returnData) {
+        emit GetRebalancerCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getRebalancer.selector));
+    }
+
+    function _getMinLeverageCall() internal returns (bool success, bytes memory returnData) {
+        emit GetMinLeverageCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getMinLeverage.selector));
+    }
+
+    function _getMaxLeverageCall() internal returns (bool success, bytes memory returnData) {
+        emit GetMaxLeverageCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getMaxLeverage.selector));
+    }
+
+    function _getLowLatencyValidatorDeadlineCall() internal returns (bool success, bytes memory returnData) {
+        emit GetLowLatencyValidatorDeadlineCall();
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.getLowLatencyValidatorDeadline.selector)
+        );
+    }
+
+    function _getOnChainValidatorDeadlineCall() internal returns (bool success, bytes memory returnData) {
+        emit GetOnChainValidatorDeadlineCall();
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.getOnChainValidatorDeadline.selector)
+        );
+    }
+
+    function _getLiquidationPenaltyCall() internal returns (bool success, bytes memory returnData) {
+        emit GetLiquidationPenaltyCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getLiquidationPenalty.selector));
+    }
+
+    function _getSafetyMarginBpsCall() internal returns (bool success, bytes memory returnData) {
+        emit GetSafetyMarginBpsCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getSafetyMarginBps.selector));
+    }
+
+    function _getLiquidationIterationCall() internal returns (bool success, bytes memory returnData) {
+        emit GetLiquidationIterationCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getLiquidationIteration.selector));
+    }
+
+    function _getEmaPeriodCall() internal returns (bool success, bytes memory returnData) {
+        emit GetEmaPeriodCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getEMAPeriod.selector));
+    }
+
+    function _getFundingSfCall() internal returns (bool success, bytes memory returnData) {
+        emit GetFundingSfCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getFundingSF.selector));
+    }
+
+    function _getProtocolFeeBpsCall() internal returns (bool success, bytes memory returnData) {
+        emit GetProtocolFeeBpsCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getProtocolFeeBps.selector));
+    }
+
+    function _getPositionFeeBpsCall() internal returns (bool success, bytes memory returnData) {
+        emit GetPositionFeeBpsCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getPositionFeeBps.selector));
+    }
+
+    function _getVaultFeeBpsCall() internal returns (bool success, bytes memory returnData) {
+        emit GetVaultFeeBpsCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getVaultFeeBps.selector));
+    }
+
+    function _getRebalancerBonusBpsCall() internal returns (bool success, bytes memory returnData) {
+        emit GetRebalancerBonusBpsCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getRebalancerBonusBps.selector));
+    }
+
+    function _getSdexBurnOnDepositRatioCall() internal returns (bool success, bytes memory returnData) {
+        emit GetSdexBurnOnDepositRatioCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getSdexBurnOnDepositRatio.selector));
+    }
+
+    function _getSecurityDepositValueCall() internal returns (bool success, bytes memory returnData) {
+        emit GetSecurityDepositValueCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getSecurityDepositValue.selector));
+    }
+
+    function _getFeeThresholdCall() internal returns (bool success, bytes memory returnData) {
+        emit GetFeeThresholdCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getFeeThreshold.selector));
+    }
+
+    function _getFeeCollectorCall() internal returns (bool success, bytes memory returnData) {
+        emit GetFeeCollectorCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getFeeCollector.selector));
+    }
+
+    function _getMiddlewareValidationDelayCall() internal returns (bool success, bytes memory returnData) {
+        emit GetMiddlewareValidationDelayCall();
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.getMiddlewareValidationDelay.selector)
+        );
+    }
+
+    function _getTargetUsdnPriceCall() internal returns (bool success, bytes memory returnData) {
+        emit GetTargetUsdnPriceCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getTargetUsdnPrice.selector));
+    }
+
+    function _getUsdnRebaseThresholdCall() internal returns (bool success, bytes memory returnData) {
+        emit GetUsdnRebaseThresholdCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getUsdnRebaseThreshold.selector));
+    }
+
+    function _getLastFundingPerDayCall() internal returns (bool success, bytes memory returnData) {
+        emit GetLastFundingPerDayCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getLastFundingPerDay.selector));
+    }
+
+    function _getBalanceVaultCall() internal returns (bool success, bytes memory returnData) {
+        emit GetBalanceVaultCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getBalanceVault.selector));
+    }
+
+    function _getBalanceLongCall() internal returns (bool success, bytes memory returnData) {
+        emit GetBalanceLongCall();
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.getBalanceLong.selector));
+    }
+
+    function _initiateDepositAssetsCall(uint88 amount, address to)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        vm.prank(currentActor);
+        (success, returnData) =
+            address(rebalancer).call(abi.encodeWithSelector(Rebalancer.initiateDepositAssets.selector, amount, to));
+    }
+
+    function _validateDepositAssetsCall() internal returns (bool success, bytes memory returnData) {
+        vm.prank(currentActor);
+        (success, returnData) =
+            address(rebalancer).call(abi.encodeWithSelector(Rebalancer.validateDepositAssets.selector));
+    }
+
+    function _resetDepositAssetsCall() internal returns (bool success, bytes memory returnData) {
+        vm.prank(currentActor);
+        (success, returnData) = address(rebalancer).call(abi.encodeWithSelector(Rebalancer.resetDepositAssets.selector));
+    }
+
+    function _initiateWithdrawAssetsCall() internal returns (bool success, bytes memory returnData) {
+        vm.prank(currentActor);
+        (success, returnData) =
+            address(rebalancer).call(abi.encodeWithSelector(Rebalancer.initiateWithdrawAssets.selector));
+    }
+
+    function _validateWithdrawAssetsCall(uint88 amount, address to)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        vm.prank(currentActor);
+        (success, returnData) =
+            address(rebalancer).call(abi.encodeWithSelector(Rebalancer.validateWithdrawAssets.selector, amount, to));
+    }
+
+    function _initiateClosePositionCallInRebalancer(
+        uint88 amount,
+        address to,
+        address payable validator,
+        uint256 userMinPrice,
+        uint256 deadline,
+        bytes memory currentPriceData,
+        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+        bytes memory delegationData,
+        uint256 txValue
+    ) internal returns (bool success, bytes memory returnData) {
+        emit InitiateClosePositionCallInRebalancer(amount, to, userMinPrice);
+        vm.prank(currentActor);
+        (success, returnData) = address(rebalancer).call{ value: txValue }(
+            abi.encodeWithSelector(
+                Rebalancer.initiateClosePosition.selector,
+                amount,
+                to,
+                validator,
+                userMinPrice,
+                deadline,
+                currentPriceData,
+                previousActionsData,
+                delegationData
+            )
+        );
+    }
+}

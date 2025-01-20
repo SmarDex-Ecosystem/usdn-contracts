@@ -1,0 +1,100 @@
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.0;
+
+import { PostConditionsBase } from "./PostConditionsBase.sol";
+
+abstract contract PostConditionsUsdnProtocolVault is PostConditionsBase {
+    function initiateDepositPostConditions(
+        bool success,
+        bytes memory returnData,
+        address[] memory actorsToUpdate,
+        InitiateDepositParams memory params
+    ) internal {
+        if (success) {
+            _after(actorsToUpdate);
+            bool initiatedDeposit = abi.decode(returnData, (bool));
+            if (initiatedDeposit) {
+                invariant_DEPI_01(actorsToUpdate[0], initiatedDeposit);
+                invariant_DEPI_02(actorsToUpdate[0], params);
+                invariant_DEPI_03(actorsToUpdate[0]);
+                invariant_DEPI_04(params, initiatedDeposit);
+                invariant_DEPI_05(params); //failed
+            }
+            onSuccessInvariantsGeneral(returnData);
+        } else {
+            onFailInvariantsGeneral(returnData);
+        }
+    }
+
+    function validateDepositPostConditions(
+        bool success,
+        bytes memory returnData,
+        address[] memory actorsToUpdate,
+        ValidateDepositParams memory params
+    ) internal {
+        if (success) {
+            _after(actorsToUpdate);
+
+            // function internal bool return
+            if (abi.decode(returnData, (bool))) {
+                invariant_DEPV_01(actorsToUpdate[0]); //increasing number of shares
+                invariant_DEPV_02(actorsToUpdate[0], actorsToUpdate[2]);
+                invariant_DEPV_03(actorsToUpdate[0], actorsToUpdate[1]);
+            }
+
+            invariant_DEPV_04(actorsToUpdate[0], actorsToUpdate[1]);
+            invariant_DEPV_05(params); //Failed, acknowledged edge case
+            invariant_DEPV_06(actorsToUpdate[2]);
+            invariant_DEPV_07(params);
+            invariant_DEPV_08(actorsToUpdate[1]);
+            invariant_DEPV_09(actorsToUpdate[0]);
+
+            onSuccessInvariantsGeneral(returnData);
+        } else {
+            onFailInvariantsGeneral(returnData);
+        }
+    }
+
+    function initiateWithdrawalPostConditions(
+        bool success,
+        bytes memory returnData,
+        address[] memory actorsToUpdate,
+        InitiateWithdrawalParams memory params
+    ) internal {
+        if (success) {
+            _after(actorsToUpdate);
+            bool initiatedWithdrawal = abi.decode(returnData, (bool));
+            if (initiatedWithdrawal) {
+                invariant_WITHI_01(actorsToUpdate[0], initiatedWithdrawal);
+                invariant_WITHI_02(actorsToUpdate[0], params);
+                invariant_WITHI_03(params, initiatedWithdrawal);
+                invariant_WITHI_04(params);
+            }
+
+            onSuccessInvariantsGeneral(returnData);
+        } else {
+            onFailInvariantsGeneral(returnData);
+        }
+    }
+
+    function validateWithdrawalPostConditions(
+        bool success,
+        bytes memory returnData,
+        address[] memory actorsToUpdate,
+        ValidateWithdrawalParams memory params
+    ) internal {
+        if (success) {
+            _after(actorsToUpdate);
+            invariant_WITHV_01(actorsToUpdate[0]);
+            if (abi.decode(returnData, (bool))) {
+                invariant_WITHV_02(actorsToUpdate[0]);
+                invariant_WITHV_03();
+                invariant_WITHV_04(params);
+                invariant_WITHV_05(params);
+            }
+            onSuccessInvariantsGeneral(returnData);
+        } else {
+            onFailInvariantsGeneral(returnData);
+        }
+    }
+}
