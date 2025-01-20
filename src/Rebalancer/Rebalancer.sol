@@ -224,20 +224,12 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     function getCurrentStateData()
         external
         view
-        returns (
-            uint128 pendingAssets_,
-            uint256 maxLeverage_,
-            uint128 positionAmount_,
-            uint256 entryAccMultiplier_,
-            Types.PositionId memory currentPosId_
-        )
+        returns (uint128 pendingAssets_, uint256 maxLeverage_, Types.PositionId memory currentPosId_)
     {
         PositionData storage positionData = _positionData[_positionVersion];
         return (
             _pendingAssetsAmount,
             _maxLeverage,
-            positionData.amount,
-            positionData.entryAccMultiplier,
             Types.PositionId({
                 tick: positionData.tick,
                 tickVersion: positionData.tickVersion,
