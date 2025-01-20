@@ -65,17 +65,15 @@ interface IUsdnProtocolTypes {
      * @param Closed The action only closes a position.
      * @param Opened The action only opens a position.
      * @param ClosedOpened The action closes and opens a position.
-     * @param LiquidatedOpened The action liquidates and opens a position.
      */
     enum RebalancerAction {
         None,
         NoImbalance,
         PendingLiquidation,
         NoCloseNoOpen,
-        Liquidated,
+        Closed,
         Opened,
-        ClosedOpened,
-        LiquidatedOpened
+        ClosedOpened
     }
 
     /**

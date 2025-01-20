@@ -81,18 +81,12 @@ library UsdnProtocolLongLibrary {
      * @param rebalancerMaxLeverage The maximum leverage of the rebalancer.
      * @param rebalancerPosId The ID of the rebalancer's position.
      * @param positionValue The value of the rebalancer's position.
-     * @param prevPositionAmount The amount of assets used as collateral to open the previous position.
-     * @param entryAccMultiplier The entry accumulation multiplier of the previous rebalancer's position.
-     * @param newAccMultiplier The new accumulation multiplier of the rebalancer.
      */
     struct TriggerRebalancerData {
         uint128 positionAmount;
         uint256 rebalancerMaxLeverage;
         Types.PositionId rebalancerPosId;
         uint128 positionValue;
-        uint128 prevPositionAmount;
-        uint256 entryAccMultiplier;
-        uint256 newAccMultiplier;
     }
 
     /// @notice See {IUsdnProtocolLong.getPositionValue}.
@@ -626,14 +620,8 @@ library UsdnProtocolLongLibrary {
         }
 
         TriggerRebalancerData memory data;
-        // the default value of `positionAmount` is the amount of pending assets in the rebalancer
-        (
-            data.positionAmount,
-            data.rebalancerMaxLeverage,
-            data.prevPositionAmount,
-            data.entryAccMultiplier,
-            data.rebalancerPosId
-        ) = rebalancer.getCurrentStateData();
+        // the default value of `positionAmount` is the amount of pendingAssets in the rebalancer
+        (data.positionAmount, data.rebalancerMaxLeverage, data.rebalancerPosId) = rebalancer.getCurrentStateData();
 
         // close the rebalancer position and get its value to open the next one
         if (data.rebalancerPosId.tick != Constants.NO_POSITION_TICK) {
@@ -655,27 +643,14 @@ library UsdnProtocolLongLibrary {
             return (longBalance_, vaultBalance_, Types.RebalancerAction.NoCloseNoOpen);
         }
 
-        if (data.prevPositionAmount > 0) {
-            data.newAccMultiplier =
-                FixedPointMathLib.fullMulDiv(data.positionValue, data.entryAccMultiplier, data.prevPositionAmount);
-        }
-        // if the amount in the position we wanted to open is below a fraction of the `_minLongPosition` setting,
-        // we are dealing with dust, we should stop the process and gift the remaining value to the vault
+        // if the amount in the position we wanted to open is below a fraction of the _minLongPosition setting,
+        // we are dealing with dust. So we should stop the process and gift the remaining value to the vault
         if (data.positionAmount <= s._minLongPosition / 10_000) {
             // make the rebalancer believe that the previous position was liquidated,
             // and inform it that no new position was open so it can start anew
             rebalancer.updatePosition(Types.PositionId(Constants.NO_POSITION_TICK, 0, 0), 0);
             vaultBalance_ += data.positionValue;
-            return (longBalance_, vaultBalance_, Types.RebalancerAction.Liquidated);
-        }
-
-        // if the new rewards accumulated multiplier is below 10_000, it means the position is very small and the
-        // rebalancer will not be able to compute rewards properly, we should gift the remaining value to the vault
-        // a position will be opened with the pending assets and bonus
-        if (data.prevPositionAmount > 0 && data.newAccMultiplier < 10_000) {
-            vaultBalance_ += data.positionValue;
-            data.positionAmount -= data.positionValue;
-            data.positionValue = 0;
+            return (longBalance_, vaultBalance_, Types.RebalancerAction.Closed);
         }
 
         // transfer the pending assets from the rebalancer to this contract
@@ -710,8 +685,6 @@ library UsdnProtocolLongLibrary {
 
         if (data.positionValue > 0) {
             action_ = Types.RebalancerAction.ClosedOpened;
-        } else if (data.newAccMultiplier < 10_000 && data.prevPositionAmount > 0) {
-            action_ = Types.RebalancerAction.LiquidatedOpened;
         } else {
             action_ = Types.RebalancerAction.Opened;
         }
