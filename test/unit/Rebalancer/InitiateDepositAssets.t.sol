@@ -285,11 +285,11 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
      * @custom:then Its previous deposit is deleted and the new one is pending inclusion
      */
     function test_depositAfterLiquidation() public {
-        // create a position for the rebalancer and deposit assets
         rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
         skip(rebalancer.getTimeLimits().validationDelay);
         rebalancer.validateDepositAssets();
 
+        // update the position version twice
         vm.startPrank(address(usdnProtocol));
         rebalancer.updatePosition(Types.PositionId({ tick: 0, tickVersion: 0, index: 0 }), 0);
         rebalancer.updatePosition(Types.PositionId({ tick: 0, tickVersion: 0, index: 0 }), 1);
