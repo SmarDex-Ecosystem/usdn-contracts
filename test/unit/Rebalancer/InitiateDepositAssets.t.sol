@@ -277,6 +277,39 @@ contract TestRebalancerInitiateDepositAssets is RebalancerFixture {
     }
 
     /**
+     * @custom:scenario The user deposits assets after the rebalancer has been updated twice and then liquidated
+     * @custom:given The user has initiated a deposit and validated it
+     * @custom:and The rebalancer's position is updated twice
+     * @custom:and The rebalancer's position is liquidated
+     * @custom:when The user initiates and validates a new deposit
+     * @custom:then Its previous deposit is deleted and the new one is pending inclusion
+     */
+    function test_depositAfterLiquidation() public {
+        // create a position for the rebalancer and deposit assets
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT, address(this));
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+
+        vm.startPrank(address(usdnProtocol));
+        rebalancer.updatePosition(Types.PositionId({ tick: 0, tickVersion: 0, index: 0 }), 0);
+        rebalancer.updatePosition(Types.PositionId({ tick: 0, tickVersion: 0, index: 0 }), 1);
+        vm.stopPrank();
+
+        // sanity check
+        assertEq(rebalancer.getPositionVersion(), 2, "The version of the position should be 2");
+
+        // increase the tick version to simulate the tick being liquidated
+        UsdnProtocolMock(address(usdnProtocol)).setTickVersion(0, 1);
+
+        rebalancer.initiateDepositAssets(INITIAL_DEPOSIT + 1, address(this));
+        skip(rebalancer.getTimeLimits().validationDelay);
+        rebalancer.validateDepositAssets();
+
+        assertEq(rebalancer.getUserDepositData(address(this)).amount, INITIAL_DEPOSIT + 1);
+        assertEq(rebalancer.getUserDepositData(address(this)).entryPositionVersion, 3);
+    }
+
+    /**
      * @custom:scenario The user tries to deposit assets when they are in a position already
      * @custom:given The user has initiated a deposit, validated it, and the rebalancer got triggered
      * @custom:when The user tries to deposit assets
