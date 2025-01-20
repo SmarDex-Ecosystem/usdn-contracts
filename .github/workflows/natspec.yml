@@ -47,6 +47,9 @@ jobs:
           github-token: ${{ steps.app-token.outputs.token }}
           working-directory: ./
           update-comment: true
+      - name: Fail on findings
+        if: ${{ needs.natspec-smells.outputs.total-smells > 0}}
+        run: exit 1
 
   notify-on-failure:
     needs: natspec-smells
