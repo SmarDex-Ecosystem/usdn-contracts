@@ -54,7 +54,7 @@ jobs:
             }
 
       - name: Fail on negative margin (contract too big)
-        run: if echo "${{ steps.contract-sizes.outputs.SIZES }}" | sed -n '6,${/[^-]*-.*/q1}'; then exit 0; else exit 1; fi
+        run: if echo "${{ steps.contract-sizes.outputs.SIZES }}" | sed -n '6,${/-[0-9]\+/q1}'; then exit 0; else exit 1; fi
 
   notify-on-failure:
     needs: contract-sizes
