@@ -11,6 +11,8 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+    outputs:
+      total-smells: ${{ steps.natspec-smells-action.outputs.total-smells }}
     steps:
       - uses: actions/create-github-app-token@v1
         id: app-token
@@ -39,6 +41,7 @@ jobs:
         run: rm -f remappings.txt
 
       - name: Report natspec smells findings
+        id: natspec-smells-action
         uses: SmarDex-Ecosystem/natspec-smells-action@v2
         with:
           github-token: ${{ steps.app-token.outputs.token }}
