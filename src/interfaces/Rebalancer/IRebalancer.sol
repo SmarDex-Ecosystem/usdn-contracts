@@ -175,8 +175,6 @@ interface IRebalancer is IBaseRebalancer, IRebalancerErrors, IRebalancerEvents, 
      * @param delegationData An optional delegation data that include the depositOwner and an EIP712 signature to
      * provide when closing a position on the owner's behalf.
      * If used, it needs to be encoded with `abi.encode(depositOwner, abi.encodePacked(r, s, v))`.
-     * @return outcome_ The outcome of the UsdnProtocol's `initiateClosePosition` call, check
-     * {IUsdnProtocolActions.initiateClosePosition} for more details.
      */
     function initiateClosePosition(
         uint88 amount,
