@@ -47,6 +47,6 @@ jobs:
 
   notify-on-failure:
     needs: natspec-smells
-    if: ${{ always() && jobs.natspec-smells.outputs.total-smells > 0 }}
+    if: ${{ always() && needs.natspec-smells.outputs.total-smells > 0 }}
     uses: ./.github/workflows/notify_failure.yml
     secrets: inherit
