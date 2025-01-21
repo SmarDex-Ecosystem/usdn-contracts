@@ -62,7 +62,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     /*
      * @custom:fuzzing Added fuzzing helpers
      */
-
     function getHighestPopulatedTick() external view returns (int24) {
         Storage storage s = Utils._getMainStorage();
 

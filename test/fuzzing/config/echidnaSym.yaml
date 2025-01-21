@@ -1,0 +1,40 @@
+cryticArgs:
+  [
+    "--compile-libraries=(BigNumbers,0xf0),(HugeUint,0xf1)",
+  ]
+deployContracts:
+  [
+    ["0xf0", "BigNumbers"],
+    ["0xf1", "HugeUint"]
+  ]
+workers: 0
+testLimit: 10000000000000
+corpusDir: test/fuzzing/echidnaSym-corpus/
+shrinkLimit: 5000
+propMaxGas: 0xFFFFFFFFFFFFFFFF
+testMaxGas: 0xFFFFFFFFFFFFFFFF
+testMode: assertion
+# format: text
+# # by default, blacklist methods in filterFunctions
+# filterBlacklist: true
+# filterFunctions: ["addBigNumber((bytes,bool,uint256),(bytes,bool,uint256))", "addHugeUint((uint256,uint256),(uint256,uint256))"]
+
+##Enable symbolic execution
+symExec: true
+# whether symbolic execution will be concolic (vs full symbolic execution)
+symExecConcolic: false #consumes much less memory
+# number of SMT solvers used in symbolic execution
+# only relevant if symExec is true
+symExecNSolvers: 1
+# timeout for symbolic execution SMT solver
+# only relevant if symExec is true
+symExecTimeout: 30
+# Number of times we may revisit a particular branching point
+# only relevant if symExec is true and symExecConcolic is false
+symExecMaxIters: 10
+# Number of times we may revisit a particular branching point before we consult the smt solver to check reachability
+# only relevant if symExec is true and symExecConcolic is false
+symExecAskSMTIters: 5
+# List of whitelisted functions for using symbolic/concolic exploration
+# only relevant if symExec is true
+# symExecTargets: 

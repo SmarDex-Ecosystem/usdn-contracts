@@ -55,11 +55,11 @@ contract MockPyth is IMockPythError {
     function getLastPublishTime() external view returns (uint64) {
         return lastPublishTime;
     }
+
     /**
      * @notice Update manually the confidence interval.
      * @param _conf New confidence interval
      */
-
     function setConf(uint64 _conf) external {
         conf = _conf;
     }

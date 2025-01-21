@@ -1,0 +1,66 @@
+# format: text 
+
+
+cryticArgs:
+  [
+      "--compile-libraries=(Accumulator,0xf1),(DoubleEndedQueue,0xf2),(SignedMath,0xf3),(HugeUint,0xf4),(TickMath,0xf5),(UsdnProtocolActionsLongLibrary,0xf6),(UsdnProtocolActionsUtilsLibrary,0xf7),(UsdnProtocolConstantsLibrary,0xf8),(UsdnProtocolCoreLibrary,0xf9),(UsdnProtocolLongLibrary,0xfa),(UsdnProtocolSettersLibrary,0xfb),(UsdnProtocolUtilsLibrary,0xfc),(UsdnProtocolVaultLibrary,0xfd)",
+  ]
+
+deployContracts:
+  [
+    ["0xf1", "Accumulator"],
+    ["0xf2", "DoubleEndedQueue"],
+    ["0xf3", "SignedMath"],
+    ["0xf4", "HugeUint"],
+    ["0xf5", "TickMath"],
+    ["0xf6", "UsdnProtocolActionsLongLibrary"],
+    ["0xf7", "UsdnProtocolActionsUtilsLibrary"],
+    ["0xf8", "UsdnProtocolConstantsLibrary"],
+    ["0xf9", "UsdnProtocolCoreLibrary"],
+    ["0xfa", "UsdnProtocolLongLibrary"],
+    ["0xfb", "UsdnProtocolSettersLibrary"],
+    ["0xfc", "UsdnProtocolUtilsLibrary"],
+    ["0xfd", "UsdnProtocolVaultLibrary"],
+  ]
+
+workers: 3
+
+testMode: assertion
+
+corpusDir: test/fuzzing/echidna-corpus
+
+testLimit: 100000000000
+# testLimit: 1000000
+
+codeSize:  0xffffffff
+
+shrinkLimit: 5000
+
+seqLen: 100
+
+propMaxGas: 0xFFFFFFFFFFFFFFFF
+testMaxGas: 0xFFFFFFFFFFFFFFFF
+
+
+
+deployer: "0x10000"
+sender:
+  [
+    "0x10000",
+    "0x20000",
+    "0x30000",
+  ]
+
+# Initial Ether balance of contractAddr
+balanceContract: 0xffffffffffffffffffffffffffffffffffffffffffffffff
+
+# maximum value to send to payable functions
+maxValue: 100000000000000000000000000000 # 100000000000 eth
+
+maxTimeDelay: 0
+maxBlockDelay: 0
+
+
+
+
+  
