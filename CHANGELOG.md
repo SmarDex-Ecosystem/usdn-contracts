@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.0.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.24.2...v1.0.0) (2025-01-21)
+
+
+### Features
+
+* **deployment:** deploy the v0.24.2 on tenderly ([#841](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/841)) ([318a672](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/318a672c14aeaa4d1910b9c6996d812914647793))
+* **script:** update script ([#850](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/850)) ([2ab7e28](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/2ab7e28af094cebabb1de02d3c451b43e605d971))
+* **script:** update script ([#850](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/850)) ([5edf029](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/5edf02965b87984e73a881294a15ea06ad05c472))
+
+
+### Reverts
+
+* _triggerRebalancer fixes ([#848](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/848)) ([f26db82](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/f26db82370dbcbeddf3f36fb561424d31b3f8351))
+* max leverage scenario's liqPrice fix ([#845](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/845)) ([eff8b6d](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/eff8b6d6413a8e9e0cafb2521655942a2b0735aa))
+
+
+### Documentation
+
+* **whitepaper:** generate pdf ([#849](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/849)) ([8b41a72](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/8b41a725e0b802caad2ca6396b87e5d1269b7547))
+
 ## [0.24.2](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.24.1...v0.24.2) (2025-01-15)
 
 
