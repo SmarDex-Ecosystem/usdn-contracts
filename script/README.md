@@ -56,13 +56,13 @@ For a mainnet deployment, you have to use the bash script. The required variable
 - the WUSDN token address
 
 ```bash
-deployMainnet.sh -s SAFE_ADDRESS -r RPC_URL -w WUSDN_ADDRESS
+deployMainnet.sh -s SAFE_ADDRESS -r RPC_URL
 ```
 
 example:
 
 ```bash
-./script/deployMainnet.sh -r 127.0.0.1:8545 -s 0x1E3e1128F6bC2264a19D7a065982696d356879c5 -w 0x99999999999999Cc837C997B882957daFdCb1Af9
+./script/deployMainnet.sh -r 127.0.0.1:8545 -s 0x1E3e1128F6bC2264a19D7a065982696d356879c5
 ```
 
 Two optional flags are available:
