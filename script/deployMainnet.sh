@@ -9,7 +9,7 @@ green='\033[0;32m'
 blue='\033[0;34m'
 nc='\033[0m'
 
-USAGE="Usage: $(basename $0) [-r RPC_URL] [-s SAFE_ADDRESS] [-w WUSDN_ADDRESS] (-e GET_WSTETH) (-t HARDWARE_WALLET)"
+USAGE="Usage: $(basename $0) [-r RPC_URL] [-s SAFE_ADDRESS] (-e GET_WSTETH) (-t HARDWARE_WALLET)"
 
 broadcastPath="broadcast/00_DeployUsdn.s.sol/"
 broadcastFile="/run-latest.json"
@@ -50,7 +50,7 @@ function handlePrivateKey() {
 
 # Parses the arguments passed to the script
 function parseArguments() {
-    while getopts ":r:s:t:w:he" opt; do
+    while getopts ":r:s:t:he" opt; do
         case ${opt} in
         r)
             rpcUrl="$OPTARG"
@@ -61,10 +61,6 @@ function parseArguments() {
             ;;
         e)
             getWstETH=true
-            ;;
-        w)
-            wusdnAddress="$OPTARG"
-            export WUSDN_ADDRESS=$wusdnAddress
             ;;
         t)
             if [ "$OPTARG" = "ledger" ] || [ "$OPTARG" = "trezor" ]; then
@@ -89,8 +85,8 @@ function parseArguments() {
         esac
     done
 
-    if [[ -z "${rpcUrl}" || -z "${safeAddress}" || -z "${wusdnAddress}" ]]; then
-        printf "\nError: All -r, -w and -s options are required\n\n"
+    if [[ -z "${rpcUrl}" || -z "${safeAddress}" ]]; then
+        printf "\nError: All -r and -s options are required\n\n"
         printf "${USAGE}\n"
         exit 1
     fi
@@ -114,7 +110,7 @@ if [ "$1" = "--test" ]; then
     export GET_WSTETH=true
     export SAFE_ADDRESS="0x1E3e1128F6bC2264a19D7a065982696d356879c5"
     export IS_PROD_ENV=true
-    export WUSDN_ADDRESS="0x1234567890123456789012345678901234567890"
+    export WUSDN_ADDRESS="0x99999999999999Cc837C997B882957daFdCb1Af9"
 
 else
     printf "\n$green To run this script in test mode, add \"-t\" or \"--test\"$nc\n\n"
@@ -136,10 +132,6 @@ else
         [Yy]*)
             export IS_PROD_ENV=true
             export DEPLOYER_ADDRESS=$address
-            export INIT_LONG_AMOUNT=$initialLongAmount
-            if [ "$getWstETH" = true ]; then
-                export GET_WSTETH=true
-            fi
             break
             ;;
         [Nn]*)
@@ -151,11 +143,11 @@ else
 fi
 
 if [ "$hardwareWallet" = "ledger" ]; then
-    forge script -l -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast --slow
+    forge script -l -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
 elif [ "$hardwareWallet" = "trezor" ]; then
-    forge script -t -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast --slow
+    forge script -t -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
 else
-    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/01_DeployProtocol.s.sol:DeployProtocol --broadcast --slow
+    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/01_DeployProtocol.s.sol:DeployProtocol --broadcast
 fi
 
 popd >/dev/null

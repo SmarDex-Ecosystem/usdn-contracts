@@ -30,6 +30,7 @@ contract DeployProtocol is Script {
     address constant WSTETH_MAINNET = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
     address constant SDEX_MAINNET = 0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF;
     address constant USDN_MAINNET = 0xde17a000BA631c5d7c2Bd9FB692EFeA52D90DEE2;
+    address constant WUSDN_MAINNET = 0x99999999999999Cc837C997B882957daFdCb1Af9;
     address constant PYTH_MAINNET = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
     bytes32 constant PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
     address constant CHAINLINK_ETH_PRICE_MAINNET = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
@@ -233,7 +234,7 @@ contract DeployProtocol is Script {
             wusdn_ = Wusdn(wusdnAddress);
         } else {
             if (_isProdEnv) {
-                revert("WUSDN_ADDRESS is required on mainnet");
+                wusdn_ = Wusdn(WUSDN_MAINNET);
             } else {
                 wusdn_ = new Wusdn(usdn_);
             }
