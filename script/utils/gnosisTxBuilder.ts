@@ -87,8 +87,8 @@ async function getDepositAmountAndLiqPrice(
   const price = (await oracleMiddleware.simulate.parseAndValidatePrice([pad('0x'), BigInt(Date.now()), 1, '0x'])).result
     .price;
 
-  // we want a leverage of ~2x so we get the current price from the middleware and divide it by two
-  const desiredLiqPrice = price / 2n;
+  // we want a leverage of ~2.5x so we get the current price from the middleware and divide it by two
+  const desiredLiqPrice = (price * 3n) / 5n;
   // get the liquidation price with the tick rounding
   const liqPriceWithoutPenalty = await protocol.read.getLiqPriceFromDesiredLiqPrice([
     desiredLiqPrice,
