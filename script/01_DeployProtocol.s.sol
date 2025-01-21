@@ -361,6 +361,8 @@ contract DeployProtocol is Script {
         // grant the necessary roles to the deployer to set the rebalancer and then revoke them
         bytes32 ADMIN_SET_EXTERNAL_ROLE = Constants.ADMIN_SET_EXTERNAL_ROLE;
         bytes32 SET_EXTERNAL_ROLE = Constants.SET_EXTERNAL_ROLE;
+        bytes32 MIDDLEWARE_ADMIN_ROLE = wstEthOracleMiddleware.ADMIN_ROLE();
+
         usdnProtocol.grantRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
         usdnProtocol.grantRole(SET_EXTERNAL_ROLE, _deployerAddress);
 
@@ -368,6 +370,7 @@ contract DeployProtocol is Script {
 
         usdnProtocol.revokeRole(SET_EXTERNAL_ROLE, _deployerAddress);
         usdnProtocol.revokeRole(ADMIN_SET_EXTERNAL_ROLE, _deployerAddress);
+        wstEthOracleMiddleware.revokeRole(MIDDLEWARE_ADMIN_ROLE, _deployerAddress);
 
         // transfer the ownership of the contracts to the safe address
         usdnProtocol.beginDefaultAdminTransfer(_safeAddress);
