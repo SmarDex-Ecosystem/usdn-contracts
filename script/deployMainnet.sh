@@ -122,9 +122,7 @@ else
     while true; do
         printf "\n$blue RPC URL          :$nc $rpcUrl"
         printf "\n$blue Deployer address :$nc $address"
-        printf "\n$blue Get wsETH        :$nc $getWstETH"
         printf "\n$blue Safe address     :$nc $safeAddress"
-        printf "\n$blue WUSDN address    :$nc $wusdnAddress\n"
 
         read -p $'\n'"Do you wish to continue? (Yy/Nn) : " yn
 
@@ -147,7 +145,7 @@ if [ "$hardwareWallet" = "ledger" ]; then
 elif [ "$hardwareWallet" = "trezor" ]; then
     forge script -t -f "$rpcUrl" script/01_Deploy.s.sol:Deploy --broadcast
 else
-    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/01_DeployProtocol.s.sol:DeployProtocol --broadcast
+    forge script --private-key $deployerPrivateKey -f "$rpcUrl" script/01_DeployProtocol.s.sol:DeployProtocol --broadcast --batch-size 5
 fi
 
 popd >/dev/null
