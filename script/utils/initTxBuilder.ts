@@ -1,5 +1,5 @@
 import type { Address, GetContractReturnType, PublicClient } from 'viem';
-import { http, createPublicClient, getContract, isAddress, pad, formatEther, parseEther } from 'viem';
+import { http, createPublicClient, getContract, pad } from 'viem';
 import { IUsdnProtocolAbi } from '../../dist/abi';
 import { IOracleMiddlewareAbi } from '../../dist/abi';
 import { Command } from 'commander';
