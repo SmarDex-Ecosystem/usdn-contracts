@@ -110,7 +110,6 @@ function createInitializationTx(depositAmount: string, longAmount: string, desir
     data: '',
     contractMethod: {
       name: 'initialize',
-      payable: true,
       inputs: [
         {
           internalType: 'uint128',
@@ -154,7 +153,6 @@ interface TxBatch {
 }
 
 interface TxMeta {
-  //   txBuilderVersion?: string;
   createdFromSafeAddress: Address;
   name: string;
 }
@@ -170,14 +168,12 @@ interface TransactionData {
 interface ContractMethod {
   inputs: ContractInput[];
   name: string;
-  payable: boolean;
 }
 
 interface ContractInput {
   internalType: string;
   name: string;
   type: string;
-  components?: ContractInput[];
 }
 
 //////////////////////
