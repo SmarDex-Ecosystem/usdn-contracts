@@ -244,5 +244,5 @@ forge script script/53_InitializeProtocol.s.sol -f 127.0.0.1:8545 --broadcast --
 This script is used to build the initialization transaction for the Gnosis Safe:
 
 ```bash
-npm run exportAbi && npx tsx script/utils/initTxBuilder.ts  -r RPC_URL -t INITIAL_TOTAL_AMOUNT
+npm run exportAbi && npx tsx script/utils/initTxBuilder.ts -r RPC_URL -t INITIAL_TOTAL_AMOUNT
 ```
