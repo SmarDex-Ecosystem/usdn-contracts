@@ -142,8 +142,9 @@ function createInitializationTx(depositAmount: string, longAmount: string, desir
   };
 }
 
-/////////////////////////////
-
+/* -------------------------------------------------------------------------- */
+/*                                    Types                                   */
+/* -------------------------------------------------------------------------- */
 interface TxBatch {
   version: string;
   chainId: string;
@@ -175,5 +176,3 @@ interface ContractInput {
   name: string;
   type: string;
 }
-
-//////////////////////
