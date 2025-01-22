@@ -11,7 +11,7 @@ import {
   publicActions,
   webSocket,
 } from 'viem';
-import { IRebalancerAbi, IUsdnAbi, IUsdnProtocolAbi } from '../dist/abi';
+import { IRebalancerAbi, IUsdnAbi, IUsdnProtocolEventsAbi } from '../../dist/abi';
 
 function parseArgs() {
   const program = new Command();
@@ -21,13 +21,13 @@ function parseArgs() {
     .option(
       '-p, --protocol <address>',
       'address of the USDN protocol contract',
-      '0x669c6cf087a0127e8e7c483a58538a8ec0532382',
+      '0x656cb8c6d154aad29d8771384089be5b5141f01a',
     )
-    .option('-u, --usdn <address>', 'address of the USDN token contract', '0x81a3ffF82e09A63ec1e3e114B04Af6C99D340Fb9')
+    .option('-u, --usdn <address>', 'address of the USDN token contract', '0xde17a000ba631c5d7c2bd9fb692efea52d90dee2')
     .option(
       '--rebalancer <address>',
       'address of the rebalancer contract',
-      '0xB47dDaAc48eF4Fe272b4561399628e1A04e623D3',
+      '0xaeBcc85a5594e687F6B302405E6E92D616826e03',
     )
     .option('-r, --rpc-url <url>', 'URL of the RPC node to connect to')
     .option('-b, --blocks <blocks>', 'number of blocks to retrieve', '1000')
@@ -64,7 +64,7 @@ async function main() {
 
   const client = getClient(options.rpcUrl);
 
-  const protocolEvents = IUsdnProtocolAbi.filter((item) => item.type === 'event');
+  const protocolEvents = IUsdnProtocolEventsAbi.filter((item) => item.type === 'event');
   const usdnEvents = IUsdnAbi.filter((item) => item.type === 'event');
   const rebalancerEvents = IRebalancerAbi.filter((item) => item.type === 'event');
 
@@ -112,6 +112,7 @@ async function main() {
       ),
     );
     console.log('Block number:', log.blockNumber.toString());
+    console.log('TX Hash:', log.transactionHash);
     console.log('Event name:', pc.yellow(pc.bold(log.eventName)));
     console.log('Args:');
     for (const arg of Object.entries(log.args)) {
