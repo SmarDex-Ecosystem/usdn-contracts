@@ -1,24 +1,11 @@
-import type { Address, GetContractReturnType, Hex, PublicClient } from 'viem';
-import {
-  keccak256,
-  toHex,
-  http,
-  createPublicClient,
-  getContract,
-  isAddress,
-  pad,
-  stringToBytes,
-  bytesToHex,
-} from 'viem';
+import type { Address, GetContractReturnType, PublicClient } from 'viem';
+import { http, createPublicClient, getContract, isAddress, pad, formatEther, parseEther } from 'viem';
 import { IUsdnProtocolAbi } from '../../dist/abi';
 import { IOracleMiddlewareAbi } from '../../dist/abi';
 import { Command } from 'commander';
 import { writeFileSync } from 'node:fs';
 
 const SAFE_ADDRESS: Address = '0x1E3e1128F6bC2264a19D7a065982696d356879c5';
-const MINTER_ROLE = keccak256(toHex('MINTER_ROLE'));
-const REBASER_ROLE = keccak256(toHex('REBASER_ROLE'));
-const DEFAULT_ADMIN_ROLE = keccak256('0x00');
 
 main();
 
@@ -28,7 +15,7 @@ async function main() {
     .description('Create a batch transaction for Gnosis Safe to initialize the USDN protocol')
     .requiredOption('-r, --rpc-url <URL>', 'The RPC URL')
     .requiredOption('-p, --protocol <Address>', 'The address of the USDN protocol contract')
-    .requiredOption('-l, --long-amount <amount>', 'The wanted long amount')
+    .requiredOption('-t, --total-amount <amount>', 'The total amount to initiate the protocol')
     .parse(process.argv);
 
   let USDN_PROTOCOL_ADDRESS: Address;
@@ -50,7 +37,8 @@ async function main() {
     console.error('Invalid RPC URL');
     process.exit(1);
   }
-  const longAmount = BigInt(options.longAmount);
+
+  const totalAmount = BigInt(options.totalAmount);
 
   const protocol = getContract({
     address: USDN_PROTOCOL_ADDRESS,
@@ -63,31 +51,44 @@ async function main() {
     client: client,
   });
 
-  const usdnAddress = await protocol.read.getUsdn();
-  const { depositAmount, desiredLiqPrice } = await getDepositAmountAndLiqPrice(longAmount, protocol, oracleMiddleware);
+  const { depositAmount, longAmount, desiredLiqPrice } = await getAmountsAndLiqPrice(
+    totalAmount,
+    protocol,
+    oracleMiddleware,
+  );
   const initializationTx = createInitializationTx(
-    usdnAddress,
+    USDN_PROTOCOL_ADDRESS,
     depositAmount.toString(),
     longAmount.toString(),
     desiredLiqPrice.toString(),
   );
-  const batchTx = batch(usdnAddress, SAFE_ADDRESS, USDN_PROTOCOL_ADDRESS, initializationTx);
 
-  // write to file
-  writeFileSync('batch.json', JSON.stringify(batchTx, null, 2));
+  const tx: TxBatch = {
+    version: '1.0',
+    chainId: '1',
+    createdAt: Date.now(),
+    meta: {
+      createdFromSafeAddress: SAFE_ADDRESS,
+      name: 'Initialization of the USDN protocol',
+    },
+    transactions: [initializationTx],
+  };
+
+  writeFileSync('initialization.json', JSON.stringify(tx, null, 2));
 }
 
-async function getDepositAmountAndLiqPrice(
-  longAmount: bigint,
+async function getAmountsAndLiqPrice(
+  totalAmount: bigint,
   protocol: GetContractReturnType<typeof IUsdnProtocolAbi, PublicClient>,
   oracleMiddleware: GetContractReturnType<typeof IOracleMiddlewareAbi, PublicClient>,
-): Promise<{ depositAmount: bigint; desiredLiqPrice: bigint }> {
+): Promise<{ depositAmount: bigint; longAmount: bigint; desiredLiqPrice: bigint }> {
   const liquidationPenalty = await protocol.read.getLiquidationPenalty();
   const tickSpacing = await protocol.read.getTickSpacing();
+
   const price = (await oracleMiddleware.simulate.parseAndValidatePrice([pad('0x'), BigInt(Date.now()), 1, '0x'])).result
     .price;
 
-  // we want a leverage of ~2.5x so we get the current price from the middleware and divide it by two
+  // we want a leverage of ~2.5x
   const desiredLiqPrice = (price * 3n) / 5n;
   // get the liquidation price with the tick rounding
   const liqPriceWithoutPenalty = await protocol.read.getLiqPriceFromDesiredLiqPrice([
@@ -98,51 +99,26 @@ async function getDepositAmountAndLiqPrice(
     tickSpacing,
     liquidationPenalty,
   ]);
-  // get the total exposure of the wanted long position
-  const positionTotalExpo = (longAmount * price) / (price - liqPriceWithoutPenalty);
-  // get the amount to deposit to reach a balanced state
-  const depositAmount = positionTotalExpo - longAmount;
+
+  // longAmount = (totalAmount / price) * (price - liqPriceWithoutPenalty)
+  const longAmount = (((totalAmount * 10n ** 18n) / price) * (price - liqPriceWithoutPenalty)) / 10n ** 18n;
+  const depositAmount = totalAmount - longAmount;
 
   return {
     depositAmount: depositAmount,
-    desiredLiqPrice: desiredLiqPrice,
+    longAmount: longAmount,
+    desiredLiqPrice: liqPriceWithoutPenalty,
   };
-}
-
-function batch(
-  usdnAddress: Address,
-  safe: Address,
-  usdnProtocolAddress: Address,
-  initializationTx: TransactionData,
-): TxBatch {
-  const allTx: TransactionData[] = [];
-  allTx.push(grantUsdnRoleToProtocol(usdnAddress, MINTER_ROLE, usdnProtocolAddress));
-  allTx.push(grantUsdnRoleToProtocol(usdnAddress, REBASER_ROLE, usdnProtocolAddress));
-  allTx.push(renounceUsdnAdminRoleFromSafe(usdnAddress));
-  allTx.push(initializationTx);
-
-  const tx: TxBatch = {
-    version: '1.0', // TODO: check version
-    chainId: '1',
-    createdAt: Date.now(),
-    meta: {
-      createdFromSafeAddress: safe,
-      name: 'Batch',
-    },
-    transactions: allTx,
-  };
-
-  return tx;
 }
 
 function createInitializationTx(
-  usdnAddress: Address,
+  protocolAddress: Address,
   depositAmount: string,
   longAmount: string,
   desiredLiqPrice: string,
 ): TransactionData {
   return {
-    to: usdnAddress,
+    to: protocolAddress,
     value: '0',
     data: '',
     contractMethod: {
@@ -176,62 +152,6 @@ function createInitializationTx(
       longAmount: longAmount,
       desiredLiqPrice: desiredLiqPrice,
       currentPriceData: '0x',
-    },
-  };
-}
-
-function grantUsdnRoleToProtocol(usdnAddress: Address, role: string, usdnProtocolAddress: Address): TransactionData {
-  return {
-    to: usdnAddress,
-    value: '0',
-    data: '',
-    contractMethod: {
-      name: 'grantRole',
-      payable: false,
-      inputs: [
-        {
-          internalType: 'bytes32',
-          name: 'role',
-          type: 'bytes32',
-        },
-        {
-          internalType: 'address',
-          name: 'account',
-          type: 'address',
-        },
-      ],
-    },
-    contractInputsValues: {
-      role: role,
-      account: usdnProtocolAddress,
-    },
-  };
-}
-
-function renounceUsdnAdminRoleFromSafe(usdnAddress: Address): TransactionData {
-  return {
-    to: usdnAddress,
-    value: '0',
-    data: '',
-    contractMethod: {
-      name: 'renounceRole',
-      payable: false,
-      inputs: [
-        {
-          internalType: 'bytes32',
-          name: 'role',
-          type: 'bytes32',
-        },
-        {
-          internalType: 'address',
-          name: 'account',
-          type: 'address',
-        },
-      ],
-    },
-    contractInputsValues: {
-      role: DEFAULT_ADMIN_ROLE,
-      account: SAFE_ADDRESS,
     },
   };
 }
