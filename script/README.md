@@ -238,3 +238,11 @@ forge script script/52_AcceptOwnership.s.sol -f 127.0.0.1:8545 --broadcast --sen
 ```bash
 forge script script/53_InitializeProtocol.s.sol -f 127.0.0.1:8545 --broadcast --sender 0x1e3e1128f6bc2264a19d7a065982696d356879c5 --unlocked
 ```
+
+## Build initialization transaction for Gnosis Safe
+
+This script is used to build the initialization transaction for the Gnosis Safe:
+
+```bash
+npx tsx script/utils/initTxBuilder.ts  -r RPC_URL -t INITIAL_TOTAL_AMOUNT
+```
