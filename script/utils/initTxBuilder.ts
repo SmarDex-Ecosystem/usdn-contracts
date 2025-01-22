@@ -6,6 +6,7 @@ import { Command } from 'commander';
 import { writeFileSync } from 'node:fs';
 
 const SAFE_ADDRESS: Address = '0x1E3e1128F6bC2264a19D7a065982696d356879c5';
+const USDN_PROTOCOL_ADDRESS: Address = '0x656cB8C6d154Aad29d8771384089be5B5141f01a';
 
 main();
 
@@ -14,18 +15,10 @@ async function main() {
   program
     .description('Create a batch transaction for Gnosis Safe to initialize the USDN protocol')
     .requiredOption('-r, --rpc-url <URL>', 'The RPC URL')
-    .requiredOption('-p, --protocol <Address>', 'The address of the USDN protocol contract')
     .requiredOption('-t, --total-amount <amount>', 'The total amount to initiate the protocol')
     .parse(process.argv);
 
-  let USDN_PROTOCOL_ADDRESS: Address;
   const options = program.opts();
-  if (isAddress(options.protocol)) {
-    USDN_PROTOCOL_ADDRESS = options.protocol;
-  } else {
-    console.error('Invalid address');
-    process.exit(1);
-  }
 
   const client = createPublicClient({
     transport: http(options.rpcUrl),
@@ -57,7 +50,6 @@ async function main() {
     oracleMiddleware,
   );
   const initializationTx = createInitializationTx(
-    USDN_PROTOCOL_ADDRESS,
     depositAmount.toString(),
     longAmount.toString(),
     desiredLiqPrice.toString(),
@@ -111,14 +103,9 @@ async function getAmountsAndLiqPrice(
   };
 }
 
-function createInitializationTx(
-  protocolAddress: Address,
-  depositAmount: string,
-  longAmount: string,
-  desiredLiqPrice: string,
-): TransactionData {
+function createInitializationTx(depositAmount: string, longAmount: string, desiredLiqPrice: string): TransactionData {
   return {
-    to: protocolAddress,
+    to: USDN_PROTOCOL_ADDRESS,
     value: '0',
     data: '',
     contractMethod: {
