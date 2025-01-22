@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { Vm } from "forge-std/Vm.sol";
+
 import {
     ADMIN,
     DEPLOYER,
@@ -25,6 +27,7 @@ import { IUsdnEvents } from "../../../src/interfaces/Usdn/IUsdnEvents.sol";
 /**
  * @custom:feature Checking the gas usage of a liquidation
  * @custom:background Given a forked ethereum mainnet chain
+ * @custom:and LAUNCH THOSE TESTS WITH THE --gas-report OPTION FOR ACCURATE MEASURES
  */
 contract TestForkUsdnProtocolLiquidationGasUsage is
     UsdnProtocolBaseIntegrationFixture,
@@ -40,8 +43,13 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
         params.initialDeposit = 202 ether; // needed to trigger rebase
         params.initialLong = 200 ether;
         params.fork = true; // all tests in this contract must be labeled `Fork`
-        params.forkWarp = 1_709_794_800; // thu mar 07 2024 07:00:00 UTC
+        params.forkWarp = 1_721_779_200; // 24 July 2024 00:00:00 UTC
         _setUp(params);
+
+        vm.startPrank(SET_USDN_PARAMS_MANAGER);
+        protocol.setTargetUsdnPrice(1 ether);
+        protocol.setUsdnRebaseThreshold(2 ether);
+        vm.stopPrank();
 
         vm.startPrank(USER_1);
         (bool success,) = address(wstETH).call{ value: 1000 ether }("");
@@ -144,9 +152,15 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             protocol.setRebalancer(IBaseRebalancer(address(0)));
 
             // get recent price data
-            (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, block.timestamp);
+            (uint256 price,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, block.timestamp);
             uint256 oracleFee = oracleMiddleware.validationCost(data, ProtocolAction.Liquidation);
+            uint256 oraclePrice = oracleMiddleware.parseAndValidatePrice{ value: oracleFee }(
+                0, uint128(block.timestamp), ProtocolAction.Liquidation, data
+            ).price;
+            emit log_named_uint("price", price);
+            emit log_named_uint("middlewarePrice", oraclePrice);
 
+            emit log_named_uint("-- usdn price", protocol.usdnPrice(uint128(oraclePrice), uint128(block.timestamp)));
             // if required, enable rebase
             if (withRebase) {
                 vm.startPrank(SET_USDN_PARAMS_MANAGER);
@@ -163,6 +177,9 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             LiqTickInfo[] memory liquidatedTicks = protocol.liquidate{ value: oracleFee }(data);
             uint256 gasUsed = startGas - gasleft();
             gasUsedArray[ticksToLiquidate - 1] = gasUsed;
+            emit log_named_uint("tickCount", liquidatedTicks.length);
+            emit log_named_uint("tickPrice", liquidatedTicks[liquidatedTicks.length - 1].tickPrice);
+            emit log_named_uint("-- usdn price", protocol.usdnPrice(uint128(oraclePrice), uint128(block.timestamp)));
 
             // make sure the expected amount of computation was executed
             assertEq(
@@ -222,7 +239,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             if (i == 1) {
                 // enable rebalancer
                 vm.prank(SET_PROTOCOL_PARAMS_MANAGER);
-                protocol.setExpoImbalanceLimits(5000, 0, 10_000, 1, 1, -4900);
+                protocol.setExpoImbalanceLimits(5000, 0, 10_000, 1, 0, -4900);
 
                 // sanity check, make sure the rebalancer was triggered
                 vm.expectEmit(false, false, false, false);
