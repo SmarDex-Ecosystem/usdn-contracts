@@ -195,7 +195,7 @@ you need to run the script with the following arguments:
 - example:
 
 ```bash
-bash script/utils/scanRoles.sh --protocol 0x656cB8C6d154Aad29d8771384089be5B5141f01a --rpc-url https://mainnet.gateway.tenderly.co --LongFarming 0xF9D36078A248AF249AA57ae1D5D0c1033d6Bbe27
+./script/utils/scanRoles.sh --protocol 0x656cB8C6d154Aad29d8771384089be5B5141f01a --rpc-url https://mainnet.gateway.tenderly.co --LongFarming 0xF9D36078A248AF249AA57ae1D5D0c1033d6Bbe27
 ```
 
 You need to provide just the protocol address because the script will automatically fetch the other addresses from the protocol. The script will save the results in 1 csv and json file per contract with access control, and 1 csv and json file total for all the contracts with simple ownership.
