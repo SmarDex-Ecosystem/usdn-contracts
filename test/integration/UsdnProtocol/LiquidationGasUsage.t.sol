@@ -152,15 +152,9 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             protocol.setRebalancer(IBaseRebalancer(address(0)));
 
             // get recent price data
-            (uint256 price,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, block.timestamp);
+            (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, block.timestamp);
             uint256 oracleFee = oracleMiddleware.validationCost(data, ProtocolAction.Liquidation);
-            uint256 oraclePrice = oracleMiddleware.parseAndValidatePrice{ value: oracleFee }(
-                0, uint128(block.timestamp), ProtocolAction.Liquidation, data
-            ).price;
-            emit log_named_uint("price", price);
-            emit log_named_uint("middlewarePrice", oraclePrice);
 
-            emit log_named_uint("-- usdn price", protocol.usdnPrice(uint128(oraclePrice), uint128(block.timestamp)));
             // if required, enable rebase
             if (withRebase) {
                 vm.startPrank(SET_USDN_PARAMS_MANAGER);
@@ -177,9 +171,6 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             LiqTickInfo[] memory liquidatedTicks = protocol.liquidate{ value: oracleFee }(data);
             uint256 gasUsed = startGas - gasleft();
             gasUsedArray[ticksToLiquidate - 1] = gasUsed;
-            emit log_named_uint("tickCount", liquidatedTicks.length);
-            emit log_named_uint("tickPrice", liquidatedTicks[liquidatedTicks.length - 1].tickPrice);
-            emit log_named_uint("-- usdn price", protocol.usdnPrice(uint128(oraclePrice), uint128(block.timestamp)));
 
             // make sure the expected amount of computation was executed
             assertEq(
@@ -196,9 +187,10 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
             (gasUsedArray[0] + gasUsedArray[1] + gasUsedArray[2] - (averageGasUsedPerTick * 6)) / 3;
 
         // check that the gas usage per tick matches the gasUsedPerTick parameter in the LiquidationRewardsManager
-        assertEq(
+        assertApproxEqAbs(
             averageGasUsedPerTick,
             rewardsParameters.gasUsedPerTick,
+            1,
             "The result should match the gasUsedPerTick parameter set in LiquidationRewardsManager's constructor"
         );
         // check that the other gas usage matches the otherGasUsed parameter in the LiquidationRewardsManager

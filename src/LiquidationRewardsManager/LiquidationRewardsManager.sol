@@ -56,9 +56,9 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
     constructor(IWstETH wstETH) Ownable(msg.sender) {
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
-            gasUsedPerTick: 53_097,
-            otherGasUsed: 469_549,
-            rebaseGasUsed: 13_767,
+            gasUsedPerTick: 53_094,
+            otherGasUsed: 469_537,
+            rebaseGasUsed: 13_765,
             rebalancerGasUsed: 279_349,
             baseFeeOffset: 2 gwei,
             gasMultiplierBps: 10_500, // 1.05
