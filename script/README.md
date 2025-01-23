@@ -189,12 +189,13 @@ you need to run the script with the following arguments:
 
 - `rpc-url`: the RPC URL of the network you want to scan
 - `protocol`: the address of the deployed USDN protocol
+- `LongFarming`: the address of the deployed LongFarming contract
 - `block-number`: the block number to start the scan from (optional)
 
 - example:
 
 ```bash
-./script/utils/scanRoles.sh --protocol 0x0Fd23cC6c13681ddB9ECE2ae0EEAFaf7a534208f --rpc-url https://sepolia.gateway.tenderly.co --block-number 0
+bash script/utils/scanRoles.sh --protocol 0x656cB8C6d154Aad29d8771384089be5B5141f01a --rpc-url https://mainnet.gateway.tenderly.co --LongFarming 0xF9D36078A248AF249AA57ae1D5D0c1033d6Bbe27
 ```
 
 You need to provide just the protocol address because the script will automatically fetch the other addresses from the protocol. The script will save the results in 1 csv and json file per contract with access control, and 1 csv and json file total for all the contracts with simple ownership.
@@ -205,7 +206,7 @@ The verifying script will work with a broadcast file, the compiled contracts and
 You don't need to be the deployer to verify the contracts.
 Before verifying, you need to compile the contracts :
 
-```forge compile```
+`forge compile`
 
 Be sure to be in the same version as the deployment to avoid bytecode difference.
 You can then verify by using this cli:
@@ -215,7 +216,7 @@ npm run verify -- PATH_TO_BROADCAST_FILE -e ETHERSCAN_API_KEY
 ```
 
 To show some extra debug you can add `-d` flag.
-If you are verifying contracts in another platform than Etherscan, you can specify the url with `--verifier-url`  
+If you are verifying contracts in another platform than Etherscan, you can specify the url with `--verifier-url`
 
 ## Test Scripts
 
