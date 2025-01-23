@@ -24,7 +24,7 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         --protocol) contractAddressUsdnProtocol="$2"; shift ;;
         --rpc-url) rpcUrl="$2"; shift ;;
-        --LongFarming) LongFarming="$2"; shift ;;
+        --longFarming) longFarming="$2"; shift ;;
         --block-number) usdnProtocolBirthBlock="$2"; shift ;;
         *) errorAndExit "Error: Unexpected arguments.";; # Display usage if unexpected argument is found
     esac
@@ -343,7 +343,7 @@ function saveCsv(){
 
 fetchAndStoreOwner "Rebalancer" "$contractAddressRebalancer"
 fetchAndStoreOwner "LiquidationRewardsManager" "$contractAddressLiquidationRewardsManager"
-fetchAndStoreOwner "LongFarming" "$LongFarming"
+fetchAndStoreOwner "LongFarming" "$longFarming"
 
 saveJson
 saveCsv
