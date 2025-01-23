@@ -36,6 +36,8 @@ if [[ -z "$contractAddressUsdnProtocol" || -z "$rpcUrl" ]]; then
     errorAndExit "Error: Missing required arguments."
 fi
 
+mkdir -p roles
+
 # ---------------------------------------------------------------------------- #
 #                             Compilation Step                                 #
 # ---------------------------------------------------------------------------- #
@@ -141,10 +143,10 @@ function sortByBlockNumberAndLogIndex(){
 
 function saveJsonAndCsv(){
     json_output_processed=$(printf "%s" "$json_output" | jq .)
-    printf "$json_output_processed" > "${contract_name}_roles.json"
+    printf "$json_output_processed" > "roles/${contract_name}_roles.json"
     printf "${green}${contract_name} roles JSON saved to ${contract_name}_roles.json${nc}\n"
     csv_output=$(printf "%s" "$json_output" | jq -r '.[] | [.Role, .Role_admin, (.Addresses | join(","))] | @csv')
-    printf "Role,Role_admin,Addresses\n$csv_output" > "${contract_name}_roles.csv"
+    printf "Role,Role_admin,Addresses\n$csv_output" > "roles/${contract_name}_roles.csv"
     printf "${green}${contract_name} roles CSV saved to ${contract_name}_roles.csv${nc}\n"
 }
 
@@ -323,7 +325,7 @@ function saveJson(){
     done
     json_output="${json_output%,}]"
     json_output=$(printf "%s" "$json_output" | jq .)
-    printf "$json_output" > "owners.json"
+    printf "$json_output" > "roles/owners.json"
     printf "${green}Owners JSON saved to owners.json${nc}\n"
 }
 
@@ -333,7 +335,7 @@ function saveCsv(){
     for contract in "${!owners[@]}"; do
         csv_output+="$contract,${owners[$contract]}\n"
     done
-    printf "$csv_output" > "owners.csv"
+    printf "$csv_output" > "roles/owners.csv"
     printf "${green}Owners CSV saved to owners.csv${nc}\n"
 }
 
