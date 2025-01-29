@@ -4,12 +4,22 @@ use alloy_primitives::{Bytes, FixedBytes, I256, U256};
 use alloy_sol_types::SolValue;
 use anyhow::{anyhow, Context, Result};
 use clap::{Parser, Subcommand};
+use data_streams_report::report::Report;
 use rug::{
     float::Round,
     ops::{DivRounding, MulAssignRound, Pow},
     Float, Integer,
 };
 use serde::Deserialize;
+
+extern crate dotenv;
+use dotenv::dotenv;
+use hmac::{Hmac, Mac};
+use sha2::{digest::InvalidLength, Digest, Sha256};
+use std::time::{SystemTime, SystemTimeError, UNIX_EPOCH};
+use thiserror::Error;
+
+type HmacSha256 = Hmac<Sha256>;
 
 #[derive(Deserialize, Debug)]
 struct HermesResponse {
@@ -34,6 +44,12 @@ struct PythPrice {
     expo: i64,
     publish_time: u64,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct ReportResponse {
+    pub report: Report,
+}
+
 #[derive(Parser)]
 struct Cli {
     #[command(subcommand)]
@@ -95,6 +111,22 @@ enum Commands {
         decimals: u32,
         usdn_divisor: Integer,
     },
+    /// Get price from chainlink data stream api
+    ChainlinkPrice {
+        /// The chainlink datastream id
+        feed_id: String,
+        /// The price timestamp
+        timestamp: u128,
+    },
+}
+
+#[derive(Error, Debug)]
+pub enum HmacError {
+    #[error("Invalid key length: {0}")]
+    InvalidKeyLength(#[from] InvalidLength),
+
+    #[error("System time error: {0}")]
+    SystemTimeError(#[from] SystemTimeError),
 }
 
 fn main() -> Result<()> {
@@ -178,6 +210,65 @@ fn main() -> Result<()> {
             let total_mint_shares = total_mint * usdn_divisor;
             print_int_u256_hex(total_mint_shares)?;
         }
+        Commands::ChainlinkPrice { feed_id, timestamp } => {
+            dotenv().ok();
+
+            let chainlink_low_latency_api_key = std::env::var("CHAINLINK_DATA_STREAM_API_KEY")
+                .context("getting CHAINLINK_DATA_STREAM_API_KEY env variable")?;
+
+            let chainlink_user_secret = std::env::var("CHAINLINK_DATA_STREAM_API_SECRET")
+                .context("getting CHAINLINK_DATA_STREAM_API_SECRET env variable")?;
+
+            let chainlink_rest_url = std::env::var("CHAINLINK_DATA_STREAM_API_URL")
+                .context("getting CHAINLINK_DATA_STREAM_API_URL env variable")?;
+
+            const API_V1_REPORTS: &str = "/api/v1/reports";
+
+            let method = "GET";
+            let path = &format!("{API_V1_REPORTS}?feedID={feed_id}&timestamp={timestamp}");
+            let body = b"";
+            let client_id = &chainlink_low_latency_api_key;
+            let user_secret = &chainlink_user_secret;
+            let request_timestamp = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("Error: Timestamp in the past")
+                .as_millis();
+
+            let hmac_string = &generate_hmac(
+                method,
+                path,
+                body,
+                client_id,
+                request_timestamp,
+                user_secret,
+            )?;
+
+            let request_url = &format!("{chainlink_rest_url}{path}");
+            let request_timestamp_str = &format!("{request_timestamp}")[..];
+
+            let response = ureq::get(request_url)
+                .set("Authorization", client_id)
+                .set("X-Authorization-Timestamp", request_timestamp_str)
+                .set("X-Authorization-Signature-SHA256", hmac_string)
+                .call()?;
+
+            println!("Received Report");
+            let report = response.into_string();
+            println!("{:#?}", report);
+
+            // println!("Feed ID: {}", report.feed_id.to_hex_string());
+            // println!("Valid From Timestamp: {}", report.valid_from_timestamp);
+            // println!("Observations Timestamp: {}", report.observations_timestamp);
+
+            // // Uncomment to print the raw report data
+            // // println!("Raw Report data: {}", report.full_report);
+
+            // let full_report = hex::decode(&report.full_report[2..])?;
+            // let (_report_context, report_blob) = decode_full_report(&full_report)?;
+
+            // let report_data = ReportDataV3::decode(&report_blob)?;
+            // println!("{:#?}", report_data);
+        }
     }
     Ok(())
 }
@@ -236,4 +327,45 @@ fn parse_float(s: &str) -> Result<Float, String> {
         512,
         Float::parse(s).map_err(|e| e.to_string())?,
     ))
+}
+
+/// Generates an HMAC-SHA256 signature based on the provided parameters.
+///
+/// # Arguments
+///
+/// * `method` - The HTTP method (e.g., "GET", "POST", etc.).
+/// * `path` - The API endpoint path (e.g., "/api/v1/feeds", "/api/v1/reports/bulk", etc.).
+/// * `body` - The request body as a byte slice.
+/// * `client_id` - The client's API key.
+/// * `timestamp` - The current timestamp as an `u128`.
+/// * `user_secret` - The client's API secret.
+///
+/// # Returns
+///
+/// A `Result` containing the hex-encoded HMAC string if successful, or an error.
+fn generate_hmac(
+    method: &str,
+    path: &str,
+    body: &[u8],
+    client_id: &str,
+    timestamp: u128,
+    user_secret: &str,
+) -> Result<String, HmacError> {
+    let mut hasher = Sha256::new();
+    hasher.update(body);
+    let server_body_hash = hasher.finalize();
+    let server_body_hash_hex = hex::encode(server_body_hash);
+
+    // Create the server body hash string
+    let server_body_hash_string =
+        format!("{method} {path} {server_body_hash_hex} {client_id} {timestamp}");
+
+    // Compute HMAC-SHA256 of the server body hash string
+    let mut mac = HmacSha256::new_from_slice(user_secret.as_bytes())?;
+    mac.update(server_body_hash_string.as_bytes());
+    let signed_message = mac.finalize();
+    let signed_message_bytes = signed_message.into_bytes();
+    let user_hmac = hex::encode(signed_message_bytes);
+
+    Ok(user_hmac)
 }

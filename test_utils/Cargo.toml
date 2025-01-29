@@ -12,3 +12,10 @@ const-hex = "1"
 rug = "1"
 serde = { version = "1", features = ["derive"] }
 ureq = { version = "2", features = ["json"] }
+data-streams-sdk = { git = "https://github.com/smartcontractkit/data-streams-sdk.git" }
+data-streams-report = { git = "https://github.com/smartcontractkit/data-streams-sdk.git" }
+hmac = "0.12"
+thiserror = "1.0"
+sha2 = "0.10"
+hex = "0.4"
+dotenv = "0.15.0"
