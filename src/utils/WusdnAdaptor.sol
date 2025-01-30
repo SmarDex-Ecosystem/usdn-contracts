@@ -4,7 +4,10 @@ pragma solidity 0.8.26;
 import { IWusdn } from "./../interfaces/Usdn/IWusdn.sol";
 
 interface IRateProvider {
-    /// @notice Returns the current redemption rate of the WUSDN.
+    /**
+     * @notice Gets the current redemption rate of the WUSDN.
+     * @return The current redemption rate of the WUSDN.
+     */
     function getRate() external view returns (uint256);
 }
 
