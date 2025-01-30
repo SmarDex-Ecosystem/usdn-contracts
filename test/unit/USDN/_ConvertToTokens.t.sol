@@ -63,7 +63,7 @@ contract TestUsdnConvertToTokens is UsdnTokenFixture {
      * @custom:scenario Convert shares to token rounding towards the closest integer
      * @custom:given The USDN was rebased with a random divisor in the valid range
      * @custom:when We convert a random amount of shares to tokens rounding towards the closest integer
-     * @custom:then The resulting amount of tokens is the result of dividing shares by the divisor and rounding to the *
+     * @custom:then The resulting amount of tokens is the result of dividing shares by the divisor and rounding to the
      * closest integer
      * @custom:but If the amount of corresponding shares would exceed uint256.max we round down
      */
