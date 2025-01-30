@@ -106,6 +106,7 @@ contract TestUsdnProtocolCalcMintUsdnShares is UsdnProtocolBaseFixture {
      * @custom:given A vault balance equal to zero
      * @custom:when The `_calcMintUsdnShares` function is called
      * @custom:then The transaction reverts with `UsdnProtocolEmptyVault`
+     * forge-config: default.allow_internal_expect_revert = true
      */
     function test_RevertWhen_calcMintUsdnSharesBalanceZero() public {
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEmptyVault.selector);
