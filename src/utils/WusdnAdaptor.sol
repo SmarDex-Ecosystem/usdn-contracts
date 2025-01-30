@@ -11,12 +11,20 @@ interface IRateProvider {
     function getRate() external view returns (uint256 redemptionRate_);
 }
 
+interface IWusdnAdaptor is IRateProvider {
+    /**
+     * @notice Gets the WUSDN token.
+     * @return The WUSDN token.
+     */
+    function WUSDN() external view returns (IWusdn);
+}
+
 /**
  * @title Adaptor to Get USDN Redemption Rate
  * @dev Minimum implementation of the IRateProvider interface.
  */
-contract WusdnAdaptor is IRateProvider {
-    /// @notice WUSDN contract
+contract WusdnAdaptor is IWusdnAdaptor {
+    /// @inheritdoc IWusdnAdaptor
     IWusdn public immutable WUSDN;
 
     /// @param wusdn The address of the WUSDN token.
@@ -24,7 +32,10 @@ contract WusdnAdaptor is IRateProvider {
         WUSDN = wusdn;
     }
 
-    /// @inheritdoc IRateProvider
+    /**
+     * @inheritdoc IRateProvider
+     * @dev Number of USDN tokens per WUSDN token.
+     */
     function getRate() external view returns (uint256) {
         return WUSDN.redemptionRate();
     }
