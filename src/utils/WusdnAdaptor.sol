@@ -5,10 +5,10 @@ import { IWusdn } from "./../interfaces/Usdn/IWusdn.sol";
 
 interface IRateProvider {
     /**
-     * @notice Gets the current redemption rate of the WUSDN.
-     * @return The current redemption rate of the WUSDN.
+     * @notice Gets the current redemption rate.
+     * @return redemptionRate_ The current redemption rate.
      */
-    function getRate() external view returns (uint256);
+    function getRate() external view returns (uint256 redemptionRate_);
 }
 
 /**
@@ -17,7 +17,7 @@ interface IRateProvider {
  */
 contract WusdnAdaptor is IRateProvider {
     /// @notice WUSDN contract
-    IWusdn immutable WUSDN;
+    IWusdn public immutable WUSDN;
 
     /// @param wusdn The address of the WUSDN token.
     constructor(IWusdn wusdn) {
