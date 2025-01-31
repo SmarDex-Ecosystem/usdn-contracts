@@ -6,7 +6,7 @@ env:
   FOUNDRY_PROFILE: ci
 
 jobs:
-  run-ci:
+  contract-sizes:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/create-github-app-token@v1
@@ -16,8 +16,6 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -54,4 +52,10 @@ jobs:
             }
 
       - name: Fail on negative margin (contract too big)
-        run: if echo "${{ steps.contract-sizes.outputs.SIZES }}" | sed -n '6,${/[^-]*-.*/q1}'; then exit 0; else exit 1; fi
+        run: if echo "${{ steps.contract-sizes.outputs.SIZES }}" | sed -n '6,${/-[0-9]\+/q1}'; then exit 0; else exit 1; fi
+
+  notify-on-failure:
+    needs: contract-sizes
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    uses: ./.github/workflows/notify_failure.yml
+    secrets: inherit

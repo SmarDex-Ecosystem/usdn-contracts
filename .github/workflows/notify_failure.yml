@@ -1,0 +1,37 @@
+name: Discord Notification On Failure
+on:
+  workflow_call:
+
+jobs:
+  notify-on-failure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Send Discord message for PR
+        if: github.event_name == 'pull_request'
+        uses: appleboy/discord-action@master
+        with:
+          webhook_id: ${{ secrets.DISCORD_BC_CI_WEBHOOK_ID }}
+          webhook_token: ${{ secrets.DISCORD_BC_CI_WEBHOOK_TOKEN }}
+          color: "#ff0000"
+          username: ${{ github.repository }}
+          message: | 
+            PR ${{ github.event.pull_request.number }}
+            ${{ github.triggering_actor }} broke the workflow \"${{ github.workflow }}\"
+
+            https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}
+
+      - name: Send Discord message for push on main
+        if: github.event_name == 'push' && github.ref_name == 'main'
+        uses: appleboy/discord-action@master
+        with:
+          webhook_id: ${{ secrets.DISCORD_BC_CI_WEBHOOK_ID }}
+          webhook_token: ${{ secrets.DISCORD_BC_CI_WEBHOOK_TOKEN }}
+          color: "#ff0000"
+          username: ${{ github.repository }}
+          message: | 
+            Commit ${{ github.sha }}
+            ${{ github.triggering_actor }} broke the workflow \"${{ github.workflow }}\" on `main`
+
+            https://github.com/${{ github.repository }}/commit/${{ github.sha }}

@@ -11,6 +11,8 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+    outputs:
+      total-smells: ${{ steps.natspec-smells-action.outputs.total-smells }}
     steps:
       - uses: actions/create-github-app-token@v1
         id: app-token
@@ -19,8 +21,6 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -39,8 +39,19 @@ jobs:
         run: rm -f remappings.txt
 
       - name: Report natspec smells findings
+        id: natspec-smells-action
         uses: SmarDex-Ecosystem/natspec-smells-action@v2
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           working-directory: ./
           update-comment: true
+
+      - name: Fail on findings
+        if: ${{ steps.natspec-smells-action.outputs.total-smells > 0 }}
+        run: exit 1
+
+  notify-on-failure:
+    needs: natspec-smells
+    if: ${{ always() && needs.natspec-smells.outputs.total-smells > 0 }}
+    uses: ./.github/workflows/notify_failure.yml
+    secrets: inherit
