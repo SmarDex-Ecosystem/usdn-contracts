@@ -5,16 +5,13 @@ use alloy_sol_types::SolValue;
 use anyhow::{anyhow, Context, Result};
 use clap::{Parser, Subcommand};
 use data_streams_report::report::Report;
+use hmac::{Hmac, Mac};
 use rug::{
     float::Round,
     ops::{DivRounding, MulAssignRound, Pow},
     Float, Integer,
 };
 use serde::Deserialize;
-
-extern crate dotenv;
-use dotenv::dotenv;
-use hmac::{Hmac, Mac};
 use sha2::{digest::InvalidLength, Digest, Sha256};
 use std::time::{SystemTime, SystemTimeError, UNIX_EPOCH};
 use thiserror::Error;
@@ -211,8 +208,6 @@ fn main() -> Result<()> {
             print_int_u256_hex(total_mint_shares)?;
         }
         Commands::ChainlinkPrice { feed_id, timestamp } => {
-            dotenv().ok();
-
             let chainlink_low_latency_api_key = std::env::var("CHAINLINK_DATA_STREAM_API_KEY")
                 .context("getting CHAINLINK_DATA_STREAM_API_KEY env variable")?;
 
@@ -252,22 +247,9 @@ fn main() -> Result<()> {
                 .set("X-Authorization-Signature-SHA256", hmac_string)
                 .call()?;
 
-            println!("Received Report");
-            let report = response.into_string();
-            println!("{:#?}", report);
-
-            // println!("Feed ID: {}", report.feed_id.to_hex_string());
-            // println!("Valid From Timestamp: {}", report.valid_from_timestamp);
-            // println!("Observations Timestamp: {}", report.observations_timestamp);
-
-            // // Uncomment to print the raw report data
-            // // println!("Raw Report data: {}", report.full_report);
-
-            // let full_report = hex::decode(&report.full_report[2..])?;
-            // let (_report_context, report_blob) = decode_full_report(&full_report)?;
-
-            // let report_data = ReportDataV3::decode(&report_blob)?;
-            // println!("{:#?}", report_data);
+            let report_response: ReportResponse = response.into_json()?;
+            let report: Report = report_response.report;
+            print_chainlink_report(report)?;
         }
     }
     Ok(())
@@ -368,4 +350,10 @@ fn generate_hmac(
     let user_hmac = hex::encode(signed_message_bytes);
 
     Ok(user_hmac)
+}
+
+fn print_chainlink_report(report: Report) -> Result<()> {
+    let full_report = report.full_report;
+    print!("{full_report}");
+    Ok(())
 }
