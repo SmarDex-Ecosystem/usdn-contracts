@@ -9,7 +9,7 @@ import { IRebaseCallback } from "../../../src/interfaces/Usdn/IRebaseCallback.so
 import { SetRebaseHandlerManager } from "../../../src/utils/SetRebaseHandlerManager.sol";
 
 /**
- * @custom:feature The `setRebaseHandler` function of `SetRebaseHandlerManager`.
+ * @custom:feature The `SetRebaseHandlerManager` test suite.
  * @custom:background The `SetRebaseHandlerManager` contract is used to set the rebase handler in the USDN token.
  */
 contract TestSetRebaseHandlerManager is UsdnTokenFixture {
