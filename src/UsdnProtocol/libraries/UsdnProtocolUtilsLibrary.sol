@@ -84,7 +84,6 @@ library UsdnProtocolUtilsLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
         if (amount != 0) {
-            // slither-disable-next-line arbitrary-send-eth
             (bool success,) = to.call{ value: amount }("");
             if (!success) {
                 revert IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed();
@@ -131,7 +130,6 @@ library UsdnProtocolUtilsLibrary {
         if (address(this).balance < validationCost) {
             revert IUsdnProtocolErrors.UsdnProtocolInsufficientOracleFee();
         }
-        // slither-disable-next-line arbitrary-send-eth
         price_ = s._oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             actionId, uint128(timestamp), action, priceData
         );

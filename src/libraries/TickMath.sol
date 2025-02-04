@@ -47,7 +47,6 @@ library TickMath {
         }
         unchecked {
             // we want to round, so divide before multiply is desired
-            // slither-disable-next-line divide-before-multiply
             tick_ = (MAX_TICK / tickSpacing) * tickSpacing;
         }
     }
@@ -63,7 +62,6 @@ library TickMath {
         }
         unchecked {
             // we want to round, so divide before multiply is desired
-            // slither-disable-next-line divide-before-multiply
             tick_ = (MIN_TICK / tickSpacing) * tickSpacing;
         }
     }

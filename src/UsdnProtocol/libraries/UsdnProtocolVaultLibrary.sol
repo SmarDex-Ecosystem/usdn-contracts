@@ -690,10 +690,8 @@ library UsdnProtocolVaultLibrary {
             Utils._transferCallback(s._asset, params.amount, address(this));
         } else {
             if (data.sdexToBurn > 0) {
-                // slither-disable-next-line arbitrary-send-erc20
                 address(s._sdex).safeTransferFrom(params.user, address(this), data.sdexToBurn);
             }
-            // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(params.user, address(this), params.amount);
         }
 
