@@ -19,8 +19,8 @@ contract TestSetRebaseHandlerManager is UsdnTokenFixture {
         super.setUp();
 
         setRebaseHandlerManager = new SetRebaseHandlerManager(usdn, address(this));
-        usdn.grantRole(0x00, address(setRebaseHandlerManager));
-        usdn.revokeRole(0x00, address(this));
+        usdn.grantRole(usdn.DEFAULT_ADMIN_ROLE(), address(setRebaseHandlerManager));
+        usdn.revokeRole(usdn.DEFAULT_ADMIN_ROLE(), address(this));
     }
 
     /**
@@ -43,7 +43,7 @@ contract TestSetRebaseHandlerManager is UsdnTokenFixture {
      */
     function test_renounceUsdnOwnership() public {
         setRebaseHandlerManager.renounceUsdnOwnership();
-        assertFalse(usdn.hasRole(0x00, address(setRebaseHandlerManager)), "Role should be revoked");
+        assertFalse(usdn.hasRole(usdn.DEFAULT_ADMIN_ROLE(), address(setRebaseHandlerManager)), "Role should be revoked");
     }
 
     /**
@@ -55,7 +55,9 @@ contract TestSetRebaseHandlerManager is UsdnTokenFixture {
     function test_RevertWhen_setRebaseHandlerWithoutManager() public {
         IRebaseCallback newHandler = IRebaseCallback(address(0x1));
         vm.expectRevert(
-            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), 0x00)
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), usdn.DEFAULT_ADMIN_ROLE()
+            )
         );
         usdn.setRebaseHandler(newHandler);
     }
