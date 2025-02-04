@@ -23,7 +23,7 @@ interface ISetRebaseHandlerManager {
     /**
      * @notice Revokes the DEFAULT_ADMIN_ROLE on the USDN token.
      */
-    function revokeRole() external;
+    function renounceUsdnOwnership() external;
 }
 
 /**
@@ -48,7 +48,7 @@ contract SetRebaseHandlerManager is ISetRebaseHandlerManager, Ownable2Step {
     }
 
     /// @inheritdoc ISetRebaseHandlerManager
-    function revokeRole() external onlyOwner {
+    function renounceUsdnOwnership() external onlyOwner {
         USDN.revokeRole(0x00, address(this));
     }
 }

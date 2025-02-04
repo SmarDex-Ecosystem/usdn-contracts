@@ -36,13 +36,13 @@ contract TestSetRebaseHandlerManager is UsdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Call `revokeRole` functions and check the role is revoked.
+     * @custom:scenario Call `renounceUsdnOwnership` functions and check the role is revoked.
      * @custom:given The setRebaseHandlerManager has the right role.
-     * @custom:when The `revokeRole` is executed.
+     * @custom:when The `renounceUsdnOwnership` is executed.
      * @custom:then The role should be revoked.
      */
-    function test_revokeRole() public {
-        setRebaseHandlerManager.revokeRole();
+    function test_renounceUsdnOwnership() public {
+        setRebaseHandlerManager.renounceUsdnOwnership();
         assertFalse(usdn.hasRole(0x00, address(setRebaseHandlerManager)), "Role should be revoked");
     }
 
