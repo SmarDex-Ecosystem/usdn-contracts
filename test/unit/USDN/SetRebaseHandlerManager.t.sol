@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
+import { USER_1 } from "../../utils/Constants.sol";
 import { UsdnTokenFixture } from "./utils/Fixtures.sol";
 
 import { IRebaseCallback } from "../../../src/interfaces/Usdn/IRebaseCallback.sol";
@@ -47,18 +48,15 @@ contract TestSetRebaseHandlerManager is UsdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Call `setRebaseHandler` functions without the manager contract.
-     * @custom:given The caller has no right role.
-     * @custom:when A wallet without right role trigger `setRebaseHandler`.
-     * @custom:then functions should revert with custom "AccessControlUnauthorizedAccount" error.
+     * @custom:scenario Call `setRebaseHandler` function with an invalid address.
+     * @custom:given The caller is not the owner.
+     * @custom:when The `setRebaseHandler` is executed.
+     * @custom:then functions should revert with custom "OwnableUnauthorizedAccount" error.
      */
     function test_RevertWhen_setRebaseHandlerWithoutManager() public {
         IRebaseCallback newHandler = IRebaseCallback(address(0x1));
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), usdn.DEFAULT_ADMIN_ROLE()
-            )
-        );
-        usdn.setRebaseHandler(newHandler);
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1));
+        vm.prank(USER_1);
+        setRebaseHandlerManager.setRebaseHandler(newHandler);
     }
 }
