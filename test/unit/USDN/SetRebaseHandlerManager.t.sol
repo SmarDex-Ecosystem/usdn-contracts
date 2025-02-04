@@ -5,8 +5,8 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 
 import { UsdnTokenFixture } from "./utils/Fixtures.sol";
 
-import { SetRebaseHandlerManager } from "../../../src/Usdn/SetRebaseHandlerManager.sol";
 import { IRebaseCallback } from "../../../src/interfaces/Usdn/IRebaseCallback.sol";
+import { SetRebaseHandlerManager } from "../../../src/utils/SetRebaseHandlerManager.sol";
 
 /**
  * @custom:feature The `setRebaseHandler` function of `SetRebaseHandlerManager`.

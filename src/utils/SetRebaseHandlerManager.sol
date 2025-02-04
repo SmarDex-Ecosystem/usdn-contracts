@@ -7,12 +7,26 @@ import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IRebaseCallback } from "../interfaces/Usdn/IRebaseCallback.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 
+interface ISetRebaseHandlerManager {
+    /**
+     * @notice Gets the USDN token.
+     * @return usdn_ The USDN token.
+     */
+    function USDN() external view returns (IUsdn usdn_);
+
+    /**
+     * @notice Sets the rebase handler for the USDN token.
+     * @param newHandler The address of the new rebase handler.
+     */
+    function setRebaseHandler(IRebaseCallback newHandler) external;
+}
+
 /**
  * @title SetRebaseHandlerManager.
  * @notice The contract provides only the ability to set the rebase handler for the USDN token.
  */
-contract SetRebaseHandlerManager is Ownable2Step {
-    // The USDN token contract.
+contract SetRebaseHandlerManager is ISetRebaseHandlerManager, Ownable2Step {
+    /// @inheritdoc ISetRebaseHandlerManager
     IUsdn public immutable USDN;
 
     /**
@@ -23,10 +37,7 @@ contract SetRebaseHandlerManager is Ownable2Step {
         USDN = usdn;
     }
 
-    /**
-     * @notice Sets the rebase handler for the USDN token.
-     * @param newHandler The address of the new rebase handler.
-     */
+    /// @inheritdoc ISetRebaseHandlerManager
     function setRebaseHandler(IRebaseCallback newHandler) external onlyOwner {
         USDN.setRebaseHandler(newHandler);
     }
