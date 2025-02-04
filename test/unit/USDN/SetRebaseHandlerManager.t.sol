@@ -36,6 +36,17 @@ contract TestSetRebaseHandlerManager is UsdnTokenFixture {
     }
 
     /**
+     * @custom:scenario Call `revokeRole` functions and check the role is revoked.
+     * @custom:given The setRebaseHandlerManager has the right role.
+     * @custom:when The `revokeRole` is executed.
+     * @custom:then The role should be revoked.
+     */
+    function test_revokeRole() public {
+        setRebaseHandlerManager.revokeRole();
+        assertFalse(usdn.hasRole(0x00, address(setRebaseHandlerManager)), "Role should be revoked");
+    }
+
+    /**
      * @custom:scenario Call `setRebaseHandler` functions without the manager contract.
      * @custom:given The caller has no right role.
      * @custom:when A wallet without right role trigger `setRebaseHandler`.
