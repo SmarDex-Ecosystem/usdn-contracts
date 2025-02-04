@@ -31,6 +31,6 @@ contract SetRebaseHandlerManager is ISetRebaseHandlerManager, Ownable2Step {
 
     /// @inheritdoc ISetRebaseHandlerManager
     function renounceUsdnOwnership() external onlyOwner {
-        USDN.revokeRole(USDN.DEFAULT_ADMIN_ROLE(), address(this));
+        USDN.renounceRole(USDN.DEFAULT_ADMIN_ROLE(), address(this));
     }
 }
