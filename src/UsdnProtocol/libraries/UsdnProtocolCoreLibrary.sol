@@ -530,7 +530,6 @@ library UsdnProtocolCoreLibrary {
 
         // we retrieve the security deposit
         if (cleanup) {
-            // slither-disable-next-line arbitrary-send-eth
             (bool success,) = to.call{ value: pending.securityDepositValue }("");
             if (!success) {
                 revert IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed();

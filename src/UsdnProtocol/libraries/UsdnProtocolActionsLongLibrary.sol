@@ -437,7 +437,6 @@ library UsdnProtocolActionsLongLibrary {
         if (ERC165Checker.supportsInterface(msg.sender, type(IPaymentCallback).interfaceId)) {
             Utils._transferCallback(s._asset, params.amount, address(this));
         } else {
-            // slither-disable-next-line arbitrary-send-erc20
             address(s._asset).safeTransferFrom(params.user, address(this), params.amount);
         }
 
