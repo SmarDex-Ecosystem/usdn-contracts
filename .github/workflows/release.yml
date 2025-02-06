@@ -70,4 +70,4 @@ jobs:
         run: |
           forge soldeer login --email "$SOLDEER_EMAIL" --password "$SOLDEER_PASSWORD"
           VERSION=$(npm pkg get version --workspaces=false | tr -d \")
-          forge soldeer push @usdn-contracts~$VERSION
+          forge soldeer push @smardex-usdn-contracts~$VERSION

@@ -38,7 +38,8 @@
   "files": [
     "dist",
     "broadcast",
-    "docs"
+    "docs",
+    "src/**/*"
   ],
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
