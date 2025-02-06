@@ -39,7 +39,9 @@
     "dist",
     "broadcast",
     "docs",
-    "src/**/*"
+    "src/**/*",
+    "foundry.toml",
+    "soldeer.lock"
   ],
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
