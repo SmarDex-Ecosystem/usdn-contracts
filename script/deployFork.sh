@@ -89,7 +89,7 @@ for role in "${usdnTokenRolesArr[@]}"; do
     encodedRole=$(cast keccak "$role")
 
     echo -e "\nGranting role $role to $DEPLOYER_ADDRESS..."
-    cast send $USDN_PROTOCOL_ADDRESS \
+    cast send $USDN_TOKEN_ADDRESS \
         --from $DEPLOYER_ADDRESS \
         "grantRole(bytes32 role, address account)" \
         $encodedRole $DEPLOYER_ADDRESS \
