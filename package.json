@@ -37,7 +37,6 @@
   "main": "dist/index.js",
   "files": [
     "dist",
-    "broadcast",
     "docs",
     "src/**/*",
     "foundry.toml",
