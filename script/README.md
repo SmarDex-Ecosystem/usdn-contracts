@@ -247,3 +247,11 @@ This script is used to build the initialization transaction for the Gnosis Safe:
 ```bash
 npm run exportAbi && npx tsx script/utils/initTxBuilder.ts -r RPC_URL -t INITIAL_TOTAL_AMOUNT
 ```
+
+## Deploy setRebaseHandlerManager
+
+Run this command to deploy the SetRebaseHandlerManager contract (your private key will be prompted):
+
+```bash
+forge script --interactives 1 -f RPC_URL script/54_DeploySetRebaseHandlerManager.sol:DeploySetRebaseHandlerManager --broadcast
+```

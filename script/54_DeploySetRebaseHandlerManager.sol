@@ -11,6 +11,7 @@ contract DeploySetRebaseHandlerManager is Script {
     address constant SAFE_MAINNET = 0x1E3e1128F6bC2264a19D7a065982696d356879c5;
 
     function run() external returns (SetRebaseHandlerManager setRebaseHandlerManager_) {
+        vm.broadcast();
         setRebaseHandlerManager_ = new SetRebaseHandlerManager(Usdn(USDN_MAINNET), SAFE_MAINNET);
     }
 }
