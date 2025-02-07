@@ -1,0 +1,14 @@
+{
+	"name": "@smardex/usdn-contracts",
+	"version": "1.0.0",
+	"exports": "dist/abi/index.ts",
+	"publish": {
+		"include": [
+			"src/**/*",
+			"foundry.toml",
+			"soldeer.lock",
+			"dist/abi/*",
+			"docs/**/*"
+		]
+	}
+}
