@@ -9,8 +9,8 @@ import { IRebaseCallback } from "../interfaces/Usdn/IRebaseCallback.sol";
 import { ISetRebaseHandlerManager } from "../interfaces/Utils/ISetRebaseHandlerManager.sol";
 
 /**
- * @title SetRebaseHandlerManager.
- * @notice The contract provides only the ability to set the rebase handler for the USDN token.
+ * @notice This contract is meant to be the DefaultAdmin role of the USDN token, and it should only have the ability to
+ * set the rebase handler.
  */
 contract SetRebaseHandlerManager is ISetRebaseHandlerManager, Ownable2Step {
     /// @inheritdoc ISetRebaseHandlerManager

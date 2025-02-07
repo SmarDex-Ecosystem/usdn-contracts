@@ -17,8 +17,6 @@ interface ISetRebaseHandlerManager {
      */
     function setRebaseHandler(IRebaseCallback newHandler) external;
 
-    /**
-     * @notice Revokes the DEFAULT_ADMIN_ROLE on the USDN token.
-     */
+    /// @notice Revokes the DEFAULT_ADMIN_ROLE on the USDN token.
     function renounceUsdnOwnership() external;
 }
