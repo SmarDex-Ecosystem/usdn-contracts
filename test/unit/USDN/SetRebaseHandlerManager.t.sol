@@ -21,7 +21,7 @@ contract TestSetRebaseHandlerManager is UsdnTokenFixture {
 
         setRebaseHandlerManager = new SetRebaseHandlerManager(usdn, address(this));
         usdn.grantRole(usdn.DEFAULT_ADMIN_ROLE(), address(setRebaseHandlerManager));
-        usdn.revokeRole(usdn.DEFAULT_ADMIN_ROLE(), address(this));
+        usdn.renounceRole(usdn.DEFAULT_ADMIN_ROLE(), address(this));
     }
 
     /**
