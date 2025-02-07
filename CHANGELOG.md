@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.0.1](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v1.0.0...v1.0.1) (2025-02-07)
+
+
+### Features
+
+* add longFarming in scanRoles ([#857](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/857)) ([a7b1a85](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a7b1a850c0e4dd691fc72964c1b467a741e5dc7d))
+* add the Balancer.fi adaptor of the wusdn token ([#859](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/859)) ([1b66219](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/1b66219e3bd132992c0f7e71b17b7ead4f7b314b))
+* change version ([#858](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/858)) ([baf6d8a](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/baf6d8afb2b2647c5a7a09b57ec8f1d36267eb0b))
+* mainnet balancer adapter deployment ([#860](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/860)) ([f6867f0](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/f6867f00cd178dda33fc5b5893a25772414e249e))
+* mainnet deployment ([#853](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/853)) ([f9171be](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/f9171be7feed778213a8c5d4e4dfce674ba16b4d))
+* remove slither ([#863](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/863)) ([1fafc13](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/1fafc13dea3d6a6a688917f0ebf3edbad6a36654))
+* **script:** gnosis tx builder ([#847](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/847)) ([3ecf7f6](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/3ecf7f6ac12e90dc037cd9d8cf0de6fa845c8f74))
+
+
+### Bug Fixes
+
+* **logs-analysis-script:** fix wrong abi being used and update default addresses ([#856](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/856)) ([726a339](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/726a33926e2af5c9041cfc6ce76a323560d661bb))
+* **script:** revoke middleware admin role ([#851](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/851)) ([df57127](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/df57127e7e1cac337f0121b4e44f3b53bb98af03))
+
+
+### Documentation
+
+* **README:** add contributors ([#854](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/854)) ([2b8daa0](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/2b8daa04c502cfea2907c333d9577ab866236c9a))
+
+
+### Code Refactoring
+
+* **liq-rewards:** update the values for the liquidation rewards ([#855](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/855)) ([a45fa58](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a45fa58f77a6d7c1270dd72a7c3499f48d268424))
+
 ## [1.0.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v0.24.2...v1.0.0) (2025-01-21)
 
 
