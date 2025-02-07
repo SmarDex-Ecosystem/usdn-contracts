@@ -1,6 +1,6 @@
 {
 	"name": "@smardex/usdn-contracts",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"exports": "dist/abi/index.ts",
 	"publish": {
 		"include": [
