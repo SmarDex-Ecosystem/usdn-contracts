@@ -16,7 +16,7 @@ contract TestUsdnAccessControl is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
         usdn.grantRole(usdn.DEFAULT_ADMIN_ROLE(), ADMIN);
-        usdn.revokeRole(usdn.DEFAULT_ADMIN_ROLE(), address(this));
+        usdn.renounceRole(usdn.DEFAULT_ADMIN_ROLE(), address(this));
     }
 
     /**
