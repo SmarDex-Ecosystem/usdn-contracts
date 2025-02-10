@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.1.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v1.0.1...v1.1.0) (2025-02-10)
+
+
+### Features
+
+* SetRebaseHandlerManager contract ([#862](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/862)) ([b96e510](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/b96e5100a1ab1a8a103e48b56536ef76f6ef85e9))
+
+
+### Bug Fixes
+
+* jsr exports path ([#865](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/865)) ([c34d8ce](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/c34d8cedc8fa0d276183de9dbbe4a122146062b1))
+
+
+### Build System
+
+* **nix:** use stable foundry version ([#867](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/867)) ([4451dab](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/4451dab7cf4266cd5f1306740691715a4d577226))
+
 ## [1.0.1](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v1.0.0...v1.0.1) (2025-02-07)
 
 
