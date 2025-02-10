@@ -21,6 +21,7 @@ forge script --non-interactive --private-key $deployerPrivateKey -f "$rpcUrl" sc
 chainId=$(cast chain-id -r "$rpcUrl")
 DEPLOYMENT_LOG=$(cat "broadcast/01_DeployProtocol.s.sol/$chainId/run-latest.json")
 
+ADDRESS_0=0x0000000000000000000000000000000000000000
 USDN_TX_HASH=$(echo "$DEPLOYMENT_LOG" | jq '.transactions[] | select(.contractName == "Usdn" and .transactionType == "CREATE") | .hash')
 USDN_RECEIPT=$(echo "$DEPLOYMENT_LOG" | jq ".receipts[] | select(.transactionHash == $USDN_TX_HASH)")
 USDN_PROTOCOL_TX_HASH=$(echo "$DEPLOYMENT_LOG" | jq '.transactions[] | select(.contractName == "ERC1967Proxy" and .transactionType == "CREATE") | .hash')
@@ -50,7 +51,7 @@ echo "$FORK_ENV_DUMP"
 echo "$FORK_ENV_DUMP" >.env.fork
 
 # Set all roles for the deployer
-rolesArr=(
+usdnProtocolRolesArr=(
     "ADMIN_SET_EXTERNAL_ROLE"
     "ADMIN_SET_OPTIONS_ROLE"
     "ADMIN_SET_PROTOCOL_PARAMS_ROLE"
@@ -69,7 +70,7 @@ rolesArr=(
     "UNPAUSER_ROLE"
 )
 
-for role in "${rolesArr[@]}"; do
+for role in "${usdnProtocolRolesArr[@]}"; do
     encodedRole=$(cast keccak "$role")
 
     echo -e "\nGranting role $role to $DEPLOYER_ADDRESS..."
