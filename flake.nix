@@ -3,7 +3,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     foundry = {
-      url = "github:shazow/foundry.nix"; # Use monthly branch for permanent releases
+      url = "github:shazow/foundry.nix/stable";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     solc = {
