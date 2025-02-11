@@ -41,8 +41,7 @@ Two environment variables are required: `DEPLOYER_ADDRESS` and `SAFE_ADDRESS`.
 Use the following command to deploy the WUSDN token:
 
 ```bash
-forge create --rpc-url RPC_URL --constructor-args USDN_ADDRESS \
-    --private-key PRIVATE_KEY src/Usdn/Wusdn.sol:Wusdn
+forge create src/Usdn/Wusdn.sol:Wusdn --rpc-url RPC_URL --private-key PRIVATE_KEY --constructor-args USDN_ADDRESS
 ```
 
 ## Deploy protocol
@@ -231,13 +230,13 @@ cast send 0x1E3e1128F6bC2264a19D7a065982696d356879c5 --private-key 0x233c86e887a
 - **`AcceptOwnership`**: This script is intended for testing purposes only. It simulates the acceptance of ownership for all protocol-related contracts by the Safe address.
 
 ```bash
-forge script script/52_AcceptOwnership.s.sol -f 127.0.0.1:8545 --broadcast --sender 0x1e3e1128f6bc2264a19d7a065982696d356879c5 --unlocked
+forge script script/52_AcceptOwnership.s.sol -f 127.0.0.1:8545 --broadcast --sender 0x1e3e1128f6bc2264a19d7a065982696d356879c5 --slow --unlocked
 ```
 
 - **`InitializeProtocol`**: This script is also intended for testing purposes only. It simulates the initialization of the protocol by the Safe address using the specified parameters.
 
 ```bash
-forge script script/53_InitializeProtocol.s.sol -f 127.0.0.1:8545 --broadcast --sender 0x1e3e1128f6bc2264a19d7a065982696d356879c5 --unlocked
+forge script script/53_InitializeProtocol.s.sol -f 127.0.0.1:8545 --broadcast --sender 0x1e3e1128f6bc2264a19d7a065982696d356879c5 --slow --unlocked
 ```
 
 ## Build initialization transaction for Gnosis Safe
