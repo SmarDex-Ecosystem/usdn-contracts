@@ -21,7 +21,6 @@ forge script --non-interactive --private-key $deployerPrivateKey -f "$rpcUrl" sc
 chainId=$(cast chain-id -r "$rpcUrl")
 DEPLOYMENT_LOG=$(cat "broadcast/01_DeployProtocol.s.sol/$chainId/run-latest.json")
 
-ADDRESS_0=0x0000000000000000000000000000000000000000
 USDN_TX_HASH=$(echo "$DEPLOYMENT_LOG" | jq '.transactions[] | select(.contractName == "Usdn" and .transactionType == "CREATE") | .hash')
 USDN_RECEIPT=$(echo "$DEPLOYMENT_LOG" | jq ".receipts[] | select(.transactionHash == $USDN_TX_HASH)")
 USDN_PROTOCOL_TX_HASH=$(echo "$DEPLOYMENT_LOG" | jq '.transactions[] | select(.contractName == "ERC1967Proxy" and .transactionType == "CREATE") | .hash')
@@ -78,7 +77,8 @@ for role in "${usdnProtocolRolesArr[@]}"; do
         --from $DEPLOYER_ADDRESS \
         "grantRole(bytes32 role, address account)" \
         $encodedRole $DEPLOYER_ADDRESS \
-        --private-key $deployerPrivateKey
+        --private-key $deployerPrivateKey \
+        --rpc-url $rpcUrl
 done
 
 popd >/dev/null
