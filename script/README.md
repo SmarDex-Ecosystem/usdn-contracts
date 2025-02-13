@@ -252,5 +252,5 @@ npm run exportAbi && npx tsx script/utils/initTxBuilder.ts -r RPC_URL -t INITIAL
 Run this command to deploy the SetRebaseHandlerManager contract (your private key will be prompted):
 
 ```bash
-forge script --interactives 1 -f RPC_URL script/54_DeploySetRebaseHandlerManager.sol:DeploySetRebaseHandlerManager --broadcast
+forge script -l -f RPC_URL script/54_DeploySetRebaseHandlerManager.sol:DeploySetRebaseHandlerManager --broadcast
 ```
