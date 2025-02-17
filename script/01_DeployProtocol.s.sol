@@ -314,7 +314,6 @@ contract DeployProtocol is Script {
 
         usdnProtocol.setRebalancer(rebalancer);
 
-        // grant the minter and rebaser roles to the protocol
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.MINTER_ROLE(), address(_deployerAddress));
