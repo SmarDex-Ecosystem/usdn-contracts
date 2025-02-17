@@ -182,11 +182,10 @@ contract DeployProtocol is Script {
                 );
                 uint256 initialWSTETHMockedPrice = vm.envOr("INITIAL_WSTETH_MOCKED_PRICE", uint256(0));
                 if (initialWSTETHMockedPrice > 0) {
+                    MockWstEthOracleMiddleware(address(wstEthOracleMiddleware_)).setVerifySignature(false);
                     MockWstEthOracleMiddleware(address(wstEthOracleMiddleware_)).setWstethMockedPrice(
                         initialWSTETHMockedPrice
                     );
-                } else {
-                    MockWstEthOracleMiddleware(address(wstEthOracleMiddleware_)).setVerifySignature(false);
                 }
             }
         }
