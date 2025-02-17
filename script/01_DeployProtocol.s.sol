@@ -180,12 +180,13 @@ contract DeployProtocol is Script {
                 wstEthOracleMiddleware_ = new MockWstEthOracleMiddleware(
                     pythAddress, pythFeedId, chainlinkPriceAddress, wstETHAddress, chainlinkPriceValidity
                 );
-                MockWstEthOracleMiddleware(address(wstEthOracleMiddleware_)).setVerifySignature(false);
                 uint256 initialWSTETHMockedPrice = vm.envOr("INITIAL_WSTETH_MOCKED_PRICE", uint256(0));
                 if (initialWSTETHMockedPrice > 0) {
                     MockWstEthOracleMiddleware(address(wstEthOracleMiddleware_)).setWstethMockedPrice(
                         initialWSTETHMockedPrice
                     );
+                } else {
+                    MockWstEthOracleMiddleware(address(wstEthOracleMiddleware_)).setVerifySignature(false);
                 }
             }
         }
