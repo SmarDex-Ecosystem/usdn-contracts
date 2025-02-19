@@ -35,8 +35,8 @@ remappings = [
     "@redstone-finance/evm-connector/=dependencies/@redstone-finance-evm-connector-0.6.2/",
     "@smardex-solidity-libraries-1/=dependencies/@smardex-solidity-libraries-1.0.1/src/",
     "@uniswap/permit2/=dependencies/@uniswap-permit2-1.0.0/",
-    "forge-std/=dependencies/forge-std-1.9.5/src/",
-    "openzeppelin-foundry-upgrades/=dependencies/openzeppelin-foundry-upgrades-0.3.7/src/",
+    "forge-std/=dependencies/forge-std-1.9.6/src/",
+    "openzeppelin-foundry-upgrades/=dependencies/openzeppelin-foundry-upgrades-0.3.8/src/",
     "solady/src/=dependencies/solady-0.0.228/src/",
 ]
 
