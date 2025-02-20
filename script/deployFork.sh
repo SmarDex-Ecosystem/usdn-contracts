@@ -81,4 +81,13 @@ for role in "${usdnProtocolRolesArr[@]}"; do
         --rpc-url $rpcUrl
 done
 
+if [[ "$*" == *"-p"* || "$*" == *"--paused"* ]]; then
+    echo "Pausing protocol while tests are not starting to disable funding"
+    cast send $USDN_PROTOCOL_ADDRESS \
+            --from $DEPLOYER_ADDRESS \
+            "pause()" \
+            --private-key $deployerPrivateKey \
+            --rpc-url $rpcUrl
+fi
+
 popd >/dev/null
