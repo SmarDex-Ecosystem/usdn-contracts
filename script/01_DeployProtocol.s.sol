@@ -315,10 +315,9 @@ contract DeployProtocol is Script {
 
         usdnProtocol.setRebalancer(rebalancer);
 
+        // grant the minter and rebaser roles to the protocol and then renounce the admin role of the deployer
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
-        usdn.grantRole(usdn.MINTER_ROLE(), address(_deployerAddress));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(_deployerAddress));
 
         uint24 liquidationPenalty = usdnProtocol.getLiquidationPenalty();
         int24 tickSpacing = usdnProtocol.getTickSpacing();

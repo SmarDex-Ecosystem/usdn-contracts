@@ -49,45 +49,4 @@ echo "Fork environment variables:"
 echo "$FORK_ENV_DUMP"
 echo "$FORK_ENV_DUMP" >.env.fork
 
-# Set all roles for the deployer
-usdnProtocolRolesArr=(
-    "ADMIN_SET_EXTERNAL_ROLE"
-    "ADMIN_SET_OPTIONS_ROLE"
-    "ADMIN_SET_PROTOCOL_PARAMS_ROLE"
-    "ADMIN_SET_USDN_PARAMS_ROLE"
-    "SET_EXTERNAL_ROLE"
-    "SET_USDN_PARAMS_ROLE"
-    "SET_OPTIONS_ROLE"
-    "SET_PROTOCOL_PARAMS_ROLE"
-    "ADMIN_CRITICAL_FUNCTIONS_ROLE"
-    "ADMIN_PROXY_UPGRADE_ROLE"
-    "ADMIN_PAUSER_ROLE"
-    "ADMIN_UNPAUSER_ROLE"
-    "CRITICAL_FUNCTIONS_ROLE"
-    "PROXY_UPGRADE_ROLE"
-    "PAUSER_ROLE"
-    "UNPAUSER_ROLE"
-)
-
-for role in "${usdnProtocolRolesArr[@]}"; do
-    encodedRole=$(cast keccak "$role")
-
-    echo -e "\nGranting role $role to $DEPLOYER_ADDRESS..."
-    cast send $USDN_PROTOCOL_ADDRESS \
-        --from $DEPLOYER_ADDRESS \
-        "grantRole(bytes32 role, address account)" \
-        $encodedRole $DEPLOYER_ADDRESS \
-        --private-key $deployerPrivateKey \
-        --rpc-url $rpcUrl
-done
-
-if [[ "$*" == *"-p"* || "$*" == *"--paused"* ]]; then
-    echo "Pausing protocol while tests are not starting to disable funding"
-    cast send $USDN_PROTOCOL_ADDRESS \
-            --from $DEPLOYER_ADDRESS \
-            "pause()" \
-            --private-key $deployerPrivateKey \
-            --rpc-url $rpcUrl
-fi
-
 popd >/dev/null
