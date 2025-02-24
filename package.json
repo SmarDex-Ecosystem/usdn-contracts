@@ -34,13 +34,7 @@
     "verify": "tsx script/utils/verifyContracts.ts"
   },
   "main": "dist/index.js",
-  "files": [
-    "dist",
-    "docs",
-    "src/**/*",
-    "foundry.toml",
-    "soldeer.lock"
-  ],
+  "files": ["dist", "docs", "src/**/*", "foundry.toml", "soldeer.lock"],
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
     "@defi-wonderland/natspec-smells": "^1.1.4",
