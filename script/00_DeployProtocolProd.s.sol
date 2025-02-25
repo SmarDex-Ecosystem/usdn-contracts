@@ -22,6 +22,7 @@ import { IOracleMiddleware } from "../src/interfaces/OracleMiddleware/IOracleMid
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 abstract contract DeployProtocolProd is Script {
+    Sdex constant SDEX = Sdex(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
     address internal _deployerAddress;
     address internal _feeCollector;
     address internal _safeAddress;
@@ -31,7 +32,6 @@ abstract contract DeployProtocolProd is Script {
      * @notice Deploy the USDN ecosystem
      * @param liquidationRewardsManager The liquidation rewards manager
      * @param oracleMiddleware The oracle middleware
-     * @param sdex The Sdex token contract
      * @param underlying The underlying token contract
      * @param usdn The USDN token contract
      * @return Rebalancer_ The rebalancer
@@ -40,7 +40,6 @@ abstract contract DeployProtocolProd is Script {
     function _deploy(
         LiquidationRewardsManager liquidationRewardsManager,
         IOracleMiddleware oracleMiddleware,
-        Sdex sdex,
         IERC20Metadata underlying,
         Usdn usdn
     ) internal returns (Rebalancer Rebalancer_, IUsdnProtocol UsdnProtocol_) {
@@ -54,7 +53,7 @@ abstract contract DeployProtocolProd is Script {
         // we need to stop the broadcast before the OZ validation of the Usdn protocol
         vm.stopBroadcast();
 
-        UsdnProtocol_ = _deployProtocol(oracleMiddleware, liquidationRewardsManager, sdex, underlying, usdn);
+        UsdnProtocol_ = _deployProtocol(oracleMiddleware, liquidationRewardsManager, underlying, usdn);
 
         vm.startBroadcast(_deployerAddress);
 
@@ -71,13 +70,11 @@ abstract contract DeployProtocolProd is Script {
      * @notice Deploy the USDN protocol
      * @param oracleMiddleware The oracle middleware
      * @param liquidationRewardsManager The liquidation rewards manager
-     * @param sdex The Sdex token contract
      * @return usdnProtocol_ The deployed protocol
      */
     function _deployProtocol(
         IOracleMiddleware oracleMiddleware,
         LiquidationRewardsManager liquidationRewardsManager,
-        Sdex sdex,
         IERC20Metadata underlying,
         Usdn usdn
     ) internal returns (IUsdnProtocol usdnProtocol_) {
@@ -97,7 +94,7 @@ abstract contract DeployProtocolProd is Script {
                 UsdnProtocolImpl.initializeStorage,
                 (
                     usdn,
-                    sdex,
+                    SDEX,
                     underlying,
                     oracleMiddleware,
                     liquidationRewardsManager,

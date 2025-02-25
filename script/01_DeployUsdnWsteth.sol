@@ -8,8 +8,7 @@ import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { Sdex } from "../test/utils/Sdex.sol";
 import { WstETH } from "../test/utils/WstEth.sol";
-import { DeployProtocolProd } from "./01_DeployProtocolProd.s.sol";
-import { UsdnConfig } from "./config/UsdnConfig.sol";
+import { DeployProtocolProd } from "./00_DeployProtocolProd.s.sol";
 import { Utils } from "./utils/Utils.s.sol";
 
 import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
@@ -29,7 +28,6 @@ contract DeployUsdnWsteth is DeployProtocolProd {
     address constant PYTH_ADRESS = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
     bytes32 constant PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
     IWstETH constant WSTETH = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
-    Sdex constant SDEX = Sdex(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
     uint256 constant CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
     uint256 constant CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
     Usdn constant USDN = Usdn(0xde17a000BA631c5d7c2Bd9FB692EFeA52D90DEE2);
@@ -38,7 +36,6 @@ contract DeployUsdnWsteth is DeployProtocolProd {
     /**
      * @notice Deploy the USDN ecosystem with the WstETH as underlying
      * @return WstETH_ The WstETH contract
-     * @return Sdex_ The Sdex contract
      * @return WstEthOracleMiddleware_ The WstETH oracle middleware
      * @return LiquidationRewardsManager_ The liquidation rewards manager
      * @return Rebalancer_ The rebalancer
@@ -50,7 +47,6 @@ contract DeployUsdnWsteth is DeployProtocolProd {
         internal
         returns (
             IERC20Metadata WstETH_,
-            Sdex Sdex_,
             WstEthOracleMiddleware WstEthOracleMiddleware_,
             LiquidationRewardsManager LiquidationRewardsManager_,
             Rebalancer Rebalancer_,
@@ -62,10 +58,9 @@ contract DeployUsdnWsteth is DeployProtocolProd {
         LiquidationRewardsManager_ = _deployLiquidationRewardsManager();
         WstEthOracleMiddleware_ = _deployWstEthOracleMiddleware();
 
-        (Rebalancer_, UsdnProtocol_) = _deploy(LiquidationRewardsManager_, WstEthOracleMiddleware_, SDEX, WSTETH, USDN);
+        (Rebalancer_, UsdnProtocol_) = _deploy(LiquidationRewardsManager_, WstEthOracleMiddleware_, WSTETH, USDN);
 
-        return
-            (WSTETH, SDEX, WstEthOracleMiddleware_, LiquidationRewardsManager_, Rebalancer_, USDN, WUSDN, UsdnProtocol_);
+        return (WSTETH, WstEthOracleMiddleware_, LiquidationRewardsManager_, Rebalancer_, USDN, WUSDN, UsdnProtocol_);
     }
 
     /**
