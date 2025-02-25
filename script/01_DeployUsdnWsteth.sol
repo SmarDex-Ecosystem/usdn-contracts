@@ -1,25 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { Script } from "forge-std/Script.sol";
-
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import { Sdex } from "../test/utils/Sdex.sol";
-import { WstETH } from "../test/utils/WstEth.sol";
 import { DeployProtocolProd } from "./00_DeployProtocolProd.s.sol";
-import { Utils } from "./utils/Utils.s.sol";
 
 import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
 import { Wusdn } from "../src/Usdn/Wusdn.sol";
-import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
-import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
-import { UsdnProtocolConstantsLibrary as Constants } from
-    "../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
