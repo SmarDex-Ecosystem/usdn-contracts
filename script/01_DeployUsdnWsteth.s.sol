@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -29,7 +28,6 @@ contract DeployUsdnWsteth is DeployProtocolProd {
 
     /**
      * @notice Deploy the USDN ecosystem with the WstETH as underlying
-     * @return WstETH_ The WstETH contract
      * @return WstEthOracleMiddleware_ The WstETH oracle middleware
      * @return LiquidationRewardsManager_ The liquidation rewards manager
      * @return Rebalancer_ The rebalancer
@@ -40,7 +38,6 @@ contract DeployUsdnWsteth is DeployProtocolProd {
     function run()
         external
         returns (
-            IERC20Metadata WstETH_,
             WstEthOracleMiddleware WstEthOracleMiddleware_,
             LiquidationRewardsManager LiquidationRewardsManager_,
             Rebalancer Rebalancer_,
@@ -62,7 +59,7 @@ contract DeployUsdnWsteth is DeployProtocolProd {
         _initializeProtocol(UsdnProtocol_, WstEthOracleMiddleware_);
         vm.stopBroadcast();
 
-        return (WSTETH, WstEthOracleMiddleware_, LiquidationRewardsManager_, Rebalancer_, Usdn_, Wusdn_, UsdnProtocol_);
+        return (WstEthOracleMiddleware_, LiquidationRewardsManager_, Rebalancer_, Usdn_, Wusdn_, UsdnProtocol_);
     }
 
     /**
