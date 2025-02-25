@@ -68,12 +68,14 @@ contract ShortOracleMiddleware is OracleMiddleware {
     ) public payable virtual override returns (PriceInfo memory) {
         PriceInfo memory ethPrice = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
         int256 adjustmentDelta = int256(ethPrice.price) - int256(ethPrice.neutralPrice);
-        uint256 adjustedPrice;
-        if (adjustmentDelta >= int256(ethPrice.neutralPrice)) {
-            // avoid underflow or zero price due to confidence interval adjustment
-            adjustedPrice = 1;
-        } else {
-            adjustedPrice = uint256(int256(ethPrice.neutralPrice) - adjustmentDelta);
+        uint256 adjustedPrice = ethPrice.neutralPrice;
+        if (adjustmentDelta != 0) {
+            if (adjustmentDelta >= int256(ethPrice.neutralPrice)) {
+                // avoid underflow or zero price due to confidence interval adjustment
+                adjustedPrice = 1;
+            } else {
+                adjustedPrice = uint256(int256(ethPrice.neutralPrice) - adjustmentDelta);
+            }
         }
         uint256 stEthPerToken = WSTETH.stEthPerToken();
         uint128 wstEthPrice = (adjustedPrice * stEthPerToken / 1 ether).toUint128();
