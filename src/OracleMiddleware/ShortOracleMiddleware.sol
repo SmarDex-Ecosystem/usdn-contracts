@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
@@ -15,8 +13,6 @@ import { OracleMiddleware } from "./OracleMiddleware.sol";
  * shorting version of the USDN protocol with WUSDN as the underlying asset.
  */
 contract ShortOracleMiddleware is OracleMiddleware {
-    using SafeCast for uint256;
-
     /// @notice The address of the USDN protocol.
     IUsdnProtocol internal immutable USDN_PROTOCOL;
 
