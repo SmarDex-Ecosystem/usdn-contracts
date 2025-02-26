@@ -100,7 +100,7 @@ contract ShortOracleMiddleware is OracleMiddleware {
             }
             return PriceInfo({
                 price: 1e54 / (adjustedPrice * divisor),
-                neutralPrice: 1e54 / (ethPrice.price * divisor),
+                neutralPrice: 1e54 / (ethPrice.neutralPrice * divisor),
                 timestamp: ethPrice.timestamp
             });
         } else {
