@@ -28,40 +28,43 @@ contract DeployUsdnWsteth is DeployProtocolProd {
 
     /**
      * @notice Deploy the USDN ecosystem with the WstETH as underlying
-     * @return WstEthOracleMiddleware_ The WstETH oracle middleware
-     * @return LiquidationRewardsManager_ The liquidation rewards manager
-     * @return Rebalancer_ The rebalancer
-     * @return Usdn_ The USDN contract
-     * @return Wusdn_ The WUSDN contract
-     * @return UsdnProtocol_ The USDN protocol
+     * @return wstEthOracleMiddleware_ The WstETH oracle middleware
+     * @return liquidationRewardsManager_ The liquidation rewards manager
+     * @return rebalancer_ The rebalancer
+     * @return usdn_ The USDN contract
+     * @return wusdn_ The WUSDN contract
+     * @return usdnProtocol_ The USDN protocol
      */
     function run()
         external
         returns (
-            WstEthOracleMiddleware WstEthOracleMiddleware_,
-            LiquidationRewardsManager LiquidationRewardsManager_,
-            Rebalancer Rebalancer_,
-            Usdn Usdn_,
-            Wusdn Wusdn_,
-            IUsdnProtocol UsdnProtocol_
+            WstEthOracleMiddleware wstEthOracleMiddleware_,
+            LiquidationRewardsManager liquidationRewardsManager_,
+            Rebalancer rebalancer_,
+            Usdn usdn_,
+            Wusdn wusdn_,
+            IUsdnProtocol usdnProtocol_
         )
     {
+        // peripheral contracts
         vm.startBroadcast();
-        LiquidationRewardsManager_ = new LiquidationRewardsManager(WSTETH);
-        WstEthOracleMiddleware_ = new WstEthOracleMiddleware(
+        liquidationRewardsManager_ = new LiquidationRewardsManager(WSTETH);
+        wstEthOracleMiddleware_ = new WstEthOracleMiddleware(
             PYTH_ADRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WSTETH), CHAINLINK_PRICE_VALIDITY
         );
         vm.stopBroadcast();
 
-        (Rebalancer_, UsdnProtocol_, Usdn_, Wusdn_) =
-            _deploy(LiquidationRewardsManager_, WstEthOracleMiddleware_, WSTETH);
+        // core contracts
+        (rebalancer_, usdnProtocol_, usdn_, wusdn_) =
+            _deployProtocol(liquidationRewardsManager_, wstEthOracleMiddleware_, WSTETH);
 
+        // post-deployment tasks
         vm.startBroadcast();
-        _handleRoles(UsdnProtocol_, Rebalancer_, Usdn_);
-        _initializeProtocol(UsdnProtocol_, WstEthOracleMiddleware_);
+        _handleRoles(usdnProtocol_, rebalancer_, usdn_);
+        _initializeProtocol(usdnProtocol_, wstEthOracleMiddleware_);
         vm.stopBroadcast();
 
-        return (WstEthOracleMiddleware_, LiquidationRewardsManager_, Rebalancer_, Usdn_, Wusdn_, UsdnProtocol_);
+        return (wstEthOracleMiddleware_, liquidationRewardsManager_, rebalancer_, usdn_, wusdn_, usdnProtocol_);
     }
 
     function _initializeProtocol(IUsdnProtocol usdnProtocol, WstEthOracleMiddleware wstEthOracleMiddleware) internal {

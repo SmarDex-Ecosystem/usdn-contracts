@@ -33,7 +33,7 @@ abstract contract DeployProtocolProd is Script {
      * @return Usdn_ The USDN token contract
      * @return Wusdn_ The WUSDN token contract
      */
-    function _deploy(
+    function _deployProtocol(
         LiquidationRewardsManager liquidationRewardsManager,
         IOracleMiddleware oracleMiddleware,
         IERC20Metadata underlying
