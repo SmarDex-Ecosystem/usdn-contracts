@@ -55,7 +55,7 @@ contract ShortOracleMiddleware is OracleMiddleware {
      * Because we don't have historical access to the vault balance, the stETH ratio, the USDN total supply and the
      * USDN divisor, we must approximate some parameters. The following approximations are made:
      * - The USDN price is $1
-     * - The USDN divisor's current value is true (constant) for the period where we need to provide prices.
+     * - The USDN divisor's current value is valid (constant) for the period where we need to provide prices.
      *
      * This greatly simplifies the formula (with $1 and pETH having 18 decimals):
      * p = ($1 * 1e18) / (pETH * divisor) = 1e36 / (pETH * divisor)
