@@ -101,11 +101,8 @@ contract DeployUsdnWsteth is DeployProtocolProd {
      * @param rebalancer The rebalancer
      */
     function _handleRoles(IUsdnProtocol usdnProtocol, Rebalancer rebalancer, Usdn usdn) internal {
-        bytes32 ADMIN_SET_EXTERNAL_ROLE = Constants.ADMIN_SET_EXTERNAL_ROLE;
-        bytes32 SET_EXTERNAL_ROLE = Constants.SET_EXTERNAL_ROLE;
-
-        usdnProtocol.grantRole(ADMIN_SET_EXTERNAL_ROLE, msg.sender);
-        usdnProtocol.grantRole(SET_EXTERNAL_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, msg.sender);
         usdnProtocol.setRebalancer(rebalancer);
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
