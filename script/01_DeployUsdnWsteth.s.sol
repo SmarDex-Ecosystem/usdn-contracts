@@ -47,8 +47,10 @@ contract DeployUsdnWsteth is DeployProtocolProd {
         )
     {
         vm.startBroadcast();
-        LiquidationRewardsManager_ = _deployLiquidationRewardsManager();
-        WstEthOracleMiddleware_ = _deployWstEthOracleMiddleware();
+        LiquidationRewardsManager_ = new LiquidationRewardsManager(WSTETH);
+        WstEthOracleMiddleware_ = new WstEthOracleMiddleware(
+            PYTH_ADRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WSTETH), CHAINLINK_PRICE_VALIDITY
+        );
         vm.stopBroadcast();
 
         (Rebalancer_, UsdnProtocol_, Usdn_, Wusdn_) =
@@ -60,27 +62,6 @@ contract DeployUsdnWsteth is DeployProtocolProd {
         vm.stopBroadcast();
 
         return (WstEthOracleMiddleware_, LiquidationRewardsManager_, Rebalancer_, Usdn_, Wusdn_, UsdnProtocol_);
-    }
-
-    /**
-     * @notice Deploy the liquidation rewards manager
-     * @return liquidationRewardsManager_ The deployed contract
-     */
-    function _deployLiquidationRewardsManager()
-        internal
-        returns (LiquidationRewardsManager liquidationRewardsManager_)
-    {
-        liquidationRewardsManager_ = new LiquidationRewardsManager(WSTETH);
-    }
-
-    /**
-     * @notice Deploy the WstETH oracle middleware
-     * @return wstEthOracleMiddleware_ The deployed contract
-     */
-    function _deployWstEthOracleMiddleware() internal returns (WstEthOracleMiddleware wstEthOracleMiddleware_) {
-        wstEthOracleMiddleware_ = new WstEthOracleMiddleware(
-            PYTH_ADRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WSTETH), CHAINLINK_PRICE_VALIDITY
-        );
     }
 
     function _initializeProtocol(IUsdnProtocol usdnProtocol, WstEthOracleMiddleware wstEthOracleMiddleware) internal {
