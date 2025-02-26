@@ -46,7 +46,7 @@ abstract contract DeployProtocolProd is Script {
         Wusdn_ = new Wusdn(Usdn_);
         vm.stopBroadcast();
 
-        UsdnProtocol_ = _deployProtocol(oracleMiddleware, liquidationRewardsManager, underlying, Usdn_);
+        UsdnProtocol_ = _deployUsdnProtocol(oracleMiddleware, liquidationRewardsManager, underlying, Usdn_);
 
         vm.startBroadcast();
         Rebalancer_ = new Rebalancer(UsdnProtocol_);
@@ -61,7 +61,7 @@ abstract contract DeployProtocolProd is Script {
      * @param liquidationRewardsManager The liquidation rewards manager
      * @return usdnProtocol_ The deployed protocol
      */
-    function _deployProtocol(
+    function _deployUsdnProtocol(
         IOracleMiddleware oracleMiddleware,
         LiquidationRewardsManager liquidationRewardsManager,
         IERC20Metadata underlying,
