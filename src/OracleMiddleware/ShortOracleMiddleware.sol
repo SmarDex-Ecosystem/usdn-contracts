@@ -68,7 +68,8 @@ contract ShortOracleMiddleware is OracleMiddleware {
      * Because we re-use the logic of the {OracleMiddleware}, we need to invert the adjustment direction. So if an
      * action in the original protocol requires that we add the confidence interval to the neutral price (e.g. to open
      * a new long position), then this oracle middleware needs to subtract the same confidence interval from the
-     * neutral price to achieve the same effect, i.e. penalizing the user.
+     * neutral price to achieve the same effect, i.e. penalizing the user. This is because the ETH price is in the
+     * denominator of the formula.
      * @param actionId A unique identifier for the current action. This identifier can be used to link an `Initiate`
      * call with the corresponding `Validate` call.
      * @param targetTimestamp The target timestamp for validating the price data. For validation actions, this is the
