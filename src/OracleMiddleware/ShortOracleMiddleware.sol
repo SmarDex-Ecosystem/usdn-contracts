@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
-import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { OracleMiddleware } from "./OracleMiddleware.sol";
 
@@ -13,9 +12,6 @@ import { OracleMiddleware } from "./OracleMiddleware.sol";
  * shorting version of the USDN protocol with WUSDN as the underlying asset.
  */
 contract ShortOracleMiddleware is OracleMiddleware {
-    /// @notice The address of the USDN protocol.
-    IUsdnProtocol internal immutable USDN_PROTOCOL;
-
     /// @notice The USDN token address.
     IUsdn internal immutable USDN;
 
@@ -23,18 +19,17 @@ contract ShortOracleMiddleware is OracleMiddleware {
      * @param pythContract The address of the Pyth contract.
      * @param pythPriceID The ID of the ETH Pyth price feed.
      * @param chainlinkPriceFeed The address of the ETH Chainlink price feed.
-     * @param usdnProtocol The address of the USDN protocol.
+     * @param usdnToken The address of the USDN token.
      * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale.
      */
     constructor(
         address pythContract,
         bytes32 pythPriceID,
         address chainlinkPriceFeed,
-        address usdnProtocol,
+        address usdnToken,
         uint256 chainlinkTimeElapsedLimit
     ) OracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, chainlinkTimeElapsedLimit) {
-        USDN_PROTOCOL = IUsdnProtocol(usdnProtocol);
-        USDN = USDN_PROTOCOL.getUsdn();
+        USDN = IUsdn(usdnToken);
     }
 
     /**
