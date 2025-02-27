@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { DeploymentConfig } from "./DeploymentConfig.sol";
+
 import { LiquidationRewardsManager } from "../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
@@ -8,7 +10,6 @@ import { UsdnProtocolConstantsLibrary as Constants } from
     "../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { Sdex } from "../../test/utils/Sdex.sol";
-import { DeploymentConfig } from "./DeploymentConfig.sol";
 
 contract UsdnWstethConfig is DeploymentConfig {
     constructor() {

@@ -15,5 +15,5 @@ contract DeploymentConfig {
     uint256 immutable CHAINLINK_PRICE_VALIDITY;
     uint256 immutable INITIAL_LONG_AMOUNT;
 
-    Types.InitStorage internal initStorage;
+    Types.InitStorage initStorage;
 }
