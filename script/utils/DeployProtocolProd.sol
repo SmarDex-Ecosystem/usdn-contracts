@@ -17,10 +17,12 @@ import { UsdnProtocolFallback } from "../../src/UsdnProtocol/UsdnProtocolFallbac
 import { UsdnProtocolImpl } from "../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IOracleMiddleware } from "../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 abstract contract DeployProtocolProd is Script {
     Sdex constant SDEX = Sdex(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
 
+    Types.Storage internal _storage;
     Utils internal _utils = new Utils();
 
     /**
@@ -41,15 +43,7 @@ abstract contract DeployProtocolProd is Script {
         // internal validation of the Usdn protocol
         _utils.validateProtocol("UsdnProtocolImpl", "UsdnProtocolFallback");
 
-        vm.startBroadcast();
-        Usdn_ = new Usdn(address(0), address(0));
-        Wusdn_ = new Wusdn(Usdn_);
-        vm.stopBroadcast();
-
         UsdnProtocol_ = _deployUsdnProtocol(oracleMiddleware, liquidationRewardsManager, underlying, Usdn_);
-
-        vm.broadcast();
-        Rebalancer_ = new Rebalancer(UsdnProtocol_);
 
         return (Rebalancer_, UsdnProtocol_, Usdn_, Wusdn_);
     }
@@ -76,6 +70,8 @@ abstract contract DeployProtocolProd is Script {
         vm.startBroadcast();
 
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        _storage._protocolFallbackAddr = address(protocolFallback);
+
         address proxy = Upgrades.deployUUPSProxy(
             "UsdnProtocolImpl.sol",
             abi.encodeCall(

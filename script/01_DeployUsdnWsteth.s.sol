@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
+import { UsdnWstethConfig } from "./deploymentConfigs/UsdnWsteth.sol";
 import { DeployProtocolProd } from "./utils/DeployProtocolProd.sol";
 
 import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
@@ -13,19 +14,10 @@ import { Usdn } from "../src/Usdn/Usdn.sol";
 import { Wusdn } from "../src/Usdn/Wusdn.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
-import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract DeployUsdnWsteth is DeployProtocolProd {
-    address constant CHAINLINK_ETH_PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
-    address constant PYTH_ADDRESS = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
-    bytes32 constant PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
-    IWstETH constant WSTETH = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
-    uint256 constant CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
-    uint256 constant CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
-    uint256 constant INITIAL_LONG_AMOUNT = 200 ether;
-
+contract DeployUsdnWsteth is DeployProtocolProd, UsdnWstethConfig {
     /**
      * @notice Deploy the USDN ecosystem with the WstETH as underlying
      * @return wstEthOracleMiddleware_ The WstETH oracle middleware
@@ -46,20 +38,15 @@ contract DeployUsdnWsteth is DeployProtocolProd {
             IUsdnProtocol usdnProtocol_
         )
     {
-        // peripheral contracts
-        vm.startBroadcast();
-        liquidationRewardsManager_ = new LiquidationRewardsManager(WSTETH);
-        wstEthOracleMiddleware_ = new WstEthOracleMiddleware(
-            PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WSTETH), CHAINLINK_PRICE_VALIDITY
-        );
-        vm.stopBroadcast();
+        _setFeeCollector(msg.sender);
+        (wstEthOracleMiddleware_, liquidationRewardsManager_, usdn_, wusdn_) = _deployAndSetPeriferalContracts();
 
         // core contracts
         (rebalancer_, usdnProtocol_, usdn_, wusdn_) =
             _deployProtocol(liquidationRewardsManager_, wstEthOracleMiddleware_, WSTETH);
 
         // post-deployment tasks
-        _handleRoles(usdnProtocol_, rebalancer_, usdn_);
+        rebalancer_ = _setRebalancerAndHandleUsdnRoles(usdnProtocol_, usdn_);
         _initializeProtocol(usdnProtocol_, wstEthOracleMiddleware_);
 
         return (wstEthOracleMiddleware_, liquidationRewardsManager_, rebalancer_, usdn_, wusdn_, usdnProtocol_);
@@ -98,18 +85,43 @@ contract DeployUsdnWsteth is DeployProtocolProd {
     /**
      * @notice Handle post-deployment tasks
      * @param usdnProtocol The USDN protocol
-     * @param rebalancer The rebalancer
+     * @return rebalancer_ The rebalancer
      */
-    function _handleRoles(IUsdnProtocol usdnProtocol, Rebalancer rebalancer, Usdn usdn) internal {
+    function _setRebalancerAndHandleUsdnRoles(IUsdnProtocol usdnProtocol, Usdn usdn)
+        internal
+        returns (Rebalancer rebalancer_)
+    {
         vm.startBroadcast();
 
+        rebalancer_ = new Rebalancer(usdnProtocol);
         usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, msg.sender);
         usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, msg.sender);
-        usdnProtocol.setRebalancer(rebalancer);
+        usdnProtocol.setRebalancer(rebalancer_);
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
 
         vm.stopBroadcast();
+    }
+
+    function _deployAndSetPeriferalContracts()
+        internal
+        returns (
+            WstEthOracleMiddleware wstEthOracleMiddleware_,
+            LiquidationRewardsManager liquidationRewardsManager_,
+            Usdn usdn_,
+            Wusdn wusdn_
+        )
+    {
+        vm.startBroadcast();
+        liquidationRewardsManager_ = new LiquidationRewardsManager(WSTETH);
+        wstEthOracleMiddleware_ = new WstEthOracleMiddleware(
+            PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WSTETH), CHAINLINK_PRICE_VALIDITY
+        );
+        usdn_ = new Usdn(address(0), address(0));
+        wusdn_ = new Wusdn(usdn_);
+        vm.stopBroadcast();
+
+        _setPeriferalContracts(wstEthOracleMiddleware_, liquidationRewardsManager_, usdn_);
     }
 }
