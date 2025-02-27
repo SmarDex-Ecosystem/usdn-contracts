@@ -24,7 +24,7 @@ abstract contract DeployProtocolProd is Script {
     Utils internal _utils = new Utils();
 
     /**
-     * @notice Deploy the USDN ecosystem
+     * @notice Deploy the USDN and WUSDN tokens, the USDN protocol and the rebalancer.
      * @param liquidationRewardsManager The liquidation rewards manager
      * @param oracleMiddleware The oracle middleware
      * @param underlying The underlying token contract
@@ -48,9 +48,8 @@ abstract contract DeployProtocolProd is Script {
 
         UsdnProtocol_ = _deployUsdnProtocol(oracleMiddleware, liquidationRewardsManager, underlying, Usdn_);
 
-        vm.startBroadcast();
+        vm.broadcast();
         Rebalancer_ = new Rebalancer(UsdnProtocol_);
-        vm.stopBroadcast();
 
         return (Rebalancer_, UsdnProtocol_, Usdn_, Wusdn_);
     }
