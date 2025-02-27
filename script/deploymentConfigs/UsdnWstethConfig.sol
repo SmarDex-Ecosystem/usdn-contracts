@@ -13,12 +13,13 @@ import { DeploymentConfig } from "./DeploymentConfig.sol";
 contract UsdnWstethConfig is DeploymentConfig {
     constructor() {
         CHAINLINK_ETH_PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
-        PYTH_ADDRESS = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
-        PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
-        WSTETH = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
         CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
         CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
         INITIAL_LONG_AMOUNT = 200 ether;
+        PYTH_ADDRESS = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
+        PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
+        SDEX = Sdex(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
+        WSTETH = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
 
         initStorage.minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1); // x1.1
         initStorage.maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS; // x10
@@ -29,7 +30,7 @@ contract UsdnWstethConfig is DeploymentConfig {
         initStorage.protocolFeeBps = 800; // 8%
         initStorage.rebalancerBonusBps = 8000; // 80%
         initStorage.liquidationPenalty = 200; // 200 ticks -> ~2.02%
-        initStorage.EMAPeriod = 5 days;
+        initStorage.emaPeriod = 5 days;
         initStorage.fundingSF = 12 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2); // 0.12
         initStorage.feeThreshold = 1 ether;
         initStorage.openExpoImbalanceLimitBps = 500; // 5%

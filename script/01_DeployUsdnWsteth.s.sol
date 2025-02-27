@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { Script } from "forge-std/Script.sol";
+
 import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
+import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnWstethConfig } from "./deploymentConfigs/UsdnWstethConfig.sol";
@@ -11,12 +14,14 @@ import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMidd
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
 import { Wusdn } from "../src/Usdn/Wusdn.sol";
+import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract DeployUsdnWsteth is UsdnWstethConfig {
+contract DeployUsdnWsteth is UsdnWstethConfig, Script {
     /**
      * @notice Deploy the USDN ecosystem with the WstETH as underlying
      * @return wstEthOracleMiddleware_ The WstETH oracle middleware
@@ -48,6 +53,14 @@ contract DeployUsdnWsteth is UsdnWstethConfig {
         _initializeProtocol(usdnProtocol_, wstEthOracleMiddleware_);
     }
 
+    /**
+     * @notice Deploy the orracle middleware, liquidation rewards manager, USDN and WUSDN contracts. Add then to the
+     * initialisation struct.
+     * @return wstEthOracleMiddleware_ The WstETH oracle middleware
+     * @return liquidationRewardsManager_ The liquidation rewards manager
+     * @return usdn_ The USDN contract
+     * @return wusdn_ The WUSDN contract
+     */
     function _deployAndSetPeriferalContracts()
         internal
         returns (
@@ -70,9 +83,33 @@ contract DeployUsdnWsteth is UsdnWstethConfig {
     }
 
     /**
-     * @notice Handle post-deployment tasks
-     * @param usdnProtocol The USDN protocol
-     * @return rebalancer_ The rebalancer
+     * @notice Deploy the USDN protocol.
+     * @param initStorage The initialization parameters struct.
+     * @return usdnProtocol_ The USDN protocol proxy.
+     */
+    function _deployProtocol(Types.InitStorage storage initStorage) internal returns (IUsdnProtocol usdnProtocol_) {
+        // we need to allow external library linking and immutable variables in the openzeppelin module
+        Options memory opts;
+        opts.unsafeAllow = "external-library-linking,state-variable-immutable";
+
+        vm.startBroadcast();
+
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        initStorage.protocolFallbackAddr = address(protocolFallback);
+
+        address proxy = Upgrades.deployUUPSProxy(
+            "UsdnProtocolImpl.sol", abi.encodeCall(UsdnProtocolImpl.initializeStorage, (initStorage)), opts
+        );
+
+        vm.stopBroadcast();
+
+        usdnProtocol_ = IUsdnProtocol(proxy);
+    }
+
+    /**
+     * @notice Set the rebalancer and give the minting and rebasing roles to the USDN protocol.
+     * @param usdnProtocol The USDN protocol.
+     * @return rebalancer_ The rebalancer.
      */
     function _setRebalancerAndHandleUsdnRoles(IUsdnProtocol usdnProtocol, Usdn usdn)
         internal
@@ -91,6 +128,11 @@ contract DeployUsdnWsteth is UsdnWstethConfig {
         vm.stopBroadcast();
     }
 
+    /**
+     * @notice Initialize the USDN protocol with a ~2x leverage long position.
+     * @param usdnProtocol The USDN protocol.
+     * @param wstEthOracleMiddleware The WstETH oracle middleware.
+     */
     function _initializeProtocol(IUsdnProtocol usdnProtocol, WstEthOracleMiddleware wstEthOracleMiddleware) internal {
         uint24 liquidationPenalty = usdnProtocol.getLiquidationPenalty();
         int24 tickSpacing = usdnProtocol.getTickSpacing();

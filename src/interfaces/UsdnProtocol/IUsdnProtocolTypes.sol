@@ -694,6 +694,49 @@ interface IUsdnProtocolTypes {
         mapping(address => uint256) _nonce;
     }
 
+    /**
+     * @notice Structure to hold initial parameters for the protocol.
+     * @param tickSpacing The liquidation tick spacing for storing long positions.
+     * @param asset The asset ERC20 contract.
+     * @param assetDecimals The number of decimals used by the `_asset`.
+     * @param priceFeedDecimals The price feed decimals (18).
+     * @param usdn The USDN ERC20 contract.
+     * @param sdex The SDEX ERC20 contract.
+     * @param oracleMiddleware The oracle middleware contract.
+     * @param liquidationRewardsManager The liquidation rewards manager contract.
+     * @param minLeverage The minimum leverage for a position.
+     * @param maxLeverage The maximum leverage for a position.
+     * @param lowLatencyValidatorDeadline The deadline for a user to confirm their action with a low-latency oracle.
+     * @param onChainValidatorDeadline The deadline for a user to confirm their action with an on-chain oracle.
+     * @param safetyMarginBps Safety margin for the liquidation price of newly open positions, in basis points.
+     * @param liquidationIteration The number of iterations to perform during the user's action (in tick).
+     * @param protocolFeeBps The protocol fee in basis points.
+     * @param rebalancerBonusBps Part of the remaining collateral that is given as a bonus to the Rebalancer upon
+     * liquidation of a tick, in basis points. The rest is sent to the Vault balance.
+     * @param liquidationPenalty The liquidation penalty (in ticks).
+     * @param emaPeriod The moving average period of the funding rate.
+     * @param fundingSF The scaling factor (SF) of the funding rate.
+     * @param feeThreshold The threshold above which the fee will be sent.
+     * @param openExpoImbalanceLimitBps The imbalance limit of the long expo for open actions (in basis points).
+     * @param withdrawalExpoImbalanceLimitBps The imbalance limit of the long expo for withdrawal actions (in basis
+     * points).
+     * @param depositExpoImbalanceLimitBps The imbalance limit of the vault expo for deposit actions (in basis points).
+     * @param closeExpoImbalanceLimitBps The imbalance limit of the vault expo for close actions (in basis points).
+     * @param rebalancerCloseExpoImbalanceLimitBps The imbalance limit of the vault expo for close actions from the
+     * rebalancer (in basis points).
+     * @param longImbalanceTargetBps The target imbalance on the long side (in basis points)
+     * @param positionFeeBps The position fee in basis points.
+     * @param vaultFeeBps The fee for vault deposits and withdrawals, in basis points.
+     * @param sdexRewardsRatioBps The ratio of SDEX rewards to send to the user (in basis points).
+     * @param sdexBurnOnDepositRatio The ratio of USDN to SDEX tokens to burn on deposit.
+     * @param feeCollector The fee collector's address.
+     * @param securityDepositValue The deposit required for a new position.
+     * @param targetUsdnPrice The nominal (target) price of USDN (with _priceFeedDecimals).
+     * @param usdnRebaseThreshold The USDN price threshold to trigger a rebase (with _priceFeedDecimals).
+     * @param minLongPosition The minimum long position size (with `_assetDecimals`).
+     * @param EMA The exponential moving average of the funding (0.0003 at initialization).
+     * @param protocolFallbackAddr The address of the fallback contract.
+     */
     struct InitStorage {
         int24 tickSpacing;
         IERC20Metadata asset;
@@ -712,7 +755,7 @@ interface IUsdnProtocolTypes {
         uint16 protocolFeeBps;
         uint16 rebalancerBonusBps;
         uint24 liquidationPenalty;
-        uint128 EMAPeriod;
+        uint128 emaPeriod;
         uint256 fundingSF;
         uint256 feeThreshold;
         int256 openExpoImbalanceLimitBps;
