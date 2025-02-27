@@ -39,19 +39,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     using SafeCast for uint256;
     using SignedMath for int256;
 
-    function initializeStorageHandler(
-        IUsdn usdn,
-        IERC20Metadata sdex,
-        IERC20Metadata asset,
-        IBaseOracleMiddleware oracleMiddleware,
-        ILiquidationRewardsManager liquidationRewardsManager,
-        int24 tickSpacing,
-        address feeCollector,
-        IUsdnProtocolFallback protocolFallback
-    ) external initializer {
-        initializeStorage(
-            usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector, protocolFallback
-        );
+    function initializeStorageHandler(InitStorage calldata initStorage) external initializer {
+        initializeStorage(initStorage);
     }
 
     /// @dev Useful to completely disable funding, which is normally initialized with a positive bias value
