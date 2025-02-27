@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+import { IAccessControlDefaultAdminRules } from
+    "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
+
 import { IUsdnProtocol } from "../UsdnProtocol/IUsdnProtocol.sol";
 import { IBaseOracleMiddleware } from "./IBaseOracleMiddleware.sol";
 import { IChainlinkOracle } from "./IChainlinkOracle.sol";
@@ -18,7 +21,8 @@ interface IOracleMiddleware is
     IPythOracle,
     IBaseOracleMiddleware,
     IOracleMiddlewareErrors,
-    IOracleMiddlewareEvents
+    IOracleMiddlewareEvents,
+    IAccessControlDefaultAdminRules
 {
     /* -------------------------------------------------------------------------- */
     /*                                    Roles                                   */
