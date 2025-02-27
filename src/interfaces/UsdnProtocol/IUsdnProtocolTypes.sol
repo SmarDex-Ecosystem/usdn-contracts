@@ -693,4 +693,44 @@ interface IUsdnProtocolTypes {
         // EIP712
         mapping(address => uint256) _nonce;
     }
+
+    struct InitStorage {
+        int24 tickSpacing;
+        IERC20Metadata asset;
+        uint8 assetDecimals;
+        uint8 priceFeedDecimals;
+        IUsdn usdn;
+        IERC20Metadata sdex;
+        IBaseOracleMiddleware oracleMiddleware;
+        IBaseLiquidationRewardsManager liquidationRewardsManager;
+        uint256 minLeverage;
+        uint256 maxLeverage;
+        uint128 lowLatencyValidatorDeadline;
+        uint128 onChainValidatorDeadline;
+        uint256 safetyMarginBps;
+        uint16 liquidationIteration;
+        uint16 protocolFeeBps;
+        uint16 rebalancerBonusBps;
+        uint24 liquidationPenalty;
+        uint128 EMAPeriod;
+        uint256 fundingSF;
+        uint256 feeThreshold;
+        int256 openExpoImbalanceLimitBps;
+        int256 withdrawalExpoImbalanceLimitBps;
+        int256 depositExpoImbalanceLimitBps;
+        int256 closeExpoImbalanceLimitBps;
+        int256 rebalancerCloseExpoImbalanceLimitBps;
+        int256 longImbalanceTargetBps;
+        uint16 positionFeeBps;
+        uint16 vaultFeeBps;
+        uint16 sdexRewardsRatioBps;
+        uint32 sdexBurnOnDepositRatio;
+        address feeCollector;
+        uint64 securityDepositValue;
+        uint128 targetUsdnPrice;
+        uint128 usdnRebaseThreshold;
+        uint256 minLongPosition;
+        int256 EMA;
+        address protocolFallbackAddr;
+    }
 }

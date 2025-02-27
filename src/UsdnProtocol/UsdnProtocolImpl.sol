@@ -33,16 +33,7 @@ contract UsdnProtocolImpl is
     }
 
     /// @inheritdoc IUsdnProtocolImpl
-    function initializeStorage(
-        IUsdn usdn,
-        IERC20Metadata sdex,
-        IERC20Metadata asset,
-        IBaseOracleMiddleware oracleMiddleware,
-        IBaseLiquidationRewardsManager liquidationRewardsManager,
-        int24 tickSpacing,
-        address feeCollector,
-        IUsdnProtocolFallback protocolFallback
-    ) public initializer {
+    function initializeStorage(InitStorage calldata initStorage) public initializer {
         Storage storage s = Utils._getMainStorage();
 
         __AccessControlDefaultAdminRules_init(0, msg.sender);
@@ -59,64 +50,67 @@ contract UsdnProtocolImpl is
         _setRoleAdmin(Constants.PAUSER_ROLE, Constants.ADMIN_PAUSER_ROLE);
         _setRoleAdmin(Constants.UNPAUSER_ROLE, Constants.ADMIN_UNPAUSER_ROLE);
 
-        s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1); // x1.1
-        s._maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS; // x10
-        s._lowLatencyValidatorDeadline = 15 minutes;
-        s._onChainValidatorDeadline = 65 minutes; // slightly more than chainlink's heartbeat
-        s._safetyMarginBps = 200; // 2%
-        s._liquidationIteration = 1;
-        s._protocolFeeBps = 800; // 8%
-        s._rebalancerBonusBps = 8000; // 80%
-        s._liquidationPenalty = 200; // 200 ticks -> ~2.02%
-        s._EMAPeriod = 5 days;
-        s._fundingSF = 12 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2); // 0.12
-        s._feeThreshold = 1 ether;
-        s._openExpoImbalanceLimitBps = 500; // 5%
-        s._withdrawalExpoImbalanceLimitBps = 600; // 6%
-        s._depositExpoImbalanceLimitBps = 500; // 5%
-        s._closeExpoImbalanceLimitBps = 600; // 6%
-        s._rebalancerCloseExpoImbalanceLimitBps = 350; // 3.5%
-        s._longImbalanceTargetBps = 400; // 4%
-        s._positionFeeBps = 4; // 0.04%
-        s._vaultFeeBps = 4; // 0.04%
-        s._sdexRewardsRatioBps = 100; // 1%
-        s._sdexBurnOnDepositRatio = 5e6; // 5%
-        s._securityDepositValue = 0.5 ether;
-        s._EMA = int256(3 * 10 ** (Constants.FUNDING_RATE_DECIMALS - 4));
+        s._minLeverage = initStorage.minLeverage;
+        s._maxLeverage = initStorage.maxLeverage;
+        s._lowLatencyValidatorDeadline = initStorage.lowLatencyValidatorDeadline;
+        s._onChainValidatorDeadline = initStorage.onChainValidatorDeadline;
+        s._safetyMarginBps = initStorage.safetyMarginBps;
+        s._liquidationIteration = initStorage.liquidationIteration;
+        s._protocolFeeBps = initStorage.protocolFeeBps;
+        s._rebalancerBonusBps = initStorage.rebalancerBonusBps;
+        s._liquidationPenalty = initStorage.liquidationPenalty;
+        s._EMAPeriod = initStorage.EMAPeriod;
+        s._fundingSF = initStorage.fundingSF;
+        s._feeThreshold = initStorage.feeThreshold;
+        s._openExpoImbalanceLimitBps = initStorage.openExpoImbalanceLimitBps;
+        s._withdrawalExpoImbalanceLimitBps = initStorage.withdrawalExpoImbalanceLimitBps;
+        s._depositExpoImbalanceLimitBps = initStorage.depositExpoImbalanceLimitBps;
+        s._closeExpoImbalanceLimitBps = initStorage.closeExpoImbalanceLimitBps;
+        s._rebalancerCloseExpoImbalanceLimitBps = initStorage.rebalancerCloseExpoImbalanceLimitBps;
+        s._longImbalanceTargetBps = initStorage.longImbalanceTargetBps;
+        s._positionFeeBps = initStorage.positionFeeBps;
+        s._vaultFeeBps = initStorage.vaultFeeBps;
+        s._sdexRewardsRatioBps = initStorage.sdexRewardsRatioBps;
+        s._sdexBurnOnDepositRatio = initStorage.sdexBurnOnDepositRatio;
+        s._securityDepositValue = initStorage.securityDepositValue;
+        s._EMA = initStorage.EMA;
 
         // since all USDN must be minted by the protocol, we check that the total supply is 0
-        if (usdn.totalSupply() != 0) {
-            revert UsdnProtocolInvalidUsdn(address(usdn));
+        if (initStorage.usdn.totalSupply() != 0) {
+            revert UsdnProtocolInvalidUsdn(address(initStorage.usdn));
         }
-        if (feeCollector == address(0)) {
+        if (initStorage.feeCollector == address(0)) {
             revert UsdnProtocolInvalidFeeCollector();
         }
 
-        s._usdn = usdn;
-        s._sdex = sdex;
+        s._usdn = initStorage.usdn;
+        s._sdex = initStorage.sdex;
         // make sure the USDN and SDEX tokens have the same number of decimals
-        if (usdn.decimals() != Constants.TOKENS_DECIMALS || sdex.decimals() != Constants.TOKENS_DECIMALS) {
+        if (
+            initStorage.usdn.decimals() != Constants.TOKENS_DECIMALS
+                || initStorage.sdex.decimals() != Constants.TOKENS_DECIMALS
+        ) {
             revert UsdnProtocolInvalidTokenDecimals();
         }
 
-        s._usdnMinDivisor = usdn.MIN_DIVISOR();
-        s._asset = asset;
-        uint8 assetDecimals = asset.decimals();
+        s._usdnMinDivisor = initStorage.usdn.MIN_DIVISOR();
+        s._asset = initStorage.asset;
+        uint8 assetDecimals = initStorage.asset.decimals();
         s._assetDecimals = assetDecimals;
         if (assetDecimals < Constants.FUNDING_SF_DECIMALS) {
             revert UsdnProtocolInvalidAssetDecimals(assetDecimals);
         }
-        s._oracleMiddleware = oracleMiddleware;
-        uint8 priceFeedDecimals = oracleMiddleware.getDecimals();
+        s._oracleMiddleware = initStorage.oracleMiddleware;
+        uint8 priceFeedDecimals = initStorage.oracleMiddleware.getDecimals();
         s._priceFeedDecimals = priceFeedDecimals;
-        s._liquidationRewardsManager = liquidationRewardsManager;
-        s._tickSpacing = tickSpacing;
-        s._feeCollector = feeCollector;
+        s._liquidationRewardsManager = initStorage.liquidationRewardsManager;
+        s._tickSpacing = initStorage.tickSpacing;
+        s._feeCollector = initStorage.feeCollector;
 
-        s._targetUsdnPrice = uint128(10_087 * 10 ** (priceFeedDecimals - 4)); // $1.0087
-        s._usdnRebaseThreshold = uint128(1009 * 10 ** (priceFeedDecimals - 3)); // $1.009
-        s._minLongPosition = 2 * 10 ** assetDecimals; // 2 tokens
-        s._protocolFallbackAddr = address(protocolFallback);
+        s._targetUsdnPrice = initStorage.targetUsdnPrice;
+        s._usdnRebaseThreshold = initStorage.usdnRebaseThreshold;
+        s._minLongPosition = initStorage.minLongPosition;
+        s._protocolFallbackAddr = initStorage.protocolFallbackAddr;
     }
 
     /**
