@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
+import { DefaultConfig } from "../../../utils/DefaultConfig.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { RolesUtils } from "../../../utils/RolesUtils.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
@@ -12,6 +13,7 @@ import { MockOracleMiddleware } from "../../UsdnProtocol/utils/MockOracleMiddlew
 import { RebalancerHandler } from "../utils/Handler.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
+import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
@@ -25,7 +27,14 @@ import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProt
  * @title RebalancerFixture
  * @dev Utils for testing the rebalancer
  */
-contract RebalancerFixture is BaseFixture, RolesUtils, IRebalancerTypes, IRebalancerErrors, IRebalancerEvents {
+contract RebalancerFixture is
+    BaseFixture,
+    RolesUtils,
+    IRebalancerTypes,
+    IRebalancerErrors,
+    IRebalancerEvents,
+    DefaultConfig
+{
     Usdn public usdn;
     Sdex public sdex;
     WstETH public wstETH;
@@ -46,21 +55,19 @@ contract RebalancerFixture is BaseFixture, RolesUtils, IRebalancerTypes, IRebala
 
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         UsdnProtocolImpl implementation = new UsdnProtocolImpl();
+
+        _setPeriferalContracts(
+            WstEthOracleMiddleware(address(oracleMiddleware)),
+            liquidationRewardsManager,
+            usdn,
+            wstETH,
+            address(protocolFallback),
+            ADMIN,
+            sdex
+        );
+
         address proxy = UnsafeUpgrades.deployUUPSProxy(
-            address(implementation),
-            abi.encodeCall(
-                UsdnProtocolImpl.initializeStorage,
-                (
-                    usdn,
-                    sdex,
-                    wstETH,
-                    oracleMiddleware,
-                    liquidationRewardsManager,
-                    100, // tick spacing 100 = ~1.005%
-                    ADMIN, // Fee collector
-                    protocolFallback
-                )
-            )
+            address(implementation), abi.encodeCall(UsdnProtocolImpl.initializeStorage, (initStorage))
         );
         usdnProtocol = IUsdnProtocol(proxy);
 

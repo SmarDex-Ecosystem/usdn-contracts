@@ -109,21 +109,15 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
         int24 tickSpacing,
         address feeCollector
     ) public {
+        initStorage.usdn = usdn;
+        initStorage.sdex = sdex;
+        initStorage.asset = asset;
+        initStorage.oracleMiddleware = oracleMiddleware;
+        initStorage.liquidationRewardsManager = liquidationRewardsManager;
+        initStorage.tickSpacing = tickSpacing;
+        initStorage.feeCollector = feeCollector;
         UnsafeUpgrades.deployUUPSProxy(
-            address(implementation),
-            abi.encodeCall(
-                UsdnProtocolImpl.initializeStorage,
-                (
-                    usdn,
-                    sdex,
-                    asset,
-                    oracleMiddleware,
-                    liquidationRewardsManager,
-                    tickSpacing,
-                    feeCollector,
-                    protocolFallback
-                )
-            )
+            address(implementation), abi.encodeCall(UsdnProtocolImpl.initializeStorage, (initStorage))
         );
     }
 }

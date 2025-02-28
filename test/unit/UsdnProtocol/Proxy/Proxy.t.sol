@@ -15,7 +15,6 @@ import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { IUsdnProtocolFallback } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -76,16 +75,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_initializeIsCalledSecondTime() public {
         vm.expectRevert(Initializable.InvalidInitialization.selector);
-        protocol.initializeStorage(
-            usdn,
-            sdex,
-            wstETH,
-            oracleMiddleware,
-            liquidationRewardsManager,
-            _tickSpacing,
-            address(feeCollector),
-            IUsdnProtocolFallback(address(0))
-        );
+        protocol.initializeStorage(initStorage);
     }
 
     /**
@@ -103,16 +93,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         assertTrue(implementation_addr != address(0), "The implementation address should not be zero");
 
         vm.expectRevert(Initializable.InvalidInitialization.selector);
-        IUsdnProtocol(implementation_addr).initializeStorage(
-            usdn,
-            sdex,
-            wstETH,
-            oracleMiddleware,
-            liquidationRewardsManager,
-            _tickSpacing,
-            address(feeCollector),
-            IUsdnProtocolFallback(address(0))
-        );
+        IUsdnProtocol(implementation_addr).initializeStorage(initStorage);
     }
 
     /**

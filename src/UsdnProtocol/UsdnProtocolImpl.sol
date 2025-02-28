@@ -16,6 +16,7 @@ import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
 import { UsdnProtocolLong } from "./UsdnProtocolLong.sol";
 import { UsdnProtocolVault } from "./UsdnProtocolVault.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from "./libraries/UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolSettersLibrary as Setters } from "./libraries/UsdnProtocolSettersLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 
 contract UsdnProtocolImpl is
@@ -33,18 +34,7 @@ contract UsdnProtocolImpl is
     }
 
     /// @inheritdoc IUsdnProtocolImpl
-    function initializeStorage(
-        IUsdn usdn,
-        IERC20Metadata sdex,
-        IERC20Metadata asset,
-        IBaseOracleMiddleware oracleMiddleware,
-        IBaseLiquidationRewardsManager liquidationRewardsManager,
-        int24 tickSpacing,
-        address feeCollector,
-        IUsdnProtocolFallback protocolFallback
-    ) public initializer {
-        Storage storage s = Utils._getMainStorage();
-
+    function initializeStorage(InitStorage calldata initStorage) public initializer {
         __AccessControlDefaultAdminRules_init(0, msg.sender);
         __initializeReentrancyGuard_init();
         __Pausable_init();
@@ -59,64 +49,7 @@ contract UsdnProtocolImpl is
         _setRoleAdmin(Constants.PAUSER_ROLE, Constants.ADMIN_PAUSER_ROLE);
         _setRoleAdmin(Constants.UNPAUSER_ROLE, Constants.ADMIN_UNPAUSER_ROLE);
 
-        s._minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1); // x1.1
-        s._maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS; // x10
-        s._lowLatencyValidatorDeadline = 15 minutes;
-        s._onChainValidatorDeadline = 65 minutes; // slightly more than chainlink's heartbeat
-        s._safetyMarginBps = 200; // 2%
-        s._liquidationIteration = 1;
-        s._protocolFeeBps = 800; // 8%
-        s._rebalancerBonusBps = 8000; // 80%
-        s._liquidationPenalty = 200; // 200 ticks -> ~2.02%
-        s._EMAPeriod = 5 days;
-        s._fundingSF = 12 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2); // 0.12
-        s._feeThreshold = 1 ether;
-        s._openExpoImbalanceLimitBps = 500; // 5%
-        s._withdrawalExpoImbalanceLimitBps = 600; // 6%
-        s._depositExpoImbalanceLimitBps = 500; // 5%
-        s._closeExpoImbalanceLimitBps = 600; // 6%
-        s._rebalancerCloseExpoImbalanceLimitBps = 350; // 3.5%
-        s._longImbalanceTargetBps = 400; // 4%
-        s._positionFeeBps = 4; // 0.04%
-        s._vaultFeeBps = 4; // 0.04%
-        s._sdexRewardsRatioBps = 100; // 1%
-        s._sdexBurnOnDepositRatio = 5e6; // 5%
-        s._securityDepositValue = 0.5 ether;
-        s._EMA = int256(3 * 10 ** (Constants.FUNDING_RATE_DECIMALS - 4));
-
-        // since all USDN must be minted by the protocol, we check that the total supply is 0
-        if (usdn.totalSupply() != 0) {
-            revert UsdnProtocolInvalidUsdn(address(usdn));
-        }
-        if (feeCollector == address(0)) {
-            revert UsdnProtocolInvalidFeeCollector();
-        }
-
-        s._usdn = usdn;
-        s._sdex = sdex;
-        // make sure the USDN and SDEX tokens have the same number of decimals
-        if (usdn.decimals() != Constants.TOKENS_DECIMALS || sdex.decimals() != Constants.TOKENS_DECIMALS) {
-            revert UsdnProtocolInvalidTokenDecimals();
-        }
-
-        s._usdnMinDivisor = usdn.MIN_DIVISOR();
-        s._asset = asset;
-        uint8 assetDecimals = asset.decimals();
-        s._assetDecimals = assetDecimals;
-        if (assetDecimals < Constants.FUNDING_SF_DECIMALS) {
-            revert UsdnProtocolInvalidAssetDecimals(assetDecimals);
-        }
-        s._oracleMiddleware = oracleMiddleware;
-        uint8 priceFeedDecimals = oracleMiddleware.getDecimals();
-        s._priceFeedDecimals = priceFeedDecimals;
-        s._liquidationRewardsManager = liquidationRewardsManager;
-        s._tickSpacing = tickSpacing;
-        s._feeCollector = feeCollector;
-
-        s._targetUsdnPrice = uint128(10_087 * 10 ** (priceFeedDecimals - 4)); // $1.0087
-        s._usdnRebaseThreshold = uint128(1009 * 10 ** (priceFeedDecimals - 3)); // $1.009
-        s._minLongPosition = 2 * 10 ** assetDecimals; // 2 tokens
-        s._protocolFallbackAddr = address(protocolFallback);
+        Setters.setInitialStorage(initStorage);
     }
 
     /**
