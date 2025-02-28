@@ -11,6 +11,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from
 import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { Sdex } from "../../test/utils/Sdex.sol";
 
+/// @notice Configuration contract for the USDN protocol backed with WSTETH deployment.
 contract UsdnWstethConfig is DeploymentConfig {
     constructor() {
         CHAINLINK_ETH_PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
@@ -54,6 +55,12 @@ contract UsdnWstethConfig is DeploymentConfig {
         initStorage.minLongPosition = 2 * 10 ** assetDecimals; // 2 tokens
     }
 
+    /**
+     * @notice Set the protocol's peripheral contracts in the initialization struct.
+     * @param oracleMiddleware The WstEthOracleMiddleware contract.
+     * @param liquidationRewardsManager The LiquidationRewardsManager contract.
+     * @param usdn The USDN token contract.
+     */
     function _setPeriferalContracts(
         WstEthOracleMiddleware oracleMiddleware,
         LiquidationRewardsManager liquidationRewardsManager,
@@ -68,6 +75,10 @@ contract UsdnWstethConfig is DeploymentConfig {
         initStorage.usdn = usdn;
     }
 
+    /**
+     * @notice Set the protocol's fee collector in the initialization struct.
+     * @param feeCollector The address of the fee collector.
+     */
     function _setFeeCollector(address feeCollector) internal {
         initStorage.feeCollector = feeCollector;
     }

@@ -31,7 +31,7 @@ interface IUsdnProtocolImpl is
      * @notice Initializes the protocol's storage with the given values.
      * @dev This function should be called on deployment when creating the proxy.
      * It can only be called once.
-     * @param initStorage The initial storage values
+     * @param initStorage The initial storage values.
      * Any call with a function signature not present in this contract will be delegated to the fallback contract.
      */
     function initializeStorage(InitStorage calldata initStorage) external;

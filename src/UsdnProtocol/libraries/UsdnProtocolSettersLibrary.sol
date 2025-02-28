@@ -401,6 +401,10 @@ library UsdnProtocolSettersLibrary {
         emit IUsdnProtocolEvents.UsdnRebaseThresholdUpdated(newThreshold);
     }
 
+    /**
+     * @notice Set the initial storage during the initialization of the protocol.
+     * @param initStorage The initialization parameters struct.
+     */
     function setInitialStorage(Types.InitStorage calldata initStorage) external {
         Types.Storage storage s = Utils._getMainStorage();
 

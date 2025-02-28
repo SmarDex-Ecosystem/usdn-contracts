@@ -5,6 +5,7 @@ import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Sdex } from "../../test/utils/Sdex.sol";
 
+/// @notice Base configuration contract for protocol deployment.
 contract DeploymentConfig {
     address immutable CHAINLINK_ETH_PRICE;
     address immutable PYTH_ADDRESS;
