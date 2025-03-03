@@ -5,6 +5,7 @@ import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { ADMIN, DEPLOYER } from "../../../utils/Constants.sol";
+import { DefaultConfig } from "../../../utils/DefaultConfig.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { RolesUtils } from "../../../utils/RolesUtils.sol";
@@ -15,6 +16,7 @@ import { UsdnProtocolHandler } from "./Handler.sol";
 import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
+import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionUtils } from
@@ -32,7 +34,14 @@ import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
  * @title UsdnProtocolBaseFixture
  * @dev Utils for testing the USDN Protocol
  */
-contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors, IEventsErrors, IUsdnProtocolEvents {
+contract UsdnProtocolBaseFixture is
+    BaseFixture,
+    RolesUtils,
+    IUsdnProtocolErrors,
+    IEventsErrors,
+    IUsdnProtocolEvents,
+    DefaultConfig
+{
     struct Flags {
         bool enablePositionFees;
         bool enableProtocolFees;
@@ -137,21 +146,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, RolesUtils, IUsdnProtocolErrors
 
         UsdnProtocolHandler test = new UsdnProtocolHandler();
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+
+        _setPeripheralContracts(
+            WstEthOracleMiddleware(address(oracleMiddleware)),
+            liquidationRewardsManager,
+            usdn,
+            wstETH,
+            address(protocolFallback),
+            address(feeCollector),
+            sdex
+        );
+
         address proxy = UnsafeUpgrades.deployUUPSProxy(
-            address(test),
-            abi.encodeCall(
-                UsdnProtocolHandler.initializeStorageHandler,
-                (
-                    usdn,
-                    sdex,
-                    wstETH,
-                    oracleMiddleware,
-                    liquidationRewardsManager,
-                    _tickSpacing,
-                    address(feeCollector),
-                    protocolFallback
-                )
-            )
+            address(test), abi.encodeCall(UsdnProtocolHandler.initializeStorageHandler, (initStorage))
         );
         protocol = UsdnProtocolHandler(proxy);
 
