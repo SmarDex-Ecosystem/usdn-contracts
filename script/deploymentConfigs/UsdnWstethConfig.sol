@@ -61,7 +61,7 @@ contract UsdnWstethConfig is DeploymentConfig {
      * @param liquidationRewardsManager The LiquidationRewardsManager contract.
      * @param usdn The USDN token contract.
      */
-    function _setPeriferalContracts(
+    function _setPeripheralContracts(
         WstEthOracleMiddleware oracleMiddleware,
         LiquidationRewardsManager liquidationRewardsManager,
         Usdn usdn
