@@ -5,7 +5,7 @@ import { USER_1 } from "../../../test/utils/Constants.sol";
 import { UsdnTokenFixture } from "./utils/Fixtures.sol";
 
 /**
- * @custom:feature The `burnShares` function of `USDN`
+ * @custom:feature The `burn` function of `USDN`
  * @custom:background Given a user with 100 tokens
  */
 contract TestUsdnBurnTokens is UsdnTokenFixture {

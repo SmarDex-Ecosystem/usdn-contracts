@@ -22,4 +22,7 @@ interface IUsdnErrors {
 
     /// @dev The divisor value in storage is invalid (< 1).
     error UsdnInvalidDivisor();
+
+    /// @dev The current implementation does not allow rebasing.
+    error UsdnRebaseNotSupported();
 }
