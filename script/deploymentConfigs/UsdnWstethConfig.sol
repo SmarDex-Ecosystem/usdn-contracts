@@ -15,19 +15,14 @@ import { Sdex } from "../../test/utils/Sdex.sol";
 
 /// @notice Configuration contract for the USDN protocol backed with WSTETH deployment.
 contract UsdnWstethConfig is DeploymentConfig {
-    address immutable CHAINLINK_ETH_PRICE;
-    address immutable PYTH_ADDRESS;
-    bytes32 immutable PYTH_ETH_FEED_ID;
-    uint256 immutable CHAINLINK_GAS_PRICE_VALIDITY;
-    uint256 immutable CHAINLINK_PRICE_VALIDITY;
+    address constant CHAINLINK_ETH_PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+    address constant PYTH_ADDRESS = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
+    bytes32 constant PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
+    uint256 constant CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
+    uint256 constant CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
 
     constructor() {
-        CHAINLINK_ETH_PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
-        CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
-        CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
         INITIAL_LONG_AMOUNT = 200 ether;
-        PYTH_ADDRESS = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
-        PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
         SDEX = Sdex(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
         UNDERLYING_ASSET = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
 
