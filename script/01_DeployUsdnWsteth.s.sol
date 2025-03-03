@@ -8,6 +8,7 @@ import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnWstethConfig } from "./deploymentConfigs/UsdnWstethConfig.sol";
+import { Utils } from "./utils/Utils.s.sol";
 
 import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
@@ -23,7 +24,13 @@ import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol"
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract DeployUsdnWsteth is UsdnWstethConfig, Script {
-    IWstETH immutable WSTETH = IWstETH(address(UNDERLYING_ASSET));
+    IWstETH immutable WSTETH;
+    Utils utils;
+
+    constructor() {
+        WSTETH = IWstETH(address(UNDERLYING_ASSET));
+        utils = new Utils();
+    }
 
     /**
      * @notice Deploy the USDN ecosystem with the WstETH as underlying
@@ -45,6 +52,8 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
             IUsdnProtocol usdnProtocol_
         )
     {
+        utils.validateProtocol("UsdnProtocolImpl", "UsdnProtocolFallback");
+
         _setFeeCollector(msg.sender);
 
         (wstEthOracleMiddleware_, liquidationRewardsManager_, usdn_, wusdn_) = _deployAndSetPeripheralContracts();
@@ -54,6 +63,8 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
         rebalancer_ = _setRebalancerAndHandleUsdnRoles(usdnProtocol_, usdn_);
 
         _initializeProtocol(usdnProtocol_, wstEthOracleMiddleware_);
+
+        utils.validateProtocolConfig(usdnProtocol_, msg.sender);
     }
 
     /**

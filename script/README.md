@@ -7,10 +7,10 @@
 For a mainnet deployment, you can use the `01_DeployUsdnWsteth.s.sol` script with:
 
 ```bash
-forge script -f RPC_URL script/01_DeployUsdnWsteth.s.sol:DeployUsdnWsteth --broadcast -i 1 --batch-size 5
+forge clean && forge script -f RPC_URL script/01_DeployUsdnWsteth.s.sol:DeployUsdnWsteth --broadcast -i 1 --batch-size 5
 ```
 
-You can use `-t` or `-l` options instead of `-i 1` for trezor or ledger hardware wallet.
+You can use `-t` or `-l` options instead of `-i 1` for trezor or ledger hardware wallet. The `forge clean` command is necessary to use the OpenZeppelin verification tool.
 
 ### Fork mode
 
