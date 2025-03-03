@@ -8,10 +8,10 @@ import { USER_1 } from "../../utils/Constants.sol";
 import { UsdnNoRebaseTokenFixture } from "./utils/Fixtures.sol";
 
 /**
- * @custom:feature The `mintShares` function of `USDN`
+ * @custom:feature The `mintShares` function of `UsdnNoRebase`
  * @custom:background Given this contract is the contract owner
  */
-contract TestUsdnMintShares is UsdnNoRebaseTokenFixture {
+contract TestUsdnNoRebaseMintShares is UsdnNoRebaseTokenFixture {
     /**
      * @custom:scenario Minting shares to the zero address
      * @custom:when 100 shares are minted to the zero address
@@ -42,7 +42,7 @@ contract TestUsdnMintShares is UsdnNoRebaseTokenFixture {
      */
     function test_mintShares() public {
         vm.expectEmit(address(usdn));
-        emit Transfer(address(0), USER_1, 100 ether);
+        emit Transfer(address(0), address(this), 100 ether);
         usdn.mint(address(this), 100 ether);
 
         assertEq(usdn.balanceOf(address(this)), 100 ether, "balance of user");
