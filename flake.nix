@@ -6,10 +6,6 @@
       url = "github:shazow/foundry.nix/stable";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    solc = {
-      url = "github:hellwolf/solc.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     rust = {
       url = "github:oxalica/rust-overlay";
       inputs = {
@@ -18,12 +14,12 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, foundry, solc, rust }:
+  outputs = { self, nixpkgs, flake-utils, foundry, rust }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [ foundry.overlay solc.overlay rust.overlays.default ];
+          overlays = [ foundry.overlay rust.overlays.default ];
         };
         toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
         stdenv = if pkgs.stdenv.isLinux then pkgs.stdenvAdapters.useMoldLinker pkgs.stdenv else pkgs.stdenv;
@@ -42,13 +38,12 @@
             gyre-fonts
             just
             lcov
+            lintspec
             mdbook
             nodejs_20
-            solc_0_8_26
             trufflehog
             typescript
             typst
-            (solc.mkDefault pkgs solc_0_8_26)
           ];
 
           shellHook = ''

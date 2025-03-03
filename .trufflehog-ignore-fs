@@ -13,7 +13,6 @@
 ^lcov\.info$
 ^docs/
 ^\.idea/
-^natspec-smells\.txt$
 ^\.gas-snapshot$
 ^target/
 ^\.trufflehog.yml$
