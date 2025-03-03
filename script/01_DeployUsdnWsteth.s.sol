@@ -54,8 +54,8 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
     }
 
     /**
-     * @notice Deploy the orracle middleware, liquidation rewards manager, USDN and WUSDN contracts. Add then to the
-     * initialisation struct.
+     * @notice Deploy the oracle middleware, liquidation rewards manager, USDN and WUSDN contracts. Add then to the
+     * initialization struct.
      * @return wstEthOracleMiddleware_ The WstETH oracle middleware
      * @return liquidationRewardsManager_ The liquidation rewards manager
      * @return usdn_ The USDN contract
