@@ -1,3 +1,4 @@
 forge fmt --check
+lintspec
 just trufflehog
 # npm run snapshot:check

@@ -1,0 +1,8 @@
+paths = ["src"]
+exclude = [
+    "src/OracleMiddleware/mock",
+    "src/Usdn/Usdn.sol",
+    "src/UsdnProtocol/libraries",
+]
+constructor = true
+enforce_all = true
