@@ -517,7 +517,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
     function _refundEther() internal {
         uint256 amount = address(this).balance;
         if (amount > 0) {
-            // slither-disable-next-line arbitrary-send-eth
             (bool success,) = msg.sender.call{ value: amount }("");
             if (!success) {
                 revert RebalancerEtherRefundFailed();
@@ -795,7 +794,6 @@ contract Rebalancer is Ownable2Step, ReentrancyGuard, ERC165, IOwnershipCallback
 
         data.balanceOfAssetBefore = _asset.balanceOf(address(this));
 
-        // slither-disable-next-line reentrancy-eth
         outcome_ = _usdnProtocol.initiateClosePosition{ value: msg.value }(
             Types.PositionId({
                 tick: data.currentPositionData.tick,

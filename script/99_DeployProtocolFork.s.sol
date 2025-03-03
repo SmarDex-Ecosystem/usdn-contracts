@@ -84,7 +84,8 @@ contract DeployProtocol is Script {
         // we need to stop the broadcast before the OZ validation of the Usdn protocol
         vm.stopBroadcast();
 
-        UsdnProtocol_ = _deployProtocol(Usdn_, Sdex_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_);
+        Types.InitStorage memory initStorage;
+        UsdnProtocol_ = _deployProtocol(initStorage);
 
         vm.startBroadcast(_deployerAddress);
 
@@ -101,20 +102,10 @@ contract DeployProtocol is Script {
 
     /**
      * @notice Deploy the USDN protocol
-     * @param usdn The USDN token
-     * @param sdex The SDEX token
-     * @param wstETH The WstETH token
-     * @param wstEthOracleMiddleware The WstETH oracle middleware
-     * @param liquidationRewardsManager The liquidation rewards manager
+     * @param initStorage The storage initialization parameters
      * @return usdnProtocol_ The deployed protocol
      */
-    function _deployProtocol(
-        Usdn usdn,
-        Sdex sdex,
-        WstETH wstETH,
-        WstEthOracleMiddleware wstEthOracleMiddleware,
-        LiquidationRewardsManager liquidationRewardsManager
-    ) internal returns (IUsdnProtocol usdnProtocol_) {
+    function _deployProtocol(Types.InitStorage memory initStorage) internal returns (IUsdnProtocol usdnProtocol_) {
         // clean and build contracts for openzeppelin module
         _utils.cleanAndBuildContracts();
 
@@ -123,24 +114,9 @@ contract DeployProtocol is Script {
         opts.unsafeAllow = "external-library-linking,state-variable-immutable";
 
         vm.startBroadcast(_deployerAddress);
-
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        // UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         address proxy = Upgrades.deployUUPSProxy(
-            "UsdnProtocolImpl.sol",
-            abi.encodeCall(
-                UsdnProtocolImpl.initializeStorage,
-                (
-                    usdn,
-                    sdex,
-                    wstETH,
-                    wstEthOracleMiddleware,
-                    liquidationRewardsManager,
-                    100, // tick spacing 100 = 1.05%
-                    _feeCollector,
-                    protocolFallback
-                )
-            ),
-            opts
+            "UsdnProtocolImpl.sol", abi.encodeCall(UsdnProtocolImpl.initializeStorage, (initStorage)), opts
         );
 
         vm.stopBroadcast();
@@ -182,6 +158,7 @@ contract DeployProtocol is Script {
                 );
                 uint256 initialWSTETHMockedPrice = vm.envOr("INITIAL_WSTETH_MOCKED_PRICE", uint256(0));
                 if (initialWSTETHMockedPrice > 0) {
+                    MockWstEthOracleMiddleware(address(wstEthOracleMiddleware_)).setVerifySignature(false);
                     MockWstEthOracleMiddleware(address(wstEthOracleMiddleware_)).setWstethMockedPrice(
                         initialWSTETHMockedPrice
                     );
@@ -314,10 +291,10 @@ contract DeployProtocol is Script {
 
         usdnProtocol.setRebalancer(rebalancer);
 
-        // grant the minter and rebaser roles to the protocol and then renounce the admin role of the deployer
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
-        usdn.renounceRole(usdn.DEFAULT_ADMIN_ROLE(), _deployerAddress);
+        usdn.grantRole(usdn.MINTER_ROLE(), address(_deployerAddress));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(_deployerAddress));
 
         uint24 liquidationPenalty = usdnProtocol.getLiquidationPenalty();
         int24 tickSpacing = usdnProtocol.getTickSpacing();

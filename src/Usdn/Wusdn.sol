@@ -147,7 +147,6 @@ contract Wusdn is ERC20Permit, IWusdn {
     function _wrapShares(uint256 usdnShares, address to) private returns (uint256 wrappedAmount_) {
         // consecutively divide and multiply by `SHARES_RATIO` to ensure the amount of shares is a multiple of
         // `SHARES_RATIO`
-        // slither-disable-next-line divide-before-multiply
         wrappedAmount_ = usdnShares / SHARES_RATIO;
 
         if (wrappedAmount_ == 0) {

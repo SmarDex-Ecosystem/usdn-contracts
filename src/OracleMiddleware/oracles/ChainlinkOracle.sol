@@ -20,7 +20,6 @@ abstract contract ChainlinkOracle is IChainlinkOracle, IOracleMiddlewareErrors {
     AggregatorV3Interface internal immutable _priceFeed;
 
     /// @notice Tolerated elapsed time until we consider the data too old.
-    // slither-disable-next-line immutable-states
     uint256 internal _timeElapsedLimit;
 
     /**

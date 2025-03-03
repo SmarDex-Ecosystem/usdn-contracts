@@ -1,0 +1,39 @@
+name: Sync template changes across repositories
+
+on:
+  workflow_dispatch:
+  # every hour from 7AM to 5PM UTC inclusive, from monday to friday
+  schedule:
+  - cron: "0 7-17 * * 1-5"
+  
+jobs:
+  repo-sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          repositories: "${{ github.event.repository.name }},foundry-template"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: actions-template-sync
+        uses: AndreasAugustin/actions-template-sync@v2
+        with:
+          source_gh_token: ${{ steps.app-token.outputs.token }}
+          source_repo_path: Blockchain-RA2-Tech/foundry-template
+          upstream_branch: main
+          # PR settings
+          is_pr_cleanup: true # will remove previous update PR (if not merged) and create a new one
+          pr_branch_name_prefix: feature/template-sync
+          pr_title: "chore: sync changes from the Template repository"
+          pr_body: "This PR aims to update the repo with the latest changes from the template repository."

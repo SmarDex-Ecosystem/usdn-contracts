@@ -654,7 +654,6 @@ library UsdnProtocolLongLibrary {
         }
 
         // transfer the pending assets from the rebalancer to this contract
-        // slither-disable-next-line arbitrary-send-erc20
         address(s._asset).safeTransferFrom(address(rebalancer), address(this), data.positionAmount - data.positionValue);
 
         // add the bonus to the new rebalancer position and remove it from the vault
@@ -1317,7 +1316,6 @@ library UsdnProtocolLongLibrary {
             }
         } else {
             // rounding is desirable here
-            // slither-disable-next-line divide-before-multiply
             roundedTick_ = (tick / tickSpacing) * tickSpacing;
         }
     }
@@ -1346,7 +1344,6 @@ library UsdnProtocolLongLibrary {
             }
         } else {
             // rounding is desirable here
-            // slither-disable-next-line divide-before-multiply
             roundedTick_ = (tickWithPenalty / tickSpacing) * tickSpacing;
         }
     }

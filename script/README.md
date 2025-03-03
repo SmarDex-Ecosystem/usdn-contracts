@@ -1,76 +1,16 @@
 # Scripts
 
-## Deploy USDN token
-
-### Production Deployment
-
-The script verifies that the deployer address has a nonce of 0. It then deploys the token. Finally, it grants the `DEFAULT_ADMIN_ROLE` to the safe address and renounces this role from the deployer.
-
-Use the following command to deploy the USDN token:
-
-```bash
-./script/deployUsdnToken.sh -r RPC_URL -s SAFE_ADDRESS
-```
-
-It will then prompt you to enter the deployer's private key.
-
-Help can be displayed with the `-h` flag.
-
-```bash
-./script/deployUsdnToken.sh -h
-```
-
-A test mode is available with the `-t` or `--test` flag. It will deploy the token with default values (rpc url: localhost:8545, deployer: 29th account of anvil, safe: EthSafeAddr).
-
-```bash
-./script/deployUsdnToken.sh -t
-```
-
-### Standalone Deployment
-
-You can run the forge script directly with the following command:
-
-```bash
-forge script --private-key PRIVATE_KEY -f RPC_URL script/00_DeployUsdn.s.sol:DeployUsdn --broadcast --slow
-```
-
-Two environment variables are required: `DEPLOYER_ADDRESS` and `SAFE_ADDRESS`.
-
-## Deploy WUSDN token
-
-Use the following command to deploy the WUSDN token:
-
-```bash
-forge create --rpc-url RPC_URL --constructor-args USDN_ADDRESS \
-    --private-key PRIVATE_KEY src/Usdn/Wusdn.sol:Wusdn
-```
-
 ## Deploy protocol
 
 ### Production mode
 
-For a mainnet deployment, you have to use the bash script. The required variables are:
-
-- the safe address (that will be the owner of the protocol)
-- the rpc url
-- the WUSDN token address
+For a mainnet deployment, you can use the `01_DeployUsdnWsteth.s.sol` script with:
 
 ```bash
-deployMainnet.sh -s SAFE_ADDRESS -r RPC_URL
+forge clean && forge script -f RPC_URL script/01_DeployUsdnWsteth.s.sol:DeployUsdnWsteth --broadcast -i 1 --batch-size 5
 ```
 
-example:
-
-```bash
-./script/deployMainnet.sh -r 127.0.0.1:8545 -s 0x1E3e1128F6bC2264a19D7a065982696d356879c5
-```
-
-Two optional flags are available:
-
-- `-e` to get wstETH by sending ether to the wstETH contract
-- `-t` to deploy with a hardware wallet (ledger/trezor)
-
-The script can be run with the following command with `--test` flag to deploy with default values. (rpc url: localhost:8545, get wstETH: true, deployer : 29th account of anvil, safe: EthSafeAddr, is prod env: true)
+You can use `-t` or `-l` options instead of `-i 1` for trezor or ledger hardware wallet. The `forge clean` command is necessary to use the OpenZeppelin verification tool.
 
 ### Fork mode
 
@@ -78,49 +18,6 @@ The deployment script for the fork mode does not require any input:
 
 ```bash
 deployFork.sh
-```
-
-### Standalone mode
-
-You can run the forge script directly with the following command:
-
-```bash
-forge script script/01_DeployProtocol.s.sol:DeployProtocol -f RPC_URL --private-key PRIVATE_KEY --broadcast
-```
-
-Required environment variables: `DEPLOYER_ADDRESS` and `IS_PROD_ENV`. `SAFE_ADDRESS` is required only if `IS_PROD_ENV` is set to `true`. And `INIT_LONG_AMOUNT` is required if `IS_PROD_ENV` is set to `false`.
-
-If running on mainnet, remember to deploy the USDN token first with the `00_DeployUSDN.s.sol` script and set the `USDN_ADDRESS` environment variable.
-
-### Environment variables
-
-Environment variables can be used to control the script execution:
-
-- `INIT_LONG_AMOUNT`: amount to use for the `initialize` function call
-- `DEPLOYER_ADDRESS`: the address of the deployer
-- `USDN_ADDRESS`: the address of the USDN token
-- `WUSDN_ADDRESS`: required if running `01_Deploy.s.sol` in a production environment (not fork)
-- `GET_WSTETH`: whether to get wstETH by sending ether to the wstETH contract or not. Only applicable if `WSTETH_ADDRESS` is given.
-- `FEE_COLLECTOR`: the receiver of all protocol fees (set to `DEPLOYER_ADDRESS` if not set in the environment)
-- `SDEX_ADDRESS`: if provided, skips deployment of the SDEX token
-- `WSTETH_ADDRESS`: if provided, skips deployment of the wstETH token
-- `MIDDLEWARE_ADDRESS`: if provided, skips deployment of the oracle middleware
-- `PYTH_ADDRESS`: the contract address of the pyth oracle
-- `PYTH_ETH_FEED_ID`: the price ID of the ETH pyth oracle
-- `REDSTONE_ETH_FEED_ID`: the feed ID of the ETH Redstone oracle
-- `CHAINLINK_ETH_PRICE_ADDRESS`: the address of the ETH chainlink oracle
-- `CHAINLINK_ETH_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
-- `LIQUIDATION_REWARDS_MANAGER_ADDRESS`: if provided, skips deployment of the liquidation rewards manager
-- `REBALANCER_ADDRESS`: if provided, skips deployment of the rebalancer
-- `CHAINLINK_GAS_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
-
-Example using the real wstETH and depositing 10 ETH for both vault side and long side for mainnet deployment:
-
-```bash
-export INIT_LONG_AMOUNT=10000000000000000000
-export DEPLOYER_ADDRESS=0x1234567890123456789012345678901234567890
-export GET_WSTETH=true
-export IS_PROD_ENV=true
 ```
 
 ## Upgrade protocol
@@ -218,32 +115,18 @@ npm run verify -- PATH_TO_BROADCAST_FILE -e ETHERSCAN_API_KEY
 To show some extra debug you can add `-d` flag.
 If you are verifying contracts in another platform than Etherscan, you can specify the url with `--verifier-url`
 
-## Test Scripts
-
-Both scripts are designed to be executed using the Forge CLI. They are used to simulate the acceptance of ownership of the protocol contracts by the Safe address and the initialization of the protocol. Parameters can be specified via environment variables or, if not provided, will be prompted for during execution.
-
-- before the acceptance of ownership by the Safe address, it must be funded with ether. This can be done using the `cast` command of the Forge CLI. For example:
-
-```bash
-cast send 0x1E3e1128F6bC2264a19D7a065982696d356879c5 --private-key 0x233c86e887ac435d7f7dc64979d7758d69320906a0d340d2b6518b0fd20aa998 --value 800ether -r 127.0.0.1:8545
-```
-
-- **`AcceptOwnership`**: This script is intended for testing purposes only. It simulates the acceptance of ownership for all protocol-related contracts by the Safe address.
-
-```bash
-forge script script/52_AcceptOwnership.s.sol -f 127.0.0.1:8545 --broadcast --sender 0x1e3e1128f6bc2264a19d7a065982696d356879c5 --unlocked
-```
-
-- **`InitializeProtocol`**: This script is also intended for testing purposes only. It simulates the initialization of the protocol by the Safe address using the specified parameters.
-
-```bash
-forge script script/53_InitializeProtocol.s.sol -f 127.0.0.1:8545 --broadcast --sender 0x1e3e1128f6bc2264a19d7a065982696d356879c5 --unlocked
-```
-
 ## Build initialization transaction for Gnosis Safe
 
 This script is used to build the initialization transaction for the Gnosis Safe:
 
 ```bash
 npm run exportAbi && npx tsx script/utils/initTxBuilder.ts -r RPC_URL -t INITIAL_TOTAL_AMOUNT
+```
+
+## Deploy setRebaseHandlerManager
+
+Run this command to deploy the SetRebaseHandlerManager contract (your private key will be prompted):
+
+```bash
+forge script -l -f RPC_URL script/54_DeploySetRebaseHandlerManager.sol:DeploySetRebaseHandlerManager --broadcast
 ```

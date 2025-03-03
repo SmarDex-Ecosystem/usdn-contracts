@@ -3,11 +3,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     foundry = {
-      url = "github:shazow/foundry.nix"; # Use monthly branch for permanent releases
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    solc = {
-      url = "github:hellwolf/solc.nix";
+      url = "github:shazow/foundry.nix/stable";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     rust = {
@@ -18,12 +14,12 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, foundry, solc, rust }:
+  outputs = { self, nixpkgs, flake-utils, foundry, rust }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [ foundry.overlay solc.overlay rust.overlays.default ];
+          overlays = [ foundry.overlay rust.overlays.default ];
         };
         toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
         stdenv = if pkgs.stdenv.isLinux then pkgs.stdenvAdapters.useMoldLinker pkgs.stdenv else pkgs.stdenv;
@@ -42,14 +38,12 @@
             gyre-fonts
             just
             lcov
+            lintspec
             mdbook
             nodejs_20
-            slither-analyzer
-            solc_0_8_26
             trufflehog
             typescript
             typst
-            (solc.mkDefault pkgs solc_0_8_26)
           ];
 
           shellHook = ''

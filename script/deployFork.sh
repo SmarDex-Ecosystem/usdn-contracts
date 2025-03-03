@@ -50,7 +50,7 @@ echo "$FORK_ENV_DUMP"
 echo "$FORK_ENV_DUMP" >.env.fork
 
 # Set all roles for the deployer
-rolesArr=(
+usdnProtocolRolesArr=(
     "ADMIN_SET_EXTERNAL_ROLE"
     "ADMIN_SET_OPTIONS_ROLE"
     "ADMIN_SET_PROTOCOL_PARAMS_ROLE"
@@ -69,7 +69,7 @@ rolesArr=(
     "UNPAUSER_ROLE"
 )
 
-for role in "${rolesArr[@]}"; do
+for role in "${usdnProtocolRolesArr[@]}"; do
     encodedRole=$(cast keccak "$role")
 
     echo -e "\nGranting role $role to $DEPLOYER_ADDRESS..."
@@ -77,7 +77,8 @@ for role in "${rolesArr[@]}"; do
         --from $DEPLOYER_ADDRESS \
         "grantRole(bytes32 role, address account)" \
         $encodedRole $DEPLOYER_ADDRESS \
-        --private-key $deployerPrivateKey
+        --private-key $deployerPrivateKey \
+        --rpc-url $rpcUrl
 done
 
 popd >/dev/null

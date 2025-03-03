@@ -21,7 +21,7 @@ Example (note, there is no `script` import in the example):
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { console2 } from "forge-std/Test.sol";
+import { console } from "forge-std/Test.sol";
 import { StdStorage } from "forge-std/Script.sol";
 
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";

@@ -5,7 +5,7 @@ on:
 name: Release Workflow
 
 permissions:
-  id-token: write # Required for requesting AWS JWT
+  id-token: write # The OIDC ID token is used for authentication with JSR
   contents: write # Required for actions/checkout and push commit
   pull-requests: write # Required for creating pull-requests
 
@@ -30,13 +30,14 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Install Node 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          registry-url: 'https://registry.npmjs.org/'
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Install dependencies
@@ -51,12 +52,22 @@ jobs:
         run: forge doc && npx tsx script/utils/fixDocLinks.ts
         if: ${{ steps.release.outputs.release_created }}
 
-      - name: Configure AWS credentials
-        uses: backend-ra2-tech/composite-workflows/aws-login@main
-        with:
-          aws-role-to-assume: github-workflow-oidc-codeartifacts-deploy
+      - name: Publish to NPM
         if: ${{ steps.release.outputs.release_created }}
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish to CodeArtifact
-        run: npm publish
+      - name: Publish to JSR.io
         if: ${{ steps.release.outputs.release_created }}
+        run: npx jsr publish
+
+      - name: Publish to soldeer.xyz
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          SOLDEER_EMAIL: ${{ secrets.SOLDEER_EMAIL }}
+          SOLDEER_PASSWORD: ${{ secrets.SOLDEER_PASSWORD }}
+        run: |
+          forge soldeer login --email "$SOLDEER_EMAIL" --password "$SOLDEER_PASSWORD"
+          VERSION=$(npm pkg get version --workspaces=false | tr -d \")
+          forge soldeer push @smardex-usdn-contracts~$VERSION

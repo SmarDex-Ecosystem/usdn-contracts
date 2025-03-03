@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 env:
   FOUNDRY_PROFILE: heavy_ci
@@ -20,13 +21,11 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
 
       - name: Install Node 20
         uses: actions/setup-node@v4
@@ -45,3 +44,9 @@ jobs:
 
       - name: Run tests
         run: forge test --no-match-test "(ForkGasUsage)"
+
+  notify-on-failure:
+    needs: heavy-ci
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    uses: ./.github/workflows/notify_failure.yml
+    secrets: inherit

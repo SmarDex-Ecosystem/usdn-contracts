@@ -13,13 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
 
       - name: Install Node 20
         uses: actions/setup-node@v4
@@ -36,31 +34,8 @@ jobs:
       - name: Run tests
         run: forge test --no-match-test "(FFI|Fork)" --no-match-contract Fork
 
-  run-slither:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
-
-      - name: Install Node 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install deps
-        run: npm ci && forge soldeer install
-
-      - name: Install slither
-        uses: threeal/pipx-install-action@v1.0.0
-        with:
-          packages: slither-analyzer
-
-      - name: Run slither
-        run: |
-          slither --fail-none --json - . | jq '.results.detectors[] | .elements[0].source_mapping as $src | "::\( if .impact == "High" then "error" elif .impact == "Medium" then "warning" else "notice" end ) file=\( $src.filename_relative ),col=\( $src.starting_column ),endColumn=\( $src.ending_column ),line=\( $src.lines[0] )\( if $src.lines[0] == $src.lines[-1] then "" else ",endLine=" + "\( $src.lines[-1] )" end )::\( .description )"' | xargs -n1 echo
+  notify-on-failure:
+    needs: [run-ci]
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    uses: ./.github/workflows/notify_failure.yml
+    secrets: inherit
