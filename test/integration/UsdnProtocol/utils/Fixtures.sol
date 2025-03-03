@@ -19,6 +19,7 @@ import {
     SDEX,
     WSTETH
 } from "../../../utils/Constants.sol";
+import { DefaultConfig } from "../../../utils/DefaultConfig.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { RolesUtils } from "../../../utils/RolesUtils.sol";
@@ -46,7 +47,8 @@ contract UsdnProtocolBaseIntegrationFixture is
     RolesUtils,
     IUsdnProtocolErrors,
     IUsdnProtocolEvents,
-    IEventsErrors
+    IEventsErrors,
+    DefaultConfig
 {
     struct SetUpParams {
         uint128 initialDeposit;
@@ -170,21 +172,13 @@ contract UsdnProtocolBaseIntegrationFixture is
 
         implementation = new UsdnProtocolHandler();
         protocolFallback = new UsdnProtocolFallback();
+
+        _setPeripheralContracts(
+            oracleMiddleware, liquidationRewardsManager, usdn, wstETH, address(protocolFallback), ADMIN, sdex
+        );
+
         address proxy = UnsafeUpgrades.deployUUPSProxy(
-            address(implementation),
-            abi.encodeCall(
-                UsdnProtocolHandler.initializeStorageHandler,
-                (
-                    usdn,
-                    sdex,
-                    wstETH,
-                    oracleMiddleware,
-                    liquidationRewardsManager,
-                    100, // tick spacing 100 = ~1.005%
-                    ADMIN,
-                    protocolFallback
-                )
-            )
+            address(implementation), abi.encodeCall(UsdnProtocolHandler.initializeStorageHandler, (initStorage))
         );
         protocol = UsdnProtocolHandler(proxy);
 
