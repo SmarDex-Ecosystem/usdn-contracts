@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.1.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v1.0.1...v1.1.0) (2025-03-03)
+
+
+### Features
+
+* deploy SetRebaseHandlerManager ([#869](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/869)) ([33fd954](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/33fd9546e9c6bdea452172bcce044ef90f9c4fcf))
+* deployment configuration file ([#876](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/876)) ([6060feb](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/6060feb476a51294dd6d25d452cceca41961cc64))
+* SetRebaseHandlerManager contract ([#862](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/862)) ([b96e510](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/b96e5100a1ab1a8a103e48b56536ef76f6ef85e9))
+
+
+### Bug Fixes
+
+* fork deployment ([#870](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/870)) ([0c69af9](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/0c69af964207b4bf8345807d6abd6ec656d4c8e2))
+* jsr exports path ([#865](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/865)) ([c34d8ce](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/c34d8cedc8fa0d276183de9dbbe4a122146062b1))
+
+
+### Miscellaneous Chores
+
+* replace natspec-smells with lintspec ([#877](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/877)) ([eb7905a](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/eb7905a5d3db1f1afa3fc2f298fd13246321d505))
+* **template:** sync from template ([#871](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/871)) ([a45bbd1](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a45bbd10dae6f0508c39c793ed853cf6798b065f))
+
+
+### Code Refactoring
+
+* **script:** split the prod/fork deployments ([#874](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/874)) ([9f0d931](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/9f0d9317c7d9c774418aa1e76c9819c66b466b9f))
+
+
+### Build System
+
+* **nix:** use stable foundry version ([#867](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/867)) ([4451dab](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/4451dab7cf4266cd5f1306740691715a4d577226))
+
 ## [1.0.1](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v1.0.0...v1.0.1) (2025-02-07)
 
 
