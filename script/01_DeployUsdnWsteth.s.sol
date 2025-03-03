@@ -44,7 +44,7 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
     {
         _setFeeCollector(msg.sender);
 
-        (wstEthOracleMiddleware_, liquidationRewardsManager_, usdn_, wusdn_) = _deployAndSetPeriferalContracts();
+        (wstEthOracleMiddleware_, liquidationRewardsManager_, usdn_, wusdn_) = _deployAndSetPeripheralContracts();
 
         usdnProtocol_ = _deployProtocol(initStorage);
 
@@ -61,7 +61,7 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
      * @return usdn_ The USDN contract
      * @return wusdn_ The WUSDN contract
      */
-    function _deployAndSetPeriferalContracts()
+    function _deployAndSetPeripheralContracts()
         internal
         returns (
             WstEthOracleMiddleware wstEthOracleMiddleware_,
