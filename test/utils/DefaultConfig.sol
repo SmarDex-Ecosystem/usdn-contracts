@@ -53,15 +53,12 @@ contract DefaultConfig {
     ) internal {
         initStorage.oracleMiddleware = oracleMiddleware;
         uint8 priceFeedDecimals = oracleMiddleware.getDecimals();
-        initStorage.priceFeedDecimals = priceFeedDecimals;
         initStorage.liquidationRewardsManager = liquidationRewardsManager;
         initStorage.targetUsdnPrice = uint128(10_087 * 10 ** (priceFeedDecimals - 4)); // $1.0087
         initStorage.usdnRebaseThreshold = uint128(1009 * 10 ** (priceFeedDecimals - 3)); // $1.009
         initStorage.usdn = usdn;
         initStorage.asset = wstETH;
-        uint8 assetDecimals = wstETH.decimals();
-        initStorage.assetDecimals = assetDecimals;
-        initStorage.minLongPosition = 2 * 10 ** assetDecimals; // 2 tokens
+        initStorage.minLongPosition = 2 * 10 ** wstETH.decimals(); // 2 tokens
         initStorage.protocolFallbackAddr = usdnProtocolFallback;
         initStorage.feeCollector = feeCollector;
         initStorage.sdex = sdex;

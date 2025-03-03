@@ -18,10 +18,13 @@ import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.s
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract DeployUsdnWsteth is UsdnWstethConfig, Script {
+    IWstETH immutable WSTETH = IWstETH(address(UNDERLYING_ASSET));
+
     /**
      * @notice Deploy the USDN ecosystem with the WstETH as underlying
      * @return wstEthOracleMiddleware_ The WstETH oracle middleware
@@ -95,7 +98,7 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
         vm.startBroadcast();
 
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
-        initStorage.protocolFallbackAddr = address(protocolFallback);
+        _setProtocolFallback(protocolFallback);
 
         address proxy = Upgrades.deployUUPSProxy(
             "UsdnProtocolImpl.sol", abi.encodeCall(UsdnProtocolImpl.initializeStorage, (initStorage)), opts

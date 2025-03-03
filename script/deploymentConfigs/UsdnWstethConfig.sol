@@ -3,16 +3,24 @@ pragma solidity 0.8.26;
 
 import { DeploymentConfig } from "./DeploymentConfig.sol";
 
-import { LiquidationRewardsManager } from "../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
-import { WstEthOracleMiddleware } from "../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IWstETH } from "../../src/interfaces/IWstETH.sol";
+import { ILiquidationRewardsManager } from
+    "../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManager.sol";
+import { IOracleMiddleware } from "../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IUsdn } from "../../src/interfaces/Usdn/IUsdn.sol";
+import { IUsdnProtocolFallback } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { Sdex } from "../../test/utils/Sdex.sol";
 
 /// @notice Configuration contract for the USDN protocol backed with WSTETH deployment.
 contract UsdnWstethConfig is DeploymentConfig {
+    address immutable CHAINLINK_ETH_PRICE;
+    address immutable PYTH_ADDRESS;
+    bytes32 immutable PYTH_ETH_FEED_ID;
+    uint256 immutable CHAINLINK_GAS_PRICE_VALIDITY;
+    uint256 immutable CHAINLINK_PRICE_VALIDITY;
+
     constructor() {
         CHAINLINK_ETH_PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
         CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
@@ -21,7 +29,7 @@ contract UsdnWstethConfig is DeploymentConfig {
         PYTH_ADDRESS = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
         PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
         SDEX = Sdex(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
-        WSTETH = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
+        UNDERLYING_ASSET = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
 
         initStorage.minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1); // x1.1
         initStorage.maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS; // x10
@@ -49,37 +57,31 @@ contract UsdnWstethConfig is DeploymentConfig {
         initStorage.EMA = int256(3 * 10 ** (Constants.FUNDING_RATE_DECIMALS - 4)); // 0.0003
         initStorage.tickSpacing = 100;
         initStorage.sdex = SDEX;
-        initStorage.asset = WSTETH;
-        uint8 assetDecimals = WSTETH.decimals();
-        initStorage.assetDecimals = assetDecimals;
-        initStorage.minLongPosition = 2 * 10 ** assetDecimals; // 2 tokens
+        initStorage.asset = UNDERLYING_ASSET;
+        initStorage.minLongPosition = 2 * 10 ** UNDERLYING_ASSET.decimals(); // 2 tokens
     }
 
-    /**
-     * @notice Set the protocol's peripheral contracts in the initialization struct.
-     * @param oracleMiddleware The WstEthOracleMiddleware contract.
-     * @param liquidationRewardsManager The LiquidationRewardsManager contract.
-     * @param usdn The USDN token contract.
-     */
+    /// @inheritdoc DeploymentConfig
     function _setPeripheralContracts(
-        WstEthOracleMiddleware oracleMiddleware,
-        LiquidationRewardsManager liquidationRewardsManager,
-        Usdn usdn
-    ) internal {
+        IOracleMiddleware oracleMiddleware,
+        ILiquidationRewardsManager liquidationRewardsManager,
+        IUsdn usdn
+    ) internal override {
         initStorage.oracleMiddleware = oracleMiddleware;
         uint8 priceFeedDecimals = oracleMiddleware.getDecimals();
-        initStorage.priceFeedDecimals = priceFeedDecimals;
         initStorage.liquidationRewardsManager = liquidationRewardsManager;
         initStorage.targetUsdnPrice = uint128(10_087 * 10 ** (priceFeedDecimals - 4)); // $1.0087
         initStorage.usdnRebaseThreshold = uint128(1009 * 10 ** (priceFeedDecimals - 3)); // $1.009
         initStorage.usdn = usdn;
     }
 
-    /**
-     * @notice Set the protocol's fee collector in the initialization struct.
-     * @param feeCollector The address of the fee collector.
-     */
-    function _setFeeCollector(address feeCollector) internal {
+    /// @inheritdoc DeploymentConfig
+    function _setFeeCollector(address feeCollector) internal override {
         initStorage.feeCollector = feeCollector;
+    }
+
+    /// @inheritdoc DeploymentConfig
+    function _setProtocolFallback(IUsdnProtocolFallback protocolFallback) internal override {
+        initStorage.protocolFallbackAddr = address(protocolFallback);
     }
 }

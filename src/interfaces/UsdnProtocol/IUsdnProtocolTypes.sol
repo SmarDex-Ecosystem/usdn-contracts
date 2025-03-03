@@ -698,8 +698,6 @@ interface IUsdnProtocolTypes {
      * @notice Structure to hold initial parameters for the protocol.
      * @param tickSpacing The liquidation tick spacing for storing long positions.
      * @param asset The asset ERC20 contract.
-     * @param assetDecimals The number of decimals used by the `_asset`.
-     * @param priceFeedDecimals The price feed decimals (18).
      * @param usdn The USDN ERC20 contract.
      * @param sdex The SDEX ERC20 contract.
      * @param oracleMiddleware The oracle middleware contract.
@@ -740,8 +738,6 @@ interface IUsdnProtocolTypes {
     struct InitStorage {
         int24 tickSpacing;
         IERC20Metadata asset;
-        uint8 assetDecimals;
-        uint8 priceFeedDecimals;
         IUsdn usdn;
         IERC20Metadata sdex;
         IBaseOracleMiddleware oracleMiddleware;
