@@ -56,7 +56,7 @@ contract RebalancerFixture is
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         UsdnProtocolImpl implementation = new UsdnProtocolImpl();
 
-        _setPeriferalContracts(
+        _setPeripheralContracts(
             WstEthOracleMiddleware(address(oracleMiddleware)),
             liquidationRewardsManager,
             usdn,

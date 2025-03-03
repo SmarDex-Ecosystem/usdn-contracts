@@ -173,7 +173,7 @@ contract UsdnProtocolBaseIntegrationFixture is
         implementation = new UsdnProtocolHandler();
         protocolFallback = new UsdnProtocolFallback();
 
-        _setPeriferalContracts(
+        _setPeripheralContracts(
             oracleMiddleware, liquidationRewardsManager, usdn, wstETH, address(protocolFallback), ADMIN, sdex
         );
 

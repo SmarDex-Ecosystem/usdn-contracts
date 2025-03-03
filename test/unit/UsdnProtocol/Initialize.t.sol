@@ -33,7 +33,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         UsdnProtocolHandler test = new UsdnProtocolHandler();
 
-        _setPeriferalContracts(
+        _setPeripheralContracts(
             WstEthOracleMiddleware(address(oracleMiddleware)),
             liquidationRewardsManager,
             usdn,

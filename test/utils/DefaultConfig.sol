@@ -42,7 +42,7 @@ contract DefaultConfig {
         initStorage.tickSpacing = 100;
     }
 
-    function _setPeriferalContracts(
+    function _setPeripheralContracts(
         WstEthOracleMiddleware oracleMiddleware,
         LiquidationRewardsManager liquidationRewardsManager,
         Usdn usdn,

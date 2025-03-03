@@ -79,7 +79,7 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
         wusdn_ = new Wusdn(usdn_);
         vm.stopBroadcast();
 
-        _setPeriferalContracts(wstEthOracleMiddleware_, liquidationRewardsManager_, usdn_);
+        _setPeripheralContracts(wstEthOracleMiddleware_, liquidationRewardsManager_, usdn_);
     }
 
     /**

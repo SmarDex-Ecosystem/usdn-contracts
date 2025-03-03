@@ -147,7 +147,7 @@ contract UsdnProtocolBaseFixture is
         UsdnProtocolHandler test = new UsdnProtocolHandler();
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
 
-        _setPeriferalContracts(
+        _setPeripheralContracts(
             WstEthOracleMiddleware(address(oracleMiddleware)),
             liquidationRewardsManager,
             usdn,
