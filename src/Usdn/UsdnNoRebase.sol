@@ -82,7 +82,7 @@ contract UsdnNoRebase is IUsdn, ERC20Permit, ERC20Burnable, Ownable {
 
     /// @inheritdoc IUsdn
     function sharesOf(address account) public view returns (uint256 shares_) {
-        return balanceOf(account);
+        shares_ = balanceOf(account);
     }
 
     /// @inheritdoc IUsdn
@@ -107,7 +107,7 @@ contract UsdnNoRebase is IUsdn, ERC20Permit, ERC20Burnable, Ownable {
 
     /// @inheritdoc IUsdn
     function divisor() external pure returns (uint256 divisor_) {
-        return MAX_DIVISOR;
+        divisor_ = MAX_DIVISOR;
     }
 
     /// @inheritdoc IUsdn
@@ -115,7 +115,7 @@ contract UsdnNoRebase is IUsdn, ERC20Permit, ERC20Burnable, Ownable {
 
     /// @inheritdoc IUsdn
     function maxTokens() public pure returns (uint256 maxTokens_) {
-        return type(uint256).max;
+        maxTokens_ = type(uint256).max;
     }
 
     /// @inheritdoc IUsdn
