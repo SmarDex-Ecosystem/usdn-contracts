@@ -30,7 +30,7 @@ contract TestUsdnNoRebaseTransferShares is UsdnNoRebaseTokenFixture {
 
     /**
      * @custom:scenario Transfer shares to another user with insufficient balance
-     * @custom:when We try to transfer 100 ether shares to user 1
+     * @custom:when We try to transfer 150 ether shares to user 1
      * @custom:then The transaction reverts with the `ERC20InsufficientBalance` error
      */
     function test_RevertWhen_transferSharesInsufficientBalance() public {

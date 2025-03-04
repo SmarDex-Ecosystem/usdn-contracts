@@ -31,10 +31,10 @@ contract TestUsdnNoRebaseRebase is UsdnNoRebaseTokenFixture {
     }
 
     /**
-     * @custom:scenario Rebase by adjusting the divisor
+     * @custom:scenario A call to the rebase function should not do anything
      * @custom:given A user with 100 USDN
      * @custom:and This contract is the owner
-     * @custom:when The divisor is adjusted to MAX_DIVISOR / 10
+     * @custom:when The `rebase` function is called
      * @custom:then No event is emitted
      * @custom:and the total supply of tokens and shares do not change
      */

@@ -18,9 +18,9 @@ contract TestUsdnNoRebaseBurnShares is UsdnNoRebaseTokenFixture {
     /**
      * @custom:scenario Users burning its tokens
      * @custom:when 50 USDN are burned
-     * @custom:then The `Transfer` event is emitted with this address as the sender, this contract as the recipient and
-     * amount 50
-     * @custom:and This address' balance is decreased by 50
+     * @custom:then The `Transfer` event is emitted with this address as the sender, the 0 address as the recipient and
+     * an amount of 50 ether
+     * @custom:and This address' balance is decreased by 50 ether
      */
     function test_burnShares() public {
         vm.expectEmit(address(usdn));

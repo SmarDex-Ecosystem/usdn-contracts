@@ -20,10 +20,10 @@ contract TestUsdnNoRebaseBurnSharesFrom is UsdnNoRebaseTokenFixture {
      * @custom:scenario Burning from a user with allowance
      * @custom:given An approved amount of 50 USDN
      * @custom:when 50 USDN are burned from the user
-     * @custom:then The `Transfer` event is emitted with the user as the sender, this contract as the recipient and
-     * amount 50
-     * @custom:and The user's balance is decreased by 50
-     * @custom:and The allowance is decreased by 50
+     * @custom:then The `Transfer` event is emitted with the user as the sender, the 0 address as the recipient and
+     * an amount of 50 ether
+     * @custom:and The user's balance is decreased by 50 ether
+     * @custom:and The allowance is decreased by 50 ether
      */
     function test_burnSharesFrom() public {
         vm.prank(USER_1);
