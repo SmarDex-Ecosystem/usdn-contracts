@@ -12,6 +12,8 @@ import { MockChainlinkOnChain } from "../utils/MockChainlinkOnChain.sol";
 import { MockPyth } from "../utils/MockPyth.sol";
 
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { WusdnToEthOracleMiddleware } from "../../../../src/OracleMiddleware/WusdnToEthOracleMiddleware.sol";
+import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -179,5 +181,53 @@ contract WstethBaseFixture is BaseFixture, ActionsFixture {
 
     function stethToWsteth(uint256 amount, uint256 stEthPerToken) public pure returns (uint256) {
         return amount * stEthPerToken / 1 ether;
+    }
+}
+
+/// @dev Utils for testing the short oracle middleware
+contract WusdnToEthBaseFixture is BaseFixture, ActionsFixture {
+    MockPyth internal mockPyth;
+    MockChainlinkOnChain internal mockChainlinkOnChain;
+    WusdnToEthOracleMiddleware public middleware;
+    Usdn public usdn;
+
+    function setUp() public virtual {
+        vm.warp(1_704_063_600); // 01/01/2024 @ 12:00am (UTC+2)
+
+        mockPyth = new MockPyth();
+        mockChainlinkOnChain = new MockChainlinkOnChain();
+        usdn = new Usdn(address(this), address(this));
+        usdn.rebase(9e17);
+        middleware =
+            new WusdnToEthOracleMiddleware(address(mockPyth), 0, address(mockChainlinkOnChain), address(usdn), 1 hours);
+    }
+
+    function test_setUp() public {
+        assertEq(address(middleware.getPyth()), address(mockPyth));
+        assertEq(address(middleware.getPriceFeed()), address(mockChainlinkOnChain));
+
+        assertEq(mockPyth.lastPublishTime(), block.timestamp);
+        assertEq(mockChainlinkOnChain.latestTimestamp(), block.timestamp);
+
+        /* ----------------------------- Test pyth mock ----------------------------- */
+        bytes[] memory updateData = new bytes[](1);
+        bytes32[] memory priceIds = new bytes32[](1);
+        PythStructs.PriceFeed[] memory priceFeeds = mockPyth.parsePriceFeedUpdatesUnique{
+            value: mockPyth.getUpdateFee(updateData)
+        }(updateData, priceIds, 1000, 0);
+
+        assertEq(priceFeeds.length, 1);
+        assertEq(priceFeeds[0].price.price, 2000e8);
+        assertEq(priceFeeds[0].price.conf, 20e8);
+        assertEq(priceFeeds[0].price.expo, -8);
+        assertEq(priceFeeds[0].price.publishTime, 1000);
+
+        /* ---------------------- Test chainlink on chain mock ---------------------- */
+        (, int256 price,, uint256 updatedAt,) = mockChainlinkOnChain.latestRoundData();
+        assertEq(price, 2000e8);
+        assertEq(updatedAt, block.timestamp);
+
+        /* ------------------------------ USDN divisor ------------------------------ */
+        assertEq(usdn.divisor(), 9e17, "USDN divisor");
     }
 }
