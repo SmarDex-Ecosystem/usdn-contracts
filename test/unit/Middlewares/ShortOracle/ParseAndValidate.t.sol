@@ -37,6 +37,19 @@ contract TestShortOracleParseAndValidatePrice is ShortBaseFixture {
     }
 
     /**
+     * @custom:scenario Parse and validate the neutral price
+     * @custom:given ETH price is 2000 USD and estimated WUSDN price is $1.111111... ($1/0.9)
+     * @custom:when The price is retrieved
+     * @custom:then The price is 0.000555555555555555 ETH/WUSDN
+     */
+    function test_parseAndValidatePriceNeutral() public {
+        PriceInfo memory price = shortOracle.parseAndValidatePrice{
+            value: shortOracle.validationCost(MOCK_PYTH_DATA, Types.ProtocolAction.Liquidation)
+        }("", uint128(block.timestamp), Types.ProtocolAction.Liquidation, MOCK_PYTH_DATA);
+        assertEq(price.price, 0.000555555555555555 ether, "neutral price");
+    }
+
+    /**
      * @custom:scenario Parse and validate the price
      * @custom:given ETH price is 2000 USD in pyth and chainlink oracles
      * @custom:and The validationDelay is respected
