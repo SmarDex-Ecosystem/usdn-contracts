@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity 0.8.26;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { console } from "forge-std/Test.sol";
 
 import { IFeeManager } from "../../../../../src/interfaces/OracleMiddleware/IFeeManager.sol";
 
@@ -16,12 +15,16 @@ interface IWERC20 {
 contract MockFeeManager is IERC165 {
     using SafeERC20 for IERC20;
 
+    /* -------------------------------------------------------------------------- */
+    /*                                   STRUCTS                                  */
+    /* -------------------------------------------------------------------------- */
+
     /**
-     * @notice The structure to hold a fee and reward to verify a report
-     * @param digest the digest linked to the fee and reward
-     * @param fee the fee paid to verify the report
-     * @param reward the reward paid upon verification
-     * @param appliedDiscount the discount applied to the reward
+     * @notice The structure to hold a fee and reward to verify a report.
+     * @param configDigest The digest linked to the fee and reward.
+     * @param fee The fee paid to verify the report.
+     * @param reward The reward paid upon verification.
+     * @param appliedDiscount The discount applied to the reward.
      */
     struct FeeAndReward {
         bytes32 configDigest;
@@ -31,69 +34,86 @@ contract MockFeeManager is IERC165 {
     }
 
     /**
-     * @notice The structure to hold a fee payment notice
-     * @param poolId the poolId receiving the payment
-     * @param amount the amount being paid
+     * @notice The structure to hold a fee payment notice.
+     * @param poolId The poolId receiving the payment.
+     * @param amount The amount being paid.
      */
     struct FeePayment {
         bytes32 poolId;
         uint192 amount;
     }
 
-    /// @notice list of subscribers and their discounts subscriberDiscounts[subscriber][feedId][token]
+    /* -------------------------------------------------------------------------- */
+    /*                                   PRIVATE                                  */
+    /* -------------------------------------------------------------------------- */
+
+    /// @notice The total discount that can be applied to a fee, 1e18 = 100% discount.
+    uint256 private constant PERCENTAGE_SCALAR = 1e18;
+
+    /* -------------------------------------------------------------------------- */
+    /*                                   PUBLIC                                   */
+    /* -------------------------------------------------------------------------- */
+
+    /// @notice The list of subscribers and their discounts subscriberDiscounts[subscriber][feedId][token].
     mapping(address => mapping(bytes32 => mapping(address => uint256))) public s_subscriberDiscounts;
 
-    /// @notice the total discount that can be applied to a fee, 1e18 = 100% discount
-    uint64 private constant PERCENTAGE_SCALAR = 1e18;
-
-    /// @notice the native token address
+    /// @notice The native token address.
     address public constant i_nativeAddress = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
-    /// @notice the surcharge fee to be paid if paying in native
+    /// @notice The surcharge fee to be paid if paying in native.
     uint256 public s_nativeSurcharge;
 
-    /// @notice the error thrown if the discount or surcharge is invalid
+    /* -------------------------------------------------------------------------- */
+    /*                                   ERRORS                                   */
+    /* -------------------------------------------------------------------------- */
+
+    /// @notice The error thrown if the discount or surcharge is invalid.
     error InvalidSurcharge();
 
-    /// @notice the error thrown if the discount is invalid
+    /// @notice The error thrown if the discount is invalid.
     error InvalidDiscount();
 
-    /// @notice the error thrown if the address is invalid
+    /// @notice The error thrown if the address is invalid.
     error InvalidAddress();
 
-    /// @notice thrown if msg.value is supplied with a bad quote
+    /// @notice Thrown if msg.value is supplied with a bad quote.
     error InvalidDeposit();
 
-    /// @notice thrown if a report has expired
+    /// @notice Thrown if a report has expired.
     error ExpiredReport();
 
-    /// @notice thrown if a report has no quote
+    /// @notice Thrown if a report has no quote.
     error InvalidQuote();
 
-    /// @notice Emitted whenever a subscriber's discount is updated
-    /// @param subscriber address of the subscriber to update discounts for
-    /// @param feedId Feed ID for the discount
-    /// @param token Token address for the discount
-    /// @param discount Discount to apply, in relation to the PERCENTAGE_SCALAR
-    event SubscriberDiscountUpdated(address indexed subscriber, bytes32 indexed feedId, address token, uint64 discount);
+    /* -------------------------------------------------------------------------- */
+    /*                                   EVENTS                                   */
+    /* -------------------------------------------------------------------------- */
 
-    /// @notice Emitted when updating the native surcharge
-    /// @param newSurcharge Surcharge amount to apply relative to PERCENTAGE_SCALAR
+    /**
+     * @notice Emitted whenever a subscriber's discount is updated.
+     * @param subscriber The address of the subscriber to update discounts for.
+     * @param feedId Feed ID for the discount.
+     * @param token Token address for the discount.
+     * @param discount Discount to apply, in relation to the `PERCENTAGE_SCALAR`.
+     */
+    event SubscriberDiscountUpdated(
+        address indexed subscriber, bytes32 indexed feedId, address indexed token, uint64 discount
+    );
+
+    /**
+     * @notice Emitted when updating the native surcharge.
+     * @param newSurcharge The surcharge amount to apply relative to `PERCENTAGE_SCALAR`.
+     */
     event NativeSurchargeUpdated(uint64 newSurcharge);
 
-    /// @notice Emitted when funds are withdrawn
-    /// @param adminAddress Address of the admin
-    /// @param recipient Address of the recipient
-    /// @param assetAddress Address of the asset withdrawn
-    /// @param quantity Amount of the asset withdrawn
-    event Withdraw(address adminAddress, address recipient, address assetAddress, uint192 quantity);
-
-    /// @notice Emits when a fee has been processed
-    /// @param configDigest Config digest of the fee processed
-    /// @param subscriber Address of the subscriber who paid the fee
-    /// @param fee Fee paid
-    /// @param reward Reward paid
-    /// @param appliedDiscount Discount applied to the fee
+    /**
+     * @notice Emitted when a fee has been processed.
+     * @param configDigest The config digest of the fee processed.
+     * @param subscriber The address of the subscriber who paid the fee.
+     * @param fee The fee paid.
+     * @param reward The reward paid.
+     * @param appliedDiscount The discount applied to the fee.
+     */
     event DiscountApplied(
         bytes32 indexed configDigest,
         address indexed subscriber,
@@ -102,14 +122,23 @@ contract MockFeeManager is IERC165 {
         uint256 appliedDiscount
     );
 
+    /* -------------------------------------------------------------------------- */
+    /*                             EXTERNAL FUNCTIONS                             */
+    /* -------------------------------------------------------------------------- */
+
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
         return interfaceId == this.processFee.selector || interfaceId == this.processFeeBulk.selector;
     }
 
+    /**
+     * @notice Processes the fee and reward for a given payload.
+     * @param payload The encoded data containing the report and other necessary information.
+     * @param subscriber The address of the subscriber trying to verify.
+     */
     function processFee(bytes calldata payload, bytes calldata, address subscriber) external payable {
         (IFeeManager.Asset memory fee, IFeeManager.Asset memory reward, uint256 appliedDiscount) =
             _processFee(payload, subscriber);
-        console.log("fee.amount", fee.amount);
 
         if (fee.amount == 0) {
             _tryReturnChange(subscriber, msg.value);
@@ -122,35 +151,51 @@ contract MockFeeManager is IERC165 {
         _handleFeesAndRewards(subscriber, feeAndReward, 0, 1);
     }
 
+    /**
+     * @notice Processes fees and rewards for a batch of given payloads.
+     * @param payloads An array of encoded data containing reports and other necessary information.
+     * @param parameterPayload The additional parameter payload (not used in the current implementation).
+     * @param subscriber The address of the subscriber trying to verify.
+     */
     function processFeeBulk(bytes[] calldata payloads, bytes calldata parameterPayload, address subscriber)
         external
         payable
     { }
 
+    /**
+     * @notice Calculate the applied fee and reward from a report. If the sender is a subscriber, they will receive a
+     * discount.
+     * @param subscriber The address of the subscriber trying to verify.
+     * @param report The report for which the fee and reward are calculated.
+     * @param quoteAddress The address of the quote payment token.
+     * @return fee_ The calculated fee data.
+     * @return rewards_ The calculated reward data (currently not implemented, returns default value).
+     * @return discount_ The current discount applied.
+     */
     function getFeeAndReward(address subscriber, bytes memory report, address quoteAddress)
         public
         view
         returns (IFeeManager.Asset memory fee_, IFeeManager.Asset memory rewards_, uint256 discount_)
     {
-        // get the feedId from the report
+        // Get the feedId from the report
         bytes32 feedId = bytes32(report);
 
-        // verify the quote payload is a supported token
+        // Verify the quote payload is a supported token
         if (quoteAddress != i_nativeAddress) {
             revert InvalidQuote();
         }
 
-        //decode the report depending on the version
+        // Decode the report depending on the version
         uint256 nativeQuantity;
         uint256 expiresAt;
         (,,, nativeQuantity,, expiresAt) = abi.decode(report, (bytes32, uint32, uint32, uint192, uint192, uint32));
 
-        //read the timestamp bytes from the report data and verify it has not expired
+        // Read the timestamp bytes from the report data and verify it has not expired
         if (expiresAt < block.timestamp) {
             revert ExpiredReport();
         }
 
-        //get the discount being applied
+        // Get the discount being applied
         discount_ = s_subscriberDiscounts[subscriber][feedId][quoteAddress];
 
         uint256 surchargedFee =
@@ -159,12 +204,13 @@ contract MockFeeManager is IERC165 {
         fee_.assetAddress = quoteAddress;
         fee_.amount = Math.ceilDiv(surchargedFee * (PERCENTAGE_SCALAR - discount_), PERCENTAGE_SCALAR);
 
-        console.log("fee_.assetAddress", fee_.assetAddress);
-        console.log("fee_.amount", fee_.amount);
-
         return (fee_, rewards_, discount_);
     }
 
+    /**
+     * @notice Set the surcharge fee to be paid if paying in native.
+     * @param surcharge The new surcharge fee value.
+     */
     function setNativeSurcharge(uint64 surcharge) external {
         if (surcharge > PERCENTAGE_SCALAR) revert InvalidSurcharge();
 
@@ -173,10 +219,17 @@ contract MockFeeManager is IERC165 {
         emit NativeSurchargeUpdated(surcharge);
     }
 
+    /**
+     * @notice Update the subscriber discount for a specific feed and token.
+     * @param subscriber The address of the subscriber.
+     * @param feedId The ID of the feed for which the discount is being updated.
+     * @param token The address of the token (LINK or native).
+     * @param discount The new discount value to be applied.
+     */
     function updateSubscriberDiscount(address subscriber, bytes32 feedId, address token, uint64 discount) external {
-        //make sure the discount is not greater than the total discount that can be applied
+        // Ensure the discount is not greater than the total discount that can be applied
         if (discount > PERCENTAGE_SCALAR) revert InvalidDiscount();
-        //make sure the token is either LINK or native
+        // Ensure the token is either LINK or native
         if (token != i_nativeAddress) revert InvalidAddress();
 
         s_subscriberDiscounts[subscriber][feedId][token] = discount;
@@ -184,6 +237,18 @@ contract MockFeeManager is IERC165 {
         emit SubscriberDiscountUpdated(subscriber, feedId, token, discount);
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                             INTERNAL FUNCTIONS                             */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Process a fee and reward for a given payload.
+     * @param payload The encoded data containing the report and other necessary information.
+     * @param subscriber The address of the subscriber trying to verify.
+     * @return fee The calculated fee data.
+     * @return reward The calculated reward data.
+     * @return discount The current discount applied.
+     */
     function _processFee(bytes calldata payload, address subscriber)
         internal
         view
@@ -191,12 +256,19 @@ contract MockFeeManager is IERC165 {
     {
         if (subscriber == address(this)) revert InvalidAddress();
 
-        //decode the report from the payload
+        // Decode the report from the payload
         (, bytes memory report) = abi.decode(payload, (bytes32[3], bytes));
 
         return getFeeAndReward(subscriber, report, i_nativeAddress);
     }
 
+    /**
+     * @notice Handle fees and rewards for a given set of FeeAndReward structures.
+     * @param subscriber The address of the subscriber trying to verify.
+     * @param feesAndRewards An array containing FeeAndReward structures.
+     * @param numberOfLinkFees The number of Link-based fees in the feesAndRewards array.
+     * @param numberOfNativeFees The number of Native-based fees in the feesAndRewards array.
+     */
     function _handleFeesAndRewards(
         address subscriber,
         FeeAndReward[] memory feesAndRewards,
@@ -227,31 +299,36 @@ contract MockFeeManager is IERC165 {
             }
         }
 
-        //keep track of change in case of any over payment
+        // Keep track of any change in case of over payment.
         uint256 change;
 
         if (msg.value != 0) {
-            //there must be enough to cover the fee
+            // Ensure there is enough value to cover the fee.
             if (totalNativeFee > msg.value) revert InvalidDeposit();
 
-            //wrap the amount required to pay the fee & approve as the subscriber paid in wrapped native
+            // Wrap the amount required to pay the fee and approve as the subscriber paid in wrapped native.
             IWERC20(i_nativeAddress).deposit{ value: totalNativeFee }();
 
             unchecked {
-                //msg.value is always >= to fee.amount
+                // msg.value is always >= to totalNativeFee.
                 change = msg.value - totalNativeFee;
             }
         } else {
             if (totalNativeFee != 0) {
-                //subscriber has paid in wrapped native, so transfer the native to this contract
+                // The subscriber has paid in wrapped native, so transfer the native to this contract.
                 IERC20(i_nativeAddress).safeTransferFrom(subscriber, address(this), totalNativeFee);
             }
         }
 
-        // a refund may be needed if the payee has paid in excess of the fee
+        // A refund may be needed if the payee has paid in excess of the fee.
         _tryReturnChange(subscriber, change);
     }
 
+    /**
+     * @notice Try to return any excess payment to the subscriber.
+     * @param subscriber The address of the subscriber to receive funds.
+     * @param quantity The amount of native tokens to be returned.
+     */
     function _tryReturnChange(address subscriber, uint256 quantity) internal {
         if (quantity != 0) {
             payable(subscriber).transfer(quantity);

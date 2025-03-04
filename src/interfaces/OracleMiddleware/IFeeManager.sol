@@ -5,9 +5,9 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 
 interface IFeeManager is IERC165 {
     /**
-     * @notice The asset struct to hold the address of an asset and amount.
+     * @notice The Asset struct to hold the address of an asset and its amount.
      * @param assetAddress The address of the asset.
-     * @param amount The asset amount.
+     * @param amount The amount of the asset.
      */
     struct Asset {
         address assetAddress;
@@ -15,57 +15,57 @@ interface IFeeManager is IERC165 {
     }
 
     /**
-     * @notice Gets the  subscriber discount for a specific feedId.
-     * @param subscriber The subscriber address to check for a discount.
-     * @param feedId The discount related feedId.
+     * @notice Gets the subscriber discount for a specific feedId.
+     * @param subscriber The address of the subscriber to check for a discount.
+     * @param feedId The feedId related to the discount.
      * @param token The address of the quote payment token.
      * @return The current subscriber discount.
      */
     function s_subscriberDiscounts(address subscriber, bytes32 feedId, address token) external view returns (uint256);
 
     /**
-     * @notice Gets any subsidized link that is owed to the reward manager.
-     * @param feedId The link related feedId.
-     * @return The link amount.
+     * @notice Gets any subsidized LINK that is owed to the reward manager for a specific feedId.
+     * @param feedId The feedId related to the link deficit.
+     * @return The amount of link deficit.
      */
     function s_linkDeficit(bytes32 feedId) external view returns (uint256);
 
     /**
      * @notice Gets the LINK token address.
-     * @return The link address.
+     * @return The address of the LINK token.
      */
     function i_linkAddress() external view returns (address);
 
     /**
      * @notice Gets the native token address.
-     * @return The native token address.
+     * @return The address of the native token.
      */
     function i_nativeAddress() external view returns (address);
 
     /**
-     * @notice Gets the native token address.
-     * @return The native token address.
+     * @notice Gets the proxy contract address.
+     * @return The address of the proxy contract.
      */
     function i_proxyAddress() external view returns (address);
 
     /**
      * @notice Gets the surcharge fee to be paid if paying in native.
-     * @return The surcharge native fee.
+     * @return The surcharge fee for native payments.
      */
     function s_nativeSurcharge() external view returns (uint256);
 
     /**
-     * @notice Calculate the applied fee and the reward from a report. If the sender is a subscriber, they will receive
-     * a discount.
-     * @param subscriber address trying to verify
-     * @param report report to calculate the fee for
-     * @param quoteAddress address of the quote payment token
-     * @return The fee data.
-     * @return The reward data.
-     * @return The current discount.
+     * @notice Calculates the applied fee and reward from a report. If the sender is a subscriber, they will receive a
+     * discount.
+     * @param subscriber The address of the subscriber trying to verify.
+     * @param report The report to calculate the fee for.
+     * @param quoteAddress The address of the quote payment token.
+     * @return feeData The calculated fee data.
+     * @return rewardData The calculated reward data.
+     * @return discount The current discount applied.
      */
     function getFeeAndReward(address subscriber, bytes memory report, address quoteAddress)
         external
         view
-        returns (Asset memory, Asset memory, uint256);
+        returns (Asset memory feeData, Asset memory rewardData, uint256 discount);
 }

@@ -28,7 +28,7 @@ interface IOracleMiddlewareWithChainlinkDataStream is
 
     /**
      * @notice Gets the admin role's signature.
-     * @return role_ Get the role signature.
+     * @return role_ The role signature.
      */
     function ADMIN_ROLE() external pure returns (bytes32 role_);
 

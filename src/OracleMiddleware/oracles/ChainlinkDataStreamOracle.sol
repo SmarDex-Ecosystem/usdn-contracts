@@ -69,7 +69,7 @@ abstract contract ChainlinkDataStreamOracle is IOracleMiddlewareErrors, IChainli
         IFeeManager.Asset memory feeData = _getChainlinkDataStreamFeeData(payload);
         console.log("feeData.amount", feeData.amount);
 
-        // sanity check on the fee requested by the Chainlink fee manager
+        // Sanity check on the fee requested by the Chainlink fee manager
         if (feeData.amount > 0.01 ether) {
             revert OracleMiddlewareDataStreamFeeSafeguard(feeData.amount);
         }
@@ -77,25 +77,25 @@ abstract contract ChainlinkDataStreamOracle is IOracleMiddlewareErrors, IChainli
             revert OracleMiddlewareIncorrectFee();
         }
 
-        // verify report
+        // Verify report
         bytes memory verifiedReportData =
             PROXY_VERIFIER.verify{ value: feeData.amount }(payload, abi.encode(feeData.assetAddress));
 
-        // report version
+        // Report version
         uint16 reportVersion = (uint16(uint8(verifiedReportData[0])) << 8) | uint16(uint8(verifiedReportData[1]));
         if (reportVersion != REPORT_VERSION) {
             revert OracleMiddlewareInvalidReportVersion();
         }
 
-        // decode verified report
+        // Decode verified report
         verifiedReport_ = abi.decode(verifiedReportData, (IVerifierProxy.ReportV3));
 
-        // stream id
+        // Stream ID
         if (verifiedReport_.feedId != STREAM_ID) {
             revert OracleMiddlewareInvalidStreamId();
         }
 
-        // report timestamp
+        // Report timestamp
         if (targetTimestamp == 0) {
             if (verifiedReport_.expiresAt < block.timestamp - _dataStreamRecentPriceDelay) {
                 revert OracleMiddlewareDataStreamInvalidTimestamp();
@@ -105,7 +105,7 @@ abstract contract ChainlinkDataStreamOracle is IOracleMiddlewareErrors, IChainli
             revert OracleMiddlewareDataStreamInvalidTimestamp();
         }
 
-        // report prices
+        // Report prices
         if (verifiedReport_.price <= 0) {
             revert OracleMiddlewareWrongPrice(verifiedReport_.price);
         }

@@ -21,7 +21,6 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
     string internal constant BALANCE_ERROR = "Wrong balance";
     string internal constant VALIDATION_COST_ERROR = "Wrong validation cost";
 
-    // validate open
     uint8 internal constant VALIDATE_OPEN_ACTION_INDEX = 7;
     string internal _validateOpenTimestampError =
         string.concat(TIMESTAMP_ERROR, actionNames[VALIDATE_OPEN_ACTION_INDEX]);

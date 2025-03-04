@@ -6,25 +6,25 @@ import { IVerifierProxy } from "./IVerifierProxy.sol";
 interface IChainlinkDataStreamOracle {
     /**
      * @notice Gets the Chainlink Proxy verifier contract.
-     * @return proxyVerifier_ The proxy verifier.
+     * @return proxyVerifier_ The address of the proxy verifier contract.
      */
     function getProxyVerifier() external view returns (IVerifierProxy proxyVerifier_);
 
     /**
-     * @notice Gets the supported Chainlink data stream id.
-     * @return streamId_ The steam id.
+     * @notice Gets the supported Chainlink data stream ID.
+     * @return streamId_ The unique identifier for the chainlink data stream.
      */
     function getStreamId() external view returns (bytes32 streamId_);
 
     /**
      * @notice Gets the maximum age of a recent price to be considered valid.
-     * @return delay_ The price delay.
+     * @return delay_ The maximum acceptable age of a recent price in seconds.
      */
     function getDataStreamRecentPriceDelay() external view returns (uint256 delay_);
 
     /**
      * @notice Gets the supported Chainlink data stream report version.
-     * @return version_ The supported version.
+     * @return version_ The version number of the supported Chainlink data stream report.
      */
     function getReportVersion() external pure returns (uint256 version_);
 }
