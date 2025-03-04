@@ -63,9 +63,9 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
      * @custom:scenario Parse and validate price with chainlink data stream API payload with a fee manager.
      * @custom:given The price feed is ETH/USD for chainlink and pyth.
      * @custom:and A mock fee manager is deployed.
-     * @custom:when The `parseAndValidate` is called.
+     * @custom:when The `parseAndValidatePrice` function is called.
      * @custom:then The price signature is verified.
-     * @custom:and The `weth` fee manager balance is increased by the validation cost.
+     * @custom:and The `weth` fee manager balance is equal to the validation cost.
      */
     function test_ForkFFIParseAndValidatePriceFeeManager() public {
         _params.deployMockFeeManager = true;
@@ -79,28 +79,16 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
 
     /**
      * @custom:scenario Parse and validate price with chainlink data stream API payload with a fee manager and a full
-     * discount.
+     * native surcharge.
      * @custom:given The price feed is ETH/USD for chainlink and pyth.
      * @custom:and A mock fee manager is deployed.
-     * @custom:when The `parseAndValidate` is called.
+     * @custom:and A full native surcharge is set.
+     * @custom:when The `parseAndValidatePrice` function is called.
      * @custom:then The price signature is verified.
-     * @custom:and The `weth` fee manager balance is increased by the validation cost.
+     * @custom:and The `weth` fee manager balance is equal to the validation cost.
      */
-    function test_ForkFFIParseAndValidatePriceFeeManagerWithFullDiscount() public {
+    function test_ForkFFIParseAndValidatePriceFeeManagerWithFullSurcharge() public {
         _params.deployMockFeeManager = true;
-        _params.discountBps = PERCENTAGE_SCALAR;
-        _params.nativeSurchargeBps = PERCENTAGE_SCALAR;
-        _setUp(_params);
-        uint256 validationCost = _parseAndValidateDataStream(
-            actions[VALIDATE_OPEN_ACTION_INDEX], _validateOpenTimestampError, _validateOpenPriceError
-        );
-        assertEq(validationCost, 0, VALIDATION_COST_ERROR);
-        assertEq(_weth.balanceOf(address(_mockFeeManager)), validationCost, BALANCE_ERROR);
-    }
-
-    function test_ForkFFIParseAndValidatePriceFeeManagerWithPartialDiscount() public {
-        _params.deployMockFeeManager = true;
-        _params.discountBps = PERCENTAGE_SCALAR / 2;
         _params.nativeSurchargeBps = PERCENTAGE_SCALAR;
         _setUp(_params);
         uint256 validationCost = _parseAndValidateDataStream(
@@ -110,10 +98,18 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
         assertEq(_weth.balanceOf(address(_mockFeeManager)), validationCost, BALANCE_ERROR);
     }
 
-    function test_ForkFFIParseAndValidatePriceFeeManagerWithPartialSurcharge() public {
+    /**
+     * @custom:scenario Parse and validate price with chainlink data stream API payload with a fee manager and a full
+     * discount.
+     * @custom:given The price feed is ETH/USD for chainlink and pyth.
+     * @custom:and A mock fee manager is deployed.
+     * @custom:when The `parseAndValidatePrice` function is called.
+     * @custom:then The price signature is verified.
+     * @custom:and The `weth` fee manager balance is equal zero.
+     */
+    function test_ForkFFIParseAndValidatePriceFeeManagerWithFullDiscount() public {
         _params.deployMockFeeManager = true;
         _params.discountBps = PERCENTAGE_SCALAR;
-        _params.nativeSurchargeBps = PERCENTAGE_SCALAR / 2;
         _setUp(_params);
         uint256 validationCost = _parseAndValidateDataStream(
             actions[VALIDATE_OPEN_ACTION_INDEX], _validateOpenTimestampError, _validateOpenPriceError
