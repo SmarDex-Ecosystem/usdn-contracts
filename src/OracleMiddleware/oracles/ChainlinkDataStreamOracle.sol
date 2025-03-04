@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { IFeeManager } from "../../interfaces/OracleMiddleware/IFeeManager.sol";
 import { IVerifierProxy } from "../../interfaces/OracleMiddleware/IVerifierProxy.sol";
+import { console } from "forge-std/Test.sol";
 
 import { IChainlinkDataStreamOracle } from "../../interfaces/OracleMiddleware/IChainlinkDataStreamOracle.sol";
 import { IOracleMiddlewareErrors } from "../../interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
@@ -66,6 +67,7 @@ abstract contract ChainlinkDataStreamOracle is IOracleMiddlewareErrors, IChainli
         returns (IVerifierProxy.ReportV3 memory verifiedReport_)
     {
         IFeeManager.Asset memory feeData = _getChainlinkDataStreamFeeData(payload);
+        console.log("feeData.amount", feeData.amount);
 
         // sanity check on the fee requested by the Chainlink fee manager
         if (feeData.amount > 0.01 ether) {
@@ -128,7 +130,9 @@ abstract contract ChainlinkDataStreamOracle is IOracleMiddlewareErrors, IChainli
     {
         IFeeManager feeManager = PROXY_VERIFIER.s_feeManager();
         if (address(feeManager) != address(0)) {
-            (feeData_,,) = feeManager.getFeeAndReward(address(this), payload, feeManager.i_nativeAddress());
+            address quoteAddress = feeManager.i_nativeAddress();
+            (, bytes memory reportData) = abi.decode(payload, (bytes32[3], bytes));
+            (feeData_,,) = feeManager.getFeeAndReward(address(this), reportData, quoteAddress);
         }
     }
 }
