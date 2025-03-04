@@ -4,18 +4,18 @@ pragma solidity 0.8.26;
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { ETH_CONF, ETH_DECIMALS, ETH_PRICE, MOCK_PYTH_DATA } from "../utils/Constants.sol";
-import { ShortBaseFixture } from "../utils/Fixtures.sol";
+import { WusdnToEthBaseFixture } from "../utils/Fixtures.sol";
 
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
- * @custom:feature The `parseAndValidatePrice` function of `ShortOracleMiddleware`
+ * @custom:feature The `parseAndValidatePrice` function of `WusdnToEthOracleMiddleware`
  * @custom:background Given the price ETH is 2000 USD
  * @custom:and The confidence interval is 20 USD
  * @custom:and The USDN divisor is 9e17
  */
-contract TestShortOracleParseAndValidatePrice is ShortBaseFixture {
+contract TestWusdnToEthOracleParseAndValidatePrice is WusdnToEthBaseFixture {
     using Strings for uint256;
 
     uint256 internal immutable FORMATTED_ETH_PRICE;
@@ -26,9 +26,9 @@ contract TestShortOracleParseAndValidatePrice is ShortBaseFixture {
     constructor() {
         super.setUp();
 
-        FORMATTED_ETH_PRICE = ETH_PRICE * 10 ** shortOracle.getDecimals() / 10 ** ETH_DECIMALS;
-        FORMATTED_ETH_CONF = ETH_CONF * 10 ** shortOracle.getDecimals() / 10 ** ETH_DECIMALS;
-        ETH_CONF_RATIO = FORMATTED_ETH_CONF * shortOracle.getConfRatioBps() / shortOracle.BPS_DIVISOR();
+        FORMATTED_ETH_PRICE = ETH_PRICE * 10 ** middleware.getDecimals() / 10 ** ETH_DECIMALS;
+        FORMATTED_ETH_CONF = ETH_CONF * 10 ** middleware.getDecimals() / 10 ** ETH_DECIMALS;
+        ETH_CONF_RATIO = FORMATTED_ETH_CONF * middleware.getConfRatioBps() / middleware.BPS_DIVISOR();
         USDN_DIVISOR = usdn.divisor();
     }
 
@@ -43,8 +43,8 @@ contract TestShortOracleParseAndValidatePrice is ShortBaseFixture {
      * @custom:then The price is 0.000555555555555555 ETH/WUSDN
      */
     function test_parseAndValidatePriceNeutral() public {
-        PriceInfo memory price = shortOracle.parseAndValidatePrice{
-            value: shortOracle.validationCost(MOCK_PYTH_DATA, Types.ProtocolAction.Liquidation)
+        PriceInfo memory price = middleware.parseAndValidatePrice{
+            value: middleware.validationCost(MOCK_PYTH_DATA, Types.ProtocolAction.Liquidation)
         }("", uint128(block.timestamp), Types.ProtocolAction.Liquidation, MOCK_PYTH_DATA);
         assertEq(price.price, 0.000555555555555555 ether, "neutral price");
     }
@@ -64,11 +64,11 @@ contract TestShortOracleParseAndValidatePrice is ShortBaseFixture {
 
             uint128 timestamp = uint128(block.timestamp);
             if (action != Types.ProtocolAction.Liquidation) {
-                timestamp -= uint128(shortOracle.getValidationDelay());
+                timestamp -= uint128(middleware.getValidationDelay());
             }
 
-            PriceInfo memory price = shortOracle.parseAndValidatePrice{
-                value: shortOracle.validationCost(MOCK_PYTH_DATA, action)
+            PriceInfo memory price = middleware.parseAndValidatePrice{
+                value: middleware.validationCost(MOCK_PYTH_DATA, action)
             }("", timestamp, action, MOCK_PYTH_DATA);
 
             uint256 neutralPrice = _calcPrice(FORMATTED_ETH_PRICE);

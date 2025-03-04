@@ -11,8 +11,8 @@ import { OracleMiddlewareWithRedstoneHandler } from "../utils/HandlerWithRedston
 import { MockChainlinkOnChain } from "../utils/MockChainlinkOnChain.sol";
 import { MockPyth } from "../utils/MockPyth.sol";
 
-import { ShortOracleMiddleware } from "../../../../src/OracleMiddleware/ShortOracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { WusdnToEthOracleMiddleware } from "../../../../src/OracleMiddleware/WusdnToEthOracleMiddleware.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
@@ -184,14 +184,11 @@ contract WstethBaseFixture is BaseFixture, ActionsFixture {
     }
 }
 
-/**
- * @title ShortBaseFixture
- * @dev Utils for testing the short oracle middleware
- */
-contract ShortBaseFixture is BaseFixture, ActionsFixture {
+/// @dev Utils for testing the short oracle middleware
+contract WusdnToEthBaseFixture is BaseFixture, ActionsFixture {
     MockPyth internal mockPyth;
     MockChainlinkOnChain internal mockChainlinkOnChain;
-    ShortOracleMiddleware public shortOracle;
+    WusdnToEthOracleMiddleware public middleware;
     Usdn public usdn;
 
     function setUp() public virtual {
@@ -201,13 +198,13 @@ contract ShortBaseFixture is BaseFixture, ActionsFixture {
         mockChainlinkOnChain = new MockChainlinkOnChain();
         usdn = new Usdn(address(this), address(this));
         usdn.rebase(9e17);
-        shortOracle =
-            new ShortOracleMiddleware(address(mockPyth), 0, address(mockChainlinkOnChain), address(usdn), 1 hours);
+        middleware =
+            new WusdnToEthOracleMiddleware(address(mockPyth), 0, address(mockChainlinkOnChain), address(usdn), 1 hours);
     }
 
     function test_setUp() public {
-        assertEq(address(shortOracle.getPyth()), address(mockPyth));
-        assertEq(address(shortOracle.getPriceFeed()), address(mockChainlinkOnChain));
+        assertEq(address(middleware.getPyth()), address(mockPyth));
+        assertEq(address(middleware.getPriceFeed()), address(mockChainlinkOnChain));
 
         assertEq(mockPyth.lastPublishTime(), block.timestamp);
         assertEq(mockChainlinkOnChain.latestTimestamp(), block.timestamp);

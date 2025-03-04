@@ -11,7 +11,7 @@ import { OracleMiddleware } from "./OracleMiddleware.sol";
  * @notice This contract is used to get the "inverse" price in ETH/WUSDN denomination, so that it can be used for a
  * shorting version of the USDN protocol with WUSDN as the underlying asset.
  */
-contract ShortOracleMiddleware is OracleMiddleware {
+contract WusdnToEthOracleMiddleware is OracleMiddleware {
     /// @notice The USDN token address.
     IUsdn internal immutable USDN;
 
@@ -37,10 +37,10 @@ contract ShortOracleMiddleware is OracleMiddleware {
      * @dev This function returns an approximation of the price ETH/WUSDN, so how much ETH each WUSDN token is worth.
      * The exact formula would be to divide the $/WUSDN price by the $/ETH price, which would look like this (as a
      * decimal number):
-     * p = pWUSDN / pETH = (pUSDN * 1e18 / divisor) / pETH = (pUSDN * 1e18) / (pETH * divisor)
-     *   = ((usdnVaultBalance * pWstETH / usdnTotalSupply) * 1e18) / (pETH * divisor)
-     *   = (usdnVaultBalance * pETH * stETHRatio * 1e18) / (pETH * divisor * usdnTotalSupply)
-     *   = (usdnVaultBalance * stETHRatio * 1e18) / (usdnTotalSupply * divisor)
+     * p = pWUSDN / pETH = (pUSDN * MAX_DIVISOR / divisor) / pETH = (pUSDN * MAX_DIVISOR) / (pETH * divisor)
+     *   = ((usdnVaultBalance * pWstETH / usdnTotalSupply) * MAX_DIVISOR) / (pETH * divisor)
+     *   = (usdnVaultBalance * pETH * stETHRatio * MAX_DIVISOR) / (pETH * divisor * usdnTotalSupply)
+     *   = (usdnVaultBalance * stETHRatio * MAX_DIVISOR) / (usdnTotalSupply * divisor)
      *
      * Because we don't have historical access to the vault balance, the stETH ratio, the USDN total supply and the
      * USDN divisor, we must approximate some parameters. The following approximations are made:
@@ -48,7 +48,7 @@ contract ShortOracleMiddleware is OracleMiddleware {
      * - The USDN divisor's current value is valid (constant) for the period where we need to provide prices.
      *
      * This greatly simplifies the formula (with $1 and pETH having 18 decimals):
-     * p = ($1 * 1e18) / (pETH * divisor) = 1e36 / (pETH * divisor)
+     * p = ($1 * MAX_DIVISOR) / (pETH * divisor) = 1e18 * MAX_DIVISOR / (pETH * divisor)
      *
      * Since we want to represent this price as an integer with a fixed precision of 18 decimals, the number needs
      * to be multiplied by 1e18.
