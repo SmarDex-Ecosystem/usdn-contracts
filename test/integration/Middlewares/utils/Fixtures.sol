@@ -72,6 +72,14 @@ contract CommonBaseIntegrationFixture is BaseFixture {
         return abi.decode(result, (uint256, uint256, uint256, uint256, bytes));
     }
 
+    function _getChainlinkDatastreamApiSignature(bytes32 stream, uint256 timestamp)
+        internal
+        returns (bytes memory payload_)
+    {
+        payload_ = vmFFIRustCommand("chainlink-price", vm.toString(stream), vm.toString(timestamp));
+        require(keccak256(payload_) != keccak256(""), "Rust command returned an error");
+    }
+
     function getChainlinkPrice() internal view returns (uint256, uint256) {
         (, int256 price,, uint256 timestamp,) = chainlinkOnChain.latestRoundData();
         return (uint256(price), uint256(timestamp));
