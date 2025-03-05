@@ -16,7 +16,7 @@ import { IOracleMiddlewareWithChainlinkDataStream } from
 import { IVerifierProxy } from "../interfaces/OracleMiddleware/IVerifierProxy.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { ChainlinkDataStreamOracle } from "./oracles/ChainlinkDataStreamOracle.sol";
+import { ChainlinkDataStreamsOracle } from "./oracles/ChainlinkDataStreamsOracle.sol";
 import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
 import { PythOracle } from "./oracles/PythOracle.sol";
 
@@ -30,7 +30,7 @@ contract OracleMiddlewareWithChainlinkDataStream is
     PythOracle,
     ChainlinkOracle,
     AccessControlDefaultAdminRules,
-    ChainlinkDataStreamOracle
+    ChainlinkDataStreamsOracle
 {
     /// @notice The number of decimals for the returned price.
     uint8 internal constant MIDDLEWARE_DECIMALS = 18;
@@ -68,7 +68,7 @@ contract OracleMiddlewareWithChainlinkDataStream is
     )
         PythOracle(pythContract, pythFeedId)
         ChainlinkOracle(chainlinkPriceFeed, chainlinkTimeElapsedLimit)
-        ChainlinkDataStreamOracle(chainlinkProxyVerifierAddress, chainlinkStreamId)
+        ChainlinkDataStreamsOracle(chainlinkProxyVerifierAddress, chainlinkStreamId)
         AccessControlDefaultAdminRules(0, msg.sender)
     {
         _grantRole(ADMIN_ROLE, msg.sender);

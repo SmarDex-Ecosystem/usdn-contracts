@@ -11,7 +11,7 @@ import { IVerifierProxy } from "../../interfaces/OracleMiddleware/IVerifierProxy
  * @notice This contract is used to get the price of the asset that corresponds to the stored Chainlink data streams ID.
  * @dev Is implemented by the {OracleMiddleware} contract.
  */
-abstract contract ChainlinkDataStreamOracle is IOracleMiddlewareErrors, IChainlinkDataStreamOracle {
+abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainlinkDataStreamOracle {
     /// @notice The address of the Chainlink proxy verifier contract.
     IVerifierProxy internal immutable PROXY_VERIFIER;
 
