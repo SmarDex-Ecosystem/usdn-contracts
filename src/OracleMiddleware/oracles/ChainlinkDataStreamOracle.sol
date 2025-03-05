@@ -22,7 +22,7 @@ abstract contract ChainlinkDataStreamOracle is IOracleMiddlewareErrors, IChainli
     uint256 internal constant REPORT_VERSION = 3;
 
     /// @notice The maximum age of a recent price to be considered valid for Chainlink data streams.
-    uint256 internal _dataStreamRecentPriceDelay = 45 seconds;
+    uint256 internal _dataStreamsRecentPriceDelay = 45 seconds;
 
     /**
      * @param verifierAddress The address of the Chainlink proxy verifier contract.
@@ -45,7 +45,7 @@ abstract contract ChainlinkDataStreamOracle is IOracleMiddlewareErrors, IChainli
 
     /// @inheritdoc IChainlinkDataStreamOracle
     function getDataStreamRecentPriceDelay() external view returns (uint256 delay_) {
-        return _dataStreamRecentPriceDelay;
+        return _dataStreamsRecentPriceDelay;
     }
 
     /// @inheritdoc IChainlinkDataStreamOracle
@@ -94,7 +94,7 @@ abstract contract ChainlinkDataStreamOracle is IOracleMiddlewareErrors, IChainli
 
         // Report timestamp
         if (targetTimestamp == 0) {
-            if (verifiedReport_.expiresAt < block.timestamp - _dataStreamRecentPriceDelay) {
+            if (verifiedReport_.expiresAt < block.timestamp - _dataStreamsRecentPriceDelay) {
                 revert OracleMiddlewareDataStreamInvalidTimestamp();
             }
         } else if (targetTimestamp < verifiedReport_.validFromTimestamp || verifiedReport_.expiresAt < targetTimestamp)

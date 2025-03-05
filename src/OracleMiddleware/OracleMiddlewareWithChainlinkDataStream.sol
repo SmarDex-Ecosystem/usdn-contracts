@@ -102,7 +102,7 @@ contract OracleMiddlewareWithChainlinkDataStream is
             // use the bid price of the Chainlink data streams then use Chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
         } else if (action == Types.ProtocolAction.Liquidation) {
-            // we accept all prices newer than  `_dataStreamRecentPriceDelay` for Chainlink or
+            // we accept all prices newer than  `_dataStreamsRecentPriceDelay` for Chainlink or
             // `_pythRecentPriceDelay` for Pyth
             return _getLiquidationPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.InitiateDeposit) {
@@ -178,7 +178,7 @@ contract OracleMiddlewareWithChainlinkDataStream is
     }
 
     /// @inheritdoc IOracleMiddlewareWithChainlinkDataStream
-    function setDataStreamRecentPriceDelay(uint64 newDelay) external onlyRole(ADMIN_ROLE) {
+    function setDataStreamsRecentPriceDelay(uint64 newDelay) external onlyRole(ADMIN_ROLE) {
         if (newDelay < 10 seconds) {
             revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
         }
@@ -187,7 +187,7 @@ contract OracleMiddlewareWithChainlinkDataStream is
         }
         _pythRecentPriceDelay = newDelay;
 
-        emit DataStreamRecentPriceDelayUpdated(newDelay);
+        emit DataStreamsRecentPriceDelayUpdated(newDelay);
     }
 
     /// @inheritdoc IOracleMiddlewareWithChainlinkDataStream
@@ -219,10 +219,10 @@ contract OracleMiddlewareWithChainlinkDataStream is
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Gets the price from the low-latency oracle (Pyth).
+     * @notice Gets the price from the low-latency oracle (Pyth) or the data streams (Chainlink).
      * @param data The signed price update data.
      * @param dir The direction of the price.
-     * @return price_ The price from the low-latency oracle, adjusted according to the confidence interval direction.
+     * @return price_ The price from the Pyth low-latency oracle or the Chainlink data stream.
      */
     function _getLiquidationPrice(bytes calldata data, ConfidenceInterval dir)
         internal
@@ -240,12 +240,13 @@ contract OracleMiddlewareWithChainlinkDataStream is
 
     /**
      * @notice Gets the price for an `initiate` action of the protocol.
-     * @dev If the data parameter is not empty, validate the price with {PythOracle}. Else, get the on-chain price from
+     * @dev If the data parameter is not empty, validate the price with Chainlink data streams. Else, get the on-chain
+     * price from
      * {ChainlinkOracle} and compare its timestamp with the latest seen Pyth price (cached). If Pyth is more recent, we
      * return it. Otherwise, we return the Chainlink price. For the latter, we don't have a confidence interval, so both
      * `neutralPrice` and `price` are equal.
-     * @param data An optional VAA from Pyth.
-     * @param dir The direction when applying the confidence interval (when using a Pyth price).
+     * @param data An optional Chainlink data stream payload.
+     * @param dir The direction of the price to apply.
      * @return price_ The price to use for the user action.
      */
     function _getInitiateActionPrice(bytes calldata data, ConfidenceInterval dir)
@@ -303,7 +304,7 @@ contract OracleMiddlewareWithChainlinkDataStream is
     }
 
     /**
-     * @notice Applies the ask or bid according to the `dir` direction.
+     * @notice Applies the ask, bid or price according to the `dir` direction.
      * @param report The Chainlink data streams report.
      * @param dir The direction of the confidence interval to apply.
      * @return price_ The adjusted price according to the direction.
@@ -329,10 +330,9 @@ contract OracleMiddlewareWithChainlinkDataStream is
      * @notice Gets the price from the Chainlink data streams oracle.
      * @param payload The payload (full report) coming from the Chainlink data streams API.
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
-     * prices younger than {ChainlinkDataStreamOracle._dataStreamRecentPriceDelay}.
-     * @param dir The direction for the confidence interval adjusted price.
-     * @return price_ The price from the Chainlink low-latency oracle, adjusted according to the confidence interval
-     * direction.
+     * prices younger than {ChainlinkDataStreamOracle._dataStreamsRecentPriceDelay}.
+     * @param dir The direction to apply price.
+     * @return price_ The price from the Chainlink data streams, adjusted by the price direction.
      */
     function _getLowLatencyPrice(bytes calldata payload, uint128 actionTimestamp, ConfidenceInterval dir)
         internal
@@ -353,10 +353,10 @@ contract OracleMiddlewareWithChainlinkDataStream is
 
     /**
      * @notice Gets the price for a validate action of the protocol.
-     * @dev If the low latency delay is not exceeded, validate the price with the low-latency oracle(s).
+     * @dev If the low latency delay is not exceeded, validate the price with the Chainlink data streams oracle.
      * Else, get the specified roundId on-chain price from Chainlink. In case of Chainlink price,
      * we don't have a confidence interval and so both `neutralPrice` and `price` are equal.
-     * @param data An optional VAA from Pyth or a Chainlink roundId (abi-encoded uint80).
+     * @param data An optional Chainlink data streams payload or a Chainlink roundId (abi-encoded uint80).
      * @param targetTimestamp The timestamp of the initiate action.
      * @param dir The price direction to take.
      * @return price_ The price to use for the user action.

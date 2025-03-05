@@ -52,7 +52,7 @@ interface IOracleMiddlewareWithChainlinkDataStream is
      * @notice Sets the amount of time after which we do not consider a price as recent for Chainlink.
      * @param newDelay The maximum age of a price to be considered recent.
      */
-    function setDataStreamRecentPriceDelay(uint64 newDelay) external;
+    function setDataStreamsRecentPriceDelay(uint64 newDelay) external;
 
     /**
      * @notice Sets the validation delay (in seconds) between an action timestamp and the price

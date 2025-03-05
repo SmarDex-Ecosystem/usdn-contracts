@@ -28,7 +28,7 @@ interface IOracleMiddlewareEvents {
      * @notice The recent price delay for Chainlink data streams was updated.
      * @param newDelay The new recent price delay.
      */
-    event DataStreamRecentPriceDelayUpdated(uint64 newDelay);
+    event DataStreamsRecentPriceDelayUpdated(uint64 newDelay);
 
     /**
      * @notice The recent price delay for Redstone was updated.
