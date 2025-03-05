@@ -11,9 +11,8 @@ import { IPythOracle } from "./IPythOracle.sol";
 
 /**
  * @title Interface For The Middleware And Oracle Related Contracts
- * @notice The oracle middleware is a contract that is used by the USDN protocol to validate price data.
- * Using a middleware allows the protocol to later upgrade to a new oracle logic without having to modify
- * the protocol's contracts.
+ * @notice Used by the USDN protocol to validate price data. Using a middleware allows the protocol to later upgrade to
+ * a new oracle logic without having to modify the protocol's contracts.
  */
 interface IOracleMiddlewareWithChainlinkDataStreams is
     IChainlinkOracle,

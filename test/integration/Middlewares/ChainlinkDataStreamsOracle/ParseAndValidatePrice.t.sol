@@ -6,7 +6,7 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IVerifierProxy } from "../../../../src/interfaces/OracleMiddleware/IVerifierProxy.sol";
 
-import { CHAINLINK_DATA_STREAM_ETH_USD, PYTH_ETH_USD } from "../../../utils/Constants.sol";
+import { CHAINLINK_DATA_STREAMS_ETH_USD, PYTH_ETH_USD } from "../../../utils/Constants.sol";
 import { ChainlinkDataStreamsFixture } from "./utils/Fixtures.sol";
 
 /**
@@ -129,7 +129,7 @@ contract TestChainlinkDataStreamsOracleMiddlewareParseAndValidatePriceRealData i
         string memory priceErrorMessage
     ) internal returns (uint256 validationCost_) {
         // Unverified payload from the Chainlink data streams API.
-        bytes memory payload = _getChainlinkDataStreamsApiSignature(CHAINLINK_DATA_STREAM_ETH_USD, block.timestamp);
+        bytes memory payload = _getChainlinkDataStreamsApiSignature(CHAINLINK_DATA_STREAMS_ETH_USD, block.timestamp);
 
         // Decode report data from the payload.
         (, bytes memory reportData) = abi.decode(payload, (bytes32[3], bytes));

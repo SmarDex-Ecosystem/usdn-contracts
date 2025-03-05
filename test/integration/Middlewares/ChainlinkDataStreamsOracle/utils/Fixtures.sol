@@ -6,7 +6,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 
 import {
-    CHAINLINK_DATA_STREAM_ETH_USD,
+    CHAINLINK_DATA_STREAMS_ETH_USD,
     CHAINLINK_ORACLE_ETH,
     CHAINLINK_VERIFIER_PROXY,
     DEPLOYER,
@@ -50,7 +50,7 @@ contract ChainlinkDataStreamsFixture is CommonBaseIntegrationFixture, ActionsInt
             address(chainlinkOnChain),
             1 hours,
             CHAINLINK_VERIFIER_PROXY,
-            CHAINLINK_DATA_STREAM_ETH_USD
+            CHAINLINK_DATA_STREAMS_ETH_USD
         );
 
         if (params.deployMockFeeManager) {
@@ -58,7 +58,7 @@ contract ChainlinkDataStreamsFixture is CommonBaseIntegrationFixture, ActionsInt
             _weth = IERC20(_mockFeeManager.i_nativeAddress());
             _mockFeeManager.updateSubscriberDiscount(
                 address(oracleMiddleware),
-                CHAINLINK_DATA_STREAM_ETH_USD,
+                CHAINLINK_DATA_STREAMS_ETH_USD,
                 _mockFeeManager.i_nativeAddress(),
                 params.discountBps
             );

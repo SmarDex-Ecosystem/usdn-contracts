@@ -62,7 +62,7 @@ interface IFeeManager is IERC165 {
      * @param quoteAddress The address of the quote payment token.
      * @return feeData The calculated fee data.
      * @return rewardData The calculated reward data.
-     * @return discount The current discount applied.
+     * @return discount The current subscriber discount applied.
      */
     function getFeeAndReward(address subscriber, bytes memory report, address quoteAddress)
         external

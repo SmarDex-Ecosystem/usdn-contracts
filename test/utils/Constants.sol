@@ -54,9 +54,9 @@ address constant CHAINLINK_VERIFIER_PROXY = address(0x5A1634A86e9b7BfEf33F0f3f3E
 bytes32 constant PYTH_ETH_USD = bytes32(0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace);
 bytes32 constant PYTH_WSTETH_USD = bytes32(0x6df640f3b8963d8f8358f791f352b8364513f6ab1cca5ed3f1f7b5448980e784);
 bytes32 constant REDSTONE_ETH_USD = bytes32("ETH");
-bytes32 constant CHAINLINK_DATA_STREAM_WSTETH_USD =
+bytes32 constant CHAINLINK_DATA_STREAMS_WSTETH_USD =
     bytes32(0x0003db069f3010212c213d1a0d4bc2cce328471aca2bff86bbfc0226fd060e90);
-bytes32 constant CHAINLINK_DATA_STREAM_ETH_USD =
+bytes32 constant CHAINLINK_DATA_STREAMS_ETH_USD =
     bytes32(0x000362205e10b3a147d02792eccee483dca6c7b44ecce7012cb8c6e0b68b3ae9);
 
 /* -------------------------------------------------------------------------- */
