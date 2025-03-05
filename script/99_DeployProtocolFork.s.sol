@@ -293,8 +293,6 @@ contract DeployProtocol is Script {
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
-        usdn.grantRole(usdn.MINTER_ROLE(), address(_deployerAddress));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(_deployerAddress));
 
         uint24 liquidationPenalty = usdnProtocol.getLiquidationPenalty();
         int24 tickSpacing = usdnProtocol.getTickSpacing();
