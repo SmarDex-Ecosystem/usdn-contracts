@@ -11,8 +11,8 @@ import {
     FormattedPythPrice,
     PriceInfo
 } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IOracleMiddlewareWithChainlinkDataStream } from
-    "../interfaces/OracleMiddleware/IOracleMiddlewareWithChainlinkDataStream.sol";
+import { IOracleMiddlewareWithChainlinkDataStreams } from
+    "../interfaces/OracleMiddleware/IOracleMiddlewareWithChainlinkDataStreams.sol";
 import { IVerifierProxy } from "../interfaces/OracleMiddleware/IVerifierProxy.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -26,7 +26,7 @@ import { PythOracle } from "./oracles/PythOracle.sol";
  * It is used by the USDN protocol to get the price of the USDN underlying asset.
  */
 contract OracleMiddlewareWithChainlinkDataStreams is
-    IOracleMiddlewareWithChainlinkDataStream,
+    IOracleMiddlewareWithChainlinkDataStreams,
     PythOracle,
     ChainlinkOracle,
     AccessControlDefaultAdminRules,
@@ -35,7 +35,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
     /// @notice The number of decimals for the returned price.
     uint8 internal constant MIDDLEWARE_DECIMALS = 18;
 
-    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStream
+    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStreams
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     /**
@@ -150,21 +150,21 @@ contract OracleMiddlewareWithChainlinkDataStreams is
     /*                            Privileged functions                            */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStream
+    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStreams
     function setValidationDelay(uint256 newValidationDelay) external onlyRole(ADMIN_ROLE) {
         _validationDelay = newValidationDelay;
 
         emit ValidationDelayUpdated(newValidationDelay);
     }
 
-    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStream
+    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStreams
     function setChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external onlyRole(ADMIN_ROLE) {
         _timeElapsedLimit = newTimeElapsedLimit;
 
         emit TimeElapsedLimitUpdated(newTimeElapsedLimit);
     }
 
-    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStream
+    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStreams
     function setPythRecentPriceDelay(uint64 newDelay) external onlyRole(ADMIN_ROLE) {
         if (newDelay < 10 seconds) {
             revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
@@ -177,7 +177,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
         emit PythRecentPriceDelayUpdated(newDelay);
     }
 
-    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStream
+    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStreams
     function setDataStreamsRecentPriceDelay(uint64 newDelay) external onlyRole(ADMIN_ROLE) {
         if (newDelay < 10 seconds) {
             revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
@@ -190,7 +190,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
         emit DataStreamsRecentPriceDelayUpdated(newDelay);
     }
 
-    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStream
+    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStreams
     function setLowLatencyDelay(uint16 newLowLatencyDelay, IUsdnProtocol usdnProtocol) external onlyRole(ADMIN_ROLE) {
         if (newLowLatencyDelay > 90 minutes) {
             revert OracleMiddlewareInvalidLowLatencyDelay();
@@ -203,7 +203,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
         emit LowLatencyDelayUpdated(newLowLatencyDelay);
     }
 
-    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStream
+    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStreams
     function withdrawEther(address to) external onlyRole(ADMIN_ROLE) {
         if (to == address(0)) {
             revert OracleMiddlewareTransferToZeroAddress();

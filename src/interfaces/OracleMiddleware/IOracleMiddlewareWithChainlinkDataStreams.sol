@@ -15,7 +15,7 @@ import { IPythOracle } from "./IPythOracle.sol";
  * Using a middleware allows the protocol to later upgrade to a new oracle logic without having to modify
  * the protocol's contracts.
  */
-interface IOracleMiddlewareWithChainlinkDataStream is
+interface IOracleMiddlewareWithChainlinkDataStreams is
     IChainlinkOracle,
     IPythOracle,
     IBaseOracleMiddleware,

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { IChainlinkDataStreamOracle } from "../../interfaces/OracleMiddleware/IChainlinkDataStreamOracle.sol";
+import { IChainlinkDataStreamsOracle } from "../../interfaces/OracleMiddleware/IChainlinkDataStreamsOracle.sol";
 import { IFeeManager } from "../../interfaces/OracleMiddleware/IFeeManager.sol";
 import { IOracleMiddlewareErrors } from "../../interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { IVerifierProxy } from "../../interfaces/OracleMiddleware/IVerifierProxy.sol";
@@ -11,7 +11,7 @@ import { IVerifierProxy } from "../../interfaces/OracleMiddleware/IVerifierProxy
  * @notice This contract is used to get the price of the asset that corresponds to the stored Chainlink data streams ID.
  * @dev Is implemented by the {OracleMiddleware} contract.
  */
-abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainlinkDataStreamOracle {
+abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainlinkDataStreamsOracle {
     /// @notice The address of the Chainlink proxy verifier contract.
     IVerifierProxy internal immutable PROXY_VERIFIER;
 
@@ -33,22 +33,22 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
         STREAM_ID = streamId;
     }
 
-    /// @inheritdoc IChainlinkDataStreamOracle
+    /// @inheritdoc IChainlinkDataStreamsOracle
     function getProxyVerifier() external view returns (IVerifierProxy proxyVerifier_) {
         return PROXY_VERIFIER;
     }
 
-    /// @inheritdoc IChainlinkDataStreamOracle
+    /// @inheritdoc IChainlinkDataStreamsOracle
     function getStreamId() external view returns (bytes32 streamId_) {
         return STREAM_ID;
     }
 
-    /// @inheritdoc IChainlinkDataStreamOracle
+    /// @inheritdoc IChainlinkDataStreamsOracle
     function getDataStreamRecentPriceDelay() external view returns (uint256 delay_) {
         return _dataStreamsRecentPriceDelay;
     }
 
-    /// @inheritdoc IChainlinkDataStreamOracle
+    /// @inheritdoc IChainlinkDataStreamsOracle
     function getReportVersion() external pure returns (uint256 version_) {
         return REPORT_VERSION;
     }
