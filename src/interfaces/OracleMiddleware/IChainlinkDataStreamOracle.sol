@@ -12,7 +12,7 @@ interface IChainlinkDataStreamOracle {
 
     /**
      * @notice Gets the supported Chainlink data stream ID.
-     * @return streamId_ The unique identifier for the Chainlink data stream.
+     * @return streamId_ The unique identifier for the Chainlink data streams.
      */
     function getStreamId() external view returns (bytes32 streamId_);
 
@@ -23,8 +23,8 @@ interface IChainlinkDataStreamOracle {
     function getDataStreamRecentPriceDelay() external view returns (uint256 delay_);
 
     /**
-     * @notice Gets the supported Chainlink data stream report version.
-     * @return version_ The version number of the supported Chainlink data stream report.
+     * @notice Gets the supported Chainlink data streams report version.
+     * @return version_ The version number of the supported Chainlink data streams report.
      */
     function getReportVersion() external pure returns (uint256 version_);
 }

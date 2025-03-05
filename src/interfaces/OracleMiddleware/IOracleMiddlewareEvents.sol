@@ -25,7 +25,7 @@ interface IOracleMiddlewareEvents {
     event PythRecentPriceDelayUpdated(uint64 newDelay);
 
     /**
-     * @notice The recent price delay for Chainlink data stream was updated.
+     * @notice The recent price delay for Chainlink data streams was updated.
      * @param newDelay The new recent price delay.
      */
     event DataStreamRecentPriceDelayUpdated(uint64 newDelay);

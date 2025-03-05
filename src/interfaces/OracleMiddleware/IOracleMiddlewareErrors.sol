@@ -81,13 +81,13 @@ interface IOracleMiddlewareErrors {
     /// @notice The new low latency delay is invalid.
     error OracleMiddlewareInvalidLowLatencyDelay();
 
-    /// @notice The Chainlink data stream report version is invalid.
+    /// @notice The Chainlink data streams report version is invalid.
     error OracleMiddlewareInvalidReportVersion();
 
     /// @notice The Chainlink report stream id is invalid.
     error OracleMiddlewareInvalidStreamId();
 
-    /// @notice The Chainlink data stream report timestamp is invalid.
+    /// @notice The Chainlink data streams report timestamp is invalid.
     error OracleMiddlewareDataStreamInvalidTimestamp();
 
     /**

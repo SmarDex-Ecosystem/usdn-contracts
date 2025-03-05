@@ -108,7 +108,7 @@ enum Commands {
         decimals: u32,
         usdn_divisor: Integer,
     },
-    /// Get price from chainlink data stream api
+    /// Get price from chainlink data streams api
     ChainlinkPrice {
         /// The chainlink datastream id
         feed_id: String,
@@ -208,43 +208,34 @@ fn main() -> Result<()> {
             print_int_u256_hex(total_mint_shares)?;
         }
         Commands::ChainlinkPrice { feed_id, timestamp } => {
-            let chainlink_low_latency_api_key = std::env::var("CHAINLINK_DATA_STREAM_API_KEY")
-                .context("getting CHAINLINK_DATA_STREAM_API_KEY env variable")?;
+            let chainlink_low_latency_api_key = std::env::var("CHAINLINK_DATA_STREAMS_API_KEY")
+                .context("getting CHAINLINK_DATA_STREAMS_API_KEY env variable")?;
 
-            let chainlink_user_secret = std::env::var("CHAINLINK_DATA_STREAM_API_SECRET")
-                .context("getting CHAINLINK_DATA_STREAM_API_SECRET env variable")?;
+            let chainlink_user_secret = std::env::var("CHAINLINK_DATA_STREAMS_API_SECRET")
+                .context("getting CHAINLINK_DATA_STREAMS_API_SECRET env variable")?;
 
-            let chainlink_rest_url = std::env::var("CHAINLINK_DATA_STREAM_API_URL")
-                .context("getting CHAINLINK_DATA_STREAM_API_URL env variable")?;
+            let chainlink_rest_url = std::env::var("CHAINLINK_DATA_STREAMS_API_URL")
+                .context("getting CHAINLINK_DATA_STREAMS_API_URL env variable")?;
 
-            const API_V1_REPORTS: &str = "/api/v1/reports";
-
-            let method = "GET";
-            let path = &format!("{API_V1_REPORTS}?feedID={feed_id}&timestamp={timestamp}");
-            let body = b"";
-            let client_id = &chainlink_low_latency_api_key;
-            let user_secret = &chainlink_user_secret;
+            let path = format!("/api/v1/reports?feedID={feed_id}&timestamp={timestamp}");
             let request_timestamp = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("Error: Timestamp in the past")
                 .as_millis();
 
-            let hmac_string = &generate_hmac(
-                method,
-                path,
-                body,
-                client_id,
+            let hmac_string = generate_hmac(
+                "GET",
+                &path,
+                b"",
+                &chainlink_low_latency_api_key,
                 request_timestamp,
-                user_secret,
+                &chainlink_user_secret,
             )?;
 
-            let request_url = &format!("{chainlink_rest_url}{path}");
-            let request_timestamp_str = &format!("{request_timestamp}")[..];
-
-            let response = ureq::get(request_url)
-                .set("Authorization", client_id)
-                .set("X-Authorization-Timestamp", request_timestamp_str)
-                .set("X-Authorization-Signature-SHA256", hmac_string)
+            let response = ureq::get(&format!("{chainlink_rest_url}{path}"))
+                .set("Authorization", &chainlink_low_latency_api_key)
+                .set("X-Authorization-Timestamp", &request_timestamp.to_string())
+                .set("X-Authorization-Signature-SHA256", &hmac_string)
                 .call()?;
 
             let report_response: ReportResponse = response.into_json()?;

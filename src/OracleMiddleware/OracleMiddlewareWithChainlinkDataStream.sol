@@ -90,32 +90,32 @@ contract OracleMiddlewareWithChainlinkDataStream is
         } else if (action == Types.ProtocolAction.Initialize) {
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.ValidateDeposit) {
-            // use the bid price of the Chainlink data stream then use Chainlink specified roundId
+            // use the bid price of the Chainlink data streams then use Chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
         } else if (action == Types.ProtocolAction.ValidateWithdrawal) {
-            // use the ask price  of the Chainlink data stream then use Chainlink specified roundId
+            // use the ask price  of the Chainlink data streams then use Chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
         } else if (action == Types.ProtocolAction.ValidateOpenPosition) {
-            // use the ask price  of the Chainlink data stream then use Chainlink specified roundId
+            // use the ask price  of the Chainlink data streams then use Chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
         } else if (action == Types.ProtocolAction.ValidateClosePosition) {
-            // use the bid price of the Chainlink data stream then use Chainlink specified roundId
+            // use the bid price of the Chainlink data streams then use Chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
         } else if (action == Types.ProtocolAction.Liquidation) {
             // we accept all prices newer than  `_dataStreamRecentPriceDelay` for Chainlink or
             // `_pythRecentPriceDelay` for Pyth
             return _getLiquidationPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.InitiateDeposit) {
-            // if the user chooses to initiate with Chainlink data stream, the neutral price will be used
+            // if the user chooses to initiate with Chainlink data streams, the neutral price will be used
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.InitiateWithdrawal) {
-            // if the user chooses to initiate with Chainlink data stream, the neutral price will be used
+            // if the user chooses to initiate with Chainlink data streams, the neutral price will be used
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.InitiateOpenPosition) {
-            // if the user chooses to initiate with Chainlink data stream, the neutral price will be used
+            // if the user chooses to initiate with Chainlink data streams, the neutral price will be used
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.InitiateClosePosition) {
-            // if the user chooses to initiate with Chainlink data stream, the neutral price will be used
+            // if the user chooses to initiate with Chainlink data streams, the neutral price will be used
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         }
     }
@@ -304,7 +304,7 @@ contract OracleMiddlewareWithChainlinkDataStream is
 
     /**
      * @notice Applies the ask or bid according to the `dir` direction.
-     * @param report The Chainlink data stream report.
+     * @param report The Chainlink data streams report.
      * @param dir The direction of the confidence interval to apply.
      * @return price_ The adjusted price according to the direction.
      */
@@ -326,8 +326,8 @@ contract OracleMiddlewareWithChainlinkDataStream is
     }
 
     /**
-     * @notice Gets the price from the Chainlink data stream oracle.
-     * @param payload The payload (full report) coming from the Chainlink data stream API.
+     * @notice Gets the price from the Chainlink data streams oracle.
+     * @param payload The payload (full report) coming from the Chainlink data streams API.
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
      * prices younger than {ChainlinkDataStreamOracle._dataStreamRecentPriceDelay}.
      * @param dir The direction for the confidence interval adjusted price.

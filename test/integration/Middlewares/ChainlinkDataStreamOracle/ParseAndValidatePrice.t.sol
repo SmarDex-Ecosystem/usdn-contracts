@@ -27,14 +27,14 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
     string internal _validateOpenPriceError = string.concat(PRICE_ERROR, actionNames[VALIDATE_OPEN_ACTION_INDEX]);
 
     /**
-     * @custom:scenario Parse and validate the price using Chainlink data stream API payload for all actions
+     * @custom:scenario Parse and validate the price using Chainlink data streams API payload for all actions
      * and Pyth Hermes API signature for liquidations.
      * @custom:given The price feed is ETH/USD for both Chainlink and Pyth.
      * @custom:and The validation delay is respected.
      * @custom:when A Protocol action is performed.
      * @custom:then The price signature is well-decoded.
      * @custom:and The price retrieved by the oracle middleware matches the one
-     * from the data stream API or the Hermes API.
+     * from the data streams API or the Hermes API.
      */
     function test_ForkFFIParseAndValidatePriceWithPythAndDataStream() public {
         _setUp(_params);
@@ -48,7 +48,7 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
             string memory timestampErrorMessage = string.concat(TIMESTAMP_ERROR, actionNames[i]);
             string memory priceErrorMessage = string.concat(PRICE_ERROR, actionNames[i]);
 
-            // Validate data stream for Chainlink
+            // Validate data streams for Chainlink
             _parseAndValidateDataStream(action, timestampErrorMessage, priceErrorMessage);
 
             // For liquidation actions, validate Pyth
@@ -59,7 +59,7 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
     }
 
     /**
-     * @custom:scenario Parse and validate price with Chainlink data stream API payload using a fee manager.
+     * @custom:scenario Parse and validate price with Chainlink data streams API payload using a fee manager.
      * @custom:given The price feed is ETH/USD for both Chainlink and Pyth.
      * @custom:and A mock fee manager is deployed.
      * @custom:when The `parseAndValidatePrice` function is called.
@@ -77,7 +77,7 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
     }
 
     /**
-     * @custom:scenario Parse and validate price with Chainlink data stream API payload using a fee manager and full
+     * @custom:scenario Parse and validate price with Chainlink data streams API payload using a fee manager and full
      * native surcharge.
      * @custom:given The price feed is ETH/USD for both Chainlink and Pyth.
      * @custom:and A mock fee manager is deployed.
@@ -98,7 +98,7 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
     }
 
     /**
-     * @custom:scenario Parse and validate price with Chainlink data stream API payload using a fee manager and full
+     * @custom:scenario Parse and validate price with Chainlink data streams API payload using a fee manager and full
      * discount.
      * @custom:given The price feed is ETH/USD for both Chainlink and Pyth.
      * @custom:and A mock fee manager is deployed.
@@ -118,7 +118,7 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
     }
 
     /**
-     * @notice Parses and validates the Chainlink data stream API payload.
+     * @notice Parses and validates the Chainlink data streams API payload.
      * @param action The USDN protocol action.
      * @param timestampErrorMessage The error message for timestamp validation failure.
      * @param priceErrorMessage The error message for price validation failure.
@@ -128,7 +128,7 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
         string memory timestampErrorMessage,
         string memory priceErrorMessage
     ) internal returns (uint256 validationCost_) {
-        // Unverified payload from the Chainlink data stream API.
+        // Unverified payload from the Chainlink data streams API.
         bytes memory payload = _getChainlinkDatastreamApiSignature(CHAINLINK_DATA_STREAM_ETH_USD, block.timestamp);
 
         // Decode report data from the payload.
