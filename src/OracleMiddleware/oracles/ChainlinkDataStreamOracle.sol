@@ -7,7 +7,7 @@ import { IOracleMiddlewareErrors } from "../../interfaces/OracleMiddleware/IOrac
 import { IVerifierProxy } from "../../interfaces/OracleMiddleware/IVerifierProxy.sol";
 
 /**
- * @title Contract To Communicate With The Chainlink data streams
+ * @title Contract To Communicate With The Chainlink Data Streams
  * @notice This contract is used to get the price of the asset that corresponds to the stored Chainlink data streams ID.
  * @dev Is implemented by the {OracleMiddleware} contract.
  */
