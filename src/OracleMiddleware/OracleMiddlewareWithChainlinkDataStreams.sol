@@ -253,7 +253,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
         internal
         returns (PriceInfo memory price_)
     {
-        // if data is not empty, use pyth
+        // if data is not empty, use Chainlink data streams
         if (data.length > 0) {
             // since we use this function for `initiate` type actions which pass `targetTimestamp = block.timestamp`,
             // we should pass `0` to the function below to signal that we accept any recent price
@@ -331,7 +331,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
      * @param payload The payload (full report) coming from the Chainlink data streams API.
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
      * prices younger than {ChainlinkDataStreamOracle._dataStreamsRecentPriceDelay}.
-     * @param dir The direction to apply price.
+     * @param dir The direction to apply to the price.
      * @return price_ The price from the Chainlink data streams, adjusted by the price direction.
      */
     function _getLowLatencyPrice(bytes calldata payload, uint128 actionTimestamp, ConfidenceInterval dir)
@@ -354,9 +354,9 @@ contract OracleMiddlewareWithChainlinkDataStreams is
     /**
      * @notice Gets the price for a validate action of the protocol.
      * @dev If the low latency delay is not exceeded, validate the price with the Chainlink data streams oracle.
-     * Else, get the specified roundId on-chain price from Chainlink. In case of Chainlink price,
-     * we don't have a confidence interval and so both `neutralPrice` and `price` are equal.
-     * @param data An optional Chainlink data streams payload or a Chainlink roundId (abi-encoded uint80).
+     * Else, get the specified roundId on-chain price from Chainlink. In case of Chainlink data feeds price,
+     * `neutralPrice` and `price` are equal.
+     * @param data An optional Chainlink data streams payload or a Chainlink data feeds roundId (abi-encoded uint80).
      * @param targetTimestamp The timestamp of the initiate action.
      * @param dir The price direction to take.
      * @return price_ The price to use for the user action.

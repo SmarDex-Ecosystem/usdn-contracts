@@ -3,13 +3,14 @@ pragma solidity >=0.8.0;
 
 import { IUsdnProtocol } from "../UsdnProtocol/IUsdnProtocol.sol";
 import { IBaseOracleMiddleware } from "./IBaseOracleMiddleware.sol";
-import { IChainlinkDataStreamOracle } from "./IChainlinkDataStreamOracle.sol";
+import { IChainlinkDataStreamsOracle } from "./IChainlinkDataStreamsOracle.sol";
 import { IChainlinkOracle } from "./IChainlinkOracle.sol";
 import { IOracleMiddlewareErrors } from "./IOracleMiddlewareErrors.sol";
 import { IOracleMiddlewareEvents } from "./IOracleMiddlewareEvents.sol";
 import { IPythOracle } from "./IPythOracle.sol";
 
 /**
+ * @title Interface For The Middleware And Oracle Related Contracts
  * @notice The oracle middleware is a contract that is used by the USDN protocol to validate price data.
  * Using a middleware allows the protocol to later upgrade to a new oracle logic without having to modify
  * the protocol's contracts.
@@ -20,7 +21,7 @@ interface IOracleMiddlewareWithChainlinkDataStream is
     IBaseOracleMiddleware,
     IOracleMiddlewareErrors,
     IOracleMiddlewareEvents,
-    IChainlinkDataStreamOracle
+    IChainlinkDataStreamsOracle
 {
     /* -------------------------------------------------------------------------- */
     /*                                    Roles                                   */

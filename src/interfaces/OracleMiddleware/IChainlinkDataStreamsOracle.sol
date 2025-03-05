@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 
 import { IVerifierProxy } from "./IVerifierProxy.sol";
 
-interface IChainlinkDataStreamOracle {
+interface IChainlinkDataStreamsOracle {
     /**
      * @notice Gets the Chainlink Proxy verifier contract.
      * @return proxyVerifier_ The address of the proxy verifier contract.
