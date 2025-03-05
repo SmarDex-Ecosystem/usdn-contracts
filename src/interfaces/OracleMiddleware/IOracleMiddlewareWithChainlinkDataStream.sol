@@ -49,7 +49,7 @@ interface IOracleMiddlewareWithChainlinkDataStream is
     function setPythRecentPriceDelay(uint64 newDelay) external;
 
     /**
-     * @notice Sets the amount of time after which we do not consider a price as recent for chainlink.
+     * @notice Sets the amount of time after which we do not consider a price as recent for Chainlink.
      * @param newDelay The maximum age of a price to be considered recent.
      */
     function setDataStreamRecentPriceDelay(uint64 newDelay) external;

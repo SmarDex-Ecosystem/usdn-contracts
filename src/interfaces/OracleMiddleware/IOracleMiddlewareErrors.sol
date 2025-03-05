@@ -13,6 +13,18 @@ interface IOracleMiddlewareErrors {
     error OracleMiddlewareWrongPrice(int256 price);
 
     /**
+     * @notice The ask price returned by Chainlink data stream is negative.
+     * @param askPrice The ask price returned by Chainlink data stream.
+     */
+    error OracleMiddlewareWrongAskPrice(int256 askPrice);
+
+    /**
+     * @notice The bid price returned by Chainlink data stream is negative.
+     * @param bidPrice The bid price returned by Chainlink data stream.
+     */
+    error OracleMiddlewareWrongBidPrice(int256 bidPrice);
+
+    /**
      * @notice The price returned by an oracle is too old.
      * @param timestamp The timestamp of the price given by the oracle.
      */

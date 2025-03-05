@@ -10,7 +10,7 @@ import { CHAINLINK_DATA_STREAM_ETH_USD, PYTH_ETH_USD } from "../../../utils/Cons
 import { ChainlinkDataStreamFixture } from "./utils/Fixtures.sol";
 
 /**
- * @custom:feature The `parseAndValidatePrice` function of `OracleMiddlewareWithChainlinkDataStream`.
+ * @custom:feature The `parseAndValidatePrice` function of the `OracleMiddlewareWithChainlinkDataStream`.
  * @custom:background A deployed OracleMiddlewareWithChainlinkDataStream.
  */
 contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is ChainlinkDataStreamFixture {
@@ -27,31 +27,31 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
     string internal _validateOpenPriceError = string.concat(PRICE_ERROR, actionNames[VALIDATE_OPEN_ACTION_INDEX]);
 
     /**
-     * @custom:scenario Parse and validate price with chainlink data stream API payload for all actions
-     * and pyth hermes API signature for liquidations.
-     * @custom:given The price feed is ETH/USD for chainlink and pyth.
+     * @custom:scenario Parse and validate the price using Chainlink data stream API payload for all actions
+     * and Pyth Hermes API signature for liquidations.
+     * @custom:given The price feed is ETH/USD for both Chainlink and Pyth.
      * @custom:and The validation delay is respected.
-     * @custom:when The Protocol action is any targeted action.
+     * @custom:when A Protocol action is performed.
      * @custom:then The price signature is well-decoded.
-     * @custom:and The price retrieved by the oracle middleware is the same as the one
-     * from the data stream API or the hermes API.
+     * @custom:and The price retrieved by the oracle middleware matches the one
+     * from the data stream API or the Hermes API.
      */
     function test_ForkFFIParseAndValidatePriceWithPythAndDataStream() public {
         _setUp(_params);
 
-        // all targeted actions loop
+        // Loop through all targeted actions
         for (uint256 i; i < actions.length; i++) {
-            // action type
+            // Get the current action type
             ProtocolAction action = actions[i];
 
-            // error messages
+            // Construct error messages
             string memory timestampErrorMessage = string.concat(TIMESTAMP_ERROR, actionNames[i]);
             string memory priceErrorMessage = string.concat(PRICE_ERROR, actionNames[i]);
 
-            // chainlink data stream
+            // Validate data stream for Chainlink
             _parseAndValidateDataStream(action, timestampErrorMessage, priceErrorMessage);
 
-            // for liquidation pyth is accepted
+            // For liquidation actions, validate Pyth
             if (action == ProtocolAction.Liquidation) {
                 _parseAndValidatePyth(action, timestampErrorMessage, priceErrorMessage);
             }
@@ -59,12 +59,12 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
     }
 
     /**
-     * @custom:scenario Parse and validate price with chainlink data stream API payload with a fee manager.
-     * @custom:given The price feed is ETH/USD for chainlink and pyth.
+     * @custom:scenario Parse and validate price with Chainlink data stream API payload using a fee manager.
+     * @custom:given The price feed is ETH/USD for both Chainlink and Pyth.
      * @custom:and A mock fee manager is deployed.
      * @custom:when The `parseAndValidatePrice` function is called.
      * @custom:then The price signature is verified.
-     * @custom:and The `weth` fee manager balance is equal to the validation cost.
+     * @custom:and The balance of the WETH in the mock fee manager equals the validation cost.
      */
     function test_ForkFFIParseAndValidatePriceFeeManager() public {
         _params.deployMockFeeManager = true;
@@ -77,14 +77,14 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
     }
 
     /**
-     * @custom:scenario Parse and validate price with chainlink data stream API payload with a fee manager and a full
+     * @custom:scenario Parse and validate price with Chainlink data stream API payload using a fee manager and full
      * native surcharge.
-     * @custom:given The price feed is ETH/USD for chainlink and pyth.
+     * @custom:given The price feed is ETH/USD for both Chainlink and Pyth.
      * @custom:and A mock fee manager is deployed.
      * @custom:and A full native surcharge is set.
      * @custom:when The `parseAndValidatePrice` function is called.
      * @custom:then The price signature is verified.
-     * @custom:and The `weth` fee manager balance is equal to the validation cost.
+     * @custom:and The balance of the WETH in the mock fee manager equals the validation cost.
      */
     function test_ForkFFIParseAndValidatePriceFeeManagerWithFullSurcharge() public {
         _params.deployMockFeeManager = true;
@@ -98,13 +98,13 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
     }
 
     /**
-     * @custom:scenario Parse and validate price with chainlink data stream API payload with a fee manager and a full
+     * @custom:scenario Parse and validate price with Chainlink data stream API payload using a fee manager and full
      * discount.
-     * @custom:given The price feed is ETH/USD for chainlink and pyth.
+     * @custom:given The price feed is ETH/USD for both Chainlink and Pyth.
      * @custom:and A mock fee manager is deployed.
      * @custom:when The `parseAndValidatePrice` function is called.
      * @custom:then The price signature is verified.
-     * @custom:and The `weth` fee manager balance is equal zero.
+     * @custom:and The balance of the WETH in the mock fee manager is zero.
      */
     function test_ForkFFIParseAndValidatePriceFeeManagerWithFullDiscount() public {
         _params.deployMockFeeManager = true;
@@ -118,26 +118,32 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
     }
 
     /**
-     * @notice Parses and validates the chainlink data stream API payload.
-     * @param action The usdn protocol action.
-     * @param timestampErrorMessage The action timestamp error message.
-     * @param priceErrorMessage The action price error message.
+     * @notice Parses and validates the Chainlink data stream API payload.
+     * @param action The USDN protocol action.
+     * @param timestampErrorMessage The error message for timestamp validation failure.
+     * @param priceErrorMessage The error message for price validation failure.
      */
     function _parseAndValidateDataStream(
         ProtocolAction action,
         string memory timestampErrorMessage,
         string memory priceErrorMessage
     ) internal returns (uint256 validationCost_) {
-        // unverified payload
+        // Unverified payload from the Chainlink data stream API.
         bytes memory payload = _getChainlinkDatastreamApiSignature(CHAINLINK_DATA_STREAM_ETH_USD, block.timestamp);
-        // decode report data
+
+        // Decode report data from the payload.
         (, bytes memory reportData) = abi.decode(payload, (bytes32[3], bytes));
-        // decode unverified report
+
+        // Decode the unverified report.
         IVerifierProxy.ReportV3 memory unverifiedReport = abi.decode(reportData, (IVerifierProxy.ReportV3));
-        // validation cost
+
+        // Calculate the validation cost for the given action and payload.
         validationCost_ = oracleMiddleware.validationCost(payload, action);
-        // middleware data
+
+        // Initialize middleware price info.
         PriceInfo memory middlewarePrice;
+
+        // Validate the price based on the action type.
         if (
             action == ProtocolAction.Initialize || action == ProtocolAction.Liquidation
                 || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
@@ -150,48 +156,55 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
             );
         }
 
-        // timestamp assertion
+        // Assert that the timestamp from the middleware price matches the block timestamp.
         assertEq(middlewarePrice.timestamp, block.timestamp, timestampErrorMessage);
-        // ask price
+
+        // Validate the price based on the action type.
         if (action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition) {
+            // Ask price validation for withdrawal or open position actions.
             assertEq(middlewarePrice.price, uint192(unverifiedReport.ask), priceErrorMessage);
-        }
-        // bid price
-        else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
+        } else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
+            // Bid price validation for deposit or close position actions.
             assertEq(middlewarePrice.price, uint192(unverifiedReport.bid), priceErrorMessage);
-        }
-        // neutral price
-        else {
+        } else {
+            // Neutral price validation for other actions.
             assertEq(middlewarePrice.price, uint192(unverifiedReport.price), priceErrorMessage);
         }
     }
 
     /**
-     * @dev Parses and validates the pyth hermes API signature.
-     * @param action The usdn protocol action.
-     * @param timestampErrorMessage The action timestamp error message.
-     * @param priceErrorMessage The action price error message.
+     * @dev Parses and validates the Pyth Hermes API signature.
+     * @param action The USDN protocol action.
+     * @param timestampErrorMessage The error message for timestamp validation failure.
+     * @param priceErrorMessage The error message for price validation failure.
      */
     function _parseAndValidatePyth(
         ProtocolAction action,
         string memory timestampErrorMessage,
         string memory priceErrorMessage
     ) internal {
-        // pyth data
+        // Retrieve Pyth data including price, decimals, timestamp, and signature bytes.
         (uint256 pythPrice,, uint256 pythDecimals, uint256 pythTimestamp, bytes memory data) =
             getHermesApiSignature(PYTH_ETH_USD, block.timestamp);
-        // validation cost
+
+        // Calculate the validation cost for the given action and Pyth data.
         uint256 validationCost = oracleMiddleware.validationCost(data, action);
-        // since we force the usage of Pyth for initiate actions, Pyth requires
-        // that the price data timestamp is recent compared to block.timestamp
+
+        // Since we force the usage of Pyth for initiate actions, Pyth requires
+        // that the price data timestamp is recent compared to block.timestamp.
         vm.warp(pythTimestamp);
+
+        // Parse and validate the price using the middleware.
         PriceInfo memory middlewarePrice =
             oracleMiddleware.parseAndValidatePrice{ value: validationCost }("", 0, action, data);
-        // format price decimals
+
+        // Format Pyth price to match the expected decimal precision.
         uint256 formattedPythPrice = pythPrice * 10 ** (oracleMiddleware.getDecimals() - pythDecimals);
-        // timestamp assertion
+
+        // Assert that the timestamp from the middleware price matches the Pyth timestamp.
         assertEq(middlewarePrice.timestamp, pythTimestamp, timestampErrorMessage);
-        // price assertion
+
+        // Assert that the formatted Pyth price matches the price from the middleware.
         assertEq(middlewarePrice.price, formattedPythPrice, priceErrorMessage);
     }
 

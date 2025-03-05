@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { IFeeManager } from "../../interfaces/OracleMiddleware/IFeeManager.sol";
-import { IVerifierProxy } from "../../interfaces/OracleMiddleware/IVerifierProxy.sol";
-import { console } from "forge-std/Test.sol";
-
 import { IChainlinkDataStreamOracle } from "../../interfaces/OracleMiddleware/IChainlinkDataStreamOracle.sol";
+import { IFeeManager } from "../../interfaces/OracleMiddleware/IFeeManager.sol";
 import { IOracleMiddlewareErrors } from "../../interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { IVerifierProxy } from "../../interfaces/OracleMiddleware/IVerifierProxy.sol";
 
 /**
  * @title Contract To Communicate With The Chainlink Data Stream
@@ -23,7 +21,7 @@ abstract contract ChainlinkDataStreamOracle is IOracleMiddlewareErrors, IChainli
     /// @notice The report version.
     uint256 internal constant REPORT_VERSION = 3;
 
-    /// @notice The maximum age of a recent price to be considered valid for chainlink data stream.
+    /// @notice The maximum age of a recent price to be considered valid for Chainlink data stream.
     uint256 internal _dataStreamRecentPriceDelay = 45 seconds;
 
     /**
@@ -67,7 +65,6 @@ abstract contract ChainlinkDataStreamOracle is IOracleMiddlewareErrors, IChainli
         returns (IVerifierProxy.ReportV3 memory verifiedReport_)
     {
         IFeeManager.Asset memory feeData = _getChainlinkDataStreamFeeData(payload);
-        console.log("feeData.amount", feeData.amount);
 
         // Sanity check on the fee requested by the Chainlink fee manager
         if (feeData.amount > 0.01 ether) {
@@ -110,18 +107,18 @@ abstract contract ChainlinkDataStreamOracle is IOracleMiddlewareErrors, IChainli
             revert OracleMiddlewareWrongPrice(verifiedReport_.price);
         }
         if (verifiedReport_.ask <= 0) {
-            revert OracleMiddlewareWrongPrice(verifiedReport_.ask);
+            revert OracleMiddlewareWrongAskPrice(verifiedReport_.ask);
         }
         if (verifiedReport_.bid <= 0) {
-            revert OracleMiddlewareWrongPrice(verifiedReport_.bid);
+            revert OracleMiddlewareWrongBidPrice(verifiedReport_.bid);
         }
     }
 
     /**
-     * @notice Gets the fee asset data to update the price feed.
+     * @notice Gets the fee asset data to update the data stream.
      * @dev The native token fee option will be used.
-     * @param payload The data stream payload.
-     * @return feeData_ The fee asset data to verify the report.
+     * @param payload The data stream payload (full report).
+     * @return feeData_ The fee asset data including the token and the amount required to verify the report.
      */
     function _getChainlinkDataStreamFeeData(bytes calldata payload)
         internal

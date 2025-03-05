@@ -90,32 +90,32 @@ contract OracleMiddlewareWithChainlinkDataStream is
         } else if (action == Types.ProtocolAction.Initialize) {
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.ValidateDeposit) {
-            // use the bid price of the Chainlink data stream then use chainlink specified roundId
+            // use the bid price of the Chainlink data stream then use Chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
         } else if (action == Types.ProtocolAction.ValidateWithdrawal) {
-            // use the ask price  of the Chainlink data stream then use chainlink specified roundId
+            // use the ask price  of the Chainlink data stream then use Chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
         } else if (action == Types.ProtocolAction.ValidateOpenPosition) {
-            // use the ask price  of the Chainlink data stream then use chainlink specified roundId
+            // use the ask price  of the Chainlink data stream then use Chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
         } else if (action == Types.ProtocolAction.ValidateClosePosition) {
-            // use the bid price of the Chainlink data stream then use chainlink specified roundId
+            // use the bid price of the Chainlink data stream then use Chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
         } else if (action == Types.ProtocolAction.Liquidation) {
             // we accept all prices newer than  `_dataStreamRecentPriceDelay` for Chainlink or
             // `_pythRecentPriceDelay` for Pyth
             return _getLiquidationPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.InitiateDeposit) {
-            // if the user chooses to initiate with chainlink data stream, the neutral price will be used
+            // if the user chooses to initiate with Chainlink data stream, the neutral price will be used
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.InitiateWithdrawal) {
-            // if the user chooses to initiate with chainlink data stream, the neutral price will be used
+            // if the user chooses to initiate with Chainlink data stream, the neutral price will be used
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.InitiateOpenPosition) {
-            // if the user chooses to initiate with chainlink data stream, the neutral price will be used
+            // if the user chooses to initiate with Chainlink data stream, the neutral price will be used
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.InitiateClosePosition) {
-            // if the user chooses to initiate with chainlink data stream, the neutral price will be used
+            // if the user chooses to initiate with Chainlink data stream, the neutral price will be used
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         }
     }
@@ -208,7 +208,6 @@ contract OracleMiddlewareWithChainlinkDataStream is
         if (to == address(0)) {
             revert OracleMiddlewareTransferToZeroAddress();
         }
-        // slither-disable-next-line arbitrary-send-eth
         (bool success,) = payable(to).call{ value: address(this).balance }("");
         if (!success) {
             revert OracleMiddlewareTransferFailed(to);
@@ -260,7 +259,7 @@ contract OracleMiddlewareWithChainlinkDataStream is
             return _getLowLatencyPrice(data, 0, dir);
         }
 
-        // chainlink calls do not require a fee
+        // Chainlink calls do not require a fee
         if (msg.value > 0) {
             revert OracleMiddlewareIncorrectFee();
         }
@@ -270,7 +269,7 @@ contract OracleMiddlewareWithChainlinkDataStream is
         // check if the cached pyth price is more recent and return it instead
         FormattedPythPrice memory latestPythPrice = _getLatestStoredPythPrice(MIDDLEWARE_DECIMALS);
         if (chainlinkOnChainPrice.timestamp <= latestPythPrice.publishTime) {
-            // we use the same price age limit as for chainlink here
+            // we use the same price age limit as for Chainlink here
             if (latestPythPrice.publishTime < block.timestamp - _timeElapsedLimit) {
                 revert OracleMiddlewarePriceTooOld(latestPythPrice.publishTime);
             }
@@ -295,19 +294,19 @@ contract OracleMiddlewareWithChainlinkDataStream is
     }
 
     /**
-     * @notice Adjust the .
-     * @param pythPrice The formatted Pyth price object.
-     * @return price_ The adjusted price according to the confidence interval and confidence ratio.
+     * @notice Converts a formatted Pyth price into a PriceInfo.
+     * @param pythPrice The formatted Pyth price containing the price and publish time.
+     * @return price_ The PriceInfo with the price, neutral price, and timestamp set from the Pyth price data.
      */
     function _adjustPythPrice(FormattedPythPrice memory pythPrice) internal pure returns (PriceInfo memory price_) {
         price_ = PriceInfo({ price: pythPrice.price, neutralPrice: pythPrice.price, timestamp: pythPrice.publishTime });
     }
 
     /**
-     * @notice Applies the ask or bid according to the `dir` direction, scaled by the configured {_confRatioBps}.
+     * @notice Applies the ask or bid according to the `dir` direction.
      * @param report The Chainlink data stream report.
      * @param dir The direction of the confidence interval to apply.
-     * @return price_ The adjusted price according to the confidence interval and confidence ratio.
+     * @return price_ The adjusted price according to the direction.
      */
     function _adjustDataStreamPrice(IVerifierProxy.ReportV3 memory report, ConfidenceInterval dir)
         internal
@@ -355,9 +354,9 @@ contract OracleMiddlewareWithChainlinkDataStream is
     /**
      * @notice Gets the price for a validate action of the protocol.
      * @dev If the low latency delay is not exceeded, validate the price with the low-latency oracle(s).
-     * Else, get the specified roundId on-chain price from Chainlink. In case of chainlink price,
+     * Else, get the specified roundId on-chain price from Chainlink. In case of Chainlink price,
      * we don't have a confidence interval and so both `neutralPrice` and `price` are equal.
-     * @param data An optional VAA from Pyth or a chainlink roundId (abi-encoded uint80).
+     * @param data An optional VAA from Pyth or a Chainlink roundId (abi-encoded uint80).
      * @param targetTimestamp The timestamp of the initiate action.
      * @param dir The price direction to take.
      * @return price_ The price to use for the user action.
@@ -371,7 +370,7 @@ contract OracleMiddlewareWithChainlinkDataStream is
             return _getLowLatencyPrice(data, targetTimestamp, dir);
         }
 
-        // chainlink calls do not require a fee
+        // Chainlink calls do not require a fee
         if (msg.value > 0) {
             revert OracleMiddlewareIncorrectFee();
         }

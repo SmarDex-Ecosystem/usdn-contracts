@@ -12,7 +12,7 @@ interface IChainlinkDataStreamOracle {
 
     /**
      * @notice Gets the supported Chainlink data stream ID.
-     * @return streamId_ The unique identifier for the chainlink data stream.
+     * @return streamId_ The unique identifier for the Chainlink data stream.
      */
     function getStreamId() external view returns (bytes32 streamId_);
 
