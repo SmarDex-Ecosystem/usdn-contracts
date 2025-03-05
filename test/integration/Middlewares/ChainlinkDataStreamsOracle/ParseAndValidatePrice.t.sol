@@ -136,6 +136,9 @@ contract TestChainlinkDataStreamsOracleMiddlewareParseAndValidatePriceRealData i
 
         // Decode the unverified report.
         IVerifierProxy.ReportV3 memory unverifiedReport = abi.decode(reportData, (IVerifierProxy.ReportV3));
+        emit log_named_uint("validFromTimestamp", unverifiedReport.validFromTimestamp);
+        emit log_named_uint("observationsTimestamp", unverifiedReport.observationsTimestamp);
+        emit log_named_uint("expiresAt", unverifiedReport.expiresAt);
 
         // Calculate the validation cost for the given action and payload.
         validationCost_ = oracleMiddleware.validationCost(payload, action);

@@ -94,11 +94,13 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
 
         // Report timestamp
         if (targetTimestamp == 0) {
-            if (verifiedReport_.expiresAt < block.timestamp - _dataStreamsRecentPriceDelay) {
+            if (verifiedReport_.observationsTimestamp < block.timestamp - _dataStreamsRecentPriceDelay) {
                 revert OracleMiddlewareDataStreamInvalidTimestamp();
             }
-        } else if (targetTimestamp < verifiedReport_.validFromTimestamp || verifiedReport_.expiresAt < targetTimestamp)
-        {
+        } else if (
+            targetTimestamp < verifiedReport_.validFromTimestamp
+                || verifiedReport_.observationsTimestamp < targetTimestamp
+        ) {
             revert OracleMiddlewareDataStreamInvalidTimestamp();
         }
 
