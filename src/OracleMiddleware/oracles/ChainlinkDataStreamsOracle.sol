@@ -115,7 +115,7 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
     }
 
     /**
-     * @notice Gets the fee asset data to update the data stream.
+     * @notice Gets the fee asset data to update the data streams.
      * @dev The native token fee option will be used.
      * @param payload The data streams payload (full report).
      * @return feeData_ The fee asset data including the token and the amount required to verify the report.

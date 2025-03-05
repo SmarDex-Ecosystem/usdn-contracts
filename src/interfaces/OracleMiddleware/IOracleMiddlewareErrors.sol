@@ -13,14 +13,14 @@ interface IOracleMiddlewareErrors {
     error OracleMiddlewareWrongPrice(int256 price);
 
     /**
-     * @notice The ask price returned by Chainlink data stream is negative.
-     * @param askPrice The ask price returned by Chainlink data stream.
+     * @notice The ask price returned by Chainlink data streams is negative.
+     * @param askPrice The ask price returned by Chainlink data streams.
      */
     error OracleMiddlewareWrongAskPrice(int256 askPrice);
 
     /**
-     * @notice The bid price returned by Chainlink data stream is negative.
-     * @param bidPrice The bid price returned by Chainlink data stream.
+     * @notice The bid price returned by Chainlink data streams is negative.
+     * @param bidPrice The bid price returned by Chainlink data streams.
      */
     error OracleMiddlewareWrongBidPrice(int256 bidPrice);
 
@@ -84,7 +84,7 @@ interface IOracleMiddlewareErrors {
     /// @notice The Chainlink data streams report version is invalid.
     error OracleMiddlewareInvalidReportVersion();
 
-    /// @notice The Chainlink report stream id is invalid.
+    /// @notice The Chainlink report stream ID is invalid.
     error OracleMiddlewareInvalidStreamId();
 
     /// @notice The Chainlink data streams report timestamp is invalid.

@@ -7,13 +7,13 @@ import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMi
 import { IVerifierProxy } from "../../../../src/interfaces/OracleMiddleware/IVerifierProxy.sol";
 
 import { CHAINLINK_DATA_STREAM_ETH_USD, PYTH_ETH_USD } from "../../../utils/Constants.sol";
-import { ChainlinkDataStreamFixture } from "./utils/Fixtures.sol";
+import { ChainlinkDataStreamsFixture } from "./utils/Fixtures.sol";
 
 /**
- * @custom:feature The `parseAndValidatePrice` function of the `OracleMiddlewareWithChainlinkDataStream`.
- * @custom:background A deployed OracleMiddlewareWithChainlinkDataStream.
+ * @custom:feature The `parseAndValidatePrice` function of the `OracleMiddlewareWithChainlinkDataStreams`.
+ * @custom:background A deployed OracleMiddlewareWithChainlinkDataStreams.
  */
-contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is ChainlinkDataStreamFixture {
+contract TestChainlinkDataStreamsOracleMiddlewareParseAndValidatePriceRealData is ChainlinkDataStreamsFixture {
     using Strings for uint256;
 
     string internal constant TIMESTAMP_ERROR = "Wrong timestamp for";
@@ -36,7 +36,7 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
      * @custom:and The price retrieved by the oracle middleware matches the one
      * from the data streams API or the Hermes API.
      */
-    function test_ForkFFIParseAndValidatePriceWithPythAndDataStream() public {
+    function test_ForkFFIParseAndValidatePriceWithPythAndDataStreams() public {
         _setUp(_params);
 
         // Loop through all targeted actions
@@ -49,7 +49,7 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
             string memory priceErrorMessage = string.concat(PRICE_ERROR, actionNames[i]);
 
             // Validate data streams for Chainlink
-            _parseAndValidateDataStream(action, timestampErrorMessage, priceErrorMessage);
+            _parseAndValidateDataStreams(action, timestampErrorMessage, priceErrorMessage);
 
             // For liquidation actions, validate Pyth
             if (action == ProtocolAction.Liquidation) {
@@ -69,7 +69,7 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
     function test_ForkFFIParseAndValidatePriceFeeManager() public {
         _params.deployMockFeeManager = true;
         _setUp(_params);
-        uint256 validationCost = _parseAndValidateDataStream(
+        uint256 validationCost = _parseAndValidateDataStreams(
             actions[VALIDATE_OPEN_ACTION_INDEX], _validateOpenTimestampError, _validateOpenPriceError
         );
         assertGt(validationCost, 0, VALIDATION_COST_ERROR);
@@ -90,7 +90,7 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
         _params.deployMockFeeManager = true;
         _params.nativeSurchargeBps = PERCENTAGE_SCALAR;
         _setUp(_params);
-        uint256 validationCost = _parseAndValidateDataStream(
+        uint256 validationCost = _parseAndValidateDataStreams(
             actions[VALIDATE_OPEN_ACTION_INDEX], _validateOpenTimestampError, _validateOpenPriceError
         );
         assertGt(validationCost, 0, VALIDATION_COST_ERROR);
@@ -110,7 +110,7 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
         _params.deployMockFeeManager = true;
         _params.discountBps = PERCENTAGE_SCALAR;
         _setUp(_params);
-        uint256 validationCost = _parseAndValidateDataStream(
+        uint256 validationCost = _parseAndValidateDataStreams(
             actions[VALIDATE_OPEN_ACTION_INDEX], _validateOpenTimestampError, _validateOpenPriceError
         );
         assertEq(validationCost, 0, VALIDATION_COST_ERROR);
@@ -123,13 +123,13 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
      * @param timestampErrorMessage The error message for timestamp validation failure.
      * @param priceErrorMessage The error message for price validation failure.
      */
-    function _parseAndValidateDataStream(
+    function _parseAndValidateDataStreams(
         ProtocolAction action,
         string memory timestampErrorMessage,
         string memory priceErrorMessage
     ) internal returns (uint256 validationCost_) {
         // Unverified payload from the Chainlink data streams API.
-        bytes memory payload = _getChainlinkDatastreamApiSignature(CHAINLINK_DATA_STREAM_ETH_USD, block.timestamp);
+        bytes memory payload = _getChainlinkDataStreamsApiSignature(CHAINLINK_DATA_STREAM_ETH_USD, block.timestamp);
 
         // Decode report data from the payload.
         (, bytes memory reportData) = abi.decode(payload, (bytes32[3], bytes));
@@ -208,6 +208,6 @@ contract TestChainlinkDataStreamOracleMiddlewareParseAndValidatePriceRealData is
         assertEq(middlewarePrice.price, formattedPythPrice, priceErrorMessage);
     }
 
-    // receive ether refunds
+    // Receive ether refunds
     receive() external payable { }
 }

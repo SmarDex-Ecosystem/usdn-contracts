@@ -5,8 +5,8 @@ import { IFeeManager } from "./IFeeManager.sol";
 
 interface IVerifierProxy {
     /**
-     * @notice Represents a data report from a Data Streams stream for v3 schema (crypto streams).
-     * @dev The `price`, `bid`, and `ask` values are carried to either 8 or 18 decimal places, depending on the stream.
+     * @notice Represents a data report from a Data Streams for v3 schema (crypto streams).
+     * @dev The `price`, `bid`, and `ask` values are carried to either 8 or 18 decimal places, depending on the streams.
      * For more information, see https://docs.chain.link/data-streams/crypto-streams and
      * https://docs.chain.link/data-streams/reference/report-schema.
      * @param feedId The stream ID the report has data for.

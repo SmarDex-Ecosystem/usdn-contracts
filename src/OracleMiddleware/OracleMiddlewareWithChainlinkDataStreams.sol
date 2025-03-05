@@ -25,7 +25,7 @@ import { PythOracle } from "./oracles/PythOracle.sol";
  * @notice This contract is used to get the price of an asset from different oracles.
  * It is used by the USDN protocol to get the price of the USDN underlying asset.
  */
-contract OracleMiddlewareWithChainlinkDataStream is
+contract OracleMiddlewareWithChainlinkDataStreams is
     IOracleMiddlewareWithChainlinkDataStream,
     PythOracle,
     ChainlinkOracle,
@@ -56,7 +56,7 @@ contract OracleMiddlewareWithChainlinkDataStream is
      * @param chainlinkPriceFeed The address of the Chainlink price feed.
      * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale.
      * @param chainlinkProxyVerifierAddress The address of the Chainlink proxy verifier contract.
-     * @param chainlinkStreamId The supported Chainlink data stream id.
+     * @param chainlinkStreamId The supported Chainlink data stream ID.
      */
     constructor(
         address pythContract,
@@ -222,7 +222,7 @@ contract OracleMiddlewareWithChainlinkDataStream is
      * @notice Gets the price from the low-latency oracle (Pyth) or the data streams (Chainlink).
      * @param data The signed price update data.
      * @param dir The direction of the price.
-     * @return price_ The price from the Pyth low-latency oracle or the Chainlink data stream.
+     * @return price_ The price from the Pyth low-latency oracle or the Chainlink data streams.
      */
     function _getLiquidationPrice(bytes calldata data, ConfidenceInterval dir)
         internal
@@ -245,7 +245,7 @@ contract OracleMiddlewareWithChainlinkDataStream is
      * {ChainlinkOracle} and compare its timestamp with the latest seen Pyth price (cached). If Pyth is more recent, we
      * return it. Otherwise, we return the Chainlink price. For the latter, we don't have a confidence interval, so both
      * `neutralPrice` and `price` are equal.
-     * @param data An optional Chainlink data stream payload.
+     * @param data An optional Chainlink data streams payload.
      * @param dir The direction of the price to apply.
      * @return price_ The price to use for the user action.
      */

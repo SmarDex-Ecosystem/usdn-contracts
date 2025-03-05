@@ -72,7 +72,7 @@ contract CommonBaseIntegrationFixture is BaseFixture {
         return abi.decode(result, (uint256, uint256, uint256, uint256, bytes));
     }
 
-    function _getChainlinkDatastreamApiSignature(bytes32 stream, uint256 timestamp)
+    function _getChainlinkDataStreamsApiSignature(bytes32 stream, uint256 timestamp)
         internal
         returns (bytes memory payload_)
     {
