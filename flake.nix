@@ -55,7 +55,7 @@
           '';
 
           RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
-          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.gnum4 pkgs.opensll];
+          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.gnum4 pkgs.openssl];
           TYPST_FONT_PATHS = "${pkgs.gyre-fonts}/share/fonts";
         };
       });
