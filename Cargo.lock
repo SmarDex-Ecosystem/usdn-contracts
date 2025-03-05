@@ -2239,7 +2239,6 @@ dependencies = [
  "rug",
  "serde",
  "sha2",
- "thiserror",
  "ureq",
 ]
 

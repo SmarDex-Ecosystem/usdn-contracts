@@ -1,4 +1,7 @@
-use std::ops::DivAssign;
+use std::{
+    ops::DivAssign,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use alloy_primitives::{Bytes, FixedBytes, I256, U256};
 use alloy_sol_types::SolValue;
@@ -12,11 +15,7 @@ use rug::{
     Float, Integer,
 };
 use serde::Deserialize;
-use sha2::{digest::InvalidLength, Digest, Sha256};
-use std::time::{SystemTime, SystemTimeError, UNIX_EPOCH};
-use thiserror::Error;
-
-type HmacSha256 = Hmac<Sha256>;
+use sha2::{Digest, Sha256};
 
 #[derive(Deserialize, Debug)]
 struct HermesResponse {
@@ -115,15 +114,6 @@ enum Commands {
         /// The price timestamp
         timestamp: u128,
     },
-}
-
-#[derive(Error, Debug)]
-pub enum HmacError {
-    #[error("Invalid key length: {0}")]
-    InvalidKeyLength(#[from] InvalidLength),
-
-    #[error("System time error: {0}")]
-    SystemTimeError(#[from] SystemTimeError),
 }
 
 fn main() -> Result<()> {
@@ -240,7 +230,8 @@ fn main() -> Result<()> {
 
             let report_response: ReportResponse = response.into_json()?;
             let report: Report = report_response.report;
-            print_chainlink_report(report)?;
+
+            print!("{}", report.full_report);
         }
     }
     Ok(())
@@ -323,7 +314,7 @@ fn generate_hmac(
     client_id: &str,
     timestamp: u128,
     user_secret: &str,
-) -> Result<String, HmacError> {
+) -> Result<String> {
     let mut hasher = Sha256::new();
     hasher.update(body);
     let server_body_hash = hasher.finalize();
@@ -334,17 +325,11 @@ fn generate_hmac(
         format!("{method} {path} {server_body_hash_hex} {client_id} {timestamp}");
 
     // Compute HMAC-SHA256 of the server body hash string
-    let mut mac = HmacSha256::new_from_slice(user_secret.as_bytes())?;
+    let mut mac = Hmac::<Sha256>::new_from_slice(user_secret.as_bytes())?;
     mac.update(server_body_hash_string.as_bytes());
     let signed_message = mac.finalize();
     let signed_message_bytes = signed_message.into_bytes();
     let user_hmac = hex::encode(signed_message_bytes);
 
     Ok(user_hmac)
-}
-
-fn print_chainlink_report(report: Report) -> Result<()> {
-    let full_report = report.full_report;
-    print!("{full_report}");
-    Ok(())
 }
