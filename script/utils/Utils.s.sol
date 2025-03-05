@@ -4,7 +4,9 @@ pragma solidity 0.8.26;
 import { Script } from "forge-std/Script.sol";
 import { Vm } from "forge-std/Vm.sol";
 
-import { UsdnProtocolImpl } from "../../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 contract Utils is Script {
     string constant FUNC_CLASHES_SCRIPT_PATH = "script/utils/functionClashes.ts";
@@ -25,6 +27,62 @@ contract Utils is Script {
 
         string[] memory inputs2 = _buildCommandCheckImplementationInitialization(implementationContractName);
         runFfiCommand(inputs2);
+    }
+
+    /**
+     * @notice Validate the Usdn protocol configuration by calling all protocol setters with the current values
+     * @param usdnProtocol The Usdn protocol instance
+     * @param admin The default admin address
+     */
+    function validateProtocolConfig(IUsdnProtocol usdnProtocol, address admin) external {
+        vm.startPrank(admin);
+
+        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, admin);
+        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, admin);
+        usdnProtocol.grantRole(Constants.ADMIN_CRITICAL_FUNCTIONS_ROLE, admin);
+        usdnProtocol.grantRole(Constants.CRITICAL_FUNCTIONS_ROLE, admin);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_PROTOCOL_PARAMS_ROLE, admin);
+        usdnProtocol.grantRole(Constants.SET_PROTOCOL_PARAMS_ROLE, admin);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_OPTIONS_ROLE, admin);
+        usdnProtocol.grantRole(Constants.SET_OPTIONS_ROLE, admin);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_USDN_PARAMS_ROLE, admin);
+        usdnProtocol.grantRole(Constants.SET_USDN_PARAMS_ROLE, admin);
+
+        usdnProtocol.setOracleMiddleware(usdnProtocol.getOracleMiddleware());
+        usdnProtocol.setLiquidationRewardsManager(usdnProtocol.getLiquidationRewardsManager());
+        usdnProtocol.setRebalancer(usdnProtocol.getRebalancer());
+        usdnProtocol.setFeeCollector(usdnProtocol.getFeeCollector());
+        usdnProtocol.setValidatorDeadlines(
+            usdnProtocol.getLowLatencyValidatorDeadline(), usdnProtocol.getOnChainValidatorDeadline()
+        );
+        usdnProtocol.setMinLeverage(usdnProtocol.getMinLeverage());
+        usdnProtocol.setMaxLeverage(usdnProtocol.getMaxLeverage());
+        usdnProtocol.setLiquidationPenalty(usdnProtocol.getLiquidationPenalty());
+        usdnProtocol.setEMAPeriod(usdnProtocol.getEMAPeriod());
+        usdnProtocol.setFundingSF(usdnProtocol.getFundingSF());
+        usdnProtocol.setProtocolFeeBps(usdnProtocol.getProtocolFeeBps());
+        usdnProtocol.setPositionFeeBps(usdnProtocol.getPositionFeeBps());
+        usdnProtocol.setVaultFeeBps(usdnProtocol.getVaultFeeBps());
+        usdnProtocol.setSdexRewardsRatioBps(usdnProtocol.getSdexRewardsRatioBps());
+        usdnProtocol.setRebalancerBonusBps(usdnProtocol.getRebalancerBonusBps());
+        usdnProtocol.setSdexBurnOnDepositRatio(usdnProtocol.getSdexBurnOnDepositRatio());
+        usdnProtocol.setSecurityDepositValue(usdnProtocol.getSecurityDepositValue());
+        usdnProtocol.setExpoImbalanceLimits(
+            uint256(usdnProtocol.getOpenExpoImbalanceLimitBps()),
+            uint256(usdnProtocol.getDepositExpoImbalanceLimitBps()),
+            uint256(usdnProtocol.getWithdrawalExpoImbalanceLimitBps()),
+            uint256(usdnProtocol.getCloseExpoImbalanceLimitBps()),
+            uint256(usdnProtocol.getRebalancerCloseExpoImbalanceLimitBps()),
+            usdnProtocol.getLongImbalanceTargetBps()
+        );
+        usdnProtocol.setMinLongPosition(usdnProtocol.getMinLongPosition());
+        usdnProtocol.setSafetyMarginBps(usdnProtocol.getSafetyMarginBps());
+        usdnProtocol.setLiquidationIteration(usdnProtocol.getLiquidationIteration());
+        usdnProtocol.setFeeThreshold(usdnProtocol.getFeeThreshold());
+        usdnProtocol.setTargetUsdnPrice(usdnProtocol.getTargetUsdnPrice());
+        usdnProtocol.setUsdnRebaseThreshold(usdnProtocol.getUsdnRebaseThreshold());
+
+        vm.stopPrank();
     }
 
     /**

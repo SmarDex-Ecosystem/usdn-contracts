@@ -24,7 +24,7 @@
     "installDeps": "npm i && forge soldeer install",
     "lint:test": "solhint -c test/.solhint.json 'test/**/*.sol'",
     "lint": "solhint 'src/**/*.sol'",
-    "natspec": "npx natspec-smells > natspec-smells.txt 2>&1",
+    "natspec": "lintspec",
     "prepare": "husky",
     "quicktest:gas": "npm run quicktest -- --gas-report",
     "quicktest": "forge test -vvv --no-match-test \"(FFI|Fork|Fuzz|invariant)\" --no-match-contract Fork --offline",
@@ -34,16 +34,9 @@
     "verify": "tsx script/utils/verifyContracts.ts"
   },
   "main": "dist/index.js",
-  "files": [
-    "dist",
-    "docs",
-    "src/**/*",
-    "foundry.toml",
-    "soldeer.lock"
-  ],
+  "files": ["dist", "docs", "src/**/*", "foundry.toml", "soldeer.lock"],
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
-    "@defi-wonderland/natspec-smells": "^1.1.4",
     "@types/luxon": "^3.4.2",
     "@types/node": "^22.10.0",
     "abitype": "^1.0.5",

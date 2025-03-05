@@ -30,7 +30,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Install Node 20

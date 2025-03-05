@@ -1,4 +1,4 @@
-name: Natspec report
+name: NatSpec
 on:
   pull_request:
 
@@ -6,52 +6,23 @@ env:
   FOUNDRY_PROFILE: ci
 
 jobs:
-  natspec-smells:
+  lintspec:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
     outputs:
-      total-smells: ${{ steps.natspec-smells-action.outputs.total-smells }}
+      total-diags: ${{ steps.lintspec-action.outputs.total-diags }}
     steps:
-      - uses: actions/create-github-app-token@v1
-        id: app-token
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - uses: actions/checkout@v4
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
+      - name: Check NatSpec
+        id: lintspec-action
+        uses: beeb/lintspec@main
         with:
-          version: nightly
-
-      - name: Install Node 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install deps
-        run: npm ci && forge soldeer install
-
-      - name: Remove unused remappings file
-        run: rm -f remappings.txt
-
-      - name: Report natspec smells findings
-        id: natspec-smells-action
-        uses: SmarDex-Ecosystem/natspec-smells-action@v2
-        with:
-          github-token: ${{ steps.app-token.outputs.token }}
-          working-directory: ./
-          update-comment: true
-
+          fail-on-problem: "false" # we handle failure manually to be able to trigger the notification
       - name: Fail on findings
-        if: ${{ steps.natspec-smells-action.outputs.total-smells > 0 }}
+        if: ${{ steps.lintspec-action.outputs.total-diags > 0 }}
         run: exit 1
 
   notify-on-failure:
-    needs: natspec-smells
-    if: ${{ always() && needs.natspec-smells.outputs.total-smells > 0 }}
+    needs: lintspec
+    if: ${{ always() && needs.lintspec.outputs.total-diags > 0 }}
     uses: ./.github/workflows/notify_failure.yml
     secrets: inherit
