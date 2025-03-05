@@ -58,9 +58,11 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
      * @param payload The full report obtained from the Chainlink data streams API.
      * @param targetTimestamp The target timestamp of the price.
      * If zero, then we accept all recent prices.
+     * @param targetLimit The most recent timestamp a price can have.
+     * Can be zero if `targetTimestamp` is zero.
      * @return verifiedReport_ The Chainlink verified report.
      */
-    function _getChainlinkDataStreamPrice(bytes calldata payload, uint128 targetTimestamp)
+    function _getChainlinkDataStreamPrice(bytes calldata payload, uint128 targetTimestamp, uint128 targetLimit)
         internal
         returns (IVerifierProxy.ReportV3 memory verifiedReport_)
     {
@@ -100,6 +102,7 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
         } else if (
             targetTimestamp < verifiedReport_.validFromTimestamp
                 || verifiedReport_.observationsTimestamp < targetTimestamp
+                || targetLimit < verifiedReport_.observationsTimestamp
         ) {
             revert OracleMiddlewareDataStreamInvalidTimestamp();
         }
@@ -128,10 +131,11 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
         returns (IFeeManager.Asset memory feeData_)
     {
         IFeeManager feeManager = PROXY_VERIFIER.s_feeManager();
-        if (address(feeManager) != address(0)) {
-            address quoteAddress = feeManager.i_nativeAddress();
-            (, bytes memory reportData) = abi.decode(payload, (bytes32[3], bytes));
-            (feeData_,,) = feeManager.getFeeAndReward(address(this), reportData, quoteAddress);
+        if (address(feeManager) == address(0)) {
+            return feeData_;
         }
+        (, bytes memory reportData) = abi.decode(payload, (bytes32[3], bytes));
+        address quoteAddress = feeManager.i_nativeAddress();
+        (feeData_,,) = feeManager.getFeeAndReward(address(this), reportData, quoteAddress);
     }
 }

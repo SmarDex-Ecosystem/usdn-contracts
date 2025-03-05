@@ -86,7 +86,8 @@ contract OracleMiddlewareWithChainlinkDataStreams is
         returns (PriceInfo memory price_)
     {
         if (action == Types.ProtocolAction.None) {
-            return _getLowLatencyPrice(data, targetTimestamp, ConfidenceInterval.None);
+            return
+                _getLowLatencyPrice(data, targetTimestamp, ConfidenceInterval.None, targetTimestamp + _lowLatencyDelay);
         } else if (action == Types.ProtocolAction.Initialize) {
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.ValidateDeposit) {
@@ -231,10 +232,10 @@ contract OracleMiddlewareWithChainlinkDataStreams is
     {
         if (_isPythData(data)) {
             FormattedPythPrice memory pythPrice = _getFormattedPythPrice(data, 0, MIDDLEWARE_DECIMALS, 0);
-            return _adjustPythPrice(pythPrice);
+            return _convertPythPrice(pythPrice);
         }
 
-        IVerifierProxy.ReportV3 memory verifiedReport = _getChainlinkDataStreamPrice(data, 0);
+        IVerifierProxy.ReportV3 memory verifiedReport = _getChainlinkDataStreamPrice(data, 0, 0);
         price_ = _adjustDataStreamPrice(verifiedReport, dir);
     }
 
@@ -257,7 +258,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
         if (data.length > 0) {
             // since we use this function for `initiate` type actions which pass `targetTimestamp = block.timestamp`,
             // we should pass `0` to the function below to signal that we accept any recent price
-            return _getLowLatencyPrice(data, 0, dir);
+            return _getLowLatencyPrice(data, 0, dir, 0);
         }
 
         // Chainlink calls do not require a fee
@@ -274,7 +275,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
             if (latestPythPrice.publishTime < block.timestamp - _timeElapsedLimit) {
                 revert OracleMiddlewarePriceTooOld(latestPythPrice.publishTime);
             }
-            return _adjustPythPrice(latestPythPrice);
+            return _convertPythPrice(latestPythPrice);
         }
 
         // if the price equals PRICE_TOO_OLD then the tolerated time elapsed for price validity was exceeded, revert
@@ -299,7 +300,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
      * @param pythPrice The formatted Pyth price containing the price and publish time.
      * @return price_ The PriceInfo with the price, neutral price, and timestamp set from the Pyth price data.
      */
-    function _adjustPythPrice(FormattedPythPrice memory pythPrice) internal pure returns (PriceInfo memory price_) {
+    function _convertPythPrice(FormattedPythPrice memory pythPrice) internal pure returns (PriceInfo memory price_) {
         price_ = PriceInfo({ price: pythPrice.price, neutralPrice: pythPrice.price, timestamp: pythPrice.publishTime });
     }
 
@@ -314,6 +315,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
         pure
         returns (PriceInfo memory price_)
     {
+        // cast are safe since checks was made in `_getChainlinkDataStreamPrice`
         if (dir == ConfidenceInterval.Down) {
             price_.price = uint192(report.bid);
         } else if (dir == ConfidenceInterval.Up) {
@@ -332,13 +334,15 @@ contract OracleMiddlewareWithChainlinkDataStreams is
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
      * prices younger than {ChainlinkDataStreamOracle._dataStreamsRecentPriceDelay}.
      * @param dir The direction to apply to the price.
+     * @param targetLimit The most recent timestamp a price can have (can be zero if `actionTimestamp` is zero).
      * @return price_ The price from the Chainlink data streams, adjusted by the price direction.
      */
-    function _getLowLatencyPrice(bytes calldata payload, uint128 actionTimestamp, ConfidenceInterval dir)
-        internal
-        virtual
-        returns (PriceInfo memory price_)
-    {
+    function _getLowLatencyPrice(
+        bytes calldata payload,
+        uint128 actionTimestamp,
+        ConfidenceInterval dir,
+        uint128 targetLimit
+    ) internal virtual returns (PriceInfo memory price_) {
         // if actionTimestamp is 0 we're performing a liquidation or a initiate
         // action and we don't add the validation delay
         if (actionTimestamp > 0) {
@@ -347,7 +351,8 @@ contract OracleMiddlewareWithChainlinkDataStreams is
             actionTimestamp += uint128(_validationDelay);
         }
 
-        IVerifierProxy.ReportV3 memory verifiedReport = _getChainlinkDataStreamPrice(payload, actionTimestamp);
+        IVerifierProxy.ReportV3 memory verifiedReport =
+            _getChainlinkDataStreamPrice(payload, actionTimestamp, targetLimit);
         price_ = _adjustDataStreamPrice(verifiedReport, dir);
     }
 
@@ -367,7 +372,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
     {
         uint128 targetLimit = targetTimestamp + _lowLatencyDelay;
         if (block.timestamp <= targetLimit) {
-            return _getLowLatencyPrice(data, targetTimestamp, dir);
+            return _getLowLatencyPrice(data, targetTimestamp, dir, targetLimit);
         }
 
         // Chainlink calls do not require a fee
