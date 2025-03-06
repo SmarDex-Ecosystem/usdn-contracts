@@ -4,10 +4,8 @@ pragma solidity >=0.8.0;
 import { IUsdnProtocol } from "../UsdnProtocol/IUsdnProtocol.sol";
 import { IBaseOracleMiddleware } from "./IBaseOracleMiddleware.sol";
 import { IChainlinkDataStreamsOracle } from "./IChainlinkDataStreamsOracle.sol";
-import { IChainlinkOracle } from "./IChainlinkOracle.sol";
 import { IOracleMiddlewareErrors } from "./IOracleMiddlewareErrors.sol";
 import { IOracleMiddlewareEvents } from "./IOracleMiddlewareEvents.sol";
-import { IPythOracle } from "./IPythOracle.sol";
 
 /**
  * @title Interface For The Middleware And Oracle Related Contracts
@@ -15,8 +13,6 @@ import { IPythOracle } from "./IPythOracle.sol";
  * a new oracle logic without having to modify the protocol's contracts.
  */
 interface IOracleMiddlewareWithChainlinkDataStreams is
-    IChainlinkOracle,
-    IPythOracle,
     IBaseOracleMiddleware,
     IOracleMiddlewareErrors,
     IOracleMiddlewareEvents,

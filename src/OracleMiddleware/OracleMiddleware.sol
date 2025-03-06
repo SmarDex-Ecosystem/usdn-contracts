@@ -14,6 +14,7 @@ import {
 } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { CommonOracleMiddleware } from "./CommonOracleMiddleware.sol";
 import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
 import { PythOracle } from "./oracles/PythOracle.sol";
 
@@ -22,15 +23,12 @@ import { PythOracle } from "./oracles/PythOracle.sol";
  * @notice This contract is used to get the price of an asset from different oracles.
  * It is used by the USDN protocol to get the price of the USDN underlying asset.
  */
-contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, AccessControlDefaultAdminRules {
+contract OracleMiddleware is IOracleMiddleware, CommonOracleMiddleware, AccessControlDefaultAdminRules {
     /// @inheritdoc IOracleMiddleware
     uint16 public constant BPS_DIVISOR = 10_000;
 
     /// @inheritdoc IOracleMiddleware
     uint16 public constant MAX_CONF_RATIO = BPS_DIVISOR * 2;
-
-    /// @notice The number of decimals for the returned price.
-    uint8 internal constant MIDDLEWARE_DECIMALS = 18;
 
     /// @inheritdoc IOracleMiddleware
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
@@ -57,8 +55,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
      * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale.
      */
     constructor(address pythContract, bytes32 pythFeedId, address chainlinkPriceFeed, uint256 chainlinkTimeElapsedLimit)
-        PythOracle(pythContract, pythFeedId)
-        ChainlinkOracle(chainlinkPriceFeed, chainlinkTimeElapsedLimit)
+        CommonOracleMiddleware(pythContract, pythFeedId, chainlinkPriceFeed, chainlinkTimeElapsedLimit)
         AccessControlDefaultAdminRules(0, msg.sender)
     {
         _grantRole(ADMIN_ROLE, msg.sender);
@@ -294,72 +291,6 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Acc
             neutralPrice: uint256(chainlinkOnChainPrice.price),
             timestamp: chainlinkOnChainPrice.timestamp
         });
-    }
-
-    /**
-     * @notice Checks that the given round ID is valid and returns its corresponding price data.
-     * @dev Round IDs are not necessarily consecutive, so additional computing can be necessary to find
-     * the previous round ID.
-     * @param targetLimit The timestamp of the initiate action + {_lowLatencyDelay}.
-     * @param roundId The round ID to validate.
-     * @return providedRoundPrice_ The price data of the provided round ID.
-     */
-    function _validateChainlinkRoundId(uint128 targetLimit, uint80 roundId)
-        internal
-        view
-        returns (ChainlinkPriceInfo memory providedRoundPrice_)
-    {
-        providedRoundPrice_ = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, roundId);
-
-        if (providedRoundPrice_.price <= 0) {
-            revert OracleMiddlewareWrongPrice(providedRoundPrice_.price);
-        }
-
-        (,,, uint256 previousRoundTimestamp,) = _priceFeed.getRoundData(roundId - 1);
-
-        // if the provided round's timestamp is 0, it's possible the aggregator recently changed and there is no data
-        // available for the previous round ID in the aggregator. In that case, we accept the given round ID as the
-        // sole reference with additional checks to make sure it is not too far from the target timestamp
-        if (previousRoundTimestamp == 0) {
-            // calculate the provided round's phase ID
-            uint80 roundPhaseId = roundId >> 64;
-            // calculate the first valid round ID for this phase
-            uint80 firstRoundId = (roundPhaseId << 64) + 1;
-            // the provided round ID must be the first round ID of the phase, if not, revert
-            if (firstRoundId != roundId) {
-                revert OracleMiddlewareInvalidRoundId();
-            }
-
-            // make sure that the provided round ID is not newer than it should be
-            if (providedRoundPrice_.timestamp > targetLimit + _timeElapsedLimit) {
-                revert OracleMiddlewareInvalidRoundId();
-            }
-        } else if (previousRoundTimestamp > targetLimit) {
-            // previous round should precede targetLimit
-            revert OracleMiddlewareInvalidRoundId();
-        }
-
-        if (providedRoundPrice_.timestamp <= targetLimit) {
-            revert OracleMiddlewareInvalidRoundId();
-        }
-    }
-
-    /**
-     * @notice Checks if the passed calldata corresponds to a Pyth message.
-     * @param data The calldata pointer to the message.
-     * @return isPythData_ Whether the data is a valid Pyth message or not.
-     */
-    function _isPythData(bytes calldata data) internal pure returns (bool isPythData_) {
-        if (data.length <= 32) {
-            return false;
-        }
-        // check the first 4 bytes of the data to identify a pyth message
-        uint32 magic;
-        assembly {
-            magic := shr(224, calldataload(data.offset))
-        }
-        // Pyth magic stands for PNAU (Pyth Network Accumulator Update)
-        return magic == 0x504e4155;
     }
 
     /* -------------------------------------------------------------------------- */

@@ -6,10 +6,8 @@ import { IAccessControlDefaultAdminRules } from
 
 import { IUsdnProtocol } from "../UsdnProtocol/IUsdnProtocol.sol";
 import { IBaseOracleMiddleware } from "./IBaseOracleMiddleware.sol";
-import { IChainlinkOracle } from "./IChainlinkOracle.sol";
 import { IOracleMiddlewareErrors } from "./IOracleMiddlewareErrors.sol";
 import { IOracleMiddlewareEvents } from "./IOracleMiddlewareEvents.sol";
-import { IPythOracle } from "./IPythOracle.sol";
 
 /**
  * @notice The oracle middleware is a contract that is used by the USDN protocol to validate price data.
@@ -17,8 +15,6 @@ import { IPythOracle } from "./IPythOracle.sol";
  * the protocol's contracts.
  */
 interface IOracleMiddleware is
-    IChainlinkOracle,
-    IPythOracle,
     IBaseOracleMiddleware,
     IOracleMiddlewareErrors,
     IOracleMiddlewareEvents,
