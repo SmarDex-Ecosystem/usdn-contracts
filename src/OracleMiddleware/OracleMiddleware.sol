@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { AccessControlDefaultAdminRules } from
-    "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
-
-import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IOracleMiddleware } from "../interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import {
     ChainlinkPriceInfo,
@@ -12,41 +8,22 @@ import {
     FormattedPythPrice,
     PriceInfo
 } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { CommonOracleMiddleware } from "./CommonOracleMiddleware.sol";
-import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
-import { PythOracle } from "./oracles/PythOracle.sol";
 
 /**
  * @title Middleware Between Oracles And The USDN Protocol
  * @notice This contract is used to get the price of an asset from different oracles.
  * It is used by the USDN protocol to get the price of the USDN underlying asset.
  */
-contract OracleMiddleware is IOracleMiddleware, CommonOracleMiddleware, AccessControlDefaultAdminRules {
+contract OracleMiddleware is CommonOracleMiddleware, IOracleMiddleware {
     /// @inheritdoc IOracleMiddleware
     uint16 public constant BPS_DIVISOR = 10_000;
 
     /// @inheritdoc IOracleMiddleware
     uint16 public constant MAX_CONF_RATIO = BPS_DIVISOR * 2;
 
-    /// @inheritdoc IOracleMiddleware
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-
-    /**
-     * @notice The delay (in seconds) between the moment an action is initiated and the timestamp of the
-     * price data used to validate that action.
-     */
-    uint256 internal _validationDelay = 24 seconds;
-
     /// @notice Ratio to applied to the Pyth confidence interval (in basis points).
     uint16 internal _confRatioBps = 4000; // to divide by BPS_DIVISOR
-
-    /**
-     * @notice The amount of time during which a low latency oracle price validation is available.
-     * @dev This value should be greater than or equal to `_lowLatencyValidatorDeadline` of the USDN protocol.
-     */
-    uint16 internal _lowLatencyDelay = 20 minutes;
 
     /**
      * @param pythContract Address of the Pyth contract.
@@ -56,108 +33,44 @@ contract OracleMiddleware is IOracleMiddleware, CommonOracleMiddleware, AccessCo
      */
     constructor(address pythContract, bytes32 pythFeedId, address chainlinkPriceFeed, uint256 chainlinkTimeElapsedLimit)
         CommonOracleMiddleware(pythContract, pythFeedId, chainlinkPriceFeed, chainlinkTimeElapsedLimit)
-        AccessControlDefaultAdminRules(0, msg.sender)
-    {
-        _grantRole(ADMIN_ROLE, msg.sender);
-    }
+    { }
 
     /* -------------------------------------------------------------------------- */
     /*                           Public view functions                            */
     /* -------------------------------------------------------------------------- */
-
-    /// @inheritdoc IBaseOracleMiddleware
-    function parseAndValidatePrice(bytes32, uint128 targetTimestamp, Types.ProtocolAction action, bytes calldata data)
-        public
-        payable
-        virtual
-        returns (PriceInfo memory price_)
-    {
-        if (action == Types.ProtocolAction.None) {
-            return
-                _getLowLatencyPrice(data, targetTimestamp, ConfidenceInterval.None, targetTimestamp + _lowLatencyDelay);
-        } else if (action == Types.ProtocolAction.Initialize) {
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
-        } else if (action == Types.ProtocolAction.ValidateDeposit) {
-            // use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
-            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
-        } else if (action == Types.ProtocolAction.ValidateWithdrawal) {
-            // use the highest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
-            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
-        } else if (action == Types.ProtocolAction.ValidateOpenPosition) {
-            // use the highest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
-            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
-        } else if (action == Types.ProtocolAction.ValidateClosePosition) {
-            // use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
-            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
-        } else if (action == Types.ProtocolAction.Liquidation) {
-            // special case, if we pass a timestamp of zero, then we accept all prices newer than
-            // `_pythRecentPriceDelay`
-            return _getLowLatencyPrice(data, 0, ConfidenceInterval.None, 0);
-        } else if (action == Types.ProtocolAction.InitiateDeposit) {
-            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
-        } else if (action == Types.ProtocolAction.InitiateWithdrawal) {
-            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
-        } else if (action == Types.ProtocolAction.InitiateOpenPosition) {
-            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
-        } else if (action == Types.ProtocolAction.InitiateClosePosition) {
-            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
-        }
-    }
-
-    /// @inheritdoc IBaseOracleMiddleware
-    function getValidationDelay() external view returns (uint256 delay_) {
-        return _validationDelay;
-    }
-
-    /// @inheritdoc IBaseOracleMiddleware
-    function getDecimals() external pure returns (uint8 decimals_) {
-        return MIDDLEWARE_DECIMALS;
-    }
 
     /// @inheritdoc IOracleMiddleware
     function getConfRatioBps() external view returns (uint16 ratio_) {
         return _confRatioBps;
     }
 
-    /// @inheritdoc IBaseOracleMiddleware
-    function getLowLatencyDelay() external view returns (uint16 delay_) {
-        return _lowLatencyDelay;
-    }
+    /* -------------------------------------------------------------------------- */
+    /*                            Privileged functions                            */
+    /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IBaseOracleMiddleware
-    function validationCost(bytes calldata data, Types.ProtocolAction) public view virtual returns (uint256 result_) {
-        if (_isPythData(data)) {
-            result_ = _getPythUpdateFee(data);
+    /// @inheritdoc IOracleMiddleware
+    function setConfRatio(uint16 newConfRatio) external onlyRole(ADMIN_ROLE) {
+        // confidence ratio limit check
+        if (newConfRatio > MAX_CONF_RATIO) {
+            revert OracleMiddlewareConfRatioTooHigh();
         }
+
+        _confRatioBps = newConfRatio;
+
+        emit ConfRatioUpdated(newConfRatio);
     }
 
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @notice Gets the price from the low-latency oracle (Pyth).
-     * @param data The signed price update data.
-     * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
-     * prices younger than {PythOracle._pythRecentPriceDelay}.
-     * @param dir The direction for the confidence interval adjusted price.
-     * @param targetLimit The most recent timestamp a price can have (can be zero if `actionTimestamp` is zero).
-     * @return price_ The price from the low-latency oracle, adjusted according to the confidence interval direction.
-     */
+    /// @inheritdoc CommonOracleMiddleware
     function _getLowLatencyPrice(
         bytes calldata data,
         uint128 actionTimestamp,
         ConfidenceInterval dir,
         uint128 targetLimit
-    ) internal virtual returns (PriceInfo memory price_) {
+    ) internal virtual override returns (PriceInfo memory price_) {
         // if actionTimestamp is 0 we're performing a liquidation and we don't add the validation delay
         if (actionTimestamp > 0) {
             // add the validation delay to the action timestamp to get the timestamp of the price data used to
@@ -170,18 +83,10 @@ contract OracleMiddleware is IOracleMiddleware, CommonOracleMiddleware, AccessCo
         price_ = _adjustPythPrice(pythPrice, dir);
     }
 
-    /**
-     * @notice Gets the price for an `initiate` action of the protocol.
-     * @dev If the data parameter is not empty, validate the price with {PythOracle}. Else, get the on-chain price from
-     * {ChainlinkOracle} and compare its timestamp with the latest seen Pyth price (cached). If Pyth is more recent, we
-     * return it. Otherwise, we return the Chainlink price. For the latter, we don't have a confidence interval, so both
-     * `neutralPrice` and `price` are equal.
-     * @param data An optional VAA from Pyth.
-     * @param dir The direction when applying the confidence interval (when using a Pyth price).
-     * @return price_ The price to use for the user action.
-     */
+    /// @inheritdoc CommonOracleMiddleware
     function _getInitiateActionPrice(bytes calldata data, ConfidenceInterval dir)
         internal
+        override
         returns (PriceInfo memory price_)
     {
         // if data is not empty, use pyth
@@ -255,108 +160,5 @@ contract OracleMiddleware is IOracleMiddleware, CommonOracleMiddleware, AccessCo
 
         price_.timestamp = pythPrice.publishTime;
         price_.neutralPrice = pythPrice.price;
-    }
-
-    /**
-     * @notice Gets the price for a validate action of the protocol.
-     * @dev If the low latency delay is not exceeded, validate the price with the low-latency oracle(s).
-     * Else, get the specified roundId on-chain price from Chainlink. In case of chainlink price,
-     * we don't have a confidence interval and so both `neutralPrice` and `price` are equal.
-     * @param data An optional VAA from Pyth or a chainlink roundId (abi-encoded uint80).
-     * @param targetTimestamp The timestamp of the initiate action.
-     * @param dir The direction for applying the confidence interval (in case we use a Pyth price).
-     * @return price_ The price to use for the user action.
-     */
-    function _getValidateActionPrice(bytes calldata data, uint128 targetTimestamp, ConfidenceInterval dir)
-        internal
-        returns (PriceInfo memory price_)
-    {
-        uint128 targetLimit = targetTimestamp + _lowLatencyDelay;
-        if (block.timestamp <= targetLimit) {
-            return _getLowLatencyPrice(data, targetTimestamp, dir, targetLimit);
-        }
-
-        // chainlink calls do not require a fee
-        if (msg.value > 0) {
-            revert OracleMiddlewareIncorrectFee();
-        }
-
-        uint80 validateRoundId = abi.decode(data, (uint80));
-
-        // check that the round ID is valid and get its price data
-        ChainlinkPriceInfo memory chainlinkOnChainPrice = _validateChainlinkRoundId(targetLimit, validateRoundId);
-
-        price_ = PriceInfo({
-            price: uint256(chainlinkOnChainPrice.price),
-            neutralPrice: uint256(chainlinkOnChainPrice.price),
-            timestamp: chainlinkOnChainPrice.timestamp
-        });
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /*                            Privileged functions                            */
-    /* -------------------------------------------------------------------------- */
-
-    /// @inheritdoc IOracleMiddleware
-    function setValidationDelay(uint256 newValidationDelay) external onlyRole(ADMIN_ROLE) {
-        _validationDelay = newValidationDelay;
-
-        emit ValidationDelayUpdated(newValidationDelay);
-    }
-
-    /// @inheritdoc IOracleMiddleware
-    function setChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external onlyRole(ADMIN_ROLE) {
-        _timeElapsedLimit = newTimeElapsedLimit;
-
-        emit TimeElapsedLimitUpdated(newTimeElapsedLimit);
-    }
-
-    /// @inheritdoc IOracleMiddleware
-    function setPythRecentPriceDelay(uint64 newDelay) external onlyRole(ADMIN_ROLE) {
-        if (newDelay < 10 seconds) {
-            revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
-        }
-        if (newDelay > 10 minutes) {
-            revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
-        }
-        _pythRecentPriceDelay = newDelay;
-
-        emit PythRecentPriceDelayUpdated(newDelay);
-    }
-
-    /// @inheritdoc IOracleMiddleware
-    function setConfRatio(uint16 newConfRatio) external onlyRole(ADMIN_ROLE) {
-        // confidence ratio limit check
-        if (newConfRatio > MAX_CONF_RATIO) {
-            revert OracleMiddlewareConfRatioTooHigh();
-        }
-
-        _confRatioBps = newConfRatio;
-
-        emit ConfRatioUpdated(newConfRatio);
-    }
-
-    /// @inheritdoc IOracleMiddleware
-    function setLowLatencyDelay(uint16 newLowLatencyDelay, IUsdnProtocol usdnProtocol) external onlyRole(ADMIN_ROLE) {
-        if (newLowLatencyDelay > 90 minutes) {
-            revert OracleMiddlewareInvalidLowLatencyDelay();
-        }
-        if (newLowLatencyDelay < usdnProtocol.getLowLatencyValidatorDeadline()) {
-            revert OracleMiddlewareInvalidLowLatencyDelay();
-        }
-        _lowLatencyDelay = newLowLatencyDelay;
-
-        emit LowLatencyDelayUpdated(newLowLatencyDelay);
-    }
-
-    /// @inheritdoc IOracleMiddleware
-    function withdrawEther(address to) external onlyRole(ADMIN_ROLE) {
-        if (to == address(0)) {
-            revert OracleMiddlewareTransferToZeroAddress();
-        }
-        (bool success,) = payable(to).call{ value: address(this).balance }("");
-        if (!success) {
-            revert OracleMiddlewareTransferFailed(to);
-        }
     }
 }

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { IBaseOracleMiddleware } from "../../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { OracleMiddleware } from "../OracleMiddleware.sol";
+import { CommonOracleMiddleware } from "../CommonOracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "../WstEthOracleMiddleware.sol";
 
 /**
@@ -35,7 +35,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         uint256 chainlinkTimeElapsedLimit
     ) WstEthOracleMiddleware(pythContract, pythFeedId, chainlinkPriceFeed, wsteth, chainlinkTimeElapsedLimit) { }
 
-    /// @inheritdoc OracleMiddleware
+    /// @inheritdoc CommonOracleMiddleware
     function parseAndValidatePrice(
         bytes32 actionId,
         uint128 targetTimestamp,
@@ -114,11 +114,11 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         _verifySignature = verify;
     }
 
-    /// @inheritdoc OracleMiddleware
+    /// @inheritdoc CommonOracleMiddleware
     function validationCost(bytes calldata data, Types.ProtocolAction action)
         public
         view
-        override
+        override(IBaseOracleMiddleware, CommonOracleMiddleware)
         returns (uint256 result_)
     {
         // no signature verification -> no oracle fee

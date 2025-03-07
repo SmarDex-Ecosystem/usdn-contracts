@@ -16,7 +16,6 @@ import { IOracleMiddlewareWithChainlinkDataStreams } from
 import { IVerifierProxy } from "../interfaces/OracleMiddleware/IVerifierProxy.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 import { CommonOracleMiddleware } from "./CommonOracleMiddleware.sol";
 import { ChainlinkDataStreamsOracle } from "./oracles/ChainlinkDataStreamsOracle.sol";
 
@@ -27,25 +26,9 @@ import { ChainlinkDataStreamsOracle } from "./oracles/ChainlinkDataStreamsOracle
  */
 contract OracleMiddlewareWithChainlinkDataStreams is
     CommonOracleMiddleware,
-    IOracleMiddlewareWithChainlinkDataStreams,
-    AccessControlDefaultAdminRules,
-    ChainlinkDataStreamsOracle
+    ChainlinkDataStreamsOracle,
+    IOracleMiddlewareWithChainlinkDataStreams
 {
-    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStreams
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-
-    /**
-     * @notice The delay (in seconds) between the moment an action is initiated and the timestamp of the
-     * price data used to validate that action.
-     */
-    uint256 internal _validationDelay = 24 seconds;
-
-    /**
-     * @notice The amount of time during which a low latency oracle price validation is available.
-     * @dev This value should be greater than or equal to `_lowLatencyValidatorDeadline` of the USDN protocol.
-     */
-    uint16 internal _lowLatencyDelay = 20 minutes;
-
     /**
      * @param pythContract Address of the Pyth contract.
      * @param pythFeedId The Pyth price feed ID for the asset.
@@ -64,75 +47,19 @@ contract OracleMiddlewareWithChainlinkDataStreams is
     )
         CommonOracleMiddleware(pythContract, pythFeedId, chainlinkPriceFeed, chainlinkTimeElapsedLimit)
         ChainlinkDataStreamsOracle(chainlinkProxyVerifierAddress, chainlinkStreamId)
-        AccessControlDefaultAdminRules(0, msg.sender)
-    {
-        _grantRole(ADMIN_ROLE, msg.sender);
-    }
+    { }
 
     /* -------------------------------------------------------------------------- */
     /*                           Public view functions                            */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IBaseOracleMiddleware
-    function parseAndValidatePrice(bytes32, uint128 targetTimestamp, Types.ProtocolAction action, bytes calldata data)
+    function validationCost(bytes calldata data, Types.ProtocolAction)
         public
-        payable
-        virtual
-        returns (PriceInfo memory price_)
+        view
+        override(CommonOracleMiddleware, IBaseOracleMiddleware)
+        returns (uint256 result_)
     {
-        if (action == Types.ProtocolAction.None) {
-            return
-                _getLowLatencyPrice(data, targetTimestamp, ConfidenceInterval.None, targetTimestamp + _lowLatencyDelay);
-        } else if (action == Types.ProtocolAction.Initialize) {
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
-        } else if (action == Types.ProtocolAction.ValidateDeposit) {
-            // use the bid price of the Chainlink data streams then use Chainlink specified roundId
-            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
-        } else if (action == Types.ProtocolAction.ValidateWithdrawal) {
-            // use the ask price  of the Chainlink data streams then use Chainlink specified roundId
-            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
-        } else if (action == Types.ProtocolAction.ValidateOpenPosition) {
-            // use the ask price  of the Chainlink data streams then use Chainlink specified roundId
-            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
-        } else if (action == Types.ProtocolAction.ValidateClosePosition) {
-            // use the bid price of the Chainlink data streams then use Chainlink specified roundId
-            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
-        } else if (action == Types.ProtocolAction.Liquidation) {
-            // we accept all prices newer than  `_dataStreamsRecentPriceDelay` for Chainlink or
-            // `_pythRecentPriceDelay` for Pyth
-            return _getLiquidationPrice(data, ConfidenceInterval.None);
-        } else if (action == Types.ProtocolAction.InitiateDeposit) {
-            // if the user chooses to initiate with Chainlink data streams, the neutral price will be used
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
-        } else if (action == Types.ProtocolAction.InitiateWithdrawal) {
-            // if the user chooses to initiate with Chainlink data streams, the neutral price will be used
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
-        } else if (action == Types.ProtocolAction.InitiateOpenPosition) {
-            // if the user chooses to initiate with Chainlink data streams, the neutral price will be used
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
-        } else if (action == Types.ProtocolAction.InitiateClosePosition) {
-            // if the user chooses to initiate with Chainlink data streams, the neutral price will be used
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
-        }
-    }
-
-    /// @inheritdoc IBaseOracleMiddleware
-    function getValidationDelay() external view returns (uint256 delay_) {
-        return _validationDelay;
-    }
-
-    /// @inheritdoc IBaseOracleMiddleware
-    function getDecimals() external pure returns (uint8 decimals_) {
-        return MIDDLEWARE_DECIMALS;
-    }
-
-    /// @inheritdoc IBaseOracleMiddleware
-    function getLowLatencyDelay() external view returns (uint16 delay_) {
-        return _lowLatencyDelay;
-    }
-
-    /// @inheritdoc IBaseOracleMiddleware
-    function validationCost(bytes calldata data, Types.ProtocolAction) public view virtual returns (uint256 result_) {
         if (data.length == 0) {
             return 0;
         } else if (_isPythData(data)) {
@@ -147,33 +74,6 @@ contract OracleMiddlewareWithChainlinkDataStreams is
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IOracleMiddlewareWithChainlinkDataStreams
-    function setValidationDelay(uint256 newValidationDelay) external onlyRole(ADMIN_ROLE) {
-        _validationDelay = newValidationDelay;
-
-        emit ValidationDelayUpdated(newValidationDelay);
-    }
-
-    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStreams
-    function setChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external onlyRole(ADMIN_ROLE) {
-        _timeElapsedLimit = newTimeElapsedLimit;
-
-        emit TimeElapsedLimitUpdated(newTimeElapsedLimit);
-    }
-
-    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStreams
-    function setPythRecentPriceDelay(uint64 newDelay) external onlyRole(ADMIN_ROLE) {
-        if (newDelay < 10 seconds) {
-            revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
-        }
-        if (newDelay > 10 minutes) {
-            revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
-        }
-        _pythRecentPriceDelay = newDelay;
-
-        emit PythRecentPriceDelayUpdated(newDelay);
-    }
-
-    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStreams
     function setDataStreamsRecentPriceDelay(uint64 newDelay) external onlyRole(ADMIN_ROLE) {
         if (newDelay < 10 seconds) {
             revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
@@ -186,67 +86,34 @@ contract OracleMiddlewareWithChainlinkDataStreams is
         emit DataStreamsRecentPriceDelayUpdated(newDelay);
     }
 
-    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStreams
-    function setLowLatencyDelay(uint16 newLowLatencyDelay, IUsdnProtocol usdnProtocol) external onlyRole(ADMIN_ROLE) {
-        if (newLowLatencyDelay > 90 minutes) {
-            revert OracleMiddlewareInvalidLowLatencyDelay();
-        }
-        if (newLowLatencyDelay < usdnProtocol.getLowLatencyValidatorDeadline()) {
-            revert OracleMiddlewareInvalidLowLatencyDelay();
-        }
-        _lowLatencyDelay = newLowLatencyDelay;
-
-        emit LowLatencyDelayUpdated(newLowLatencyDelay);
-    }
-
-    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStreams
-    function withdrawEther(address to) external onlyRole(ADMIN_ROLE) {
-        if (to == address(0)) {
-            revert OracleMiddlewareTransferToZeroAddress();
-        }
-        (bool success,) = payable(to).call{ value: address(this).balance }("");
-        if (!success) {
-            revert OracleMiddlewareTransferFailed(to);
-        }
-    }
-
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @notice Gets the price from the low-latency oracle (Pyth) or the data streams (Chainlink).
-     * @param data The signed price update data.
-     * @param dir The direction of the price.
-     * @return price_ The price from the Pyth low-latency oracle or the Chainlink data streams.
-     */
-    function _getLiquidationPrice(bytes calldata data, ConfidenceInterval dir)
-        internal
-        virtual
-        returns (PriceInfo memory price_)
-    {
-        if (_isPythData(data)) {
-            FormattedPythPrice memory pythPrice = _getFormattedPythPrice(data, 0, MIDDLEWARE_DECIMALS, 0);
-            return _convertPythPrice(pythPrice);
+    /// @inheritdoc CommonOracleMiddleware
+    function _getLowLatencyPrice(
+        bytes calldata payload,
+        uint128 actionTimestamp,
+        ConfidenceInterval dir,
+        uint128 targetLimit
+    ) internal virtual override returns (PriceInfo memory price_) {
+        // if actionTimestamp is 0 we're performing a liquidation or a initiate
+        // action and we don't add the validation delay
+        if (actionTimestamp > 0) {
+            // add the validation delay to the action timestamp to get
+            // the timestamp of the price data used to validate
+            actionTimestamp += uint128(_validationDelay);
         }
 
-        IVerifierProxy.ReportV3 memory verifiedReport = _getChainlinkDataStreamPrice(data, 0, 0);
+        IVerifierProxy.ReportV3 memory verifiedReport =
+            _getChainlinkDataStreamPrice(payload, actionTimestamp, targetLimit);
         price_ = _adjustDataStreamPrice(verifiedReport, dir);
     }
 
-    /**
-     * @notice Gets the price for an `initiate` action of the protocol.
-     * @dev If the data parameter is not empty, validate the price with Chainlink data streams. Else, get the on-chain
-     * price from
-     * {ChainlinkOracle} and compare its timestamp with the latest seen Pyth price (cached). If Pyth is more recent, we
-     * return it. Otherwise, we return the Chainlink price. For the latter, we don't have a confidence interval, so both
-     * `neutralPrice` and `price` are equal.
-     * @param data An optional Chainlink data streams payload.
-     * @param dir The direction of the price to apply.
-     * @return price_ The price to use for the user action.
-     */
+    /// @inheritdoc CommonOracleMiddleware
     function _getInitiateActionPrice(bytes calldata data, ConfidenceInterval dir)
         internal
+        override
         returns (PriceInfo memory price_)
     {
         // if data is not empty, use Chainlink data streams
@@ -291,6 +158,26 @@ contract OracleMiddlewareWithChainlinkDataStreams is
     }
 
     /**
+     * @notice Gets the price from the low-latency oracle (Pyth) or the data streams (Chainlink).
+     * @param data The signed price update data.
+     * @param dir The direction of the price.
+     * @return price_ The price from the Pyth low-latency oracle or the Chainlink data streams.
+     */
+    function _getLiquidationPrice(bytes calldata data, ConfidenceInterval dir)
+        internal
+        virtual
+        returns (PriceInfo memory price_)
+    {
+        if (_isPythData(data)) {
+            FormattedPythPrice memory pythPrice = _getFormattedPythPrice(data, 0, MIDDLEWARE_DECIMALS, 0);
+            return _convertPythPrice(pythPrice);
+        }
+
+        IVerifierProxy.ReportV3 memory verifiedReport = _getChainlinkDataStreamPrice(data, 0, 0);
+        price_ = _adjustDataStreamPrice(verifiedReport, dir);
+    }
+
+    /**
      * @notice Converts a formatted Pyth price into a PriceInfo.
      * @param pythPrice The formatted Pyth price containing the price and publish time.
      * @return price_ The PriceInfo with the price, neutral price, and timestamp set from the Pyth price data.
@@ -321,69 +208,5 @@ contract OracleMiddlewareWithChainlinkDataStreams is
 
         price_.timestamp = report.observationsTimestamp;
         price_.neutralPrice = uint192(report.price);
-    }
-
-    /**
-     * @notice Gets the price from the Chainlink data streams oracle.
-     * @param payload The payload (full report) coming from the Chainlink data streams API.
-     * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
-     * prices younger than {ChainlinkDataStreamOracle._dataStreamsRecentPriceDelay}.
-     * @param dir The direction to apply to the price.
-     * @param targetLimit The most recent timestamp a price can have (can be zero if `actionTimestamp` is zero).
-     * @return price_ The price from the Chainlink data streams, adjusted by the price direction.
-     */
-    function _getLowLatencyPrice(
-        bytes calldata payload,
-        uint128 actionTimestamp,
-        ConfidenceInterval dir,
-        uint128 targetLimit
-    ) internal virtual returns (PriceInfo memory price_) {
-        // if actionTimestamp is 0 we're performing a liquidation or a initiate
-        // action and we don't add the validation delay
-        if (actionTimestamp > 0) {
-            // add the validation delay to the action timestamp to get
-            // the timestamp of the price data used to validate
-            actionTimestamp += uint128(_validationDelay);
-        }
-
-        IVerifierProxy.ReportV3 memory verifiedReport =
-            _getChainlinkDataStreamPrice(payload, actionTimestamp, targetLimit);
-        price_ = _adjustDataStreamPrice(verifiedReport, dir);
-    }
-
-    /**
-     * @notice Gets the price for a validate action of the protocol.
-     * @dev If the low latency delay is not exceeded, validate the price with the Chainlink data streams oracle.
-     * Else, get the specified roundId on-chain price from Chainlink. In case of Chainlink data feeds price,
-     * `neutralPrice` and `price` are equal.
-     * @param data An optional Chainlink data streams payload or a Chainlink data feeds roundId (abi-encoded uint80).
-     * @param targetTimestamp The timestamp of the initiate action.
-     * @param dir The price direction to take.
-     * @return price_ The price to use for the user action.
-     */
-    function _getValidateActionPrice(bytes calldata data, uint128 targetTimestamp, ConfidenceInterval dir)
-        internal
-        returns (PriceInfo memory price_)
-    {
-        uint128 targetLimit = targetTimestamp + _lowLatencyDelay;
-        if (block.timestamp <= targetLimit) {
-            return _getLowLatencyPrice(data, targetTimestamp, dir, targetLimit);
-        }
-
-        // Chainlink calls do not require a fee
-        if (msg.value > 0) {
-            revert OracleMiddlewareIncorrectFee();
-        }
-
-        uint80 validateRoundId = abi.decode(data, (uint80));
-
-        // check that the round ID is valid and get its price data
-        ChainlinkPriceInfo memory chainlinkOnChainPrice = _validateChainlinkRoundId(targetLimit, validateRoundId);
-
-        price_ = PriceInfo({
-            price: uint256(chainlinkOnChainPrice.price),
-            neutralPrice: uint256(chainlinkOnChainPrice.price),
-            timestamp: chainlinkOnChainPrice.timestamp
-        });
     }
 }

@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-
 import { IBaseOracleMiddleware } from "../../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
+import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { OracleMiddleware } from "../OracleMiddleware.sol";
+import { CommonOracleMiddleware } from "../CommonOracleMiddleware.sol";
 import { WstEthOracleMiddlewareWithRedstone } from "../WstEthOracleMiddlewareWithRedstone.sol";
 
 /**
@@ -129,7 +128,7 @@ contract MockWstEthOracleMiddlewareWithRedstone is WstEthOracleMiddlewareWithRed
     function validationCost(bytes calldata data, Types.ProtocolAction action)
         public
         view
-        override(IBaseOracleMiddleware, OracleMiddleware)
+        override(IBaseOracleMiddleware, CommonOracleMiddleware)
         returns (uint256 result_)
     {
         // no signature verification -> no oracle fee

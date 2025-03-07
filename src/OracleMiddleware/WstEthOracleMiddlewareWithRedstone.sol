@@ -5,7 +5,7 @@ import { IWstETH } from "../interfaces/IWstETH.sol";
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { OracleMiddleware } from "./OracleMiddleware.sol";
+import { CommonOracleMiddleware } from "./CommonOracleMiddleware.sol";
 import { OracleMiddlewareWithRedstone } from "./OracleMiddlewareWithRedstone.sol";
 
 /**
@@ -54,7 +54,7 @@ contract WstEthOracleMiddlewareWithRedstone is OracleMiddlewareWithRedstone {
         uint128 targetTimestamp,
         Types.ProtocolAction action,
         bytes calldata data
-    ) public payable virtual override(IBaseOracleMiddleware, OracleMiddleware) returns (PriceInfo memory) {
+    ) public payable virtual override(IBaseOracleMiddleware, CommonOracleMiddleware) returns (PriceInfo memory) {
         // fetched eth price
         PriceInfo memory ethPrice = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
 
