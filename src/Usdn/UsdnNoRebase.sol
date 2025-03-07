@@ -107,7 +107,7 @@ contract UsdnNoRebase is IUsdn, ERC20Permit, ERC20Burnable, Ownable {
 
     /// @inheritdoc IUsdn
     function divisor() external pure returns (uint256 divisor_) {
-        divisor_ = MAX_DIVISOR;
+        divisor_ = MIN_DIVISOR;
     }
 
     /// @inheritdoc IUsdn
@@ -156,7 +156,7 @@ contract UsdnNoRebase is IUsdn, ERC20Permit, ERC20Burnable, Ownable {
     /// @inheritdoc IUsdn
     function rebase(uint256) external pure returns (bool rebased_, uint256 oldDivisor_, bytes memory callbackResult_) {
         rebased_ = false;
-        oldDivisor_ = MAX_DIVISOR;
+        oldDivisor_ = MIN_DIVISOR;
         callbackResult_ = bytes("");
     }
 
