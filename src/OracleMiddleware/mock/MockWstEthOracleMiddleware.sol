@@ -58,14 +58,14 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         price_.neutralPrice = _wstethMockedPrice;
         price_.price = price_.neutralPrice;
 
-        // `ConfidenceInterval` down cases
+        // `PriceAdjustment` down cases
         if (
             action == Types.ProtocolAction.ValidateDeposit || action == Types.ProtocolAction.ValidateClosePosition
                 || action == Types.ProtocolAction.InitiateDeposit || action == Types.ProtocolAction.InitiateClosePosition
         ) {
             price_.price -= price_.price * _wstethMockedConfBps / BPS_DIVISOR;
 
-            // `ConfidenceInterval` up case
+            // `PriceAdjustment` up case
         } else if (
             action == Types.ProtocolAction.ValidateWithdrawal || action == Types.ProtocolAction.ValidateOpenPosition
                 || action == Types.ProtocolAction.InitiateWithdrawal || action == Types.ProtocolAction.InitiateOpenPosition

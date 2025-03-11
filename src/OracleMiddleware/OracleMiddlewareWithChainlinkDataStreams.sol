@@ -7,8 +7,8 @@ import { AccessControlDefaultAdminRules } from
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import {
     ChainlinkPriceInfo,
-    ConfidenceInterval,
     FormattedPythPrice,
+    PriceAdjustment,
     PriceInfo
 } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IOracleMiddlewareWithChainlinkDataStreams } from
@@ -94,7 +94,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
     function _getLowLatencyPrice(
         bytes calldata payload,
         uint128 actionTimestamp,
-        ConfidenceInterval dir,
+        PriceAdjustment dir,
         uint128 targetLimit
     ) internal virtual override returns (PriceInfo memory price_) {
         // if actionTimestamp is 0 we're performing a liquidation or a initiate
@@ -111,7 +111,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
     }
 
     /// @inheritdoc CommonOracleMiddleware
-    function _getInitiateActionPrice(bytes calldata data, ConfidenceInterval dir)
+    function _getInitiateActionPrice(bytes calldata data, PriceAdjustment dir)
         internal
         override
         returns (PriceInfo memory price_)
@@ -165,7 +165,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
         }
 
         IVerifierProxy.ReportV3 memory verifiedReport = _getChainlinkDataStreamPrice(data, 0, 0);
-        price_ = _adjustDataStreamPrice(verifiedReport, ConfidenceInterval.None);
+        price_ = _adjustDataStreamPrice(verifiedReport, PriceAdjustment.None);
     }
 
     /**
@@ -180,18 +180,18 @@ contract OracleMiddlewareWithChainlinkDataStreams is
     /**
      * @notice Applies the ask, bid or price according to the `dir` direction.
      * @param report The Chainlink data streams report.
-     * @param dir The direction of the confidence interval to apply.
+     * @param dir The direction to adjust the price.
      * @return price_ The adjusted price according to the direction.
      */
-    function _adjustDataStreamPrice(IVerifierProxy.ReportV3 memory report, ConfidenceInterval dir)
+    function _adjustDataStreamPrice(IVerifierProxy.ReportV3 memory report, PriceAdjustment dir)
         internal
         pure
         returns (PriceInfo memory price_)
     {
         // cast are safe since checks was made in `_getChainlinkDataStreamPrice`
-        if (dir == ConfidenceInterval.Down) {
+        if (dir == PriceAdjustment.Down) {
             price_.price = uint192(report.bid);
-        } else if (dir == ConfidenceInterval.Up) {
+        } else if (dir == PriceAdjustment.Up) {
             price_.price = uint192(report.ask);
         } else {
             price_.price = uint192(report.price);

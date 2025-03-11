@@ -8,8 +8,8 @@ import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracl
 import { ICommonOracleMiddleware } from "../interfaces/OracleMiddleware/ICommonOracleMiddleware.sol";
 import {
     ChainlinkPriceInfo,
-    ConfidenceInterval,
     FormattedPythPrice,
+    PriceAdjustment,
     PriceInfo
 } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
@@ -105,41 +105,40 @@ abstract contract CommonOracleMiddleware is
         returns (PriceInfo memory price_)
     {
         if (action == Types.ProtocolAction.InitiateOpenPosition) {
-            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
+            // if the user chooses to initiate with the low latency oracle, the neutral price will be used
+            return _getInitiateActionPrice(data, PriceAdjustment.None);
         } else if (action == Types.ProtocolAction.ValidateOpenPosition) {
-            // use the highest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
-            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
+            // use the highest price to ensure a minimum benefit for the user in case of price
+            // inaccuracies until low latency delay is exceeded then use chainlink specified roundId
+            return _getValidateActionPrice(data, targetTimestamp, PriceAdjustment.Up);
         } else if (action == Types.ProtocolAction.InitiateDeposit) {
-            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
+            // if the user chooses to initiate with the low latency oracle, the neutral price will be used
+            return _getInitiateActionPrice(data, PriceAdjustment.None);
         } else if (action == Types.ProtocolAction.ValidateDeposit) {
-            // use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
-            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
+            // use the lowest price to ensure a minimum benefit for the user in case of price
+            // inaccuracies until low latency delay is exceeded then use chainlink specified roundId
+            return _getValidateActionPrice(data, targetTimestamp, PriceAdjustment.Down);
         } else if (action == Types.ProtocolAction.InitiateClosePosition) {
-            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
+            // if the user chooses to initiate with the low latency oracle, the neutral price will be used
+            return _getInitiateActionPrice(data, PriceAdjustment.None);
         } else if (action == Types.ProtocolAction.ValidateClosePosition) {
-            // use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
-            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
+            // use the lowest price to ensure a minimum benefit for the user in case of price
+            // inaccuracies until low latency delay is exceeded then use chainlink specified roundId
+            return _getValidateActionPrice(data, targetTimestamp, PriceAdjustment.Down);
         } else if (action == Types.ProtocolAction.InitiateWithdrawal) {
-            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
+            // if the user chooses to initiate with the low latency oracle, the neutral price will be used
+            return _getInitiateActionPrice(data, PriceAdjustment.None);
         } else if (action == Types.ProtocolAction.ValidateWithdrawal) {
-            // use the highest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
-            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
+            // use the highest price to ensure a minimum benefit for the user in case of price
+            // inaccuracies until low latency delay is exceeded then use chainlink specified roundId
+            return _getValidateActionPrice(data, targetTimestamp, PriceAdjustment.Up);
         } else if (action == Types.ProtocolAction.Liquidation) {
             // use the neutral price from the low-latency oracle
             return _getLiquidationPrice(data);
         } else if (action == Types.ProtocolAction.Initialize) {
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
+            return _getInitiateActionPrice(data, PriceAdjustment.None);
         } else if (action == Types.ProtocolAction.None) {
-            return
-                _getLowLatencyPrice(data, targetTimestamp, ConfidenceInterval.None, targetTimestamp + _lowLatencyDelay);
+            return _getLowLatencyPrice(data, targetTimestamp, PriceAdjustment.None, targetTimestamp + _lowLatencyDelay);
         }
     }
 
@@ -207,28 +206,27 @@ abstract contract CommonOracleMiddleware is
      * @param data The signed price update data.
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
      * prices younger than the recent price delay.
-     * @param dir The direction for the confidence interval adjusted price.
+     * @param dir The direction for the low latency price adjustment.
      * @param targetLimit The most recent timestamp a price can have (can be zero if `actionTimestamp` is zero).
-     * @return price_ The price from the low-latency oracle, adjusted according to the confidence interval direction.
+     * @return price_ The price from the low-latency oracle, adjusted according to the price adjustment direction.
      */
-    function _getLowLatencyPrice(
-        bytes calldata data,
-        uint128 actionTimestamp,
-        ConfidenceInterval dir,
-        uint128 targetLimit
-    ) internal virtual returns (PriceInfo memory price_);
+    function _getLowLatencyPrice(bytes calldata data, uint128 actionTimestamp, PriceAdjustment dir, uint128 targetLimit)
+        internal
+        virtual
+        returns (PriceInfo memory price_);
 
     /**
      * @notice Gets the price for an `initiate` action of the protocol.
-     * @dev If the data parameter is not empty, validate the price with {PythOracle}. Else, get the on-chain price from
-     * {ChainlinkOracle} and compare its timestamp with the latest seen Pyth price (cached). If Pyth is more recent, we
-     * return it. Otherwise, we return the Chainlink price. For the latter, we don't have a confidence interval, so both
+     * @dev If the data parameter is not empty, validate the price with the low latency oracle. Else, get the on-chain
+     * price from {ChainlinkOracle} and compare its timestamp with the latest seen Pyth price (cached). If Pyth is more
+     * recent, we
+     * return it. Otherwise, we return the Chainlink price. For the latter, we don't have a price adjustment, so both
      * `neutralPrice` and `price` are equal.
-     * @param data An optional VAA from Pyth.
-     * @param dir The direction when applying the confidence interval (when using a Pyth price).
+     * @param data The low latency data.
+     * @param dir The direction to adjust the price (when using a low latency price).
      * @return price_ The price to use for the user action.
      */
-    function _getInitiateActionPrice(bytes calldata data, ConfidenceInterval dir)
+    function _getInitiateActionPrice(bytes calldata data, PriceAdjustment dir)
         internal
         virtual
         returns (PriceInfo memory price_);
@@ -237,13 +235,13 @@ abstract contract CommonOracleMiddleware is
      * @notice Gets the price for a validate action of the protocol.
      * @dev If the low latency delay is not exceeded, validate the price with the low-latency oracle(s).
      * Else, get the specified roundId on-chain price from Chainlink. In case of chainlink price,
-     * we don't have a confidence interval and so both `neutralPrice` and `price` are equal.
+     * we don't have a price adjustment, so both `neutralPrice` and `price` are equal.
      * @param data An optional low-latency price update or a chainlink roundId (abi-encoded uint80).
      * @param targetTimestamp The timestamp of the initiate action.
-     * @param dir The direction for applying the confidence interval (in case we use a low-latency price).
+     * @param dir The direction to adjust the price (when using a low latency price).
      * @return price_ The price to use for the user action.
      */
-    function _getValidateActionPrice(bytes calldata data, uint128 targetTimestamp, ConfidenceInterval dir)
+    function _getValidateActionPrice(bytes calldata data, uint128 targetTimestamp, PriceAdjustment dir)
         internal
         virtual
         returns (PriceInfo memory price_)
@@ -276,7 +274,7 @@ abstract contract CommonOracleMiddleware is
      * @return price_ The low-latency oracle price.
      */
     function _getLiquidationPrice(bytes calldata data) internal virtual returns (PriceInfo memory price_) {
-        return _getLowLatencyPrice(data, 0, ConfidenceInterval.None, 0);
+        return _getLowLatencyPrice(data, 0, PriceAdjustment.None, 0);
     }
 
     /**

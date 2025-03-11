@@ -4,8 +4,8 @@ pragma solidity 0.8.26;
 import { IOracleMiddleware } from "../interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import {
     ChainlinkPriceInfo,
-    ConfidenceInterval,
     FormattedPythPrice,
+    PriceAdjustment,
     PriceInfo
 } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { CommonOracleMiddleware } from "./CommonOracleMiddleware.sol";
@@ -65,12 +65,12 @@ contract OracleMiddleware is CommonOracleMiddleware, IOracleMiddleware {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc CommonOracleMiddleware
-    function _getLowLatencyPrice(
-        bytes calldata data,
-        uint128 actionTimestamp,
-        ConfidenceInterval dir,
-        uint128 targetLimit
-    ) internal virtual override returns (PriceInfo memory price_) {
+    function _getLowLatencyPrice(bytes calldata data, uint128 actionTimestamp, PriceAdjustment dir, uint128 targetLimit)
+        internal
+        virtual
+        override
+        returns (PriceInfo memory price_)
+    {
         // if actionTimestamp is 0 we're performing a liquidation and we don't add the validation delay
         if (actionTimestamp > 0) {
             // add the validation delay to the action timestamp to get the timestamp of the price data used to
@@ -84,12 +84,12 @@ contract OracleMiddleware is CommonOracleMiddleware, IOracleMiddleware {
     }
 
     /// @inheritdoc CommonOracleMiddleware
-    function _getInitiateActionPrice(bytes calldata data, ConfidenceInterval dir)
+    function _getInitiateActionPrice(bytes calldata data, PriceAdjustment dir)
         internal
         override
         returns (PriceInfo memory price_)
     {
-        // if data is not empty, use pyth
+        // if data is not empty, use the low latency oracle
         if (data.length > 0) {
             // since we use this function for `initiate` type actions which pass `targetTimestamp = block.timestamp`,
             // we should pass `0` to the function below to signal that we accept any recent price
@@ -136,12 +136,12 @@ contract OracleMiddleware is CommonOracleMiddleware, IOracleMiddleware {
      * @param dir The direction of the confidence interval to apply.
      * @return price_ The adjusted price according to the confidence interval and confidence ratio.
      */
-    function _adjustPythPrice(FormattedPythPrice memory pythPrice, ConfidenceInterval dir)
+    function _adjustPythPrice(FormattedPythPrice memory pythPrice, PriceAdjustment dir)
         internal
         view
         returns (PriceInfo memory price_)
     {
-        if (dir == ConfidenceInterval.Down) {
+        if (dir == PriceAdjustment.Down) {
             uint256 adjust = (pythPrice.conf * _confRatioBps) / BPS_DIVISOR;
             if (adjust >= pythPrice.price) {
                 // avoid underflow or zero price due to confidence interval adjustment
@@ -152,7 +152,7 @@ contract OracleMiddleware is CommonOracleMiddleware, IOracleMiddleware {
                     price_.price = pythPrice.price - adjust;
                 }
             }
-        } else if (dir == ConfidenceInterval.Up) {
+        } else if (dir == PriceAdjustment.Up) {
             price_.price = pythPrice.price + ((pythPrice.conf * _confRatioBps) / BPS_DIVISOR);
         } else {
             price_.price = pythPrice.price;
