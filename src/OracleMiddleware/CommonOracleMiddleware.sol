@@ -104,42 +104,42 @@ abstract contract CommonOracleMiddleware is
         virtual
         returns (PriceInfo memory price_)
     {
-        if (action == Types.ProtocolAction.None) {
-            return
-                _getLowLatencyPrice(data, targetTimestamp, ConfidenceInterval.None, targetTimestamp + _lowLatencyDelay);
-        } else if (action == Types.ProtocolAction.Initialize) {
+        if (action == Types.ProtocolAction.InitiateOpenPosition) {
+            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
+            return _getInitiateActionPrice(data, ConfidenceInterval.None);
+        } else if (action == Types.ProtocolAction.ValidateOpenPosition) {
+            // use the highest price in the confidence interval to ensure a minimum benefit for the user in case
+            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
+            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
+        } else if (action == Types.ProtocolAction.InitiateDeposit) {
+            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.ValidateDeposit) {
             // use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
-        } else if (action == Types.ProtocolAction.ValidateWithdrawal) {
-            // use the highest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
-            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
-        } else if (action == Types.ProtocolAction.ValidateOpenPosition) {
-            // use the highest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
-            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
+        } else if (action == Types.ProtocolAction.InitiateClosePosition) {
+            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
+            return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.ValidateClosePosition) {
             // use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
             return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
-        } else if (action == Types.ProtocolAction.Liquidation) {
-            // use the neutral price from the low-latency oracle
-            return _getLiquidationPrice(data);
-        } else if (action == Types.ProtocolAction.InitiateDeposit) {
-            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == Types.ProtocolAction.InitiateWithdrawal) {
             // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
-        } else if (action == Types.ProtocolAction.InitiateOpenPosition) {
-            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
+        } else if (action == Types.ProtocolAction.ValidateWithdrawal) {
+            // use the highest price in the confidence interval to ensure a minimum benefit for the user in case
+            // of price inaccuracies until low latency delay is exceeded then use chainlink specified roundId
+            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
+        } else if (action == Types.ProtocolAction.Liquidation) {
+            // use the neutral price from the low-latency oracle
+            return _getLiquidationPrice(data);
+        } else if (action == Types.ProtocolAction.Initialize) {
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
-        } else if (action == Types.ProtocolAction.InitiateClosePosition) {
-            // if the user chooses to initiate with pyth, the neutral price will be used so no confidence is needed
-            return _getInitiateActionPrice(data, ConfidenceInterval.None);
+        } else if (action == Types.ProtocolAction.None) {
+            return
+                _getLowLatencyPrice(data, targetTimestamp, ConfidenceInterval.None, targetTimestamp + _lowLatencyDelay);
         }
     }
 
