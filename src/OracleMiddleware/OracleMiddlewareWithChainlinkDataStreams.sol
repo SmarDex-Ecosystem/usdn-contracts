@@ -157,24 +157,15 @@ contract OracleMiddlewareWithChainlinkDataStreams is
         });
     }
 
-    /**
-     * @notice Gets the price from the low-latency oracle (Pyth) or the data streams (Chainlink).
-     * @param data The signed price update data.
-     * @param dir The direction of the price.
-     * @return price_ The price from the Pyth low-latency oracle or the Chainlink data streams.
-     */
-    function _getLiquidationPrice(bytes calldata data, ConfidenceInterval dir)
-        internal
-        virtual
-        returns (PriceInfo memory price_)
-    {
+    /// @inheritdoc CommonOracleMiddleware
+    function _getLiquidationPrice(bytes calldata data) internal virtual override returns (PriceInfo memory price_) {
         if (_isPythData(data)) {
             FormattedPythPrice memory pythPrice = _getFormattedPythPrice(data, 0, MIDDLEWARE_DECIMALS, 0);
             return _convertPythPrice(pythPrice);
         }
 
         IVerifierProxy.ReportV3 memory verifiedReport = _getChainlinkDataStreamPrice(data, 0, 0);
-        price_ = _adjustDataStreamPrice(verifiedReport, dir);
+        price_ = _adjustDataStreamPrice(verifiedReport, ConfidenceInterval.None);
     }
 
     /**
