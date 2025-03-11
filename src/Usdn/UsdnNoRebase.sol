@@ -27,13 +27,13 @@ contract UsdnNoRebase is IUsdn, ERC20Permit, ERC20Burnable, Ownable {
      * @inheritdoc IUsdn
      * @dev Only here to match the `IUsdn` interface, this contract uses `Ownable` instead.
      */
-    bytes32 public constant MINTER_ROLE = bytes32(0);
+    bytes32 public constant MINTER_ROLE = "";
 
     /**
      * @inheritdoc IUsdn
      * @dev Only here to match the `IUsdn` interface, this contract uses `Ownable` instead.
      */
-    bytes32 public constant REBASER_ROLE = bytes32(0);
+    bytes32 public constant REBASER_ROLE = "";
 
     /**
      * @inheritdoc IUsdn
@@ -120,12 +120,12 @@ contract UsdnNoRebase is IUsdn, ERC20Permit, ERC20Burnable, Ownable {
 
     /// @inheritdoc IUsdn
     function transferShares(address to, uint256 value) external returns (bool success_) {
-        return transfer(to, value);
+        success_ = transfer(to, value);
     }
 
     /// @inheritdoc IUsdn
     function transferSharesFrom(address from, address to, uint256 value) external returns (bool success_) {
-        return transferFrom(from, to, value);
+        success_ = transferFrom(from, to, value);
     }
 
     /// @inheritdoc IUsdn
@@ -157,7 +157,7 @@ contract UsdnNoRebase is IUsdn, ERC20Permit, ERC20Burnable, Ownable {
     function rebase(uint256) external pure returns (bool rebased_, uint256 oldDivisor_, bytes memory callbackResult_) {
         rebased_ = false;
         oldDivisor_ = MIN_DIVISOR;
-        callbackResult_ = bytes("");
+        callbackResult_ = "";
     }
 
     /// @inheritdoc IUsdn
