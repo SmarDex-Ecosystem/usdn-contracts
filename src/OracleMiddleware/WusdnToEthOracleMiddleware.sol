@@ -12,6 +12,15 @@ import { OracleMiddleware } from "./OracleMiddleware.sol";
  * shorting version of the USDN protocol with WUSDN as the underlying asset.
  */
 contract WusdnToEthOracleMiddleware is OracleMiddleware {
+    /// @dev One dollar with the middleware decimals.
+    uint256 internal constant ONE_DOLLAR = 10 ** MIDDLEWARE_DECIMALS;
+
+    /// @dev Max divisor from the USDN token (as constant for gas optimisation).
+    uint256 internal constant USDN_MAX_DIVISOR = 1e18;
+
+    /// @dev Numerator for the price calculation in {WusdnToEthOracleMiddleware.parseAndValidatePrice}.
+    uint256 internal constant PRICE_NUMERATOR = 10 ** MIDDLEWARE_DECIMALS * ONE_DOLLAR * USDN_MAX_DIVISOR;
+
     /// @notice The USDN token address.
     IUsdn internal immutable USDN;
 
@@ -89,13 +98,13 @@ contract WusdnToEthOracleMiddleware is OracleMiddleware {
                 adjustedPrice = uint256(int256(ethPrice.neutralPrice) - adjustmentDelta);
             }
             return PriceInfo({
-                price: 1e54 / (adjustedPrice * divisor),
-                neutralPrice: 1e54 / (ethPrice.neutralPrice * divisor),
+                price: PRICE_NUMERATOR / (adjustedPrice * divisor),
+                neutralPrice: PRICE_NUMERATOR / (ethPrice.neutralPrice * divisor),
                 timestamp: ethPrice.timestamp
             });
         } else {
             // gas optimization, only compute the price once because there is no confidence interval to apply
-            uint256 price = 1e54 / (ethPrice.price * divisor);
+            uint256 price = PRICE_NUMERATOR / (ethPrice.price * divisor);
             return PriceInfo({ price: price, neutralPrice: price, timestamp: ethPrice.timestamp });
         }
     }
