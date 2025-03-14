@@ -17,6 +17,7 @@ jobs:
         uses: beeb/lintspec@main
         with:
           fail-on-problem: "false" # we handle failure manually to be able to trigger the notification
+          version: "0.3.0"
       - name: Fail on findings
         if: ${{ steps.lintspec-action.outputs.total-diags > 0 }}
         run: exit 1
