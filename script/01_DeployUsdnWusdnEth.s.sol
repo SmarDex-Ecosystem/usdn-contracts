@@ -7,48 +7,45 @@ import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { UsdnWstethConfig } from "./deploymentConfigs/UsdnWstethConfig.sol";
+import { UsdnWusdnEthConfig } from "./deploymentConfigs/UsdnWusdnEthConfig.sol";
 import { Utils } from "./utils/Utils.s.sol";
 
 import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
-import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { WusdnToEthOracleMiddleware } from "../src/OracleMiddleware/WusdnToEthOracleMiddleware.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
-import { Usdn } from "../src/Usdn/Usdn.sol";
-import { Wusdn } from "../src/Usdn/Wusdn.sol";
+import { UsdnNoRebase } from "../src/Usdn/UsdnNoRebase.sol";
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
-import { IWstETH } from "../src/interfaces/IWstETH.sol";
+import { IWusdn } from "../src/interfaces/Usdn/IWusdn.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract DeployUsdnWsteth is UsdnWstethConfig, Script {
-    IWstETH immutable WSTETH;
+contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
+    IWusdn immutable WUSDN;
     Utils utils;
 
     constructor() {
-        WSTETH = IWstETH(address(UNDERLYING_ASSET));
+        WUSDN = IWusdn(address(UNDERLYING_ASSET));
         utils = new Utils();
     }
 
     /**
-     * @notice Deploy the USDN ecosystem with the WstETH as underlying
-     * @return wstEthOracleMiddleware_ The WstETH oracle middleware
-     * @return liquidationRewardsManager_ The liquidation rewards manager
-     * @return rebalancer_ The rebalancer
-     * @return usdn_ The USDN contract
-     * @return wusdn_ The WUSDN contract
-     * @return usdnProtocol_ The USDN protocol
+     * @notice Deploy the USDN ecosystem with Wusdn as the underlying token.
+     * @return WusdnToEthOracleMiddleware_ The oracle middleware to get the price of the Wusdn in ETH.
+     * @return liquidationRewardsManager_ The liquidation rewards manager.
+     * @return rebalancer_ The rebalancer.
+     * @return usdnNoRebase_ The USDN token contract.
+     * @return usdnProtocol_ The USDN protocol contract.
      */
     function run()
         external
         returns (
-            WstEthOracleMiddleware wstEthOracleMiddleware_,
+            WusdnToEthOracleMiddleware wusdnToEthOracleMiddleware_,
             LiquidationRewardsManager liquidationRewardsManager_,
             Rebalancer rebalancer_,
-            Usdn usdn_,
-            Wusdn wusdn_,
+            UsdnNoRebase usdnNoRebase_,
             IUsdnProtocol usdnProtocol_
         )
     {
@@ -56,44 +53,45 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
 
         _setFeeCollector(msg.sender);
 
-        (wstEthOracleMiddleware_, liquidationRewardsManager_, usdn_, wusdn_) = _deployAndSetPeripheralContracts();
+        (wusdnToEthOracleMiddleware_, liquidationRewardsManager_, usdnNoRebase_) = _deployAndSetPeripheralContracts();
 
         usdnProtocol_ = _deployProtocol(initStorage);
 
-        rebalancer_ = _setRebalancerAndHandleUsdnRoles(usdnProtocol_, usdn_);
+        rebalancer_ = _setRebalancerAndHandleUsdnRoles(usdnProtocol_, usdnNoRebase_);
 
-        _initializeProtocol(usdnProtocol_, wstEthOracleMiddleware_);
+        _initializeProtocol(usdnProtocol_, wusdnToEthOracleMiddleware_);
 
         utils.validateProtocolConfig(usdnProtocol_, msg.sender);
     }
 
     /**
-     * @notice Deploy the oracle middleware, liquidation rewards manager, USDN and WUSDN contracts. Add then to the
+     * @notice Deploy the oracle middleware, liquidation rewards manager and UsdnNoRebase contracts. Add then to the
      * initialization struct.
-     * @return wstEthOracleMiddleware_ The WstETH oracle middleware
-     * @return liquidationRewardsManager_ The liquidation rewards manager
-     * @return usdn_ The USDN contract
-     * @return wusdn_ The WUSDN contract
+     * @dev As the USDN token doesn't rebase, there's no need to deploy the WUSDN contract, as wrapping is only useful
+     * to avoid messing with the token balances in smart contracts.
+     * @return wusdnToEthOracleMiddleware_ The oracle middleware that gets the price of the Wusdn in Eth.
+     * @return liquidationRewardsManager_ The liquidation rewards manager.
+     * @return usdnNoRebase_ The USDN contract.
      */
     function _deployAndSetPeripheralContracts()
         internal
         returns (
-            WstEthOracleMiddleware wstEthOracleMiddleware_,
+            WusdnToEthOracleMiddleware wusdnToEthOracleMiddleware_,
             LiquidationRewardsManager liquidationRewardsManager_,
-            Usdn usdn_,
-            Wusdn wusdn_
+            UsdnNoRebase usdnNoRebase_
         )
     {
         vm.startBroadcast();
-        liquidationRewardsManager_ = new LiquidationRewardsManager(WSTETH);
-        wstEthOracleMiddleware_ = new WstEthOracleMiddleware(
-            PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WSTETH), CHAINLINK_PRICE_VALIDITY
+        // TODO needs the new LiquidationRewardsManager
+        liquidationRewardsManager_ = new LiquidationRewardsManager(WUSDN);
+        wusdnToEthOracleMiddleware_ = new WusdnToEthOracleMiddleware(
+            PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WUSDN.USDN()), CHAINLINK_PRICE_VALIDITY
         );
-        usdn_ = new Usdn(address(0), address(0));
-        wusdn_ = new Wusdn(usdn_);
+        // TODO decide of a name/symbol
+        usdnNoRebase_ = new UsdnNoRebase("", "");
         vm.stopBroadcast();
 
-        _setPeripheralContracts(wstEthOracleMiddleware_, liquidationRewardsManager_, usdn_);
+        _setPeripheralContracts(wusdnToEthOracleMiddleware_, liquidationRewardsManager_, usdnNoRebase_);
     }
 
     /**
@@ -125,7 +123,7 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
      * @param usdnProtocol The USDN protocol.
      * @return rebalancer_ The rebalancer.
      */
-    function _setRebalancerAndHandleUsdnRoles(IUsdnProtocol usdnProtocol, Usdn usdn)
+    function _setRebalancerAndHandleUsdnRoles(IUsdnProtocol usdnProtocol, UsdnNoRebase usdn)
         internal
         returns (Rebalancer rebalancer_)
     {
@@ -145,12 +143,14 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
     /**
      * @notice Initialize the USDN protocol with a ~2x leverage long position.
      * @param usdnProtocol The USDN protocol.
-     * @param wstEthOracleMiddleware The WstETH oracle middleware.
+     * @param wusdnToEthOracleMiddleware The WstETH oracle middleware.
      */
-    function _initializeProtocol(IUsdnProtocol usdnProtocol, WstEthOracleMiddleware wstEthOracleMiddleware) internal {
+    function _initializeProtocol(IUsdnProtocol usdnProtocol, WusdnToEthOracleMiddleware wusdnToEthOracleMiddleware)
+        internal
+    {
         uint24 liquidationPenalty = usdnProtocol.getLiquidationPenalty();
         int24 tickSpacing = usdnProtocol.getTickSpacing();
-        uint256 price = wstEthOracleMiddleware.parseAndValidatePrice(
+        uint256 price = wusdnToEthOracleMiddleware.parseAndValidatePrice(
             "", uint128(block.timestamp), Types.ProtocolAction.Initialize, ""
         ).price;
 
@@ -166,13 +166,10 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
         // get the amount to deposit to reach a balanced state
         uint256 depositAmount = positionTotalExpo - INITIAL_LONG_AMOUNT;
 
-        uint256 ethAmount = (depositAmount + INITIAL_LONG_AMOUNT + 10_000) * WSTETH.stEthPerToken() / 1 ether;
-
         vm.startBroadcast();
-        (bool result,) = address(WSTETH).call{ value: ethAmount }(hex"");
         require(result, "Failed to mint wstETH");
 
-        WSTETH.approve(address(usdnProtocol), depositAmount + INITIAL_LONG_AMOUNT);
+        WUSDN.approve(address(usdnProtocol), depositAmount + INITIAL_LONG_AMOUNT);
         usdnProtocol.initialize(uint128(depositAmount), uint128(INITIAL_LONG_AMOUNT), desiredLiqPrice, "");
         vm.stopBroadcast();
     }
