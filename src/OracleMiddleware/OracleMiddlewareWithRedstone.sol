@@ -3,8 +3,8 @@ pragma solidity 0.8.26;
 
 import {
     ChainlinkPriceInfo,
-    ConfidenceInterval,
     FormattedPythPrice,
+    PriceAdjustment,
     PriceInfo,
     RedstonePriceInfo
 } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -60,12 +60,11 @@ contract OracleMiddlewareWithRedstone is IOracleMiddlewareWithRedstone, OracleMi
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
      * prices younger than {PythOracle._pythRecentPriceDelay} or {RedstoneOracle._redstoneRecentPriceDelay}.
      */
-    function _getLowLatencyPrice(
-        bytes calldata data,
-        uint128 actionTimestamp,
-        ConfidenceInterval dir,
-        uint128 targetLimit
-    ) internal override returns (PriceInfo memory price_) {
+    function _getLowLatencyPrice(bytes calldata data, uint128 actionTimestamp, PriceAdjustment dir, uint128 targetLimit)
+        internal
+        override
+        returns (PriceInfo memory price_)
+    {
         // if actionTimestamp is 0 we're performing a liquidation and we don't add the validation delay
         if (actionTimestamp > 0) {
             // add the validation delay to the action timestamp to get the timestamp of the price data used to
@@ -103,14 +102,14 @@ contract OracleMiddlewareWithRedstone is IOracleMiddlewareWithRedstone, OracleMi
      * @param dir The direction to apply the penalty.
      * @return price_ The adjusted price according to the penalty.
      */
-    function _adjustRedstonePrice(RedstonePriceInfo memory redstonePrice, ConfidenceInterval dir)
+    function _adjustRedstonePrice(RedstonePriceInfo memory redstonePrice, PriceAdjustment dir)
         internal
         view
         returns (PriceInfo memory price_)
     {
-        if (dir == ConfidenceInterval.Down) {
+        if (dir == PriceAdjustment.Down) {
             price_.price = redstonePrice.price - (redstonePrice.price * _penaltyBps / BPS_DIVISOR);
-        } else if (dir == ConfidenceInterval.Up) {
+        } else if (dir == PriceAdjustment.Up) {
             price_.price = redstonePrice.price + (redstonePrice.price * _penaltyBps / BPS_DIVISOR);
         } else {
             price_.price = redstonePrice.price;

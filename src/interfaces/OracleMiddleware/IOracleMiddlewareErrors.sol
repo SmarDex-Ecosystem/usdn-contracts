@@ -13,6 +13,18 @@ interface IOracleMiddlewareErrors {
     error OracleMiddlewareWrongPrice(int256 price);
 
     /**
+     * @notice The ask price returned by Chainlink data streams is negative.
+     * @param askPrice The ask price returned by Chainlink data streams.
+     */
+    error OracleMiddlewareWrongAskPrice(int256 askPrice);
+
+    /**
+     * @notice The bid price returned by Chainlink data streams is negative.
+     * @param bidPrice The bid price returned by Chainlink data streams.
+     */
+    error OracleMiddlewareWrongBidPrice(int256 bidPrice);
+
+    /**
      * @notice The price returned by an oracle is too old.
      * @param timestamp The timestamp of the price given by the oracle.
      */
@@ -68,4 +80,19 @@ interface IOracleMiddlewareErrors {
 
     /// @notice The new low latency delay is invalid.
     error OracleMiddlewareInvalidLowLatencyDelay();
+
+    /// @notice The Chainlink data streams report version is invalid.
+    error OracleMiddlewareInvalidReportVersion();
+
+    /// @notice The Chainlink report stream ID is invalid.
+    error OracleMiddlewareInvalidStreamId();
+
+    /// @notice The Chainlink data streams report timestamp is invalid.
+    error OracleMiddlewareDataStreamInvalidTimestamp();
+
+    /**
+     * @notice The validation fee returned by the Chainlink fee manager contract exceeded the safeguard value.
+     * @param fee The required fee returned by the Chainlink fee manager.
+     */
+    error OracleMiddlewareDataStreamFeeSafeguard(uint256 fee);
 }
