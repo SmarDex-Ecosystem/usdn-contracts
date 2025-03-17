@@ -130,3 +130,13 @@ Run this command to deploy the SetRebaseHandlerManager contract (your private ke
 ```bash
 forge script -l -f RPC_URL script/54_DeploySetRebaseHandlerManager.sol:DeploySetRebaseHandlerManager --broadcast
 ```
+
+## Set Current Parameters for a New Protocol
+
+This script is meant to be used on a fork. To transfer all current USDN protocol parameters to a new protocol, run the `SetUsdnParams` script with:
+
+```bash
+forge script -f RPC_URL script/utils/SetUsdnParams --sender ADMIN_ADDR --unlocked --broadcast
+```
+
+You will be prompted to enter the new protocol address. Note that all setter roles will be granted to the default admin.
