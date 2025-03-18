@@ -46,7 +46,7 @@ struct RedstonePriceInfo {
 }
 
 /**
- * @notice Represents price adjustment options for the low latency price selection.
+ * @notice Represents the options for the low latency price adjustment.
  * @dev Used to determine how the price is adjusted based on protocol action.
  * @param Up Price adjusted to the upper bound.
  * @param Down Price adjusted to the lower bound.
