@@ -15,7 +15,7 @@ import {
     PYTH_DATA_TIMESTAMP
 } from "../utils/Constants.sol";
 
-import { OracleMiddleware } from "../../../../src/OracleMiddleware/OracleMiddleware.sol";
+import { OracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/OracleMiddlewareWithPyth.sol";
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { IWstETH } from "../../../../src/interfaces/IWstETH.sol";
 import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
@@ -103,7 +103,7 @@ contract CommonBaseIntegrationFixture is BaseFixture {
  * @dev Utils for testing the oracle middleware
  */
 contract OracleMiddlewareBaseIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegrationFixture {
-    OracleMiddleware public oracleMiddleware;
+    OracleMiddlewareWithPyth public oracleMiddleware;
 
     modifier reSetUp() {
         setUp();
@@ -113,7 +113,7 @@ contract OracleMiddlewareBaseIntegrationFixture is CommonBaseIntegrationFixture,
     function setUp() public virtual {
         pyth = IPyth(PYTH_ORACLE);
         chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_ETH);
-        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), 1 hours);
+        oracleMiddleware = new OracleMiddlewareWithPyth(address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), 1 hours);
     }
 
     function getMockedPythSignatureETH()

@@ -217,11 +217,6 @@ abstract contract CommonOracleMiddleware is
 
     /**
      * @notice Gets the price for an `initiate` action of the protocol.
-     * @dev If the data parameter is not empty, validate the price with the low latency oracle. Else, get the on-chain
-     * price from {ChainlinkOracle} and compare its timestamp with the latest seen Pyth price (cached). If Pyth is more
-     * recent, we
-     * return it. Otherwise, we return the Chainlink price. For the latter, we don't have a price adjustment, so both
-     * `neutralPrice` and `price` are equal.
      * @param data The low latency data.
      * @param dir The direction to adjust the price (when using a low latency price).
      * @return price_ The price to use for the user action.

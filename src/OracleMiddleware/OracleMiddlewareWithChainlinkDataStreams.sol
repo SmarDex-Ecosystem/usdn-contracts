@@ -110,7 +110,14 @@ contract OracleMiddlewareWithChainlinkDataStreams is
         price_ = _adjustDataStreamPrice(verifiedReport, dir);
     }
 
-    /// @inheritdoc CommonOracleMiddleware
+    /**
+     * @inheritdoc CommonOracleMiddleware
+     * @dev If the data parameter is not empty, validate the price with the low latency oracle. Else, get the on-chain
+     * price from {ChainlinkOracle} and compare its timestamp with the latest seen Pyth price (cached). If Pyth is more
+     * recent, we
+     * return it. Otherwise, we return the Chainlink price. For the latter, we don't have a price adjustment, so both
+     * `neutralPrice` and `price` are equal.
+     */
     function _getInitiateActionPrice(bytes calldata data, PriceAdjustment dir)
         internal
         override

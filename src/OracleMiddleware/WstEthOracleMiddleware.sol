@@ -6,13 +6,13 @@ import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracl
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { CommonOracleMiddleware } from "./CommonOracleMiddleware.sol";
-import { OracleMiddleware } from "./OracleMiddleware.sol";
+import { OracleMiddlewareWithPyth } from "./OracleMiddlewareWithPyth.sol";
 
 /**
  * @title Middleware Implementation For WstETH Price
  * @notice This contract is used to get the price of wstETH from the eth price oracle.
  */
-contract WstEthOracleMiddleware is OracleMiddleware {
+contract WstEthOracleMiddleware is OracleMiddlewareWithPyth {
     /// @notice The wstETH contract.
     IWstETH internal immutable _wstEth;
 
@@ -29,7 +29,7 @@ contract WstEthOracleMiddleware is OracleMiddleware {
         address chainlinkPriceFeed,
         address wstETH,
         uint256 chainlinkTimeElapsedLimit
-    ) OracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, chainlinkTimeElapsedLimit) {
+    ) OracleMiddlewareWithPyth(pythContract, pythPriceID, chainlinkPriceFeed, chainlinkTimeElapsedLimit) {
         _wstEth = IWstETH(wstETH);
     }
 

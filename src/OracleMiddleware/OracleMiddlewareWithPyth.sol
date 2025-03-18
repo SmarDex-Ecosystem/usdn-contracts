@@ -15,7 +15,7 @@ import { CommonOracleMiddleware } from "./CommonOracleMiddleware.sol";
  * @notice This contract is used to get the price of an asset from different oracles.
  * It is used by the USDN protocol to get the price of the USDN underlying asset.
  */
-contract OracleMiddleware is CommonOracleMiddleware, IOracleMiddleware {
+contract OracleMiddlewareWithPyth is CommonOracleMiddleware, IOracleMiddleware {
     /// @inheritdoc IOracleMiddleware
     uint16 public constant BPS_DIVISOR = 10_000;
 
@@ -83,7 +83,14 @@ contract OracleMiddleware is CommonOracleMiddleware, IOracleMiddleware {
         price_ = _adjustPythPrice(pythPrice, dir);
     }
 
-    /// @inheritdoc CommonOracleMiddleware
+    /**
+     * @inheritdoc CommonOracleMiddleware
+     * @dev If the data parameter is not empty, validate the price with the low latency oracle. Else, get the on-chain
+     * price from {ChainlinkOracle} and compare its timestamp with the latest seen Pyth price (cached). If Pyth is more
+     * recent, we
+     * return it. Otherwise, we return the Chainlink price. For the latter, we don't have a price adjustment, so both
+     * `neutralPrice` and `price` are equal.
+     */
     function _getInitiateActionPrice(bytes calldata data, PriceAdjustment dir)
         internal
         override

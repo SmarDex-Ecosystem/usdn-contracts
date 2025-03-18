@@ -10,7 +10,7 @@ import { IPythOracle } from "../../interfaces/OracleMiddleware/IPythOracle.sol";
 /**
  * @title Contract To Communicate With The Pyth Oracle
  * @notice This contract is used to get the price of the asset that corresponds to the stored feed ID.
- * @dev Is implemented by the {OracleMiddleware} contract.
+ * @dev Is implemented by the {CommonOracleMiddleware} contract.
  */
 abstract contract PythOracle is IPythOracle {
     /// @notice The ID of the Pyth price feed.
