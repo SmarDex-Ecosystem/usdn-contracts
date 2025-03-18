@@ -136,7 +136,7 @@ forge script -l -f RPC_URL script/54_DeploySetRebaseHandlerManager.sol:DeploySet
 This script is meant to be used on a fork. To transfer all current USDN protocol, Rebalancer an liquidation rewards manager parameters to a new protocol, run the `SetProtocolParams` script with:
 
 ```bash
-forge script -f RPC_URL script/utils/SetProtocolParams --sender ADMIN_ADDR --unlocked --broadcast
+forge script -f RPC_URL script/utils/SetProtocolParams.s.sol --unlocked --broadcast
 ```
 
 You will be prompted to enter the new protocol address. Note that all setter roles will be granted to the default admin.
