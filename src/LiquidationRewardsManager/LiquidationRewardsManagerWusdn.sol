@@ -77,7 +77,7 @@ contract WusdnLiquidationRewardsManager is ILiquidationRewardsManager, Ownable2S
         Types.ProtocolAction,
         bytes calldata,
         bytes calldata
-    ) external view returns (uint256 wstETHRewards_) {
+    ) external view returns (uint256 wUsdnRewards_) {
         if (liquidatedTicks.length == 0) {
             return 0;
         }
@@ -93,20 +93,17 @@ contract WusdnLiquidationRewardsManager is ILiquidationRewardsManager, Ownable2S
             gasUsed += rewardsParameters.rebalancerGasUsed;
         }
 
-        uint256 totalRewardETH = rewardsParameters.fixedReward
-            + _calcGasPrice(rewardsParameters.baseFeeOffset) * gasUsed * rewardsParameters.gasMultiplierBps / BPS_DIVISOR;
+        uint256 gasRewards =
+            _calcGasPrice(rewardsParameters.baseFeeOffset) * gasUsed * rewardsParameters.gasMultiplierBps / BPS_DIVISOR;
 
-        uint256 wstEthBonus =
-            _calcPositionSizeBonus(liquidatedTicks, currentPrice, rewardsParameters.positionBonusMultiplierBps);
+        wUsdnRewards_ = rewardsParameters.fixedReward
+            + _calcPositionSizeBonus(liquidatedTicks, currentPrice, rewardsParameters.positionBonusMultiplierBps);
 
-        // totalRewardETH += _wstEth.getStETHByWstETH(wstEthBonus);
+        wUsdnRewards_ += FixedPointMathLib.fullMulDiv(gasRewards, BPS_DIVISOR, currentPrice);
 
-        if (totalRewardETH > rewardsParameters.maxReward) {
-            totalRewardETH = rewardsParameters.maxReward;
+        if (wUsdnRewards_ > rewardsParameters.maxReward) {
+            wUsdnRewards_ = rewardsParameters.maxReward;
         }
-
-        // convert to wstETH
-        // wstETHRewards_ = _wstEth.getWstETHByStETH(totalRewardETH);
     }
 
     /// @inheritdoc ILiquidationRewardsManager
