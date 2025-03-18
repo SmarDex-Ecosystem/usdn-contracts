@@ -10,8 +10,8 @@ import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnPro
 import { LiquidationRewardsManager } from "./LiquidationRewardsManager.sol";
 
 /**
- * @title Liquidation Rewards Manager
- * @notice This contract calculates rewards for liquidators within the USDN protocol.
+ * @title Liquidation Rewards Manager for Wrapped stETH
+ * @notice This contract calculates rewards for liquidators within the USDN protocol with wstETH as underlying asset.
  * @dev Rewards are computed based on gas costs, position size, and other parameters.
  */
 contract LiquidationRewardsManagerWsteth is LiquidationRewardsManager {

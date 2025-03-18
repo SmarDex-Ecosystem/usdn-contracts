@@ -12,7 +12,7 @@ import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnPro
 
 /**
  * @title Liquidation Rewards Manager
- * @notice This contract calculates rewards for liquidators within the USDN protocol.
+ * @notice This abstract contract calculates rewards for liquidators within the USDN protocol.
  * @dev Rewards are computed based on gas costs, position size, and other parameters.
  */
 abstract contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {

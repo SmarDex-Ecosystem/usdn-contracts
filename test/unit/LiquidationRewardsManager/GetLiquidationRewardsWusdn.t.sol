@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { LiquidationRewardsManagerWusdn } from
-    "../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWusdn.sol";
 import { BaseFixture } from "../../utils/Fixtures.sol";
 
+import { LiquidationRewardsManagerWusdn } from
+    "../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWusdn.sol";
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { Wusdn } from "../../../src/Usdn/Wusdn.sol";
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
@@ -13,20 +13,17 @@ import { IWusdn } from "../../../src/interfaces/Usdn/IWusdn.sol";
 import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /// @custom:feature The `getLiquidationRewards` function of `LiquidationRewardsManagerWusdn`
-
 contract TestLiquidationRewardsManagerWusdnGetLiquidationRewards is BaseFixture {
     IWusdn internal wusdn;
     LiquidationRewardsManagerWusdn internal liquidationRewardsManager;
     ILiquidationRewardsManagerErrorsEventsTypes.RewardsParameters rewardsParameters;
 
-    uint256 internal constant CURRENT_PRICE = 0.98 ether / 1000; // 0.001 eth/wUsdn
+    uint256 internal constant CURRENT_PRICE = 1 ether / 1000; // 0.001 eth/wUsdn
 
     Types.LiqTickInfo[] internal _singleLiquidatedTick;
     Types.LiqTickInfo[] internal _liquidatedTicksEmpty;
 
     function setUp() public {
-        vm.warp(1_704_063_600); // 01/01/2024 @ 12:00am (UTC+2)
-
         wusdn = new Wusdn(new Usdn(address(0), address(0)));
         liquidationRewardsManager = new LiquidationRewardsManagerWusdn(wusdn);
 
@@ -53,11 +50,9 @@ contract TestLiquidationRewardsManagerWusdnGetLiquidationRewards is BaseFixture 
     /**
      * @custom:scenario Call `getLiquidationRewards` when 1 tick was liquidated
      * @custom:given The tx.gasprice is equal to the base fee + offset
-     * @custom:and The exchange rate for stETH per wstETH is 1.15
-     * @custom:and The current price of wstETH is $1000
+     * @custom:and The current price of is 0.001 eth/wUsdn
      * @custom:when 1 tick was liquidated
-     * @custom:then It should return an amount of wstETH based on the gas used by
-     * UsdnProtocolActions.liquidate(bytes)
+     * @custom:then It should return an amount of wUsdn based on the gas used by UsdnProtocolActions.liquidate(bytes)
      */
     function test_getLiquidationRewardsFor1Tick() public view {
         uint256 posBonusWusdn = (
