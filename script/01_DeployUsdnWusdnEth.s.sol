@@ -18,6 +18,7 @@ import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.s
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IWusdn } from "../src/interfaces/Usdn/IWusdn.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -33,7 +34,7 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
 
     /**
      * @notice Deploy the USDN ecosystem with Wusdn as the underlying token.
-     * @return WusdnToEthOracleMiddleware_ The oracle middleware to get the price of the Wusdn in ETH.
+     * @return wusdnToEthOracleMiddleware_ The oracle middleware to get the price of the Wusdn in ETH.
      * @return liquidationRewardsManager_ The liquidation rewards manager.
      * @return rebalancer_ The rebalancer.
      * @return usdnNoRebase_ The USDN token contract.
@@ -57,7 +58,7 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
 
         usdnProtocol_ = _deployProtocol(initStorage);
 
-        rebalancer_ = _setRebalancerAndHandleUsdnRoles(usdnProtocol_, usdnNoRebase_);
+        rebalancer_ = _setRebalancerAndHandleUsdnRoles(usdnProtocol_);
 
         _initializeProtocol(usdnProtocol_, wusdnToEthOracleMiddleware_);
 
@@ -83,7 +84,8 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     {
         vm.startBroadcast();
         // TODO needs the new LiquidationRewardsManager
-        liquidationRewardsManager_ = new LiquidationRewardsManager(WUSDN);
+        // This doesn't work, it's just so t can compile
+        liquidationRewardsManager_ = new LiquidationRewardsManager(IWstETH(address(WUSDN)));
         wusdnToEthOracleMiddleware_ = new WusdnToEthOracleMiddleware(
             PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WUSDN.USDN()), CHAINLINK_PRICE_VALIDITY
         );
@@ -123,19 +125,13 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
      * @param usdnProtocol The USDN protocol.
      * @return rebalancer_ The rebalancer.
      */
-    function _setRebalancerAndHandleUsdnRoles(IUsdnProtocol usdnProtocol, UsdnNoRebase usdn)
-        internal
-        returns (Rebalancer rebalancer_)
-    {
+    function _setRebalancerAndHandleUsdnRoles(IUsdnProtocol usdnProtocol) internal returns (Rebalancer rebalancer_) {
         vm.startBroadcast();
 
         rebalancer_ = new Rebalancer(usdnProtocol);
         usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, msg.sender);
         usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, msg.sender);
         usdnProtocol.setRebalancer(rebalancer_);
-
-        usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
 
         vm.stopBroadcast();
     }
@@ -167,8 +163,6 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
         uint256 depositAmount = positionTotalExpo - INITIAL_LONG_AMOUNT;
 
         vm.startBroadcast();
-        require(result, "Failed to mint wstETH");
-
         WUSDN.approve(address(usdnProtocol), depositAmount + INITIAL_LONG_AMOUNT);
         usdnProtocol.initialize(uint128(depositAmount), uint128(INITIAL_LONG_AMOUNT), desiredLiqPrice, "");
         vm.stopBroadcast();
