@@ -2,11 +2,10 @@
 pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
+import { IWstETH } from "../interfaces/IWstETH.sol";
 import { IBaseLiquidationRewardsManager } from
     "../interfaces/LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
-import { IWusdn } from "../interfaces/Usdn/IWusdn.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { LiquidationRewardsManager } from "./LiquidationRewardsManager.sol";
 
@@ -15,10 +14,10 @@ import { LiquidationRewardsManager } from "./LiquidationRewardsManager.sol";
  * @notice This contract calculates rewards for liquidators within the USDN protocol.
  * @dev Rewards are computed based on gas costs, position size, and other parameters.
  */
-contract LiquidationRewardsManagerWusdn is LiquidationRewardsManager {
-    /// @param wusdn The address of the wUsdn token.
-    constructor(IWusdn wusdn) Ownable(msg.sender) {
-        _rewardAsset = wusdn;
+contract LiquidationRewardsManagerWsteth is LiquidationRewardsManager {
+    /// @param wstETH The address of the wstETH token.
+    constructor(IWstETH wstETH) Ownable(msg.sender) {
+        _rewardAsset = wstETH;
         _rewardsParameters = RewardsParameters({
             gasUsedPerTick: 53_094,
             otherGasUsed: 469_537,
@@ -27,8 +26,8 @@ contract LiquidationRewardsManagerWusdn is LiquidationRewardsManager {
             baseFeeOffset: 2 gwei,
             gasMultiplierBps: 10_500, // 1.05
             positionBonusMultiplierBps: 200, // 0.02
-            fixedReward: 2 ether,
-            maxReward: 1000 ether
+            fixedReward: 0.001 ether,
+            maxReward: 0.5 ether
         });
     }
 
@@ -41,7 +40,7 @@ contract LiquidationRewardsManagerWusdn is LiquidationRewardsManager {
         Types.ProtocolAction,
         bytes calldata,
         bytes calldata
-    ) external view override returns (uint256 wUsdnRewards_) {
+    ) external view override returns (uint256 wstETHRewards_) {
         if (liquidatedTicks.length == 0) {
             return 0;
         }
@@ -57,16 +56,19 @@ contract LiquidationRewardsManagerWusdn is LiquidationRewardsManager {
             gasUsed += rewardsParameters.rebalancerGasUsed;
         }
 
-        uint256 gasRewards =
-            _calcGasPrice(rewardsParameters.baseFeeOffset) * gasUsed * rewardsParameters.gasMultiplierBps / BPS_DIVISOR;
+        uint256 totalRewardETH = rewardsParameters.fixedReward
+            + _calcGasPrice(rewardsParameters.baseFeeOffset) * gasUsed * rewardsParameters.gasMultiplierBps / BPS_DIVISOR;
 
-        wUsdnRewards_ = rewardsParameters.fixedReward
-            + _calcPositionSizeBonus(liquidatedTicks, currentPrice, rewardsParameters.positionBonusMultiplierBps);
+        uint256 wstEthBonus =
+            _calcPositionSizeBonus(liquidatedTicks, currentPrice, rewardsParameters.positionBonusMultiplierBps);
 
-        wUsdnRewards_ += FixedPointMathLib.fullMulDiv(gasRewards, BPS_DIVISOR, currentPrice);
+        totalRewardETH += IWstETH(address(_rewardAsset)).getStETHByWstETH(wstEthBonus);
 
-        if (wUsdnRewards_ > rewardsParameters.maxReward) {
-            wUsdnRewards_ = rewardsParameters.maxReward;
+        if (totalRewardETH > rewardsParameters.maxReward) {
+            totalRewardETH = rewardsParameters.maxReward;
         }
+
+        // convert to wstETH
+        wstETHRewards_ = IWstETH(address(_rewardAsset)).getWstETHByStETH(totalRewardETH);
     }
 }
