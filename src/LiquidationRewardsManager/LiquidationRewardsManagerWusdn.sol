@@ -16,7 +16,7 @@ import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnPro
  * @notice This contract calculates rewards for liquidators within the USDN protocol.
  * @dev Rewards are computed based on gas costs, position size, and other parameters.
  */
-contract WusdnLiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
+contract LiquidationRewardsManagerWusdn is ILiquidationRewardsManager, Ownable2Step {
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
@@ -63,8 +63,8 @@ contract WusdnLiquidationRewardsManager is ILiquidationRewardsManager, Ownable2S
             baseFeeOffset: 2 gwei,
             gasMultiplierBps: 10_500, // 1.05
             positionBonusMultiplierBps: 200, // 0.02
-            fixedReward: 0.001 ether,
-            maxReward: 0.5 ether
+            fixedReward: 2 ether,
+            maxReward: 1000 ether
         });
     }
 
