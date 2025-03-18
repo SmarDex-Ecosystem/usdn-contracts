@@ -15,7 +15,8 @@ import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "./Handler.sol";
 import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
-import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManagerWsteth } from
+    "../../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWsteth.sol";
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
@@ -99,7 +100,7 @@ contract UsdnProtocolBaseFixture is
     Sdex public sdex;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
-    LiquidationRewardsManager public liquidationRewardsManager;
+    LiquidationRewardsManagerWsteth public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
     UsdnProtocolHandler public protocol;
     FeeCollector public feeCollector;
@@ -124,7 +125,7 @@ contract UsdnProtocolBaseFixture is
         wstETH = new WstETH();
         sdex = new Sdex();
         oracleMiddleware = new MockOracleMiddleware();
-        liquidationRewardsManager = new LiquidationRewardsManager(wstETH);
+        liquidationRewardsManager = new LiquidationRewardsManagerWsteth(wstETH);
         feeCollector = new FeeCollector();
 
         if (!testParams.flags.enableLiquidationRewards) {

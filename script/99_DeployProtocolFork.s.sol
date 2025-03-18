@@ -12,7 +12,7 @@ import { WstETH } from "../test/utils/WstEth.sol";
 
 import { Utils } from "./utils/Utils.s.sol";
 
-import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManagerWsteth } from "../src/LiquidationRewardsManager/LiquidationRewardsManagerWsteth.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { MockWstEthOracleMiddleware } from "../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
@@ -61,7 +61,7 @@ contract DeployProtocol is Script {
             WstETH WstETH_,
             Sdex Sdex_,
             WstEthOracleMiddleware WstEthOracleMiddleware_,
-            LiquidationRewardsManager LiquidationRewardsManager_,
+            LiquidationRewardsManagerWsteth LiquidationRewardsManager_,
             Rebalancer Rebalancer_,
             Usdn Usdn_,
             Wusdn Wusdn_,
@@ -175,14 +175,14 @@ contract DeployProtocol is Script {
      */
     function _deployLiquidationRewardsManager(address wstETHAddress)
         internal
-        returns (LiquidationRewardsManager liquidationRewardsManager_)
+        returns (LiquidationRewardsManagerWsteth liquidationRewardsManager_)
     {
         address liquidationRewardsManagerAddress = vm.envOr("LIQUIDATION_REWARDS_MANAGER_ADDRESS", address(0));
 
         if (liquidationRewardsManagerAddress != address(0)) {
-            liquidationRewardsManager_ = LiquidationRewardsManager(liquidationRewardsManagerAddress);
+            liquidationRewardsManager_ = LiquidationRewardsManagerWsteth(liquidationRewardsManagerAddress);
         } else {
-            liquidationRewardsManager_ = new LiquidationRewardsManager(IWstETH(wstETHAddress));
+            liquidationRewardsManager_ = new LiquidationRewardsManagerWsteth(IWstETH(wstETHAddress));
         }
     }
 
@@ -331,7 +331,7 @@ contract DeployProtocol is Script {
         IUsdnProtocol usdnProtocol,
         Rebalancer rebalancer,
         WstEthOracleMiddleware wstEthOracleMiddleware,
-        LiquidationRewardsManager liquidationRewardsManager
+        LiquidationRewardsManagerWsteth liquidationRewardsManager
     ) internal {
         // grant the necessary roles to the deployer to set the rebalancer and then revoke them
         bytes32 ADMIN_SET_EXTERNAL_ROLE = Constants.ADMIN_SET_EXTERNAL_ROLE;
