@@ -69,15 +69,7 @@ contract TestLiquidationRewardsManagerWusdnGetLiquidationRewards is BaseFixture 
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
             _singleLiquidatedTick, CURRENT_PRICE, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
-        assertEq(rewards, totRewards, "without rebase");
-
-        gasUsed += rewardsParameters.rebaseGasUsed;
-        totRewards =
-            rewardsParameters.fixedReward + posBonusWusdn + gasUsed * gasPriceAndMultiplier * 1e18 / CURRENT_PRICE;
-        rewards = liquidationRewardsManager.getLiquidationRewards(
-            _singleLiquidatedTick, CURRENT_PRICE, true, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
-        );
-        assertEq(rewards, totRewards, "with rebase");
+        assertEq(rewards, totRewards, "without rebalancer trigger");
 
         gasUsed += rewardsParameters.rebalancerGasUsed;
         totRewards =

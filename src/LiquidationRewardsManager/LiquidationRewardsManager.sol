@@ -57,9 +57,9 @@ abstract contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownab
         uint256 currentPrice,
         bool rebased,
         Types.RebalancerAction rebalancerAction,
-        Types.ProtocolAction,
-        bytes calldata,
-        bytes calldata
+        Types.ProtocolAction action,
+        bytes calldata rebaseCallbackResult,
+        bytes calldata priceData
     ) external view virtual returns (uint256 rewards_);
 
     /// @inheritdoc ILiquidationRewardsManager

@@ -26,7 +26,7 @@ contract LiquidationRewardsManagerWusdn is LiquidationRewardsManager {
         _rewardsParameters = RewardsParameters({
             gasUsedPerTick: 53_094,
             otherGasUsed: 469_537,
-            rebaseGasUsed: 13_765,
+            rebaseGasUsed: 0,
             rebalancerGasUsed: 279_349,
             baseFeeOffset: 2 gwei,
             gasMultiplierBps: 10_500, // 1.05
@@ -40,7 +40,7 @@ contract LiquidationRewardsManagerWusdn is LiquidationRewardsManager {
     function getLiquidationRewards(
         Types.LiqTickInfo[] calldata liquidatedTicks,
         uint256 currentPrice,
-        bool rebased,
+        bool,
         Types.RebalancerAction rebalancerAction,
         Types.ProtocolAction,
         bytes calldata,
@@ -54,9 +54,6 @@ contract LiquidationRewardsManagerWusdn is LiquidationRewardsManager {
         // calculate the amount of gas spent during the liquidation
         uint256 gasUsed = rewardsParameters.otherGasUsed + BASE_GAS_COST
             + uint256(rewardsParameters.gasUsedPerTick) * liquidatedTicks.length;
-        if (rebased) {
-            gasUsed += rewardsParameters.rebaseGasUsed;
-        }
         if (uint8(rebalancerAction) > uint8(Types.RebalancerAction.NoCloseNoOpen)) {
             gasUsed += rewardsParameters.rebalancerGasUsed;
         }
