@@ -3,19 +3,24 @@ pragma solidity 0.8.26;
 
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
-import { PYTH_ETH_USD, REDSTONE_ETH_USD } from "../../../utils/Constants.sol";
+import { MockFeeManager } from "../../../integration/Middlewares/ChainlinkDataStreamsOracle/utils/MockFeeManager.sol";
+import { PYTH_ETH_USD, REDSTONE_ETH_USD, WETH } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import { OracleMiddlewareHandler } from "../utils/Handler.sol";
 import { OracleMiddlewareWithRedstoneHandler } from "../utils/HandlerWithRedstone.sol";
 import { MockChainlinkOnChain } from "../utils/MockChainlinkOnChain.sol";
 import { MockPyth } from "../utils/MockPyth.sol";
+import { STREAM_ETH_PRICE } from "./Constants.sol";
+import { OracleMiddlewareWithChainlinkDataStreamsHandler } from "./Handler.sol";
+import { MockStreamVerifierProxy } from "./MockStreamVerifierProxy.sol";
 
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { WusdnToEthOracleMiddleware } from "../../../../src/OracleMiddleware/WusdnToEthOracleMiddleware.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
+import { IVerifierProxy } from "../../../../src/interfaces/OracleMiddleware/IVerifierProxy.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -130,6 +135,89 @@ contract OracleMiddlewareWithRedstoneFixture is BaseFixture, ActionsFixture {
         (, int256 price,, uint256 updatedAt,) = mockChainlinkOnChain.latestRoundData();
         assertEq(price, 2000e8);
         assertEq(updatedAt, block.timestamp);
+    }
+}
+
+/**
+ * @title OracleMiddlewareWithChainlinkDataStreamsFixture
+ * @dev Utils for testing the oracle middleware with chainlink data streams support
+ */
+contract OracleMiddlewareWithChainlinkDataStreamsFixture is BaseFixture, ActionsFixture {
+    MockPyth internal mockPyth;
+    MockChainlinkOnChain internal mockChainlinkOnChain;
+    MockFeeManager internal mockFeeManager;
+    MockStreamVerifierProxy internal mockStreamVerifierProxy;
+    OracleMiddlewareWithChainlinkDataStreamsHandler internal oracleMiddleware;
+    uint256 internal chainlinkTimeElapsedLimit = 1 hours;
+
+    IVerifierProxy.ReportV3 internal report;
+    bytes internal reportData;
+    bytes internal payload;
+
+    function setUp() public virtual {
+        vm.warp(1_704_063_600);
+        mockPyth = new MockPyth();
+        mockChainlinkOnChain = new MockChainlinkOnChain();
+        mockFeeManager = new MockFeeManager();
+        mockStreamVerifierProxy = new MockStreamVerifierProxy(address(mockFeeManager));
+
+        oracleMiddleware = new OracleMiddlewareWithChainlinkDataStreamsHandler(
+            address(mockPyth),
+            PYTH_ETH_USD,
+            address(mockChainlinkOnChain),
+            chainlinkTimeElapsedLimit,
+            address(mockStreamVerifierProxy),
+            ""
+        );
+
+        report = IVerifierProxy.ReportV3({
+            feedId: "",
+            validFromTimestamp: uint32(block.timestamp),
+            observationsTimestamp: uint32(block.timestamp),
+            nativeFee: 0.001 ether,
+            linkFee: 0,
+            expiresAt: uint32(block.timestamp) + 100,
+            price: int192(int256(STREAM_ETH_PRICE)),
+            bid: int192(int256(STREAM_ETH_PRICE)) - 1,
+            ask: int192(int256(STREAM_ETH_PRICE)) + 1
+        });
+
+        reportData = abi.encode(report);
+        payload = abi.encode(new bytes32[](3), reportData);
+        test_setUp();
+    }
+
+    function test_setUp() public {
+        assertEq(address(oracleMiddleware.getPyth()), address(mockPyth));
+        assertEq(address(oracleMiddleware.getPriceFeed()), address(mockChainlinkOnChain));
+
+        assertEq(mockPyth.lastPublishTime(), block.timestamp);
+        assertEq(mockChainlinkOnChain.latestTimestamp(), block.timestamp);
+
+        /* ----------------------------- Test pyth mock ----------------------------- */
+        bytes[] memory updateData = new bytes[](1);
+        bytes32[] memory priceIds = new bytes32[](1);
+        PythStructs.PriceFeed[] memory priceFeeds = mockPyth.parsePriceFeedUpdatesUnique{
+            value: mockPyth.getUpdateFee(updateData)
+        }(updateData, priceIds, 1000, 0);
+
+        assertEq(priceFeeds.length, 1);
+        assertEq(priceFeeds[0].price.price, 2000e8);
+        assertEq(priceFeeds[0].price.conf, 20e8);
+        assertEq(priceFeeds[0].price.expo, -8);
+        assertEq(priceFeeds[0].price.publishTime, 1000);
+
+        /* ---------------------- Test chainlink on chain mock ---------------------- */
+        (, int256 price,, uint256 updatedAt,) = mockChainlinkOnChain.latestRoundData();
+        assertEq(price, 2000e8);
+        assertEq(updatedAt, block.timestamp);
+
+        /* --------------------- Test chainlink stream verifier --------------------- */
+        assertEq(address(mockStreamVerifierProxy.s_feeManager()), address(mockFeeManager));
+
+        /* ----------------------- Test chainlink fee manager ----------------------- */
+        assertEq(mockFeeManager.i_nativeAddress(), WETH);
+        assertEq(mockFeeManager.s_nativeSurcharge(), 0);
     }
 }
 
