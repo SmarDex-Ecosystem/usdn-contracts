@@ -28,7 +28,7 @@ contract TestLiquidationRewardsManagerWusdnGetLiquidationRewards is BaseFixture 
         liquidationRewardsManager = new LiquidationRewardsManagerWusdn(wusdn);
 
         liquidationRewardsManager.setRewardsParameters(
-            50_000, 500_000, 10_000, 300_000, 2 gwei, 10_500, 200, 2 ether, 1000 ether
+            50_000, 500_000, 0, 300_000, 2 gwei, 10_500, 200, 2 ether, 1000 ether
         );
 
         rewardsParameters = liquidationRewardsManager.getRewardsParameters();
