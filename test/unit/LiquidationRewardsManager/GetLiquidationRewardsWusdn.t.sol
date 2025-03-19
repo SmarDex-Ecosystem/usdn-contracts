@@ -55,7 +55,6 @@ contract TestLiquidationRewardsManagerWusdnGetLiquidationRewards is BaseFixture 
      * @custom:then It should return an amount of wUsdn based on the gas used by UsdnProtocolActions.liquidate(bytes)
      */
     function test_getLiquidationRewardsFor1Tick() public view {
-        uint256 priceDecimals = liquidationRewardsManager.PRICE_DECIMALS();
         uint256 posBonusWusdn = (
             _singleLiquidatedTick[0].totalExpo * (_singleLiquidatedTick[0].tickPrice - CURRENT_PRICE) / CURRENT_PRICE
         ) * 200 / BPS_DIVISOR;
@@ -65,24 +64,24 @@ contract TestLiquidationRewardsManagerWusdnGetLiquidationRewards is BaseFixture 
 
         uint256 gasUsed = rewardsParameters.otherGasUsed + liquidationRewardsManager.BASE_GAS_COST()
             + uint256(rewardsParameters.gasUsedPerTick) * _singleLiquidatedTick.length;
-        uint256 totRewards = rewardsParameters.fixedReward + posBonusWusdn
-            + gasUsed * gasPriceAndMultiplier * priceDecimals / CURRENT_PRICE;
+        uint256 totRewards =
+            rewardsParameters.fixedReward + posBonusWusdn + gasUsed * gasPriceAndMultiplier * 1e18 / CURRENT_PRICE;
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(
             _singleLiquidatedTick, CURRENT_PRICE, false, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, totRewards, "without rebase");
 
         gasUsed += rewardsParameters.rebaseGasUsed;
-        totRewards = rewardsParameters.fixedReward + posBonusWusdn
-            + gasUsed * gasPriceAndMultiplier * priceDecimals / CURRENT_PRICE;
+        totRewards =
+            rewardsParameters.fixedReward + posBonusWusdn + gasUsed * gasPriceAndMultiplier * 1e18 / CURRENT_PRICE;
         rewards = liquidationRewardsManager.getLiquidationRewards(
             _singleLiquidatedTick, CURRENT_PRICE, true, Types.RebalancerAction.None, Types.ProtocolAction.None, "", ""
         );
         assertEq(rewards, totRewards, "with rebase");
 
         gasUsed += rewardsParameters.rebalancerGasUsed;
-        totRewards = rewardsParameters.fixedReward + posBonusWusdn
-            + gasUsed * gasPriceAndMultiplier * priceDecimals / CURRENT_PRICE;
+        totRewards =
+            rewardsParameters.fixedReward + posBonusWusdn + gasUsed * gasPriceAndMultiplier * 1e18 / CURRENT_PRICE;
         rewards = liquidationRewardsManager.getLiquidationRewards(
             _singleLiquidatedTick,
             CURRENT_PRICE,

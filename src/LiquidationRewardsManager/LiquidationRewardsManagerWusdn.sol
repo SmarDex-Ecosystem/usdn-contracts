@@ -17,7 +17,7 @@ import { LiquidationRewardsManager } from "./LiquidationRewardsManager.sol";
  */
 contract LiquidationRewardsManagerWusdn is LiquidationRewardsManager {
     /// @notice The precision used for the price.
-    uint256 public constant PRICE_DECIMALS = 1e18;
+    uint256 constant PRICE_DECIMALS = 1e18;
 
     /// @param wusdn The address of the wUsdn token.
     constructor(IWusdn wusdn) Ownable(msg.sender) {
