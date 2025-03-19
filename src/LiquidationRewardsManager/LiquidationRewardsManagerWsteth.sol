@@ -11,8 +11,10 @@ import { LiquidationRewardsManager } from "./LiquidationRewardsManager.sol";
 
 /**
  * @title Liquidation Rewards Manager for Wrapped stETH
- * @notice This contract calculates rewards for liquidators within the USDN protocol with wstETH as underlying asset.
- * @dev Rewards are computed based on gas costs, position size, and other parameters.
+ * @notice This contract calculates rewards for liquidators within the USDN protocol, using wstETH as the underlying
+ * asset. Rewards are computed based on gas costs, which are converted to wstETH using the current conversion rate
+ * between wstETH and stETH, assuming a one-to-one rate between stETH and ETH. Additionally a fixed reward is added
+ * along with a bonus based on the size of the liquidated ticks.
  */
 contract LiquidationRewardsManagerWsteth is LiquidationRewardsManager {
     /// @param wstETH The address of the wstETH token.

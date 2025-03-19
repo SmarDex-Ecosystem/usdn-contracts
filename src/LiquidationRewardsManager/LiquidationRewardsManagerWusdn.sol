@@ -12,8 +12,9 @@ import { LiquidationRewardsManager } from "./LiquidationRewardsManager.sol";
 
 /**
  * @title Liquidation Rewards Manager for Wrapped USDN
- * @notice This contract calculates rewards for liquidators within the USDN protocol with wUsdn as underlying asset.
- * @dev Rewards are computed based on gas costs, position size, and other parameters.
+ * @notice This contract calculates rewards for liquidators within the USDN protocol, using wUSDN as the underlying
+ * asset. Rewards are computed based on gas costs which are converted to wUSDN using the current price. Additionally a
+ * fixed reward is added along with a bonus based on the size of the liquidated ticks.
  */
 contract LiquidationRewardsManagerWusdn is LiquidationRewardsManager {
     /// @notice The precision used for the price.
