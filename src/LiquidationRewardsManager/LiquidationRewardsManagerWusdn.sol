@@ -16,6 +16,9 @@ import { LiquidationRewardsManager } from "./LiquidationRewardsManager.sol";
  * @dev Rewards are computed based on gas costs, position size, and other parameters.
  */
 contract LiquidationRewardsManagerWusdn is LiquidationRewardsManager {
+    /// @notice The precision used for the price.
+    uint256 public constant PRICE_DECIMALS = 1e18;
+
     /// @param wusdn The address of the wUsdn token.
     constructor(IWusdn wusdn) Ownable(msg.sender) {
         _rewardAsset = wusdn;
@@ -63,7 +66,7 @@ contract LiquidationRewardsManagerWusdn is LiquidationRewardsManager {
         wUsdnRewards_ = rewardsParameters.fixedReward
             + _calcPositionSizeBonus(liquidatedTicks, currentPrice, rewardsParameters.positionBonusMultiplierBps);
 
-        wUsdnRewards_ += FixedPointMathLib.fullMulDiv(gasRewards, BPS_DIVISOR, currentPrice);
+        wUsdnRewards_ += FixedPointMathLib.fullMulDiv(gasRewards, PRICE_DECIMALS, currentPrice);
 
         if (wUsdnRewards_ > rewardsParameters.maxReward) {
             wUsdnRewards_ = rewardsParameters.maxReward;
