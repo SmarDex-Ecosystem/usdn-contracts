@@ -29,4 +29,6 @@ contract MockStreamVerifierProxy {
 
         (, reportData_) = abi.decode(payload, (bytes32[3], bytes));
     }
+
+    receive() external payable { }
 }

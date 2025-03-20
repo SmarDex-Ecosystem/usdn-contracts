@@ -4,16 +4,17 @@ pragma solidity 0.8.26;
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
 import { MockFeeManager } from "../../../integration/Middlewares/ChainlinkDataStreamsOracle/utils/MockFeeManager.sol";
-import { PYTH_ETH_USD, REDSTONE_ETH_USD, WETH } from "../../../utils/Constants.sol";
+import { PYTH_ETH_USD, REDSTONE_ETH_USD } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
 import { OracleMiddlewareHandler } from "../utils/Handler.sol";
 import { OracleMiddlewareWithRedstoneHandler } from "../utils/HandlerWithRedstone.sol";
 import { MockChainlinkOnChain } from "../utils/MockChainlinkOnChain.sol";
 import { MockPyth } from "../utils/MockPyth.sol";
-import { STREAM_ETH_PRICE } from "./Constants.sol";
+import { EMPTY_STREAM_V3, STREAM_ETH_PRICE } from "./Constants.sol";
 import { OracleMiddlewareWithChainlinkDataStreamsHandler } from "./Handler.sol";
 import { MockStreamVerifierProxy } from "./MockStreamVerifierProxy.sol";
+import { MockWETH } from "./MockWETH.sol";
 
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { WusdnToEthOracleMiddleware } from "../../../../src/OracleMiddleware/WusdnToEthOracleMiddleware.sol";
@@ -25,7 +26,7 @@ import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProt
 
 /**
  * @title ActionsFixture
- * @dev All protocol actions
+ * @dev All protocol actions.
  */
 contract ActionsFixture is IOracleMiddlewareErrors, IOracleMiddlewareEvents {
     // all action types
@@ -46,7 +47,7 @@ contract ActionsFixture is IOracleMiddlewareErrors, IOracleMiddlewareEvents {
 
 /**
  * @title OracleMiddlewareBaseFixture
- * @dev Utils for testing the oracle middleware
+ * @dev Utils for testing the oracle middleware.
  */
 contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
     MockPyth internal mockPyth;
@@ -93,7 +94,7 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
 
 /**
  * @title OracleMiddlewareWithRedstoneFixture
- * @dev Utils for testing the oracle middleware with redstone support
+ * @dev Utils for testing the oracle middleware with redstone support.
  */
 contract OracleMiddlewareWithRedstoneFixture is BaseFixture, ActionsFixture {
     MockPyth internal mockPyth;
@@ -140,7 +141,7 @@ contract OracleMiddlewareWithRedstoneFixture is BaseFixture, ActionsFixture {
 
 /**
  * @title OracleMiddlewareWithChainlinkDataStreamsFixture
- * @dev Utils for testing the oracle middleware with chainlink data streams support
+ * @dev Utils for testing the oracle middleware with chainlink data streams support.
  */
 contract OracleMiddlewareWithChainlinkDataStreamsFixture is BaseFixture, ActionsFixture {
     MockPyth internal mockPyth;
@@ -148,14 +149,18 @@ contract OracleMiddlewareWithChainlinkDataStreamsFixture is BaseFixture, Actions
     MockFeeManager internal mockFeeManager;
     MockStreamVerifierProxy internal mockStreamVerifierProxy;
     OracleMiddlewareWithChainlinkDataStreamsHandler internal oracleMiddleware;
-    uint256 internal chainlinkTimeElapsedLimit = 1 hours;
-
     IVerifierProxy.ReportV3 internal report;
+
+    address internal wethTargetAddress;
+    uint256 internal chainlinkTimeElapsedLimit = 1 hours;
     bytes internal reportData;
     bytes internal payload;
 
-    function setUp() public virtual {
+    bytes32[3] internal emptySignature;
+
+    function _setUp() internal {
         vm.warp(1_704_063_600);
+
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
         mockFeeManager = new MockFeeManager();
@@ -167,11 +172,15 @@ contract OracleMiddlewareWithChainlinkDataStreamsFixture is BaseFixture, Actions
             address(mockChainlinkOnChain),
             chainlinkTimeElapsedLimit,
             address(mockStreamVerifierProxy),
-            ""
+            EMPTY_STREAM_V3
         );
 
+        wethTargetAddress = mockFeeManager.i_nativeAddress();
+        bytes memory code = vm.getDeployedCode("MockWETH.sol");
+        vm.etch(wethTargetAddress, code);
+
         report = IVerifierProxy.ReportV3({
-            feedId: "",
+            feedId: EMPTY_STREAM_V3,
             validFromTimestamp: uint32(block.timestamp),
             observationsTimestamp: uint32(block.timestamp),
             nativeFee: 0.001 ether,
@@ -182,9 +191,7 @@ contract OracleMiddlewareWithChainlinkDataStreamsFixture is BaseFixture, Actions
             ask: int192(int256(STREAM_ETH_PRICE)) + 1
         });
 
-        reportData = abi.encode(report);
-        payload = abi.encode(new bytes32[](3), reportData);
-        test_setUp();
+        (reportData, payload) = _encodeReport(report);
     }
 
     function test_setUp() public {
@@ -216,14 +223,23 @@ contract OracleMiddlewareWithChainlinkDataStreamsFixture is BaseFixture, Actions
         assertEq(address(mockStreamVerifierProxy.s_feeManager()), address(mockFeeManager));
 
         /* ----------------------- Test chainlink fee manager ----------------------- */
-        assertEq(mockFeeManager.i_nativeAddress(), WETH);
+        assertEq(mockFeeManager.i_nativeAddress(), wethTargetAddress);
         assertEq(mockFeeManager.s_nativeSurcharge(), 0);
+    }
+
+    function _encodeReport(IVerifierProxy.ReportV3 memory reportV3)
+        internal
+        view
+        returns (bytes memory reportData_, bytes memory payload_)
+    {
+        reportData_ = abi.encode(reportV3);
+        payload_ = abi.encode(emptySignature, reportData_);
     }
 }
 
 /**
  * @title WstethBaseFixture
- * @dev Utils for testing the wsteth oracle
+ * @dev Utils for testing the wsteth oracle.
  */
 contract WstethBaseFixture is BaseFixture, ActionsFixture {
     MockPyth internal mockPyth;
@@ -272,7 +288,7 @@ contract WstethBaseFixture is BaseFixture, ActionsFixture {
     }
 }
 
-/// @dev Utils for testing the short oracle middleware
+/// @dev Utils for testing the short oracle middleware.
 contract WusdnToEthBaseFixture is BaseFixture, ActionsFixture {
     MockPyth internal mockPyth;
     MockChainlinkOnChain internal mockChainlinkOnChain;

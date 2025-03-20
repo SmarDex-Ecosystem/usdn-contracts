@@ -51,6 +51,7 @@ contract OracleMiddlewareWithChainlinkDataStreamsHandler is OracleMiddlewareWith
 
     function i_getChainlinkDataStreamPrice(bytes calldata payload, uint128 targetTimestamp, uint128 targetLimit)
         external
+        payable
         returns (IVerifierProxy.ReportV3 memory verifiedReport_)
     {
         return _getChainlinkDataStreamPrice(payload, targetTimestamp, targetLimit);
