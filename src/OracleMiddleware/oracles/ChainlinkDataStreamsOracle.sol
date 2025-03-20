@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { IChainlinkDataStreamsOracle } from "../../interfaces/OracleMiddleware/IChainlinkDataStreamsOracle.sol";
 import { IFeeManager } from "../../interfaces/OracleMiddleware/IFeeManager.sol";
 import { IOracleMiddlewareErrors } from "../../interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { FormattedDataStreamsPrice } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IVerifierProxy } from "../../interfaces/OracleMiddleware/IVerifierProxy.sol";
 
 /**
@@ -60,11 +61,11 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
      * If zero, then we accept all recent prices.
      * @param targetLimit The most recent timestamp a price can have.
      * Can be zero if `targetTimestamp` is zero.
-     * @return verifiedReport_ The Chainlink verified report.
+     * @return formattedPrice_ The Chainlink formatted price.
      */
     function _getChainlinkDataStreamPrice(bytes calldata payload, uint128 targetTimestamp, uint128 targetLimit)
         internal
-        returns (IVerifierProxy.ReportV3 memory verifiedReport_)
+        returns (FormattedDataStreamsPrice memory formattedPrice_)
     {
         IFeeManager.Asset memory feeData = _getChainlinkDataStreamFeeData(payload);
 
@@ -87,36 +88,43 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
         }
 
         // Decode verified report
-        verifiedReport_ = abi.decode(verifiedReportData, (IVerifierProxy.ReportV3));
+        IVerifierProxy.ReportV3 memory verifiedReport = abi.decode(verifiedReportData, (IVerifierProxy.ReportV3));
 
         // Stream ID
-        if (verifiedReport_.feedId != STREAM_ID) {
+        if (verifiedReport.feedId != STREAM_ID) {
             revert OracleMiddlewareInvalidStreamId();
         }
 
         // Report timestamp
         if (targetTimestamp == 0) {
-            if (verifiedReport_.validFromTimestamp < block.timestamp - _dataStreamsRecentPriceDelay) {
+            if (verifiedReport.validFromTimestamp < block.timestamp - _dataStreamsRecentPriceDelay) {
                 revert OracleMiddlewareDataStreamInvalidTimestamp();
             }
         } else if (
-            targetTimestamp < verifiedReport_.validFromTimestamp
-                || verifiedReport_.observationsTimestamp < targetTimestamp
-                || targetLimit < verifiedReport_.observationsTimestamp
+            targetTimestamp < verifiedReport.validFromTimestamp
+                || verifiedReport.observationsTimestamp < targetTimestamp
+                || targetLimit < verifiedReport.observationsTimestamp
         ) {
             revert OracleMiddlewareDataStreamInvalidTimestamp();
         }
 
         // Report prices
-        if (verifiedReport_.price <= 0) {
-            revert OracleMiddlewareWrongPrice(verifiedReport_.price);
+        if (verifiedReport.price <= 0) {
+            revert OracleMiddlewareWrongPrice(verifiedReport.price);
         }
-        if (verifiedReport_.ask <= 0) {
-            revert OracleMiddlewareWrongAskPrice(verifiedReport_.ask);
+        if (verifiedReport.ask <= 0) {
+            revert OracleMiddlewareWrongAskPrice(verifiedReport.ask);
         }
-        if (verifiedReport_.bid <= 0) {
-            revert OracleMiddlewareWrongBidPrice(verifiedReport_.bid);
+        if (verifiedReport.bid <= 0) {
+            revert OracleMiddlewareWrongBidPrice(verifiedReport.bid);
         }
+
+        return FormattedDataStreamsPrice({
+            timestamp: uint256(verifiedReport.observationsTimestamp),
+            price: uint256(uint192(verifiedReport.price)),
+            ask: uint256(uint192(verifiedReport.ask)),
+            bid: uint256(uint192(verifiedReport.bid))
+        });
     }
 
     /**
