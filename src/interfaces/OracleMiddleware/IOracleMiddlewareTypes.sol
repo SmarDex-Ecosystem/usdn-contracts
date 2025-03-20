@@ -57,3 +57,17 @@ enum PriceAdjustment {
     Down,
     None
 }
+
+/**
+ * @notice Representation of data streams asset price with a uint256 price.
+ * @param timestamp The timestamp of the asset price.
+ * @param price The price of the asset with 18 decimals.
+ * @param bid The simulated price impact of a buy order.
+ * @param ask The simulated price impact of a sell order.
+ */
+struct FormattedDataStreamsPrice {
+    uint256 timestamp;
+    uint256 price;
+    uint256 ask;
+    uint256 bid;
+}

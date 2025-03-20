@@ -9,7 +9,7 @@ import { ICommonOracleMiddleware } from "./ICommonOracleMiddleware.sol";
  * the protocol's contracts.
  * @dev This middleware uses Pyth as low-latency oracle and Chainlink Data Feeds as fallback.
  */
-interface IOracleMiddleware is ICommonOracleMiddleware {
+interface IOracleMiddlewareWithPyth is ICommonOracleMiddleware {
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */

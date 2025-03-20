@@ -7,6 +7,7 @@ import { AccessControlDefaultAdminRules } from
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import {
     ChainlinkPriceInfo,
+    FormattedDataStreamsPrice,
     FormattedPythPrice,
     PriceAdjustment,
     PriceInfo
@@ -81,7 +82,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
         if (newDelay > 10 minutes) {
             revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
         }
-        _pythRecentPriceDelay = newDelay;
+        _dataStreamsRecentPriceDelay = newDelay;
 
         emit DataStreamsRecentPriceDelayUpdated(newDelay);
     }
@@ -105,9 +106,9 @@ contract OracleMiddlewareWithChainlinkDataStreams is
             actionTimestamp += uint128(_validationDelay);
         }
 
-        IVerifierProxy.ReportV3 memory verifiedReport =
+        FormattedDataStreamsPrice memory formattedPrice =
             _getChainlinkDataStreamPrice(payload, actionTimestamp, targetLimit);
-        price_ = _adjustDataStreamPrice(verifiedReport, dir);
+        price_ = _adjustDataStreamPrice(formattedPrice, dir);
     }
 
     /**
@@ -170,8 +171,8 @@ contract OracleMiddlewareWithChainlinkDataStreams is
             return _convertPythPrice(pythPrice);
         }
 
-        IVerifierProxy.ReportV3 memory verifiedReport = _getChainlinkDataStreamPrice(data, 0, 0);
-        price_ = _adjustDataStreamPrice(verifiedReport, PriceAdjustment.None);
+        FormattedDataStreamsPrice memory formattedPrice = _getChainlinkDataStreamPrice(data, 0, 0);
+        price_ = _adjustDataStreamPrice(formattedPrice, PriceAdjustment.None);
     }
 
     /**
@@ -185,25 +186,25 @@ contract OracleMiddlewareWithChainlinkDataStreams is
 
     /**
      * @notice Applies the ask, bid or price according to the `dir` direction.
-     * @param report The Chainlink data streams report.
+     * @param formattedPrice The Chainlink data streams formatted price.
      * @param dir The direction to adjust the price.
      * @return price_ The adjusted price according to the direction.
      */
-    function _adjustDataStreamPrice(IVerifierProxy.ReportV3 memory report, PriceAdjustment dir)
+    function _adjustDataStreamPrice(FormattedDataStreamsPrice memory formattedPrice, PriceAdjustment dir)
         internal
         pure
         returns (PriceInfo memory price_)
     {
         // cast are safe since checks was made in `_getChainlinkDataStreamPrice`
         if (dir == PriceAdjustment.Down) {
-            price_.price = uint192(report.bid);
+            price_.price = formattedPrice.bid;
         } else if (dir == PriceAdjustment.Up) {
-            price_.price = uint192(report.ask);
+            price_.price = formattedPrice.ask;
         } else {
-            price_.price = uint192(report.price);
+            price_.price = formattedPrice.price;
         }
 
-        price_.timestamp = report.observationsTimestamp;
-        price_.neutralPrice = uint192(report.price);
+        price_.timestamp = formattedPrice.timestamp;
+        price_.neutralPrice = formattedPrice.price;
     }
 }
