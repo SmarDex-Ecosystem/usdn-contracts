@@ -12,8 +12,8 @@ import { WstETH } from "../../../utils/WstEth.sol";
 import { MockOracleMiddleware } from "../../UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { RebalancerHandler } from "../utils/Handler.sol";
 
-import { LiquidationRewardsManagerWsteth } from
-    "../../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWsteth.sol";
+import { LiquidationRewardsManagerWstEth } from
+    "../../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
@@ -40,7 +40,7 @@ contract RebalancerFixture is
     Sdex public sdex;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
-    LiquidationRewardsManagerWsteth public liquidationRewardsManager;
+    LiquidationRewardsManagerWstEth public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
     IUsdnProtocol public usdnProtocol;
     Types.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
@@ -52,7 +52,7 @@ contract RebalancerFixture is
         wstETH = new WstETH();
         sdex = new Sdex();
         oracleMiddleware = new MockOracleMiddleware();
-        liquidationRewardsManager = new LiquidationRewardsManagerWsteth(wstETH);
+        liquidationRewardsManager = new LiquidationRewardsManagerWstEth(wstETH);
 
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
         UsdnProtocolImpl implementation = new UsdnProtocolImpl();

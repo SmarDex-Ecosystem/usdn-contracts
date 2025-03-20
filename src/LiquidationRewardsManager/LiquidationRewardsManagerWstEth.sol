@@ -16,7 +16,7 @@ import { LiquidationRewardsManager } from "./LiquidationRewardsManager.sol";
  * between wstETH and stETH, assuming a one-to-one rate between stETH and ETH. Additionally a fixed reward is added
  * along with a bonus based on the size of the liquidated ticks.
  */
-contract LiquidationRewardsManagerWsteth is LiquidationRewardsManager {
+contract LiquidationRewardsManagerWstEth is LiquidationRewardsManager {
     /// @param wstETH The address of the wstETH token.
     constructor(IWstETH wstETH) Ownable(msg.sender) {
         _rewardAsset = wstETH;
