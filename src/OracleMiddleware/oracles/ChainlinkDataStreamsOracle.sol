@@ -55,7 +55,7 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
     }
 
     /**
-     * @notice Gets the price of the asset with Chainlink data streams.
+     * @notice Gets the formatted price of the asset with Chainlink data streams.
      * @param payload The full report obtained from the Chainlink data streams API.
      * @param targetTimestamp The target timestamp of the price.
      * If zero, then we accept all recent prices.
