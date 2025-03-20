@@ -145,6 +145,7 @@ contract DeployUsdnWstethFork is UsdnWstethConfig, Script {
         usdnProtocol.grantRole(Constants.PROXY_UPGRADE_ROLE, msg.sender);
         usdnProtocol.grantRole(Constants.PAUSER_ROLE, msg.sender);
         usdnProtocol.grantRole(Constants.UNPAUSER_ROLE, msg.sender);
+
         usdnProtocol.setRebalancer(rebalancer_);
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
