@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 
 /**
  * @title Events For The Middleware And Oracle Related Contracts
- * @notice Defines all the custom events emitted by the contracts related to the OracleMiddleware contract.
+ * @notice Defines all the custom events emitted by the contracts related to the OracleMiddleware contracts.
  */
 interface IOracleMiddlewareEvents {
     /**
@@ -23,6 +23,12 @@ interface IOracleMiddlewareEvents {
      * @param newDelay The new recent price delay.
      */
     event PythRecentPriceDelayUpdated(uint64 newDelay);
+
+    /**
+     * @notice The recent price delay for Chainlink data streams was updated.
+     * @param newDelay The new recent price delay.
+     */
+    event DataStreamsRecentPriceDelayUpdated(uint64 newDelay);
 
     /**
      * @notice The recent price delay for Redstone was updated.

@@ -3,13 +3,13 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import { OracleMiddleware } from "../../../../src/OracleMiddleware/OracleMiddleware.sol";
+import { OracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/OracleMiddlewareWithPyth.sol";
 
-contract OracleMiddlewareHandler is OracleMiddleware, Test {
+contract OracleMiddlewareHandler is OracleMiddlewareWithPyth, Test {
     bool internal _mockRedstonePriceZero;
 
     constructor(address pythContract, bytes32 pythFeedId, address chainlinkPriceFeed, uint256 chainlinkTimeElapsedLimit)
-        OracleMiddleware(pythContract, pythFeedId, chainlinkPriceFeed, chainlinkTimeElapsedLimit)
+        OracleMiddlewareWithPyth(pythContract, pythFeedId, chainlinkPriceFeed, chainlinkTimeElapsedLimit)
     { }
 
     function setMockRedstonePriceZero(bool mock) external {

@@ -4,16 +4,15 @@ pragma solidity 0.8.26;
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
-import { IOracleMiddlewareErrors } from "../../interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { FormattedPythPrice } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IPythOracle } from "../../interfaces/OracleMiddleware/IPythOracle.sol";
 
 /**
  * @title Contract To Communicate With The Pyth Oracle
  * @notice This contract is used to get the price of the asset that corresponds to the stored feed ID.
- * @dev Is implemented by the {OracleMiddleware} contract.
+ * @dev Is implemented by the {CommonOracleMiddleware} contract.
  */
-abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
+abstract contract PythOracle is IPythOracle {
     /// @notice The ID of the Pyth price feed.
     bytes32 internal immutable _pythFeedId;
 

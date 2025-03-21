@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { OracleMiddleware } from "./OracleMiddleware.sol";
+import { CommonOracleMiddleware, OracleMiddlewareWithPyth } from "./OracleMiddlewareWithPyth.sol";
 
 /**
  * @title Middleware Implementation For Short ETH Protocol
  * @notice This contract is used to get the "inverse" price in ETH/WUSDN denomination, so that it can be used for a
  * shorting version of the USDN protocol with WUSDN as the underlying asset.
  */
-contract WusdnToEthOracleMiddleware is OracleMiddleware {
+contract WusdnToEthOracleMiddleware is OracleMiddlewareWithPyth {
     /// @dev One dollar with the middleware decimals.
     uint256 internal constant ONE_DOLLAR = 10 ** MIDDLEWARE_DECIMALS;
 
@@ -37,12 +38,12 @@ contract WusdnToEthOracleMiddleware is OracleMiddleware {
         address chainlinkPriceFeed,
         address usdnToken,
         uint256 chainlinkTimeElapsedLimit
-    ) OracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, chainlinkTimeElapsedLimit) {
+    ) OracleMiddlewareWithPyth(pythContract, pythPriceID, chainlinkPriceFeed, chainlinkTimeElapsedLimit) {
         USDN = IUsdn(usdnToken);
     }
 
     /**
-     * @inheritdoc OracleMiddleware
+     * @inheritdoc IBaseOracleMiddleware
      * @dev This function returns an approximation of the price ETH/WUSDN, so how much ETH each WUSDN token is worth.
      * The exact formula would be to divide the $/WUSDN price by the $/ETH price, which would look like this (as a
      * decimal number):
@@ -84,7 +85,7 @@ contract WusdnToEthOracleMiddleware is OracleMiddleware {
         uint128 targetTimestamp,
         Types.ProtocolAction action,
         bytes calldata data
-    ) public payable virtual override returns (PriceInfo memory) {
+    ) public payable virtual override(CommonOracleMiddleware, IBaseOracleMiddleware) returns (PriceInfo memory) {
         PriceInfo memory ethPrice = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
         uint256 divisor = USDN.divisor();
         int256 adjustmentDelta = int256(ethPrice.price) - int256(ethPrice.neutralPrice);

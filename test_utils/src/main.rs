@@ -1,15 +1,21 @@
-use std::ops::DivAssign;
+use std::{
+    ops::DivAssign,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use alloy_primitives::{Bytes, FixedBytes, I256, U256};
 use alloy_sol_types::SolValue;
 use anyhow::{anyhow, Context, Result};
 use clap::{Parser, Subcommand};
+use data_streams_report::report::Report;
+use hmac::{Hmac, Mac};
 use rug::{
     float::Round,
     ops::{DivRounding, MulAssignRound, Pow},
     Float, Integer,
 };
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 
 #[derive(Deserialize, Debug)]
 struct HermesResponse {
@@ -34,6 +40,12 @@ struct PythPrice {
     expo: i64,
     publish_time: u64,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct ReportResponse {
+    pub report: Report,
+}
+
 #[derive(Parser)]
 struct Cli {
     #[command(subcommand)]
@@ -94,6 +106,13 @@ enum Commands {
         price: Integer,
         decimals: u32,
         usdn_divisor: Integer,
+    },
+    /// Get price from chainlink data streams api
+    ChainlinkPrice {
+        /// The chainlink datastream id
+        feed_id: String,
+        /// The price timestamp
+        timestamp: u128,
     },
 }
 
@@ -178,6 +197,42 @@ fn main() -> Result<()> {
             let total_mint_shares = total_mint * usdn_divisor;
             print_int_u256_hex(total_mint_shares)?;
         }
+        Commands::ChainlinkPrice { feed_id, timestamp } => {
+            let chainlink_low_latency_api_key = std::env::var("CHAINLINK_DATA_STREAMS_API_KEY")
+                .context("getting CHAINLINK_DATA_STREAMS_API_KEY env variable")?;
+
+            let chainlink_user_secret = std::env::var("CHAINLINK_DATA_STREAMS_API_SECRET")
+                .context("getting CHAINLINK_DATA_STREAMS_API_SECRET env variable")?;
+
+            let chainlink_rest_url = std::env::var("CHAINLINK_DATA_STREAMS_API_URL")
+                .context("getting CHAINLINK_DATA_STREAMS_API_URL env variable")?;
+
+            let path = format!("/api/v1/reports?feedID={feed_id}&timestamp={timestamp}");
+            let request_timestamp = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("Error: Timestamp in the past")
+                .as_millis();
+
+            let hmac_string = generate_hmac(
+                "GET",
+                &path,
+                b"",
+                &chainlink_low_latency_api_key,
+                request_timestamp,
+                &chainlink_user_secret,
+            )?;
+
+            let response = ureq::get(&format!("{chainlink_rest_url}{path}"))
+                .set("Authorization", &chainlink_low_latency_api_key)
+                .set("X-Authorization-Timestamp", &request_timestamp.to_string())
+                .set("X-Authorization-Signature-SHA256", &hmac_string)
+                .call()?;
+
+            let report_response: ReportResponse = response.into_json()?;
+            let report: Report = report_response.report;
+
+            print!("{}", report.full_report);
+        }
     }
     Ok(())
 }
@@ -236,4 +291,45 @@ fn parse_float(s: &str) -> Result<Float, String> {
         512,
         Float::parse(s).map_err(|e| e.to_string())?,
     ))
+}
+
+/// Generates an HMAC-SHA256 signature based on the provided parameters.
+///
+/// # Arguments
+///
+/// * `method` - The HTTP method (e.g., "GET", "POST", etc.).
+/// * `path` - The API endpoint path (e.g., "/api/v1/feeds", "/api/v1/reports/bulk", etc.).
+/// * `body` - The request body as a byte slice.
+/// * `client_id` - The client's API key.
+/// * `timestamp` - The current timestamp as an `u128`.
+/// * `user_secret` - The client's API secret.
+///
+/// # Returns
+///
+/// A `Result` containing the hex-encoded HMAC string if successful, or an error.
+fn generate_hmac(
+    method: &str,
+    path: &str,
+    body: &[u8],
+    client_id: &str,
+    timestamp: u128,
+    user_secret: &str,
+) -> Result<String> {
+    let mut hasher = Sha256::new();
+    hasher.update(body);
+    let server_body_hash = hasher.finalize();
+    let server_body_hash_hex = hex::encode(server_body_hash);
+
+    // Create the server body hash string
+    let server_body_hash_string =
+        format!("{method} {path} {server_body_hash_hex} {client_id} {timestamp}");
+
+    // Compute HMAC-SHA256 of the server body hash string
+    let mut mac = Hmac::<Sha256>::new_from_slice(user_secret.as_bytes())?;
+    mac.update(server_body_hash_string.as_bytes());
+    let signed_message = mac.finalize();
+    let signed_message_bytes = signed_message.into_bytes();
+    let user_hmac = hex::encode(signed_message_bytes);
+
+    Ok(user_hmac)
 }
