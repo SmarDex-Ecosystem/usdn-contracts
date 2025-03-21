@@ -65,7 +65,6 @@ contract UsdnWusdnEthConfig is DeploymentConfig {
         IUsdn usdnNoRebase
     ) internal override {
         initStorage.oracleMiddleware = oracleMiddleware;
-        uint8 priceFeedDecimals = oracleMiddleware.getDecimals();
         initStorage.liquidationRewardsManager = liquidationRewardsManager;
         initStorage.usdn = usdnNoRebase;
     }

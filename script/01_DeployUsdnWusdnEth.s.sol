@@ -10,7 +10,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { UsdnWusdnEthConfig } from "./deploymentConfigs/UsdnWusdnEthConfig.sol";
 import { Utils } from "./utils/Utils.s.sol";
 
-import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManagerWusdn } from "../src/LiquidationRewardsManager/LiquidationRewardsManagerWusdn.sol";
 import { WusdnToEthOracleMiddleware } from "../src/OracleMiddleware/WusdnToEthOracleMiddleware.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { UsdnNoRebase } from "../src/Usdn/UsdnNoRebase.sol";
@@ -18,7 +18,6 @@ import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.s
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
-import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IWusdn } from "../src/interfaces/Usdn/IWusdn.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -44,7 +43,7 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
         external
         returns (
             WusdnToEthOracleMiddleware wusdnToEthOracleMiddleware_,
-            LiquidationRewardsManager liquidationRewardsManager_,
+            LiquidationRewardsManagerWusdn liquidationRewardsManager_,
             Rebalancer rebalancer_,
             UsdnNoRebase usdnNoRebase_,
             IUsdnProtocol usdnProtocol_
@@ -78,14 +77,12 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
         internal
         returns (
             WusdnToEthOracleMiddleware wusdnToEthOracleMiddleware_,
-            LiquidationRewardsManager liquidationRewardsManager_,
+            LiquidationRewardsManagerWusdn liquidationRewardsManager_,
             UsdnNoRebase usdnNoRebase_
         )
     {
         vm.startBroadcast();
-        // TODO needs the new LiquidationRewardsManager
-        // This doesn't work, it's just so t can compile
-        liquidationRewardsManager_ = new LiquidationRewardsManager(IWstETH(address(WUSDN)));
+        liquidationRewardsManager_ = new LiquidationRewardsManagerWusdn(WUSDN);
         wusdnToEthOracleMiddleware_ = new WusdnToEthOracleMiddleware(
             PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WUSDN.USDN()), CHAINLINK_PRICE_VALIDITY
         );
