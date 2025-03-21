@@ -61,7 +61,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
         override(CommonOracleMiddleware, IBaseOracleMiddleware)
         returns (uint256 result_)
     {
-        if (data.length == 0) {
+        if (data.length <= 32) {
             return 0;
         } else if (_isPythData(data)) {
             return _getPythUpdateFee(data);
