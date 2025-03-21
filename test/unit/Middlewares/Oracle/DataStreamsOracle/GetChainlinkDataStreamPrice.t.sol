@@ -6,12 +6,12 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { EMPTY_STREAM_V3, EMPTY_STREAM_V4 } from "../../utils/Constants.sol";
 import { OracleMiddlewareWithChainlinkDataStreamsFixture } from "../../utils/Fixtures.sol";
 
-import { IVerifierProxy } from "../../../../../src/interfaces/OracleMiddleware/IVerifierProxy.sol";
+import { FormattedDataStreamsPrice } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 /// @custom:feature The `_getChainlinkDataStreamPrice` function of the `ChainlinkDataStreamsOracle`.
 contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithChainlinkDataStreamsFixture {
-    function setUp() public {
-        _setUp();
+    function setUp() public override {
+        super.setUp();
     }
 
     /**
@@ -162,20 +162,13 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithChainlink
      * @custom:and The fee manager weth balance must be equal to the report nativeFee value.
      */
     function test_getChainlinkDataStreamPrice() public {
-        IVerifierProxy.ReportV3 memory verifiedReport =
+        FormattedDataStreamsPrice memory formattedReport =
             oracleMiddleware.i_getChainlinkDataStreamPrice{ value: report.nativeFee }(payload, 0, 0);
 
-        assertEq(verifiedReport.feedId, report.feedId, "Invalid feedId");
-        assertEq(verifiedReport.validFromTimestamp, report.validFromTimestamp, "Invalid validFromTimestamp");
-        assertEq(verifiedReport.observationsTimestamp, report.observationsTimestamp, "Invalid observationsTimestamp");
-        assertEq(verifiedReport.nativeFee, report.nativeFee, "Invalid nativeFee");
-        assertEq(verifiedReport.linkFee, report.linkFee, "Invalid linkFee");
-        assertEq(verifiedReport.expiresAt, report.expiresAt, "Invalid expiresAt");
-        assertEq(verifiedReport.price, report.price, "Invalid price");
-        assertEq(verifiedReport.bid, report.bid, "Invalid bid");
-        assertEq(verifiedReport.ask, report.ask, "Invalid ask");
-        assertEq(
-            IERC20(wethTargetAddress).balanceOf(address(mockFeeManager)), verifiedReport.nativeFee, "Wrong weth balance"
-        );
+        assertEq(formattedReport.timestamp, report.observationsTimestamp, "Invalid observationsTimestamp");
+        assertEq(int192(int256(formattedReport.price)), report.price, "Invalid price");
+        assertEq(int192(int256(formattedReport.bid)), report.bid, "Invalid bid");
+        assertEq(int192(int256(formattedReport.ask)), report.ask, "Invalid ask");
+        assertEq(IERC20(wethTargetAddress).balanceOf(address(mockFeeManager)), report.nativeFee, "Wrong weth balance");
     }
 }

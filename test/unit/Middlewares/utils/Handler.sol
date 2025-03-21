@@ -8,11 +8,11 @@ import { OracleMiddlewareWithChainlinkDataStreams } from
 import { OracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/OracleMiddlewareWithPyth.sol";
 import { IFeeManager } from "../../../../src/interfaces/OracleMiddleware/IFeeManager.sol";
 import {
+    FormattedDataStreamsPrice,
     FormattedPythPrice,
     PriceAdjustment,
     PriceInfo
 } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IVerifierProxy } from "../../../../src/interfaces/OracleMiddleware/IVerifierProxy.sol";
 
 contract OracleMiddlewareHandler is OracleMiddlewareWithPyth, Test {
     bool internal _mockRedstonePriceZero;
@@ -49,10 +49,14 @@ contract OracleMiddlewareWithChainlinkDataStreamsHandler is OracleMiddlewareWith
         )
     { }
 
+    /* -------------------------------------------------------------------------- */
+    /*                         ChainlinkDataStreamsOracle                         */
+    /* -------------------------------------------------------------------------- */
+
     function i_getChainlinkDataStreamPrice(bytes calldata payload, uint128 targetTimestamp, uint128 targetLimit)
         external
         payable
-        returns (IVerifierProxy.ReportV3 memory verifiedReport_)
+        returns (FormattedDataStreamsPrice memory formattedPrice_)
     {
         return _getChainlinkDataStreamPrice(payload, targetTimestamp, targetLimit);
     }
@@ -65,35 +69,36 @@ contract OracleMiddlewareWithChainlinkDataStreamsHandler is OracleMiddlewareWith
         return _getChainlinkDataStreamFeeData(payload);
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                  OracleMiddlewareWithChainlinkDataStreams                  */
+    /* -------------------------------------------------------------------------- */
+
     function i_getLowLatencyPrice(
         bytes calldata payload,
         uint128 actionTimestamp,
         PriceAdjustment dir,
         uint128 targetLimit
-    ) external returns (PriceInfo memory price_) {
+    ) external payable returns (PriceInfo memory price_) {
         return _getLowLatencyPrice(payload, actionTimestamp, dir, targetLimit);
     }
 
     function i_getInitiateActionPrice(bytes calldata data, PriceAdjustment dir)
         external
+        payable
         returns (PriceInfo memory price_)
     {
         return _getInitiateActionPrice(data, dir);
     }
 
-    function i_getLiquidationPrice(bytes calldata data) external returns (PriceInfo memory price_) {
+    function i_getLiquidationPrice(bytes calldata data) external payable returns (PriceInfo memory price_) {
         return _getLiquidationPrice(data);
     }
 
-    function i_convertPythPrice(FormattedPythPrice memory pythPrice) external pure returns (PriceInfo memory price_) {
-        return _convertPythPrice(pythPrice);
-    }
-
-    function i_adjustDataStreamPrice(IVerifierProxy.ReportV3 memory report, PriceAdjustment dir)
+    function i_adjustDataStreamPrice(FormattedDataStreamsPrice memory formattedReport, PriceAdjustment dir)
         external
         pure
         returns (PriceInfo memory price_)
     {
-        return _adjustDataStreamPrice(report, dir);
+        return _adjustDataStreamPrice(formattedReport, dir);
     }
 }

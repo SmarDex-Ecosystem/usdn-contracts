@@ -120,10 +120,10 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
         }
 
         return FormattedDataStreamsPrice({
-            timestamp: uint256(verifiedReport.observationsTimestamp),
-            price: uint256(uint192(verifiedReport.price)),
-            ask: uint256(uint192(verifiedReport.ask)),
-            bid: uint256(uint192(verifiedReport.bid))
+            timestamp: verifiedReport.observationsTimestamp,
+            price: uint192(verifiedReport.price),
+            ask: uint192(verifiedReport.ask),
+            bid: uint192(verifiedReport.bid)
         });
     }
 

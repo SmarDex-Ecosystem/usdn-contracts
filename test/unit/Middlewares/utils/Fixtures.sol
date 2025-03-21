@@ -158,7 +158,7 @@ contract OracleMiddlewareWithChainlinkDataStreamsFixture is BaseFixture, Actions
 
     bytes32[3] internal emptySignature;
 
-    function _setUp() internal {
+    function setUp() public virtual {
         vm.warp(1_704_063_600);
 
         mockPyth = new MockPyth();

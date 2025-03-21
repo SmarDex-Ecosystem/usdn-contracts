@@ -8,8 +8,8 @@ import { IFeeManager } from "../../../../../src/interfaces/OracleMiddleware/IFee
 
 /// @custom:feature The `_getChainlinkDataStreamFeeData` function of the `ChainlinkDataStreamsOracle`.
 contract TestOracleMiddlewareWithChainlinkDataStreamFeeData is OracleMiddlewareWithChainlinkDataStreamsFixture {
-    function setUp() public {
-        _setUp();
+    function setUp() public override {
+        super.setUp();
     }
 
     /**
