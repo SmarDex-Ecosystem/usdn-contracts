@@ -399,6 +399,10 @@ library UsdnProtocolCoreLibrary {
                 // remove the stale pending action
                 s._pendingActionsQueue.clearAt(rawIndex);
                 delete s._pendingActions[validator];
+
+                //@TODO: added by fuzzer find out why?
+                s._positionWasLiquidatedInTheMeantime = true;
+
                 emit IUsdnProtocolEvents.StalePendingActionRemoved(
                     validator,
                     Types.PositionId({
@@ -949,5 +953,89 @@ library UsdnProtocolCoreLibrary {
         maxLongBalance_ = FixedPointMathLib.fullMulDiv(
             totalExpo, (Constants.BPS_DIVISOR - Constants.MIN_LONG_TRADING_EXPO_BPS), Constants.BPS_DIVISOR
         );
+    }
+
+    //TODO: added by fuzzer
+    function _applyPnlAndFundingStateless(uint128 currentPrice, uint128 timestamp)
+        public
+        returns (Types.ApplyPnlAndFundingData memory data_)
+    {
+        Types.Storage storage s = Utils._getMainStorage();
+
+        int256 fundAsset;
+        int256 snapshotEma = s._EMA;
+        int256 snapshotLastFundingPerDay = s._lastFundingPerDay;
+
+        {
+            // cache variable for optimization
+            uint128 lastUpdateTimestamp = s._lastUpdateTimestamp;
+            // if the price is not fresh, do nothing
+            if (timestamp <= lastUpdateTimestamp) {
+                return Types.ApplyPnlAndFundingData({
+                    tempLongBalance: s._balanceLong.toInt256(),
+                    tempVaultBalance: s._balanceVault.toInt256(),
+                    lastPrice: s._lastPrice
+                });
+            }
+
+            // calculate the funding
+            int256 fundingPerDay;
+            (fundAsset, fundingPerDay) = _fundingAsset(timestamp, s._EMA);
+
+            s._lastFundingPerDay = fundingPerDay;
+
+            emit IUsdnProtocolEvents.LastFundingPerDayUpdated(fundingPerDay, timestamp);
+
+            // update the funding EMA (mutates the storage)
+            _updateEMA(fundingPerDay, timestamp - lastUpdateTimestamp);
+        }
+
+        // take protocol fee on the funding value
+        (int256 fee, int256 fundAssetWithFee) = _calculateFeeStateless(fundAsset);
+
+        // we subtract the fee from the total balance
+        int256 totalBalance = (s._balanceLong + s._balanceVault).toInt256() - fee;
+
+        // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
+        if (fundAsset > 0) {
+            // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
+            // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
+            // only by the funding amount minus the fee amount
+            data_.tempLongBalance = Utils._longAssetAvailable(currentPrice).safeSub(fundAsset);
+        } else {
+            // in case of negative funding, the vault balance must be decremented by the totality of the funding amount
+            // however, since we deducted the fee amount from the total balance, the long balance will be incremented
+            // only by the funding amount minus the fee amount
+            data_.tempLongBalance = Utils._longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
+        }
+
+        uint256 maxLongBalance = _calcMaxLongBalance(s._totalExpo);
+        if (data_.tempLongBalance > 0 && uint256(data_.tempLongBalance) > maxLongBalance) {
+            data_.tempLongBalance = maxLongBalance.toInt256();
+        }
+
+        data_.tempVaultBalance = totalBalance.safeSub(data_.tempLongBalance);
+
+        // update state variables
+        // s._lastPrice = currentPrice;
+        data_.lastPrice = currentPrice;
+        // s._lastUpdateTimestamp = timestamp;
+
+        s._EMA = snapshotEma;
+        s._lastFundingPerDay = snapshotLastFundingPerDay;
+    }
+
+    function _calculateFeeStateless(int256 fundAsset) internal view returns (int256 fee_, int256 fundAssetWithFee_) {
+        Types.Storage storage s = Utils._getMainStorage();
+
+        int256 protocolFeeBps = Utils._toInt256(s._protocolFeeBps);
+        fee_ = (fundAsset * protocolFeeBps) / int256(Constants.BPS_DIVISOR);
+        // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
+        fundAssetWithFee_ = fundAsset - fee_;
+
+        if (fee_ < 0) {
+            // we want to return the absolute value of the fee
+            fee_ = -fee_;
+        }
     }
 }

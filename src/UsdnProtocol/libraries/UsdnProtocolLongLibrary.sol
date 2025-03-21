@@ -537,6 +537,9 @@ library UsdnProtocolLongLibrary {
         // transfer rewards (assets) to the liquidator
         address(s._asset).safeTransfer(msg.sender, liquidationRewards);
 
+        s._fuzz_liquidator = msg.sender; //TODO: added by fuzzer find out why?
+        s._fuzz_liquidationRewards = liquidationRewards; //TODO: added by fuzzer find out why
+
         emit IUsdnProtocolEvents.LiquidatorRewarded(msg.sender, liquidationRewards);
     }
 
@@ -682,6 +685,8 @@ library UsdnProtocolLongLibrary {
         // call the rebalancer to update the public bookkeeping
         rebalancer.updatePosition(posId, data.positionValue);
 
+        s._rebalancerTriggered = true; //@TODO added by fuzzer find out why?
+
         if (data.positionValue > 0) {
             action_ = Types.RebalancerAction.ClosedOpened;
         } else {
@@ -784,6 +789,9 @@ library UsdnProtocolLongLibrary {
         }
         cache.tradingExpo = cache.totalExpo - cache.longBalance;
 
+        //@TODO added by fuzzer find out why?
+        s._positionProfit = positionValue_ - Utils._toInt256(pos.amount);
+
         // emit both initiate and validate events
         // so the position is considered the same as other positions by event indexers
         emit IUsdnProtocolEvents.InitiatedClosePosition(pos.user, pos.user, pos.user, posId, pos.amount, pos.amount, 0);
@@ -879,6 +887,9 @@ library UsdnProtocolLongLibrary {
             // update bitmap to reflect that the tick is empty
             s._tickBitmap.unset(index);
 
+            //TODO: added by fuzzer find out why?
+            s._lowestLiquidatedTick = data.iTick;
+
             emit IUsdnProtocolEvents.LiquidatedTick(
                 data.iTick,
                 s._tickVersion[data.iTick] - 1,
@@ -901,6 +912,12 @@ library UsdnProtocolLongLibrary {
         effects_.isLiquidationPending = data.isLiquidationPending;
         (effects_.newLongBalance, effects_.newVaultBalance) =
             _handleNegativeBalances(data.tempLongBalance, data.tempVaultBalance);
+
+        // TODO: changes added by fuzzer find out why?
+        s._liquidationPending = effects_.isLiquidationPending;
+        if (effects_.liquidatedPositions > 0) {
+            s._positionLiquidated = true;
+        }
     }
 
     /**

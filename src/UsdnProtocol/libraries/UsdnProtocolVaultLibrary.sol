@@ -1036,6 +1036,9 @@ library UsdnProtocolVaultLibrary {
 
         isValidated_ = true;
 
+        //@TODO: added by fuzzer find out why?
+        s._withdrawAssetToTransferAfterFees = assetToTransferAfterFees;
+
         emit IUsdnProtocolEvents.ValidatedWithdrawal(
             withdrawal.to,
             withdrawal.validator,

@@ -441,6 +441,10 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         isInitiated_ = true;
+
+        //@TODO: added by fuzzer find out why?
+        s._latestPosIdTIck = posId_.tick;
+
         emit IUsdnProtocolEvents.InitiatedOpenPosition(
             params.to,
             params.validator,
@@ -560,6 +564,9 @@ library UsdnProtocolActionsLongLibrary {
         uint256 version;
         (data_.tickHash, version) = Utils._tickHash(data_.action.tick);
         if (version != data_.action.tickVersion) {
+            //@TODO changes added by fuzzer find out why?
+            s._positionWasLiquidatedInTheMeantime = true;
+
             // the current tick version doesn't match the version from the pending action
             // this means the position has been liquidated in the meantime
             emit IUsdnProtocolEvents.StalePendingActionRemoved(
@@ -861,6 +868,9 @@ library UsdnProtocolActionsLongLibrary {
         }
 
         isValidated_ = true;
+
+        //@TODO added by fuzzer find out why?
+        s._positionProfit = assetToTransfer.toInt256() - Utils._toInt256(long.closeAmount);
 
         emit IUsdnProtocolEvents.ValidatedClosePosition(
             long.validator,

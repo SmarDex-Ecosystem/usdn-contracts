@@ -624,6 +624,16 @@ interface IUsdnProtocolTypes {
      * @param _tickBitmap The bitmap used to quickly find populated ticks.
      * @param _protocolFallbackAddr The address of the fallback contract.
      * @param _nonce The user EIP712 nonce.
+     * @param _positionLiquidated Flags when positions have been liquidated.
+     * @param _liquidationPending Tracks if there are positions pending liquidation.
+     * @param _positionWasLiquidatedInTheMeantime Flags when a position was liquidated while pending.
+     * @param _positionProfit Tracks the profit/loss when a position is closed.
+     * @param _fuzz_liquidator Records the address of the liquidator.
+     * @param _fuzz_liquidationRewards Records the amount of rewards sent to liquidator.
+     * @param _lowestLiquidatedTick Records the lowest tick that was liquidated.
+     * @param _latestPosIdTIck Records the tick of the most recently created position.
+     * @param _rebalancerTriggered Flags when the rebalancer has been triggered.
+     * @param _withdrawAssetToTransferAfterFees Records withdrawal amounts after fees.
      */
     struct Storage {
         // immutable
@@ -692,6 +702,21 @@ interface IUsdnProtocolTypes {
         address _protocolFallbackAddr;
         // EIP712
         mapping(address => uint256) _nonce;
+        /*
+         *
+         * FUZZING SUITE STATE CHECK VARS
+         *
+         */
+        bool _positionLiquidated;
+        bool _liquidationPending;
+        bool _positionWasLiquidatedInTheMeantime;
+        int256 _positionProfit;
+        address _fuzz_liquidator;
+        uint256 _fuzz_liquidationRewards;
+        int24 _lowestLiquidatedTick;
+        int24 _latestPosIdTIck;
+        bool _rebalancerTriggered;
+        uint256 _withdrawAssetToTransferAfterFees;
     }
 
     /**

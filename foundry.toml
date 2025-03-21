@@ -30,6 +30,7 @@ remappings = [
     "@chainlink/=dependencies/@chainlink-1.2.0/",
     "@openzeppelin/contracts-upgradeable/=dependencies/@openzeppelin-contracts-upgradeable-5.1.0/",
     "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-5.1.0/",
+    "@perimetersec/fuzzlib/=dependencies/@perimetersec-0.3.1/",
     "@pythnetwork/pyth-sdk-solidity/=dependencies/@pythnetwork-pyth-sdk-solidity-3.1.0/",
     "@redstone-finance/evm-connector/=dependencies/@redstone-finance-evm-connector-0.6.2/",
     "@smardex-solidity-libraries-1/=dependencies/@smardex-solidity-libraries-1.0.1/src/",
