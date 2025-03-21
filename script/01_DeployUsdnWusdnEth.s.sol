@@ -57,7 +57,7 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
 
         usdnProtocol_ = _deployProtocol(initStorage);
 
-        rebalancer_ = _setRebalancerAndHandleUsdnRoles(usdnProtocol_);
+        rebalancer_ = _setRebalancerAndHandleUsdnRoles(usdnProtocol_, usdnNoRebase_);
 
         _initializeProtocol(usdnProtocol_, wusdnToEthOracleMiddleware_);
 
@@ -120,15 +120,21 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     /**
      * @notice Set the rebalancer and give the minting and rebasing roles to the USDN protocol.
      * @param usdnProtocol The USDN protocol.
+     * @param usdnNoRebase The USDN token of the protocol.
      * @return rebalancer_ The rebalancer.
      */
-    function _setRebalancerAndHandleUsdnRoles(IUsdnProtocol usdnProtocol) internal returns (Rebalancer rebalancer_) {
+    function _setRebalancerAndHandleUsdnRoles(IUsdnProtocol usdnProtocol, UsdnNoRebase usdnNoRebase)
+        internal
+        returns (Rebalancer rebalancer_)
+    {
         vm.startBroadcast();
 
         rebalancer_ = new Rebalancer(usdnProtocol);
         usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, msg.sender);
         usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, msg.sender);
         usdnProtocol.setRebalancer(rebalancer_);
+
+        usdnNoRebase.transferOwnership(address(usdnProtocol));
 
         vm.stopBroadcast();
     }

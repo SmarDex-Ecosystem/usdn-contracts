@@ -23,7 +23,7 @@ contract UsdnWusdnEthConfig is DeploymentConfig {
 
     constructor() {
         // TODO decide of an initial amount
-        INITIAL_LONG_AMOUNT = 200 ether;
+        INITIAL_LONG_AMOUNT = 250_000 ether;
         SDEX = Sdex(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
         UNDERLYING_ASSET = IWusdn(0x99999999999999Cc837C997B882957daFdCb1Af9);
 
