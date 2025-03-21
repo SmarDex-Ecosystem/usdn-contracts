@@ -17,14 +17,15 @@ import { Sdex } from "../../test/utils/Sdex.sol";
 contract UsdnWstethConfig is DeploymentConfig {
     address constant CHAINLINK_ETH_PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
     address constant PYTH_ADDRESS = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
+    IWstETH constant WSTETH = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
     bytes32 constant PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
     uint256 constant CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
     uint256 constant CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
 
-    constructor() {
+    constructor(address underlying) {
         INITIAL_LONG_AMOUNT = 200 ether;
         SDEX = Sdex(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
-        UNDERLYING_ASSET = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
+        UNDERLYING_ASSET = IWstETH(underlying);
 
         initStorage.minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1); // x1.1
         initStorage.maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS; // x10
