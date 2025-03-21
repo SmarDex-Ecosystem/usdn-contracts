@@ -103,9 +103,6 @@ library UsdnProtocolConstantsLibrary {
     /// @notice Maximum security deposit allowed.
     uint256 internal constant MAX_SECURITY_DEPOSIT = 5 ether;
 
-    /// @notice The highest value allowed for the minimum long position setting.
-    uint256 internal constant MAX_MIN_LONG_POSITION = 10 ether;
-
     /// @notice Maximum protocol fee allowed in basis points.
     uint16 internal constant MAX_PROTOCOL_FEE_BPS = 3000;
 
