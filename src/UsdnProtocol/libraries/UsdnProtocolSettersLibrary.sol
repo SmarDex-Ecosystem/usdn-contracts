@@ -316,10 +316,6 @@ library UsdnProtocolSettersLibrary {
     function setMinLongPosition(uint256 newMinLongPosition) external {
         Types.Storage storage s = Utils._getMainStorage();
 
-        if (newMinLongPosition > Constants.MAX_MIN_LONG_POSITION) {
-            revert IUsdnProtocolErrors.UsdnProtocolInvalidMinLongPosition();
-        }
-
         s._minLongPosition = newMinLongPosition;
         emit IUsdnProtocolEvents.MinLongPositionUpdated(newMinLongPosition);
 
