@@ -10,7 +10,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { UsdnWstethUSDConfig } from "./deploymentConfigs/UsdnWstethUSDConfig.sol";
 import { Utils } from "./utils/Utils.s.sol";
 
-import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManagerWstEth } from "../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
 import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
@@ -45,7 +45,7 @@ contract DeployUsdnWstethUSD is UsdnWstethUSDConfig, Script {
         external
         returns (
             WstEthOracleMiddleware wstEthOracleMiddleware_,
-            LiquidationRewardsManager liquidationRewardsManager_,
+            LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Rebalancer rebalancer_,
             Usdn usdn_,
             Wusdn wusdn_,
@@ -79,13 +79,13 @@ contract DeployUsdnWstethUSD is UsdnWstethUSDConfig, Script {
         internal
         returns (
             WstEthOracleMiddleware wstEthOracleMiddleware_,
-            LiquidationRewardsManager liquidationRewardsManager_,
+            LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Usdn usdn_,
             Wusdn wusdn_
         )
     {
         vm.startBroadcast();
-        liquidationRewardsManager_ = new LiquidationRewardsManager(WSTETH);
+        liquidationRewardsManager_ = new LiquidationRewardsManagerWstEth(WSTETH);
         wstEthOracleMiddleware_ = new WstEthOracleMiddleware(
             PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WSTETH), CHAINLINK_PRICE_VALIDITY
         );
