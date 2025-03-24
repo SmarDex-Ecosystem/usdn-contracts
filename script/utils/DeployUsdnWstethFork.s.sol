@@ -7,6 +7,7 @@ import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
+import { MockChainlinkOnChain } from "../../test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { WstETH } from "../../test/utils/WstEth.sol";
 import { UsdnWstethConfig } from "../deploymentConfigs/UsdnWstethConfig.sol";
 import { Utils } from "../utils/Utils.s.sol";
@@ -87,7 +88,7 @@ contract DeployUsdnWstethFork is UsdnWstethConfig, Script {
         vm.startBroadcast();
         liquidationRewardsManager_ = new LiquidationRewardsManagerWstEth(WSTETH);
         wstEthOracleMiddleware_ = new MockWstEthOracleMiddleware(
-            PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WSTETH), CHAINLINK_PRICE_VALIDITY
+            PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE_MOCKED, address(WSTETH), CHAINLINK_PRICE_VALIDITY
         );
         MockWstEthOracleMiddleware(wstEthOracleMiddleware_).setVerifySignature(false);
         MockWstEthOracleMiddleware(wstEthOracleMiddleware_).setWstethMockedPrice(price);
