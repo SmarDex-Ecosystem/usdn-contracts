@@ -32,7 +32,8 @@ import {
     PYTH_DATA_TIMESTAMP
 } from "../../Middlewares/utils/Constants.sol";
 
-import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManagerWstEth } from
+    "../../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
@@ -95,7 +96,7 @@ contract UsdnProtocolBaseIntegrationFixture is
     MockPyth public mockPyth;
     MockChainlinkOnChain public mockChainlinkOnChain;
     WstEthOracleMiddleware public oracleMiddleware;
-    LiquidationRewardsManager public liquidationRewardsManager;
+    LiquidationRewardsManagerWstEth public liquidationRewardsManager;
     Rebalancer public rebalancer;
 
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
@@ -149,7 +150,7 @@ contract UsdnProtocolBaseIntegrationFixture is
             PriceInfo memory currentPrice =
                 oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.Initialize, "");
             testParams.initialLiqPrice = uint128(currentPrice.neutralPrice) / 2;
-            liquidationRewardsManager = new LiquidationRewardsManager(wstETH);
+            liquidationRewardsManager = new LiquidationRewardsManagerWstEth(wstETH);
         } else {
             wstETH = new WstETH();
             sdex = new Sdex();
@@ -164,7 +165,7 @@ contract UsdnProtocolBaseIntegrationFixture is
                 address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
             );
             vm.warp(testParams.initialTimestamp);
-            liquidationRewardsManager = new LiquidationRewardsManager(wstETH);
+            liquidationRewardsManager = new LiquidationRewardsManagerWstEth(wstETH);
         }
         (bool success,) = address(wstETH).call{ value: DEPLOYER.balance * 9 / 10 }("");
         require(success, "DEPLOYER wstETH mint failed");
