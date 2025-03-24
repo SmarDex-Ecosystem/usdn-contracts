@@ -25,6 +25,7 @@ import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.s
 import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract DeployUsdnWstethFork is UsdnWstethConfig, Script {
+    address immutable CHAINLINK_ETH_PRICE_MOCKED = address(new MockChainlinkOnChain());
     uint256 price = 3000 ether;
     Utils utils;
 
