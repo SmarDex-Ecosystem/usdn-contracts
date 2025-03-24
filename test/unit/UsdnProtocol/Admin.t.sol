@@ -484,7 +484,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then The call reverts
      */
     function test_RevertWhen_setSdexBurnOnDepositRatioWithMax() public adminPrank {
-        uint32 aboveMax = uint32(Constants.MAX_SDEX_BURN_RATIO + 1);
+        uint32 aboveMax = uint32(MAX_SDEX_BURN_RATIO + 1);
 
         vm.expectRevert(UsdnProtocolInvalidBurnSdexOnDepositRatio.selector);
         protocol.setSdexBurnOnDepositRatio(aboveMax);
@@ -955,7 +955,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test_RevertWhen_invalidSetMinLongPosition() public adminPrank {
         vm.expectRevert(UsdnProtocolInvalidMinLongPosition.selector);
-        protocol.setMinLongPosition(10 ether + 1);
+        protocol.setMinLongPosition(MAX_MIN_LONG_POSITION + 1);
     }
 
     /**
