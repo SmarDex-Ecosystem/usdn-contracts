@@ -11,11 +11,14 @@ import { ILiquidationRewardsManager } from
 import { IOracleMiddleware } from "../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { IUsdn } from "../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolFallback } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
+
+import { MockChainlinkOnChain } from "../../test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { Sdex } from "../../test/utils/Sdex.sol";
+import { WstETH } from "../../test/utils/WstEth.sol";
 
 /// @notice Configuration contract for the USDN protocol backed with WSTETH deployment.
 contract UsdnWstethConfig is DeploymentConfig {
-    address constant CHAINLINK_ETH_PRICE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+    address immutable CHAINLINK_ETH_PRICE = address(new MockChainlinkOnChain());
     address constant PYTH_ADDRESS = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
     IWstETH constant WSTETH = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
     bytes32 constant PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;

@@ -7,6 +7,7 @@ import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
+import { WstETH } from "../../test/utils/WstEth.sol";
 import { UsdnWstethConfig } from "../deploymentConfigs/UsdnWstethConfig.sol";
 import { Utils } from "../utils/Utils.s.sol";
 
@@ -51,8 +52,6 @@ contract DeployUsdnWstethFork is UsdnWstethConfig, Script {
             IUsdnProtocol usdnProtocol_
         )
     {
-        utils.validateProtocol("UsdnProtocolImpl", "UsdnProtocolFallback");
-
         _setFeeCollector(msg.sender);
 
         (wstEthOracleMiddleware_, liquidationRewardsManager_, usdn_, wusdn_) = _deployAndSetPeripheralContracts();
@@ -134,9 +133,9 @@ contract DeployUsdnWstethFork is UsdnWstethConfig, Script {
         usdnProtocol.grantRole(Constants.ADMIN_SET_PROTOCOL_PARAMS_ROLE, msg.sender);
         usdnProtocol.grantRole(Constants.ADMIN_SET_USDN_PARAMS_ROLE, msg.sender);
         usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, msg.sender);
-        usdnProtocol.grantRole(Constants.SET_USDN_PARAMS_ROLE, msg.sender);
         usdnProtocol.grantRole(Constants.SET_OPTIONS_ROLE, msg.sender);
         usdnProtocol.grantRole(Constants.SET_PROTOCOL_PARAMS_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.SET_USDN_PARAMS_ROLE, msg.sender);
         usdnProtocol.grantRole(Constants.ADMIN_CRITICAL_FUNCTIONS_ROLE, msg.sender);
         usdnProtocol.grantRole(Constants.ADMIN_PROXY_UPGRADE_ROLE, msg.sender);
         usdnProtocol.grantRole(Constants.ADMIN_PAUSER_ROLE, msg.sender);
