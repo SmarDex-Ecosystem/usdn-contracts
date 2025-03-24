@@ -11,7 +11,8 @@ import { WstETH } from "../../test/utils/WstEth.sol";
 import { UsdnWstethConfig } from "../deploymentConfigs/UsdnWstethConfig.sol";
 import { Utils } from "../utils/Utils.s.sol";
 
-import { LiquidationRewardsManager } from "../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManagerWstEth } from
+    "../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
 import { MockWstEthOracleMiddleware } from "../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
@@ -45,7 +46,7 @@ contract DeployUsdnWstethFork is UsdnWstethConfig, Script {
         external
         returns (
             MockWstEthOracleMiddleware wstEthOracleMiddleware_,
-            LiquidationRewardsManager liquidationRewardsManager_,
+            LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Rebalancer rebalancer_,
             Usdn usdn_,
             Wusdn wusdn_,
@@ -77,13 +78,13 @@ contract DeployUsdnWstethFork is UsdnWstethConfig, Script {
         internal
         returns (
             MockWstEthOracleMiddleware wstEthOracleMiddleware_,
-            LiquidationRewardsManager liquidationRewardsManager_,
+            LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Usdn usdn_,
             Wusdn wusdn_
         )
     {
         vm.startBroadcast();
-        liquidationRewardsManager_ = new LiquidationRewardsManager(WSTETH);
+        liquidationRewardsManager_ = new LiquidationRewardsManagerWstEth(WSTETH);
         wstEthOracleMiddleware_ = new MockWstEthOracleMiddleware(
             PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WSTETH), CHAINLINK_PRICE_VALIDITY
         );
