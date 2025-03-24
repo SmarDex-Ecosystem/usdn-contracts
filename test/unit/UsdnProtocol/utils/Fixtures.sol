@@ -43,9 +43,6 @@ contract UsdnProtocolBaseFixture is
     IUsdnProtocolEvents,
     DefaultConfig
 {
-    uint256 constant MAX_SDEX_BURN_RATIO = Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 10; // 10%
-    uint256 constant MAX_MIN_LONG_POSITION = 10 ether;
-
     struct Flags {
         bool enablePositionFees;
         bool enableProtocolFees;
