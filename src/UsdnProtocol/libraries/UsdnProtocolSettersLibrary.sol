@@ -230,10 +230,10 @@ library UsdnProtocolSettersLibrary {
     }
 
     /// @notice See {UsdnProtocolFallback.setSdexBurnOnDepositRatio}.
-    function setSdexBurnOnDepositRatio(uint32 newRatio) external {
+    function setSdexBurnOnDepositRatio(uint256 highestPossibleValue, uint32 newRatio) external {
         Types.Storage storage s = Utils._getMainStorage();
 
-        if (newRatio > Constants.MAX_SDEX_BURN_RATIO) {
+        if (newRatio > highestPossibleValue) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidBurnSdexOnDepositRatio();
         }
 
@@ -313,8 +313,12 @@ library UsdnProtocolSettersLibrary {
     }
 
     /// @notice See {UsdnProtocolFallback.setMinLongPosition}.
-    function setMinLongPosition(uint256 newMinLongPosition) external {
+    function setMinLongPosition(uint256 highestPossibleValue, uint256 newMinLongPosition) external {
         Types.Storage storage s = Utils._getMainStorage();
+
+        if (newMinLongPosition > highestPossibleValue) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidMinLongPosition();
+        }
 
         s._minLongPosition = newMinLongPosition;
         emit IUsdnProtocolEvents.MinLongPositionUpdated(newMinLongPosition);

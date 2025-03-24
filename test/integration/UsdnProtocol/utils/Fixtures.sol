@@ -38,6 +38,8 @@ import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthO
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -51,6 +53,9 @@ contract UsdnProtocolBaseIntegrationFixture is
     IEventsErrors,
     DefaultConfig
 {
+    uint256 constant MAX_SDEX_BURN_RATIO = Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 10; // 10%
+    uint256 constant MAX_MIN_LONG_POSITION = 10 ether;
+
     struct SetUpParams {
         uint128 initialDeposit;
         uint128 initialLong;
@@ -171,8 +176,8 @@ contract UsdnProtocolBaseIntegrationFixture is
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
 
-        implementation = new UsdnProtocolHandler();
-        protocolFallback = new UsdnProtocolFallback();
+        implementation = new UsdnProtocolHandler(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
+        protocolFallback = new UsdnProtocolFallback(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
 
         _setPeripheralContracts(
             oracleMiddleware, liquidationRewardsManager, usdn, wstETH, address(protocolFallback), ADMIN, sdex

@@ -30,8 +30,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         vm.startPrank(ADMIN);
         usdn = new Usdn(address(0), address(0));
 
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
-        UsdnProtocolHandler test = new UsdnProtocolHandler();
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
+        UsdnProtocolHandler test = new UsdnProtocolHandler(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
 
         _setPeripheralContracts(
             WstEthOracleMiddleware(address(oracleMiddleware)),

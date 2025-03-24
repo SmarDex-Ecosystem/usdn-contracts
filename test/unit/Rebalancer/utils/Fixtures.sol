@@ -54,7 +54,7 @@ contract RebalancerFixture is
         oracleMiddleware = new MockOracleMiddleware();
         liquidationRewardsManager = new LiquidationRewardsManagerWstEth(wstETH);
 
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback(1e8, 10 ether);
         UsdnProtocolImpl implementation = new UsdnProtocolImpl();
 
         _setPeripheralContracts(
