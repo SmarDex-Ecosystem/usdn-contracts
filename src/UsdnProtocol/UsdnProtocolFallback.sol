@@ -39,7 +39,7 @@ contract UsdnProtocolFallback is
     /// @notice The highest value allowed for the ratio of SDEX to burn per minted USDN on deposit.
     uint256 internal immutable MAX_SDEX_BURN_RATIO;
 
-    /// @notice The highest value allowed for the minimum long position setting
+    /// @notice The highest value allowed for the minimum long position setting.
     uint256 internal immutable MAX_MIN_LONG_POSITION;
 
     /**
