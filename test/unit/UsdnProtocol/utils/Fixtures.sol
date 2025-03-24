@@ -19,7 +19,6 @@ import { LiquidationRewardsManagerWstEth } from
     "../../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionUtils } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
@@ -146,20 +145,19 @@ contract UsdnProtocolBaseFixture is
         }
 
         UsdnProtocolHandler test = new UsdnProtocolHandler(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
 
         _setPeripheralContracts(
             WstEthOracleMiddleware(address(oracleMiddleware)),
             liquidationRewardsManager,
             usdn,
             wstETH,
-            address(protocolFallback),
+            address(0),
             address(feeCollector),
             sdex
         );
 
         address proxy = UnsafeUpgrades.deployUUPSProxy(
-            address(test), abi.encodeCall(UsdnProtocolHandler.initializeStorageHandler, (initStorage))
+            address(test), abi.encodeCall(UsdnProtocolHandler.initializeStorageHandler, initStorage)
         );
         protocol = UsdnProtocolHandler(proxy);
 
