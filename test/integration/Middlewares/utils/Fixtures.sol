@@ -15,7 +15,7 @@ import {
     PYTH_DATA_TIMESTAMP
 } from "../utils/Constants.sol";
 
-import { OracleMiddleware } from "../../../../src/OracleMiddleware/OracleMiddleware.sol";
+import { OracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/OracleMiddlewareWithPyth.sol";
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { IWstETH } from "../../../../src/interfaces/IWstETH.sol";
 import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
@@ -72,6 +72,14 @@ contract CommonBaseIntegrationFixture is BaseFixture {
         return abi.decode(result, (uint256, uint256, uint256, uint256, bytes));
     }
 
+    function _getChainlinkDataStreamsApiSignature(bytes32 stream, uint256 timestamp)
+        internal
+        returns (bytes memory payload_)
+    {
+        payload_ = vmFFIRustCommand("chainlink-price", vm.toString(stream), vm.toString(timestamp));
+        require(keccak256(payload_) != keccak256(""), "Rust command returned an error");
+    }
+
     function getChainlinkPrice() internal view returns (uint256, uint256) {
         (, int256 price,, uint256 timestamp,) = chainlinkOnChain.latestRoundData();
         return (uint256(price), uint256(timestamp));
@@ -95,7 +103,7 @@ contract CommonBaseIntegrationFixture is BaseFixture {
  * @dev Utils for testing the oracle middleware
  */
 contract OracleMiddlewareBaseIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegrationFixture {
-    OracleMiddleware public oracleMiddleware;
+    OracleMiddlewareWithPyth public oracleMiddleware;
 
     modifier reSetUp() {
         setUp();
@@ -105,7 +113,7 @@ contract OracleMiddlewareBaseIntegrationFixture is CommonBaseIntegrationFixture,
     function setUp() public virtual {
         pyth = IPyth(PYTH_ORACLE);
         chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_ETH);
-        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), 1 hours);
+        oracleMiddleware = new OracleMiddlewareWithPyth(address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), 1 hours);
     }
 
     function getMockedPythSignatureETH()
