@@ -17,8 +17,11 @@ You can use `-t` or `-l` options instead of `-i 1` for trezor or ledger hardware
 The deployment script for the fork mode does not require any input:
 
 ```bash
-deployFork.sh
+./script/fork/deployFork.sh
 ```
+
+You can define `UNDERLYING_ADDRESS` and/or `START_PRICE` env variables.  
+If you do so, the `wStEth` asset will be replaced by `UNDERLYING_ADDRESS` and the underlying price will then be defined to `START_PRICE`.
 
 ## Upgrade protocol
 
