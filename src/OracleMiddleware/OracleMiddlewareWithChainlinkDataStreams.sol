@@ -62,10 +62,17 @@ contract OracleMiddlewareWithChainlinkDataStreams is
         returns (uint256 result_)
     {
         if (data.length <= 32) {
+            // If the input data is empty, retrieve the last round data from Chainlink data feeds.
+            // If the input data is 32 bytes long, decode it to fetch specific round data from Chainlink
+            // using `uint80 roundId = abi.decode(data, (uint80))`.
             return 0;
         } else if (_isPythData(data)) {
+            // If the data is from Pyth, we assume the data length will be greater than 32,
+            // and use it only for liquidation purposes.
             return _getPythUpdateFee(data);
         } else {
+            // For any other data, we assume it is a Chainlink data stream payload,
+            // which should also have a length greater than 32, and return the associated fee amount.
             return _getChainlinkDataStreamFeeData(data).amount;
         }
     }
