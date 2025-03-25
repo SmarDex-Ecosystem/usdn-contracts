@@ -27,7 +27,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
     function setUp() public {
         _setUp(DEFAULT_PARAMS);
         implementation = new UsdnProtocolImpl();
-        protocolFallback = new UsdnProtocolFallback();
+        protocolFallback = new UsdnProtocolFallback(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
     }
 
     /**

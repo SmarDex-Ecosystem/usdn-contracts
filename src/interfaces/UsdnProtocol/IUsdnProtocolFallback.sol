@@ -586,6 +586,9 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     /**
      * @notice Sets the minimum long position size.
      * @dev This value is used to prevent users from opening positions that are too small and not worth liquidating.
+     * As this parameter highly depends on the value of the underlying asset, the max value for `newMinLongPosition` is
+     * given as a constructor argument when the {UsdnProtocolFallback} contract is deployed, and is stored in an
+     * immutable variable.
      * @param newMinLongPosition The new minimum long position size (with `_assetDecimals`).
      */
     function setMinLongPosition(uint256 newMinLongPosition) external;
@@ -653,6 +656,8 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
 
     /**
      * @notice Sets the ratio of SDEX tokens to burn per minted USDN.
+     * @dev As this parameter highly depends on the value of the USDN token, the max value for `newRatio` is given as a
+     * constructor argument when the {UsdnProtocolFallback} contract is deployed and is stored in an immutable variable.
      * @param newRatio The new ratio.
      */
     function setSdexBurnOnDepositRatio(uint32 newRatio) external;
