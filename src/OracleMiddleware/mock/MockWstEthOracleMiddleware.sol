@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { IBaseOracleMiddleware } from "../../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { OracleMiddleware } from "../OracleMiddleware.sol";
+import { CommonOracleMiddleware } from "../CommonOracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "../WstEthOracleMiddleware.sol";
 
 /**
@@ -35,7 +35,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         uint256 chainlinkTimeElapsedLimit
     ) WstEthOracleMiddleware(pythContract, pythFeedId, chainlinkPriceFeed, wsteth, chainlinkTimeElapsedLimit) { }
 
-    /// @inheritdoc OracleMiddleware
+    /// @inheritdoc CommonOracleMiddleware
     function parseAndValidatePrice(
         bytes32 actionId,
         uint128 targetTimestamp,
@@ -58,14 +58,14 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         price_.neutralPrice = _wstethMockedPrice;
         price_.price = price_.neutralPrice;
 
-        // `ConfidenceInterval` down cases
+        // `PriceAdjustment` down cases
         if (
             action == Types.ProtocolAction.ValidateDeposit || action == Types.ProtocolAction.ValidateClosePosition
                 || action == Types.ProtocolAction.InitiateDeposit || action == Types.ProtocolAction.InitiateClosePosition
         ) {
             price_.price -= price_.price * _wstethMockedConfBps / BPS_DIVISOR;
 
-            // `ConfidenceInterval` up case
+            // `PriceAdjustment` up case
         } else if (
             action == Types.ProtocolAction.ValidateWithdrawal || action == Types.ProtocolAction.ValidateOpenPosition
                 || action == Types.ProtocolAction.InitiateWithdrawal || action == Types.ProtocolAction.InitiateOpenPosition
@@ -114,11 +114,11 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         _verifySignature = verify;
     }
 
-    /// @inheritdoc OracleMiddleware
+    /// @inheritdoc CommonOracleMiddleware
     function validationCost(bytes calldata data, Types.ProtocolAction action)
         public
         view
-        override
+        override(IBaseOracleMiddleware, CommonOracleMiddleware)
         returns (uint256 result_)
     {
         // no signature verification -> no oracle fee

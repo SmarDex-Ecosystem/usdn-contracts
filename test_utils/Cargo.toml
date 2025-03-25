@@ -9,6 +9,11 @@ alloy-sol-types = "0.7"
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 const-hex = "1"
+data-streams-report = { git = "https://github.com/smartcontractkit/data-streams-sdk.git" }
+data-streams-sdk = { git = "https://github.com/smartcontractkit/data-streams-sdk.git" }
+hex = "0.4"
+hmac = "0.12"
 rug = "1"
 serde = { version = "1", features = ["derive"] }
+sha2 = "0.10"
 ureq = { version = "2", features = ["json"] }

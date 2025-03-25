@@ -110,7 +110,7 @@ contract DeployUsdnWstethFork is UsdnWstethConfig, Script {
     function _deployProtocol(Types.InitStorage storage initStorage) internal returns (IUsdnProtocol usdnProtocol_) {
         vm.startBroadcast();
 
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
         _setProtocolFallback(protocolFallback);
 
         address proxy = UnsafeUpgrades.deployUUPSProxy(

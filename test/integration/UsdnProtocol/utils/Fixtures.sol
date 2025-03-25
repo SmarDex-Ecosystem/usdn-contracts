@@ -171,8 +171,8 @@ contract UsdnProtocolBaseIntegrationFixture is
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
 
-        implementation = new UsdnProtocolHandler();
-        protocolFallback = new UsdnProtocolFallback();
+        implementation = new UsdnProtocolHandler(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
+        protocolFallback = new UsdnProtocolFallback(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
 
         _setPeripheralContracts(
             oracleMiddleware, liquidationRewardsManager, usdn, wstETH, address(protocolFallback), ADMIN, sdex

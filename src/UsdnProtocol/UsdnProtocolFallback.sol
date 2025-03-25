@@ -36,6 +36,21 @@ contract UsdnProtocolFallback is
 {
     using SafeTransferLib for address;
 
+    /// @notice The highest value allowed for the ratio of SDEX to burn per minted USDN on deposit.
+    uint256 internal immutable MAX_SDEX_BURN_RATIO;
+
+    /// @notice The highest value allowed for the minimum long position setting.
+    uint256 internal immutable MAX_MIN_LONG_POSITION;
+
+    /**
+     * @param maxSdexBurnRatio The value of `MAX_SDEX_BURN_RATIO`.
+     * @param maxMinLongPosition The value of `MAX_MIN_LONG_POSITION`.
+     */
+    constructor(uint256 maxSdexBurnRatio, uint256 maxMinLongPosition) {
+        MAX_SDEX_BURN_RATIO = maxSdexBurnRatio;
+        MAX_MIN_LONG_POSITION = maxMinLongPosition;
+    }
+
     /// @inheritdoc IUsdnProtocolFallback
     function getActionablePendingActions(address currentUser, uint256 lookAhead, uint256 maxIter)
         external
@@ -576,7 +591,7 @@ contract UsdnProtocolFallback is
 
     /// @inheritdoc IUsdnProtocolFallback
     function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setSdexBurnOnDepositRatio(newRatio);
+        Setters.setSdexBurnOnDepositRatio(MAX_SDEX_BURN_RATIO, newRatio);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -608,7 +623,7 @@ contract UsdnProtocolFallback is
 
     /// @inheritdoc IUsdnProtocolFallback
     function setMinLongPosition(uint256 newMinLongPosition) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setMinLongPosition(newMinLongPosition);
+        Setters.setMinLongPosition(MAX_MIN_LONG_POSITION, newMinLongPosition);
     }
 
     /* -------------------------------------------------------------------------- */

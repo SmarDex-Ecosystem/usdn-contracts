@@ -11,7 +11,6 @@ import { UsdnProtocolHandler } from "./utils/Handler.sol";
 
 import { WstEthOracleMiddleware } from "../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
-import { UsdnProtocolFallback } from "../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocol } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
@@ -30,15 +29,14 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         vm.startPrank(ADMIN);
         usdn = new Usdn(address(0), address(0));
 
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
-        UsdnProtocolHandler test = new UsdnProtocolHandler();
+        UsdnProtocolHandler test = new UsdnProtocolHandler(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
 
         _setPeripheralContracts(
             WstEthOracleMiddleware(address(oracleMiddleware)),
             liquidationRewardsManager,
             usdn,
             wstETH,
-            address(protocolFallback),
+            address(0),
             ADMIN,
             sdex
         );
