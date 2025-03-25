@@ -20,8 +20,6 @@ The deployment script for the fork mode does not require any input:
 ./script/fork/deployFork.sh
 ```
 
-#### Set a start price and a custom underlying asset value
-
 You can define `UNDERLYING_ADDRESS` and/or `START_PRICE` env variables.  
 If you do so, the `wStEth` asset will be replaced by `UNDERLYING_ADDRESS` and the underlying price will then be defined to `START_PRICE`.
 
