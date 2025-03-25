@@ -28,9 +28,11 @@
         devShells.default = pkgs.mkShell.override { inherit stdenv; } {
           nativeBuildInputs = with pkgs; [
             gnum4
+            openssl
           ];
           buildInputs = [
             pkgs.rust-analyzer-unwrapped
+            pkgs.pkg-config
             toolchain
           ];
           packages = with pkgs; [
@@ -53,7 +55,7 @@
           '';
 
           RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
-          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.gnum4 ];
+          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.gnum4 pkgs.openssl];
           TYPST_FONT_PATHS = "${pkgs.gyre-fonts}/share/fonts";
         };
       });
