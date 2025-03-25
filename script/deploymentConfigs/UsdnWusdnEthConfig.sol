@@ -20,6 +20,9 @@ contract UsdnWusdnEthConfig is DeploymentConfig {
     address constant PYTH_ADDRESS = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
     bytes32 constant PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
     uint256 constant CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
+    /// @dev As the ratio is already high by default, the max value needs to be even higher.
+    uint256 constant MAX_SDEX_BURN_RATIO = type(uint32).max; // ~4294%
+    uint256 constant MAX_MIN_LONG_POSITION = 10_000 ether;
 
     constructor() {
         // TODO decide of an initial amount
@@ -48,13 +51,15 @@ contract UsdnWusdnEthConfig is DeploymentConfig {
         initStorage.positionFeeBps = 1; // 0.01%
         initStorage.vaultFeeBps = 4; // 0.04%
         initStorage.sdexRewardsRatioBps = 100; // 1%
-        initStorage.sdexBurnOnDepositRatio = 5e6; // 5%
+        // As the amount of syntETH minted will be low, we need a high ratio for the amount burned to be significant.
+        // TODO temporary (but usable) value, an improvement of the scaling of this variable is in the work
+        initStorage.sdexBurnOnDepositRatio = uint32(MAX_SDEX_BURN_RATIO);
         initStorage.securityDepositValue = 0.15 ether;
         initStorage.EMA = int256(3 * 10 ** (Constants.FUNDING_RATE_DECIMALS - 4)); // 0.0003
         initStorage.tickSpacing = 100;
         initStorage.sdex = SDEX;
         initStorage.asset = UNDERLYING_ASSET;
-        // 1400 tokens (to roughly match the current minLongPosition of the wstETH/USD version)
+        // 1400 wusdn (to roughly match the current minLongPosition of the wstETH/USD version)
         initStorage.minLongPosition = 1400 * 10 ** UNDERLYING_ASSET.decimals();
     }
 
@@ -66,6 +71,10 @@ contract UsdnWusdnEthConfig is DeploymentConfig {
     ) internal override {
         initStorage.oracleMiddleware = oracleMiddleware;
         initStorage.liquidationRewardsManager = liquidationRewardsManager;
+        uint8 priceFeedDecimals = oracleMiddleware.getDecimals();
+        // set usdn prices for compatibility as the usdn token used does not rebase
+        initStorage.targetUsdnPrice = uint128(10 ** priceFeedDecimals);
+        initStorage.usdnRebaseThreshold = uint128(10 ** priceFeedDecimals);
         initStorage.usdn = usdnNoRebase;
     }
 
