@@ -86,8 +86,8 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
         wusdnToEthOracleMiddleware_ = new WusdnToEthOracleMiddleware(
             PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WUSDN.USDN()), CHAINLINK_PRICE_VALIDITY
         );
-        // TODO decide of a name/symbol
-        usdnNoRebase_ = new UsdnNoRebase("", "");
+
+        usdnNoRebase_ = new UsdnNoRebase("Synthetic ETH", "syntETH");
         vm.stopBroadcast();
 
         _setPeripheralContracts(wusdnToEthOracleMiddleware_, liquidationRewardsManager_, usdnNoRebase_);
