@@ -202,7 +202,6 @@ contract OracleMiddlewareWithChainlinkDataStreams is
         pure
         returns (PriceInfo memory price_)
     {
-        // cast are safe since checks was made in `_getChainlinkDataStreamPrice`
         if (dir == PriceAdjustment.Down) {
             price_.price = formattedPrice.bid;
         } else if (dir == PriceAdjustment.Up) {
