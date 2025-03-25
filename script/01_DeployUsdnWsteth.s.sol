@@ -25,7 +25,7 @@ import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsd
 contract DeployUsdnWsteth is UsdnWstethConfig, Script {
     Utils utils;
 
-    constructor() UsdnWstethConfig(address(WSTETH)) {
+    constructor() UsdnWstethConfig() {
         utils = new Utils();
     }
 
@@ -120,6 +120,7 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
     /**
      * @notice Set the rebalancer and give the minting and rebasing roles to the USDN protocol.
      * @param usdnProtocol The USDN protocol.
+     * @param usdn The USDN token.
      * @return rebalancer_ The rebalancer.
      */
     function _setRebalancerAndHandleUsdnRoles(IUsdnProtocol usdnProtocol, Usdn usdn)

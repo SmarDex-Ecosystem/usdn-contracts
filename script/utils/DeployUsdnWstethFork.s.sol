@@ -19,9 +19,11 @@ import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { Wusdn } from "../../src/Usdn/Wusdn.sol";
 import { UsdnProtocolFallback } from "../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+
 import { UsdnProtocolImpl } from "../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -31,7 +33,7 @@ contract DeployUsdnWstethFork is UsdnWstethConfig, Script {
     Utils utils;
 
     constructor() UsdnWstethConfig() {
-        UNDERLYING_ASSET = IERC20Metadata(vm.envOr("UNDERLYING_ADDRESS", address(WSTETH)));
+        UNDERLYING_ASSET = IWstETH(vm.envOr("UNDERLYING_ADDRESS", address(WSTETH)));
         utils = new Utils();
         price = vm.envOr("START_PRICE", price);
     }
@@ -123,6 +125,7 @@ contract DeployUsdnWstethFork is UsdnWstethConfig, Script {
     /**
      * @notice Set the rebalancer and give the minting and rebasing roles to the USDN protocol.
      * @param usdnProtocol The USDN protocol.
+     * @param usdn The USDN token.
      * @return rebalancer_ The rebalancer.
      */
     function _setRebalancerAndHandleUsdnRoles(IUsdnProtocol usdnProtocol, Usdn usdn)

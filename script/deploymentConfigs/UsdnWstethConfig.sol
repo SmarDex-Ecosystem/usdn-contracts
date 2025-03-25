@@ -22,10 +22,10 @@ contract UsdnWstethConfig is DeploymentConfig {
     uint256 constant CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
     uint256 constant CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
 
-    constructor(address underlying) {
+    constructor() {
         INITIAL_LONG_AMOUNT = 200 ether;
         SDEX = Sdex(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
-        UNDERLYING_ASSET = IWstETH(underlying);
+        UNDERLYING_ASSET = WSTETH;
 
         initStorage.minLeverage = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1); // x1.1
         initStorage.maxLeverage = 10 * 10 ** Constants.LEVERAGE_DECIMALS; // x10
