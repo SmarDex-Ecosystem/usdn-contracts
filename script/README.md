@@ -17,7 +17,7 @@ You can use `-t` or `-l` options instead of `-i 1` for trezor or ledger hardware
 The deployment script for the fork mode does not require any input:
 
 ```bash
-deployFork.sh
+./script/fork/deployFork.sh
 ```
 
 ## Upgrade protocol
