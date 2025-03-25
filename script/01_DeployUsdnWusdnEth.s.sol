@@ -32,9 +32,9 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     }
 
     /**
-     * @notice Deploy the USDN ecosystem with Wusdn as the underlying token.
-     * @return wusdnToEthOracleMiddleware_ The oracle middleware to get the price of the Wusdn in ETH.
-     * @return liquidationRewardsManager_ The liquidation rewards manager.
+     * @notice Deploy the USDN ecosystem with WUSDN as the underlying token.
+     * @return wusdnToEthOracleMiddleware_ The oracle middleware to get the price of the WUSDN in ETH.
+     * @return liquidationRewardsManagerWusdn_ The liquidation rewards manager.
      * @return rebalancer_ The rebalancer.
      * @return usdnNoRebase_ The USDN token contract.
      * @return usdnProtocol_ The USDN protocol contract.
@@ -43,7 +43,7 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
         external
         returns (
             WusdnToEthOracleMiddleware wusdnToEthOracleMiddleware_,
-            LiquidationRewardsManagerWusdn liquidationRewardsManager_,
+            LiquidationRewardsManagerWusdn liquidationRewardsManagerWusdn_,
             Rebalancer rebalancer_,
             UsdnNoRebase usdnNoRebase_,
             IUsdnProtocol usdnProtocol_
@@ -53,7 +53,8 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
 
         _setFeeCollector(msg.sender);
 
-        (wusdnToEthOracleMiddleware_, liquidationRewardsManager_, usdnNoRebase_) = _deployAndSetPeripheralContracts();
+        (wusdnToEthOracleMiddleware_, liquidationRewardsManagerWusdn_, usdnNoRebase_) =
+            _deployAndSetPeripheralContracts();
 
         usdnProtocol_ = _deployProtocol(initStorage);
         _grantRequiredRoles(usdnProtocol_, usdnNoRebase_);
@@ -71,20 +72,20 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
      * initialization struct.
      * @dev As the USDN token doesn't rebase, there's no need to deploy the WUSDN contract, as wrapping is only useful
      * to avoid messing with the token balances in smart contracts.
-     * @return wusdnToEthOracleMiddleware_ The oracle middleware that gets the price of the Wusdn in Eth.
-     * @return liquidationRewardsManager_ The liquidation rewards manager.
+     * @return wusdnToEthOracleMiddleware_ The oracle middleware that gets the price of the WUSDN in Eth.
+     * @return liquidationRewardsManagerWusdn_ The liquidation rewards manager.
      * @return usdnNoRebase_ The USDN contract.
      */
     function _deployAndSetPeripheralContracts()
         internal
         returns (
             WusdnToEthOracleMiddleware wusdnToEthOracleMiddleware_,
-            LiquidationRewardsManagerWusdn liquidationRewardsManager_,
+            LiquidationRewardsManagerWusdn liquidationRewardsManagerWusdn_,
             UsdnNoRebase usdnNoRebase_
         )
     {
         vm.startBroadcast();
-        liquidationRewardsManager_ = new LiquidationRewardsManagerWusdn(WUSDN);
+        liquidationRewardsManagerWusdn_ = new LiquidationRewardsManagerWusdn(WUSDN);
         wusdnToEthOracleMiddleware_ = new WusdnToEthOracleMiddleware(
             PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WUSDN.USDN()), CHAINLINK_PRICE_VALIDITY
         );
@@ -92,7 +93,7 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
         usdnNoRebase_ = new UsdnNoRebase("Synthetic ETH", "syntETH");
         vm.stopBroadcast();
 
-        _setPeripheralContracts(wusdnToEthOracleMiddleware_, liquidationRewardsManager_, usdnNoRebase_);
+        _setPeripheralContracts(wusdnToEthOracleMiddleware_, liquidationRewardsManagerWusdn_, usdnNoRebase_);
     }
 
     /**
@@ -120,7 +121,7 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     }
 
     /**
-     * @notice Set the rebalancer and give the minting and rebasing roles to the USDN protocol.
+     * @notice Deploys and sets the rebalancer.
      * @param usdnProtocol The USDN protocol.
      * @return rebalancer_ The rebalancer.
      */
@@ -134,7 +135,7 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     }
 
     /**
-     * @notice Initialize the USDN protocol with a ~2x leverage long position.
+     * @notice Initializes the USDN protocol with a ~2x leverage long position.
      * @param usdnProtocol The USDN protocol.
      * @param wusdnToEthOracleMiddleware The WstETH oracle middleware.
      */
