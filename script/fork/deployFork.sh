@@ -40,6 +40,6 @@ EOF
 
 echo "Fork environment variables:"
 echo "$FORK_ENV_DUMP"
-echo "$FORK_ENV_DUMP" > ../.env.fork
+echo "$FORK_ENV_DUMP" > .env.fork
 
 popd >/dev/null
