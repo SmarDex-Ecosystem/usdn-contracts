@@ -30,7 +30,8 @@ contract DeployUsdnWstethFork is UsdnWstethConfig, Script {
     uint256 price = 3000 ether;
     Utils utils;
 
-    constructor() UsdnWstethConfig(vm.envOr("UNDERLYING_ADDRESS", address(WSTETH))) {
+    constructor() UsdnWstethConfig() {
+        UNDERLYING_ASSET = IERC20Metadata(vm.envOr("UNDERLYING_ADDRESS", address(WSTETH)));
         utils = new Utils();
         price = vm.envOr("START_PRICE", price);
     }
