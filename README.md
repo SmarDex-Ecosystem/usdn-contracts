@@ -84,7 +84,7 @@ To run tests, use `forge test -vvv` or `npm run test`.
 
 ### Deployment scripts
 
-Deployment for anvil forks should be done with a custom bash script at `script/deployFork.sh` which can be run without
+Deployment for anvil forks should be done with a custom bash script at `script/fork/deployFork.sh` which can be run without
 arguments. It must set up any environment variable required by the foundry deployment script.
 
 Deployment for mainnet should be done with a custom bash script at `script/deployMainnet.sh`. To know which variables are required, run the following command:
