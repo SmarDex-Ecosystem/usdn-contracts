@@ -56,10 +56,12 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
         (wusdnToEthOracleMiddleware_, liquidationRewardsManager_, usdnNoRebase_) = _deployAndSetPeripheralContracts();
 
         usdnProtocol_ = _deployProtocol(initStorage);
+        _grantRequiredRoles(usdnProtocol_, usdnNoRebase_);
 
-        rebalancer_ = _setRebalancerAndHandleUsdnRoles(usdnProtocol_, usdnNoRebase_);
+        rebalancer_ = _setRebalancer(usdnProtocol_);
 
         _initializeProtocol(usdnProtocol_, wusdnToEthOracleMiddleware_);
+        _revokeRoles(usdnProtocol_);
 
         utils.validateProtocolConfig(usdnProtocol_, msg.sender);
     }
@@ -120,21 +122,13 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     /**
      * @notice Set the rebalancer and give the minting and rebasing roles to the USDN protocol.
      * @param usdnProtocol The USDN protocol.
-     * @param usdnNoRebase The USDN token of the protocol.
      * @return rebalancer_ The rebalancer.
      */
-    function _setRebalancerAndHandleUsdnRoles(IUsdnProtocol usdnProtocol, UsdnNoRebase usdnNoRebase)
-        internal
-        returns (Rebalancer rebalancer_)
-    {
+    function _setRebalancer(IUsdnProtocol usdnProtocol) internal returns (Rebalancer rebalancer_) {
         vm.startBroadcast();
 
         rebalancer_ = new Rebalancer(usdnProtocol);
-        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, msg.sender);
-        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, msg.sender);
         usdnProtocol.setRebalancer(rebalancer_);
-
-        usdnNoRebase.transferOwnership(address(usdnProtocol));
 
         vm.stopBroadcast();
     }
@@ -168,6 +162,35 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
         vm.startBroadcast();
         WUSDN.approve(address(usdnProtocol), depositAmount + INITIAL_LONG_AMOUNT);
         usdnProtocol.initialize(uint128(depositAmount), uint128(INITIAL_LONG_AMOUNT), desiredLiqPrice, "");
+        vm.stopBroadcast();
+    }
+
+    /**
+     * @dev Grants the required roles for the deployment.
+     * @param usdnProtocol The deployed USDN protocol.
+     * @param usdnNoRebase The USDN token of the protocol.
+     */
+    function _grantRequiredRoles(IUsdnProtocol usdnProtocol, UsdnNoRebase usdnNoRebase) internal {
+        vm.startBroadcast();
+
+        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, msg.sender);
+
+        usdnNoRebase.transferOwnership(address(usdnProtocol));
+
+        vm.stopBroadcast();
+    }
+
+    /**
+     * @dev Revokes the roles that were only necessary during the deployment.
+     * @param usdnProtocol The deployed USDN protocol.
+     */
+    function _revokeRoles(IUsdnProtocol usdnProtocol) internal {
+        vm.startBroadcast();
+
+        usdnProtocol.revokeRole(Constants.ADMIN_SET_EXTERNAL_ROLE, msg.sender);
+        usdnProtocol.revokeRole(Constants.SET_EXTERNAL_ROLE, msg.sender);
+
         vm.stopBroadcast();
     }
 }
