@@ -4,29 +4,37 @@ pragma solidity 0.8.26;
 import { Script } from "forge-std/Script.sol";
 
 import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
-import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { UsdnWstethConfig } from "./deploymentConfigs/UsdnWstethConfig.sol";
-import { Utils } from "./utils/Utils.s.sol";
+import { MockChainlinkOnChain } from "../../test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
+import { WstETH } from "../../test/utils/WstEth.sol";
+import { UsdnWstethConfig } from "../deploymentConfigs/UsdnWstethConfig.sol";
+import { Utils } from "../utils/Utils.s.sol";
 
-import { LiquidationRewardsManagerWstEth } from "../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
-import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
-import { Usdn } from "../src/Usdn/Usdn.sol";
-import { Wusdn } from "../src/Usdn/Wusdn.sol";
-import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
-import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
+import { LiquidationRewardsManagerWstEth } from
+    "../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
+import { MockWstEthOracleMiddleware } from "../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
+import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
+import { Usdn } from "../../src/Usdn/Usdn.sol";
+import { Wusdn } from "../../src/Usdn/Wusdn.sol";
+import { UsdnProtocolFallback } from "../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolImpl } from "../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
-    "../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
-import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+    "../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+import { IWstETH } from "../../src/interfaces/IWstETH.sol";
+import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract DeployUsdnWsteth is UsdnWstethConfig, Script {
+contract DeployUsdnWstethFork is UsdnWstethConfig, Script {
+    address immutable CHAINLINK_ETH_PRICE_MOCKED = address(new MockChainlinkOnChain());
+    uint256 price = 3000 ether;
     Utils utils;
 
-    constructor() {
+    constructor() UsdnWstethConfig() {
+        UNDERLYING_ASSET = IWstETH(vm.envOr("UNDERLYING_ADDRESS", address(WSTETH)));
         utils = new Utils();
+        price = vm.envOr("START_PRICE", price);
     }
 
     /**
@@ -41,16 +49,16 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
     function run()
         external
         returns (
-            WstEthOracleMiddleware wstEthOracleMiddleware_,
+            MockWstEthOracleMiddleware wstEthOracleMiddleware_,
             LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Rebalancer rebalancer_,
             Usdn usdn_,
             Wusdn wusdn_,
-            IUsdnProtocol usdnProtocol_
+            IUsdnProtocol usdnProtocol_,
+            address underlying_,
+            address sdex_
         )
     {
-        utils.validateProtocol("UsdnProtocolImpl", "UsdnProtocolFallback");
-
         _setFeeCollector(msg.sender);
 
         (wstEthOracleMiddleware_, liquidationRewardsManager_, usdn_, wusdn_) = _deployAndSetPeripheralContracts();
@@ -59,9 +67,13 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
 
         rebalancer_ = _setRebalancerAndHandleUsdnRoles(usdnProtocol_, usdn_);
 
-        _initializeProtocol(usdnProtocol_, wstEthOracleMiddleware_);
+        _initializeProtocol(usdnProtocol_);
 
         utils.validateProtocolConfig(usdnProtocol_, msg.sender);
+
+        underlying_ = address(UNDERLYING_ASSET);
+
+        sdex_ = address(SDEX);
     }
 
     /**
@@ -75,7 +87,7 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
     function _deployAndSetPeripheralContracts()
         internal
         returns (
-            WstEthOracleMiddleware wstEthOracleMiddleware_,
+            MockWstEthOracleMiddleware wstEthOracleMiddleware_,
             LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Usdn usdn_,
             Wusdn wusdn_
@@ -83,9 +95,11 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
     {
         vm.startBroadcast();
         liquidationRewardsManager_ = new LiquidationRewardsManagerWstEth(WSTETH);
-        wstEthOracleMiddleware_ = new WstEthOracleMiddleware(
-            PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WSTETH), CHAINLINK_PRICE_VALIDITY
+        wstEthOracleMiddleware_ = new MockWstEthOracleMiddleware(
+            PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE_MOCKED, address(WSTETH), CHAINLINK_PRICE_VALIDITY
         );
+        MockWstEthOracleMiddleware(wstEthOracleMiddleware_).setVerifySignature(false);
+        MockWstEthOracleMiddleware(wstEthOracleMiddleware_).setWstethMockedPrice(price);
         usdn_ = new Usdn(address(0), address(0));
         wusdn_ = new Wusdn(usdn_);
         vm.stopBroadcast();
@@ -99,17 +113,13 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
      * @return usdnProtocol_ The USDN protocol proxy.
      */
     function _deployProtocol(Types.InitStorage storage initStorage) internal returns (IUsdnProtocol usdnProtocol_) {
-        // we need to allow external library linking and immutable variables in the openzeppelin module
-        Options memory opts;
-        opts.unsafeAllow = "external-library-linking,state-variable-immutable";
-
         vm.startBroadcast();
 
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
         _setProtocolFallback(protocolFallback);
 
-        address proxy = Upgrades.deployUUPSProxy(
-            "UsdnProtocolImpl.sol", abi.encodeCall(UsdnProtocolImpl.initializeStorage, initStorage), opts
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            address(new UsdnProtocolImpl()), abi.encodeCall(UsdnProtocolImpl.initializeStorage, initStorage)
         );
 
         vm.stopBroadcast();
@@ -131,11 +141,28 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
 
         rebalancer_ = new Rebalancer(usdnProtocol);
         usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_OPTIONS_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_PROTOCOL_PARAMS_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_USDN_PARAMS_ROLE, msg.sender);
         usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.SET_OPTIONS_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.SET_PROTOCOL_PARAMS_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.SET_USDN_PARAMS_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.ADMIN_CRITICAL_FUNCTIONS_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.ADMIN_PROXY_UPGRADE_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.ADMIN_PAUSER_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.ADMIN_UNPAUSER_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.CRITICAL_FUNCTIONS_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.PROXY_UPGRADE_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.PAUSER_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.UNPAUSER_ROLE, msg.sender);
+
         usdnProtocol.setRebalancer(rebalancer_);
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
+        usdn.grantRole(usdn.MINTER_ROLE(), msg.sender);
+        usdn.grantRole(usdn.REBASER_ROLE(), msg.sender);
 
         vm.stopBroadcast();
     }
@@ -143,14 +170,10 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
     /**
      * @notice Initialize the USDN protocol with a ~2x leverage long position.
      * @param usdnProtocol The USDN protocol.
-     * @param wstEthOracleMiddleware The WstETH oracle middleware.
      */
-    function _initializeProtocol(IUsdnProtocol usdnProtocol, WstEthOracleMiddleware wstEthOracleMiddleware) internal {
+    function _initializeProtocol(IUsdnProtocol usdnProtocol) internal {
         uint24 liquidationPenalty = usdnProtocol.getLiquidationPenalty();
         int24 tickSpacing = usdnProtocol.getTickSpacing();
-        uint256 price = wstEthOracleMiddleware.parseAndValidatePrice(
-            "", uint128(block.timestamp), Types.ProtocolAction.Initialize, ""
-        ).price;
 
         // we want a leverage of ~2x so we get the current price from the middleware and divide it by two
         uint128 desiredLiqPrice = uint128(price / 2);
