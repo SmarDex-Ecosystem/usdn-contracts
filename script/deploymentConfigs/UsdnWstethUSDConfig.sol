@@ -20,6 +20,8 @@ contract UsdnWstethUSDConfig is DeploymentConfig {
     bytes32 constant PYTH_ETH_FEED_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
     uint256 constant CHAINLINK_GAS_PRICE_VALIDITY = 2 hours + 5 minutes;
     uint256 constant CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
+    uint256 constant MAX_SDEX_BURN_RATIO = Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 10; // 10%
+    uint256 constant MAX_MIN_LONG_POSITION = 10 ether;
 
     constructor() {
         INITIAL_LONG_AMOUNT = 200 ether;

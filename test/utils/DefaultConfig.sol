@@ -12,6 +12,9 @@ import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract DefaultConfig {
+    uint256 constant MAX_SDEX_BURN_RATIO = Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 10; // 10%
+    uint256 constant MAX_MIN_LONG_POSITION = 10 ether;
+
     Types.InitStorage internal initStorage;
 
     constructor() {

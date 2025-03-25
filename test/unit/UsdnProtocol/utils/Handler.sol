@@ -39,6 +39,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     using SafeCast for uint256;
     using SignedMath for int256;
 
+    constructor(uint256 maxSdexBurnRatio, uint256 maxMinLongPosition)
+        UsdnProtocolFallback(maxSdexBurnRatio, maxMinLongPosition)
+    { }
+
     function initializeStorageHandler(InitStorage calldata initStorage) external initializer {
         initializeStorage(initStorage);
     }
