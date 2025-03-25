@@ -9,7 +9,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { MockChainlinkOnChain } from "../../test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { WstETH } from "../../test/utils/WstEth.sol";
-import { UsdnWstethConfig } from "../deploymentConfigs/UsdnWstethConfig.sol";
+import { UsdnWstethUsdConfig } from "../deploymentConfigs/UsdnWstethUsdConfig.sol";
 import { Utils } from "../utils/Utils.s.sol";
 
 import { LiquidationRewardsManagerWstEth } from
@@ -26,12 +26,12 @@ import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract DeployUsdnWstethFork is UsdnWstethConfig, Script {
+contract DeployUsdnWstethFork is UsdnWstethUsdConfig, Script {
     address immutable CHAINLINK_ETH_PRICE_MOCKED = address(new MockChainlinkOnChain());
     uint256 price = 3000 ether;
     Utils utils;
 
-    constructor() UsdnWstethConfig() {
+    constructor() UsdnWstethUsdConfig() {
         UNDERLYING_ASSET = IWstETH(vm.envOr("UNDERLYING_ADDRESS", address(WSTETH)));
         utils = new Utils();
         price = vm.envOr("START_PRICE", price);
