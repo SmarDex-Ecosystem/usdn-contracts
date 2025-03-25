@@ -8,7 +8,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from
 
 import { ILiquidationRewardsManager } from
     "../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManager.sol";
-import { IOracleMiddleware } from "../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IOracleMiddlewareWithPyth } from "../../src/interfaces/OracleMiddleware/IOracleMiddlewareWithPyth.sol";
 import { IUsdn } from "../../src/interfaces/Usdn/IUsdn.sol";
 import { IWusdn } from "../../src/interfaces/Usdn/IWusdn.sol";
 import { IUsdnProtocolFallback } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
@@ -65,7 +65,7 @@ contract UsdnWusdnEthConfig is DeploymentConfig {
 
     /// @inheritdoc DeploymentConfig
     function _setPeripheralContracts(
-        IOracleMiddleware oracleMiddleware,
+        IOracleMiddlewareWithPyth oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         IUsdn usdnNoRebase
     ) internal override {
