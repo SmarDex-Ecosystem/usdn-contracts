@@ -20,7 +20,7 @@ abstract contract PostconditionsUsdnProtocolVault is PostconditionsBase {
                 invariant_DEPI_04(params, initiatedDeposit);
                 invariant_DEPI_05(params); //failed
             }
-            onSuccessInvariantsGeneral(returnData);
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }
@@ -49,7 +49,7 @@ abstract contract PostconditionsUsdnProtocolVault is PostconditionsBase {
             invariant_DEPV_08(actorsToUpdate[1]);
             invariant_DEPV_09(actorsToUpdate[0]);
 
-            onSuccessInvariantsGeneral(returnData);
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }
@@ -71,7 +71,7 @@ abstract contract PostconditionsUsdnProtocolVault is PostconditionsBase {
                 invariant_WITHI_04(params);
             }
 
-            onSuccessInvariantsGeneral(returnData);
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }
@@ -90,9 +90,9 @@ abstract contract PostconditionsUsdnProtocolVault is PostconditionsBase {
                 invariant_WITHV_02(actorsToUpdate[0]);
                 invariant_WITHV_03();
                 invariant_WITHV_04(params);
-                invariant_WITHV_05(params);
+                invariant_WITHV_05();
             }
-            onSuccessInvariantsGeneral(returnData);
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }

@@ -9,8 +9,4 @@ contract Fuzz is FuzzGuided {
 
         setup(address(this));
     }
-
-    function supportsInterface(bytes4 interfaceId) public view returns (bool) {
-        return true;
-    }
 }

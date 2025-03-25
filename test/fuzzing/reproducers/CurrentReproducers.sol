@@ -11,7 +11,7 @@ contract CurrentReproducers is ReproducersBase {
 
         try this.fuzz_initiateWithdrawal(4_511_420_339_053_028_840_618_221_102_773_018_654_233_170_735) { } catch { }
 
-        try this.fuzz_guided_openPosition(46, 1_524_785_992) { } catch { }
+        try this.fuzz_guided_openPosition(46) { } catch { }
 
         try this.fuzz_guided_depositFlow(169, 1_524_785_992) { } catch { }
 

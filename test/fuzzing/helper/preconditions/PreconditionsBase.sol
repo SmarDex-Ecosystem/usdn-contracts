@@ -39,7 +39,7 @@ abstract contract PreconditionsBase is BeforeAfter {
         _;
     }
 
-    function getRandomUser(uint8 input) internal returns (address) {
+    function getRandomUser(uint8 input) internal view returns (address) {
         uint256 randomIndex = input % USERS.length;
         return USERS[randomIndex];
     }
@@ -48,6 +48,7 @@ abstract contract PreconditionsBase is BeforeAfter {
     //@custom:fuzzing price passed with 18 decimals
     function getPreviousActionsData(address user, uint256 currentPrice)
         internal
+        view
         returns (
             IUsdnProtocolTypes.PreviousActionsData memory previousActionsData_,
             uint256 securityDeposit_,
@@ -81,6 +82,7 @@ abstract contract PreconditionsBase is BeforeAfter {
 
     function getTokenFromPendingAction(IUsdnProtocolTypes.PendingAction memory action, uint256 price)
         internal
+        view
         returns (int256 usdn_, uint256 wsteth_)
     {
         if (action.action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit) {
@@ -127,7 +129,7 @@ abstract contract PreconditionsBase is BeforeAfter {
         }
     }
 
-    function totalValue() internal returns (uint256) {
+    function totalValue() internal view returns (uint256) {
         uint256 securityDepositValue = usdnProtocol.getSecurityDepositValue();
         /*NOTE: simplifying since we are using mock,
          *1 wei * updateData.length,
@@ -160,7 +162,7 @@ abstract contract PreconditionsBase is BeforeAfter {
         InitiateOpenPositionParams memory params,
         uint256 currentPrice,
         uint256 leverage
-    ) internal {
+    ) internal view {
         console.log(StdStyle.green("-----------------------------------------------------------"));
 
         console.log(StdStyle.green("Amount ........................ %s"), params.amount);
@@ -187,7 +189,7 @@ abstract contract PreconditionsBase is BeforeAfter {
     function logValidateDeposit(
         IUsdnProtocolTypes.DepositPendingAction memory depositAction,
         uint256 usdnSharesExpected
-    ) internal {
+    ) internal pure {
         console.log(StdStyle.green("-----------------------------------------------------------"));
         console.log(StdStyle.green("  Deposit Amount ................ %s"), depositAction.amount);
         console.log(StdStyle.green("  Asset Price ................... %s"), depositAction.assetPrice);
@@ -200,7 +202,7 @@ abstract contract PreconditionsBase is BeforeAfter {
         uint256 amount,
         uint256 assetToTransfer,
         uint256 price
-    ) internal {
+    ) internal pure {
         console.log(StdStyle.green("-----------------------------------------------------------"));
         console.log(StdStyle.green("  Shares LSB .................... %s"), withdrawalAction.sharesLSB);
         console.log(StdStyle.green("  Shares MSB .................... %s"), withdrawalAction.sharesMSB);
@@ -210,20 +212,20 @@ abstract contract PreconditionsBase is BeforeAfter {
         console.log(StdStyle.green("-----------------------------------------------------------"));
     }
 
-    function logValidateOpenPosition(int256 usdn, uint256 wsteth) internal {
+    function logValidateOpenPosition(int256 usdn, uint256 wsteth) internal pure {
         console.log(StdStyle.green("-----------------------------------------------------------"));
         console.log(StdStyle.green("  USDN .......................... %s"), usdn);
         console.log(StdStyle.green("  WstETH ........................ %s"), wsteth);
         console.log(StdStyle.green("-----------------------------------------------------------"));
     }
 
-    function logValidateClosePosition(IUsdnProtocolTypes.LongPendingAction memory longAction) internal {
+    function logValidateClosePosition(IUsdnProtocolTypes.LongPendingAction memory longAction) internal pure {
         console.log(StdStyle.green("-----------------------------------------------------------"));
         console.log(StdStyle.green("  Close Amount .................. %s"), longAction.closeAmount);
         console.log(StdStyle.green("-----------------------------------------------------------"));
     }
 
-    function logDefaultCase(int256 usdn, uint256 wsteth) internal {
+    function logDefaultCase(int256 usdn, uint256 wsteth) internal pure {
         console.log(StdStyle.green("-----------------------------------------------------------"));
         console.log(StdStyle.green("  USDN .......................... %s"), usdn);
         console.log(StdStyle.green("  WstETH ........................ %s"), wsteth);

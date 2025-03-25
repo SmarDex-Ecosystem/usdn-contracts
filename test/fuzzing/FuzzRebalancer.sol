@@ -17,23 +17,21 @@ contract FuzzRebalancer is PreconditionsRebalancer, PostconditionsRebalancer, Fu
 
         (bool success, bytes memory returnData) = _initiateDepositAssetsCall(params.amount, params.to);
 
-        initiateDepositAssetsPostconditions(success, returnData, actorsToUpdate, params);
+        initiateDepositAssetsPostconditions(success, returnData, actorsToUpdate);
     }
 
     function fuzz_validateDepositAssets() public setCurrentActor {
-        ValidateDepositAssetsParams memory params = validateDepositAssetsPreconditions();
-
         address[] memory actorsToUpdate = new address[](1);
         actorsToUpdate[0] = currentActor;
 
         _before(actorsToUpdate);
         (bool success, bytes memory returnData) = _validateDepositAssetsCall();
 
-        validateDepositAssetsPostconditions(success, returnData, actorsToUpdate, params);
+        validateDepositAssetsPostconditions(success, returnData, actorsToUpdate);
     }
 
     function fuzz_resetDepositAssets() public setCurrentActor {
-        ResetDepositAssetsParams memory params = resetDepositAssetsPreconditions();
+        // ResetDepositAssetsParams memory params = resetDepositAssetsPreconditions();
 
         address[] memory actorsToUpdate = new address[](1);
         actorsToUpdate[0] = currentActor;
@@ -42,11 +40,11 @@ contract FuzzRebalancer is PreconditionsRebalancer, PostconditionsRebalancer, Fu
 
         (bool success, bytes memory returnData) = _resetDepositAssetsCall();
 
-        resetDepositAssetsPostconditions(success, returnData, actorsToUpdate, params);
+        resetDepositAssetsPostconditions(success, returnData, actorsToUpdate);
     }
 
     function fuzz_initiateWithdrawAssets() public setCurrentActor {
-        InitiateWithdrawAssetsParams memory params = initiateWithdrawAssetsPreconditions();
+        // InitiateWithdrawAssetsParams memory params = initiateWithdrawAssetsPreconditions();
 
         address[] memory actorsToUpdate = new address[](1);
         actorsToUpdate[0] = currentActor;
@@ -55,7 +53,7 @@ contract FuzzRebalancer is PreconditionsRebalancer, PostconditionsRebalancer, Fu
 
         (bool success, bytes memory returnData) = _initiateWithdrawAssetsCall();
 
-        initiateWithdrawAssetsPostconditions(success, returnData, actorsToUpdate, params);
+        initiateWithdrawAssetsPostconditions(success, returnData, actorsToUpdate);
     }
 
     function fuzz_validateWithdrawAssets(uint88 amountSeed) public setCurrentActor {
@@ -68,7 +66,7 @@ contract FuzzRebalancer is PreconditionsRebalancer, PostconditionsRebalancer, Fu
 
         (bool success, bytes memory returnData) = _validateWithdrawAssetsCall(params.amount, params.user);
 
-        validateWithdrawAssetsPostconditions(success, returnData, actorsToUpdate, params);
+        validateWithdrawAssetsPostconditions(success, returnData, actorsToUpdate);
     }
 
     function fuzz_initiateClosePositioninRebalancer(uint88 amountSeed) public payable setCurrentActor {
@@ -92,6 +90,6 @@ contract FuzzRebalancer is PreconditionsRebalancer, PostconditionsRebalancer, Fu
             params.txValue
         );
 
-        initiateClosePositionPostconditionsInRebalancer(success, returnData, actorsToUpdate, params);
+        initiateClosePositionPostconditionsInRebalancer(success, returnData, actorsToUpdate);
     }
 }

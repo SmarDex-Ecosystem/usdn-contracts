@@ -1,19 +1,22 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
+import { DefaultConfig } from "../utils/DefaultConfig.sol";
 import "./util/FunctionCalls.sol";
 
 import "forge-std/StdStyle.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-contract FuzzSetup is FunctionCalls {
+contract FuzzSetup is FunctionCalls, DefaultConfig {
     using SignedMath for int256;
 
     function setup(address deployerContract) internal {
         DEPLOYER = deployerContract;
 
-        deployPeriphery(DEPLOYER);
+        deployPeriphery();
         deployPyth();
         deployChainlink();
         deployOracleMiddleware(address(wstETH));
@@ -22,10 +25,10 @@ contract FuzzSetup is FunctionCalls {
         deployRebalancer();
         mintTokens();
         handlePostDeployment();
-        initializeUsdnProtocol(INIT_DEPOSIT_AMOUNT, INIT_LONG_AMOUNT);
+        initializeUsdnProtocol();
     }
 
-    function deployPeriphery(address admin) internal {
+    function deployPeriphery() internal {
         usdn = new Usdn();
         wusdn = new Wusdn(usdn);
         wstETH = new WstETH();
@@ -58,21 +61,37 @@ contract FuzzSetup is FunctionCalls {
         usdnProtocolHandler = new UsdnProtocolHandler();
 
         // @TODO change to new implemntation
-        bytes memory initData = abi.encodeCall(
-            usdnProtocolHandler.initializeStorageFuzz,
-            (
-                usdn,
-                sdex,
-                wstETH,
-                wstEthOracleMiddleware,
-                liquidationRewardsManager,
-                100, // tick spacing 100 = 1.05%
-                address(feeCollector),
-                usdnProtocolFallback
-            )
+        // bytes memory initData = abi.encodeCall(
+        //     usdnProtocolHandler.initializeStorageFuzz,
+        //     (
+        //         usdn,
+        //         sdex,
+        //         wstETH,
+        //         wstEthOracleMiddleware,
+        //         liquidationRewardsManager,
+        //         100, // tick spacing 100 = 1.05%
+        //         address(feeCollector),
+        //         usdnProtocolFallback
+        //     )
+        // );
+
+        UsdnProtocolHandler implementation = new UsdnProtocolHandler();
+
+        _setPeripheralContracts(
+            WstEthOracleMiddleware(address(wstEthOracleMiddleware)),
+            liquidationRewardsManager,
+            usdn,
+            wstETH,
+            address(usdnProtocolFallback),
+            address(feeCollector),
+            sdex
         );
 
-        ERC1967Proxy proxy = new ERC1967Proxy(address(usdnProtocolHandler), initData);
+        // ERC1967Proxy proxy = new ERC1967Proxy(address(usdnProtocolHandler), initData);
+
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            address(implementation), abi.encodeCall(UsdnProtocolHandler.initializeStorageHandler, (initStorage))
+        );
 
         usdnProtocol = IUsdnProtocolHandler(address(proxy));
 
@@ -106,7 +125,9 @@ contract FuzzSetup is FunctionCalls {
         usdn.renounceRole(usdn.DEFAULT_ADMIN_ROLE(), DEPLOYER);
     }
 
-    function initializeUsdnProtocol(uint256 depositAmount, uint256 longAmount) public {
+    function initializeUsdnProtocol() public {
+        // @todo uint256 depositAmount, uint256 longAmount were passed in parameter but  not used?
+
         setPrice(2222);
 
         usdnProtocol.setExpoImbalanceLimits(0, 200, 0, 0, 0, 0); // 2% for deposit

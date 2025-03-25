@@ -23,7 +23,7 @@ abstract contract PostconditionsUsdnProtocolActions is PostconditionsBase {
                 invariant_POSOPNI_03(params);
                 invariant_POSOPNI_04(currentActor, params);
             }
-            onSuccessInvariantsGeneral(returnData);
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }
@@ -37,8 +37,7 @@ abstract contract PostconditionsUsdnProtocolActions is PostconditionsBase {
     ) internal {
         if (success) {
             _after(actorsToUpdate);
-            (Types.LongActionOutcome outcome, Types.PositionId memory posId) =
-                abi.decode(returnData, (Types.LongActionOutcome, Types.PositionId));
+            (Types.LongActionOutcome outcome,) = abi.decode(returnData, (Types.LongActionOutcome, Types.PositionId));
 
             invariant_POSOPNV_01(actorsToUpdate[0], actorsToUpdate[1], params, outcome);
             invariant_POSOPNV_02(params, outcome);
@@ -46,7 +45,7 @@ abstract contract PostconditionsUsdnProtocolActions is PostconditionsBase {
             invariant_POSOPNV_03(params, outcome);
             invariant_POSOPNV_04(actorsToUpdate[1], outcome);
 
-            onSuccessInvariantsGeneral(returnData);
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }
@@ -70,9 +69,9 @@ abstract contract PostconditionsUsdnProtocolActions is PostconditionsBase {
             invariant_POSCLOSI_03(outcome);
 
             invariant_POSCLOSI_04(actorsToUpdate[0], outcome);
-            invariant_POSCLOSI_05(outcome);
+            invariant_POSCLOSI_05();
 
-            onSuccessInvariantsGeneral(returnData);
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }
@@ -99,7 +98,7 @@ abstract contract PostconditionsUsdnProtocolActions is PostconditionsBase {
             invariant_POSCLOSV_09(actorsToUpdate[0], actorsToUpdate[1], outcome);
             invariant_POSCLOSV_10(actorsToUpdate[0], actorsToUpdate[1], outcome);
 
-            onSuccessInvariantsGeneral(returnData);
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }
@@ -119,7 +118,7 @@ abstract contract PostconditionsUsdnProtocolActions is PostconditionsBase {
             invariant_PENDACTV_02(actorsToUpdate[0], params);
             invariant_PENDACTV_03(params);
 
-            onSuccessInvariantsGeneral(returnData);
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }
@@ -129,8 +128,9 @@ abstract contract PostconditionsUsdnProtocolActions is PostconditionsBase {
         if (success) {
             _after(actorsToUpdate);
 
-            Types.LiqTickInfo[] memory liquidatedTicks_ = abi.decode(returnData, (Types.LiqTickInfo[]));
-            onSuccessInvariantsGeneral(returnData);
+            // @todo not used liquidatedTicks?
+            // Types.LiqTickInfo[] memory liquidatedTicks_ = abi.decode(returnData, (Types.LiqTickInfo[]));
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }

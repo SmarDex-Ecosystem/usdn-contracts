@@ -49,67 +49,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
 
     Storage _tempStorage;
 
-    function initializeStorageHandler(
-        IUsdn usdn,
-        IERC20Metadata sdex,
-        IERC20Metadata asset,
-        IBaseOracleMiddleware oracleMiddleware,
-        ILiquidationRewardsManager liquidationRewardsManager,
-        int24 tickSpacing,
-        address feeCollector,
-        IUsdnProtocolFallback protocolFallback
-    ) public initializer {
-        // InitStorage calldata initStorage = InitStorage({
-        //     // Main contract addresses
-        //     usdn: usdn,
-        //     sdex: sdex,
-        //     asset: asset,
-        //     oracleMiddleware: oracleMiddleware,
-        //     liquidationRewardsManager: liquidationRewardsManager,
-        //     tickSpacing: tickSpacing,
-        //     feeCollector: feeCollector,
-        //     protocolFallbackAddr: address(protocolFallback),
-        //     // Leverage parameters
-        //     minLeverage: 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1), // x1.1
-        //     maxLeverage: 10 * 10 ** Constants.LEVERAGE_DECIMALS, // x10
-        //     // Validator deadlines
-        //     lowLatencyValidatorDeadline: 15 minutes,
-        //     onChainValidatorDeadline: 65 minutes, // slightly more than chainlink's heartbeat
-        //     // Fee and margin parameters
-        //     safetyMarginBps: 200, // 2%
-        //     liquidationIteration: 1,
-        //     protocolFeeBps: 800, // 8%
-        //     rebalancerBonusBps: 8000, // 80%
-        //     liquidationPenalty: 200, // 200 ticks -> ~2.02%
-        //     emaPeriod: 5 days,
-        //     fundingSF: 12 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2), // 0.12
-        //     feeThreshold: 1 ether,
-        //     // Imbalance limits
-        //     openExpoImbalanceLimitBps: 500, // 5%
-        //     withdrawalExpoImbalanceLimitBps: 600, // 6%
-        //     depositExpoImbalanceLimitBps: 500, // 5%
-        //     closeExpoImbalanceLimitBps: 600, // 6%
-        //     rebalancerCloseExpoImbalanceLimitBps: 350, // 3.5%
-        //     longImbalanceTargetBps: 400, // 4%
-        //     // Fee settings
-        //     positionFeeBps: 4, // 0.04%
-        //     vaultFeeBps: 4, // 0.04%
-        //     sdexRewardsRatioBps: 100, // 1%
-        //     sdexBurnOnDepositRatio: 5e6, // 5%
-        //     securityDepositValue: 0.5 ether,
-        //     // EMA settings
-        //     EMA: int256(3 * 10 ** (Constants.FUNDING_RATE_DECIMALS - 4)),
-        //     // USDN price settings
-        //     targetUsdnPrice: uint128(10_087 * 10 ** (oracleMiddleware.getDecimals() - 4)), // $1.0087
-        //     usdnRebaseThreshold: uint128(1009 * 10 ** (oracleMiddleware.getDecimals() - 3)), // $1.009
-        //     minLongPosition: 2 * 10 ** asset.decimals() // 2 tokens
-        //  });
-
-        // initializeStorage(initStorage);
-
-        initializeStorageFuzz(
-            usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector, protocolFallback
-        );
+    function initializeStorageHandler(InitStorage calldata initStorage) external initializer {
+        initializeStorage(initStorage);
     }
 
     /*
@@ -155,24 +96,18 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function getBitmapIndex(int24 tick) external view returns (uint256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._calcBitmapIndexFromTick(tick);
     }
 
     function getMaxTick() external pure returns (int24) {
-        Storage storage s = Utils._getMainStorage();
-
         return TickMath.MAX_TICK;
     }
 
     function getMinTick() external pure returns (int24) {
-        Storage storage s = Utils._getMainStorage();
-
         return TickMath.MIN_TICK;
     }
 
-    function checkNumOfPositions() public returns (uint256) {
+    function checkNumOfPositions() public view returns (uint256) {
         Storage storage s = Utils._getMainStorage();
 
         return s._totalLongPositions;
@@ -287,7 +222,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         return s._pendingActionsQueue.empty();
     }
 
-    function getQueueItem(uint128 rawIndex) external returns (PendingAction memory) {
+    function getQueueItem(uint128 rawIndex) external view returns (PendingAction memory) {
         Storage storage s = Utils._getMainStorage();
 
         return s._pendingActionsQueue.atRaw(rawIndex);
@@ -346,8 +281,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint64 securityDepositValue,
         Vault.WithdrawalData memory data
     ) public returns (uint256 amountToRefund_) {
-        Storage storage s = Utils._getMainStorage();
-
         return Core._createWithdrawalPendingAction(to, validator, usdnShares, securityDepositValue, data);
     }
 
@@ -358,8 +291,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint128 amount,
         Vault.InitiateDepositData memory data
     ) external returns (uint256 amountToRefund_) {
-        Storage storage s = Utils._getMainStorage();
-
         return Vault._createDepositPendingAction(validator, to, securityDepositValue, amount, data);
     }
 
@@ -369,8 +300,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint64 securityDepositValue,
         InitiateOpenPositionData memory data
     ) public returns (uint256 amountToRefund_) {
-        Storage storage s = Utils._getMainStorage();
-
         return Core._createOpenPendingAction(to, validator, securityDepositValue, data);
     }
 
@@ -382,8 +311,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint64 securityDepositValue,
         ClosePositionData memory data
     ) external returns (uint256 amountToRefund_) {
-        Storage storage s = Utils._getMainStorage();
-
         return Core._createClosePendingAction(to, validator, posId, amountToClose, securityDepositValue, data);
     }
 
@@ -431,8 +358,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         external
         returns (uint256 securityDepositValue_, bool isValidated_, bool liquidated_)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return ActionsLong._validateClosePosition(user, priceData);
     }
 
@@ -440,8 +365,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         external
         returns (uint256 securityDepositValue_, bool isValidated_)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return Vault._validateWithdrawal(user, priceData);
     }
 
@@ -449,8 +372,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         external
         returns (uint256 securityDepositValue_, bool isValidated_)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return Vault._validateDeposit(user, priceData);
     }
 
@@ -461,8 +382,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint128 amountToRemove,
         uint128 totalExpoToRemove
     ) external returns (HugeUint.Uint512 memory liqMultiplierAccumulator_) {
-        Storage storage s = Utils._getMainStorage();
-
         liqMultiplierAccumulator_ = Long._removeAmountFromPosition(tick, index, pos, amountToRemove, totalExpoToRemove);
     }
 
@@ -471,8 +390,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (int256 value_)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._positionValue(currentPrice, liqPriceWithoutPenalty, positionTotalExpo);
     }
 
@@ -481,14 +398,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (uint128 totalExpo_)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._calcPositionTotalExpo(amount, startPrice, liquidationPrice);
     }
 
     function i_getActionablePendingAction() external returns (PendingAction memory, uint128) {
-        Storage storage s = Utils._getMainStorage();
-
         return Vault._getActionablePendingAction();
     }
 
@@ -503,14 +416,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (WithdrawalPendingAction memory)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._toWithdrawalPendingAction(action);
     }
 
     function i_toLongPendingAction(PendingAction memory action) external pure returns (LongPendingAction memory) {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._toLongPendingAction(action);
     }
 
@@ -519,8 +428,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (PendingAction memory)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._convertDepositPendingAction(action);
     }
 
@@ -529,14 +436,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (PendingAction memory)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._convertWithdrawalPendingAction(action);
     }
 
     function i_convertLongPendingAction(LongPendingAction memory action) external pure returns (PendingAction memory) {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._convertLongPendingAction(action);
     }
 
@@ -546,8 +449,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint128 liqPriceWithoutPenalty,
         uint128 posExpo
     ) external pure returns (uint256) {
-        Storage storage s = Utils._getMainStorage();
-
         return ActionsUtils._assetToRemove(balanceLong, priceWithFees, liqPriceWithoutPenalty, posExpo);
     }
 
@@ -558,8 +459,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         HugeUint.Uint512 memory accumulator,
         TickData memory tickData
     ) public pure returns (int256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Long._tickValue(tick, currentPrice, longTradingExpo, accumulator, tickData);
     }
 
@@ -568,8 +467,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         payable
         returns (PriceInfo memory)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._getOraclePrice(action, timestamp, actionId, priceData);
     }
 
@@ -581,8 +478,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external pure returns (uint256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._calcSdexToBurn(usdnAmount, sdexBurnRatio);
     }
 
@@ -593,20 +488,14 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint128 newPrice,
         uint128 oldPrice
     ) external pure returns (int256 available_) {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._vaultAssetAvailable(totalExpo, balanceVault, balanceLong, newPrice, oldPrice);
     }
 
     function i_vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Vault._vaultAssetAvailable(currentPrice);
     }
 
     function i_tickHash(int24 tick) external view returns (bytes32, uint256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._tickHash(tick);
     }
 
@@ -615,68 +504,46 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (int256 available_)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
     }
 
     function i_longAssetAvailable(uint128 currentPrice) external view returns (int256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._longAssetAvailable(currentPrice);
     }
 
     function i_getLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128) {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._getLiquidationPrice(startPrice, leverage);
     }
 
     function i_checkImbalanceLimitDeposit(uint256 depositValue) external view {
-        Storage storage s = Utils._getMainStorage();
-
         ActionsUtils._checkImbalanceLimitDeposit(depositValue);
     }
 
     function i_checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) external view {
-        Storage storage s = Utils._getMainStorage();
-
         ActionsUtils._checkImbalanceLimitWithdrawal(withdrawalValue, totalExpo);
     }
 
     function i_checkImbalanceLimitClose(uint256 posTotalExpoToClose, uint256 posValueToClose) external view {
-        Storage storage s = Utils._getMainStorage();
-
         ActionsUtils._checkImbalanceLimitClose(posTotalExpoToClose, posValueToClose);
     }
 
     function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._getLeverage(price, liqPrice);
     }
 
     function i_calcTickFromBitmapIndex(uint256 index) public view returns (int24) {
-        Storage storage s = Utils._getMainStorage();
-
         return Long._calcTickFromBitmapIndex(index);
     }
 
     function i_calcTickFromBitmapIndex(uint256 index, int24 tickSpacing) public pure returns (int24) {
-        Storage storage s = Utils._getMainStorage();
-
         return Long._calcTickFromBitmapIndex(index, tickSpacing);
     }
 
     function i_calcBitmapIndexFromTick(int24 tick) external view returns (uint256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._calcBitmapIndexFromTick(tick);
     }
 
     function i_calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) external pure returns (uint256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._calcBitmapIndexFromTick(tick, tickSpacing);
     }
 
@@ -685,20 +552,14 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (uint128 liqPrice_)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return Long._calcLiqPriceFromTradingExpo(currentPrice, amount, tradingExpo);
     }
 
     function i_findHighestPopulatedTick(int24 searchStart) external view returns (int24 tick_) {
-        Storage storage s = Utils._getMainStorage();
-
         return Long._findHighestPopulatedTick(searchStart);
     }
 
     function i_updateEMA(int256 fundingPerDay, uint128 secondsElapsed) external {
-        Storage storage s = Utils._getMainStorage();
-
         Core._updateEMA(fundingPerDay, secondsElapsed);
     }
 
@@ -707,8 +568,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (uint256)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return Vault._calcUsdnPrice(vaultBalance, assetPrice, usdnTotalSupply, assetDecimals);
     }
 
@@ -717,38 +576,26 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (uint256)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return Long._calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
     }
 
     function i_addPendingAction(address user, PendingAction memory action) external returns (uint256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Core._addPendingAction(user, action);
     }
 
-    function i_getPendingAction(address user) external returns (PendingAction memory, uint128) {
-        Storage storage s = Utils._getMainStorage();
-
+    function i_getPendingAction(address user) external view returns (PendingAction memory, uint128) {
         return Core._getPendingAction(user);
     }
 
-    function i_getPendingActionOrRevert(address user) external returns (PendingAction memory, uint128) {
-        Storage storage s = Utils._getMainStorage();
-
+    function i_getPendingActionOrRevert(address user) external view returns (PendingAction memory, uint128) {
         return Core._getPendingActionOrRevert(user);
     }
 
     function i_executePendingAction(PreviousActionsData calldata data) external returns (bool, bool, bool, uint256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Vault._executePendingAction(data);
     }
 
     function i_executePendingActionOrRevert(PreviousActionsData calldata data) external {
-        Storage storage s = Utils._getMainStorage();
-
         Vault._executePendingActionOrRevert(data);
     }
 
@@ -756,56 +603,38 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         external
         payable
     {
-        Storage storage s = Utils._getMainStorage();
-
         Utils._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
     }
 
     function i_refundEther(uint256 amount, address payable to) external payable {
-        Storage storage s = Utils._getMainStorage();
-
         Utils._refundEther(amount, to);
     }
 
     function i_mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB) external pure returns (uint256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._mergeWithdrawalAmountParts(sharesLSB, sharesMSB);
     }
 
     function i_calcWithdrawalAmountLSB(uint152 usdnShares) external pure returns (uint24) {
-        Storage storage s = Utils._getMainStorage();
-
         return Vault._calcWithdrawalAmountLSB(usdnShares);
     }
 
     function i_calcWithdrawalAmountMSB(uint152 usdnShares) external pure returns (uint128) {
-        Storage storage s = Utils._getMainStorage();
-
         return Vault._calcWithdrawalAmountMSB(usdnShares);
     }
 
     function i_createInitialDeposit(uint128 amount, uint128 price) external {
-        Storage storage s = Utils._getMainStorage();
-
         Core._createInitialDeposit(amount, price);
     }
 
     function i_createInitialPosition(uint128 amount, uint128 price, int24 tick, uint128 positionTotalExpo) external {
-        Storage storage s = Utils._getMainStorage();
-
         Core._createInitialPosition(amount, price, tick, positionTotalExpo);
     }
 
     function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view {
-        Storage storage s = Utils._getMainStorage();
-
         Long._checkSafetyMargin(currentPrice, liquidationPrice);
     }
 
     function i_getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external pure returns (uint128) {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._getEffectivePriceForTick(tick, liqMultiplier);
     }
 
@@ -814,14 +643,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
     ) external pure returns (uint256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._calcFixedPrecisionMultiplier(assetPrice, longTradingExpo, accumulator);
     }
 
     function i_calcTickWithoutPenalty(int24 tick, uint24 liquidationPenalty) external pure returns (int24) {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._calcTickWithoutPenalty(tick, liquidationPenalty);
     }
 
@@ -837,8 +662,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
     ) public pure returns (uint256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Long._unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
     }
 
@@ -847,15 +670,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
-    ) public pure returns (uint256) {
-        Storage storage s = Utils._getMainStorage();
-
+    ) public pure {
         Utils._adjustPrice(unadjustedPrice, assetPrice, longTradingExpo, accumulator);
     }
 
     function i_clearPendingAction(address user, uint128 rawIndex) external {
-        Storage storage s = Utils._getMainStorage();
-
         Utils._clearPendingAction(user, rawIndex);
     }
 
@@ -868,8 +687,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 balanceVault,
         HugeUint.Uint512 memory liqMultiplierAccumulator
     ) external view returns (int24 tick_, uint128 totalExpo_, uint24 liquidationPenalty_) {
-        Storage storage s = Utils._getMainStorage();
-
         CachedProtocolState memory cache = CachedProtocolState({
             totalExpo: totalExpo,
             longBalance: balanceLong,
@@ -889,8 +706,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (int256 imbalanceBps_)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return Utils._calcImbalanceCloseBps(vaultBalance, longBalance, longTotalExpo);
     }
 
@@ -899,26 +714,18 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         pure
         returns (int256 imbalanceBps_)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return Long._calcImbalanceOpenBps(vaultBalance, longBalance, longTotalExpo);
     }
 
     function i_removeBlockedPendingAction(uint128 rawIndex, address payable to, bool cleanup) external {
-        Storage storage s = Utils._getMainStorage();
-
         Core._removeBlockedPendingAction(rawIndex, to, cleanup);
     }
 
     function i_checkInitImbalance(uint128 positionTotalExpo, uint128 longAmount, uint128 depositAmount) external view {
-        Storage storage s = Utils._getMainStorage();
-
         Core._checkInitImbalance(positionTotalExpo, longAmount, depositAmount);
     }
 
     function i_removeStalePendingAction(address user) external returns (uint256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Core._removeStalePendingAction(user);
     }
 
@@ -928,14 +735,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 vaultBalance,
         int256 remainingCollateral
     ) public returns (uint256 longBalance_, uint256 vaultBalance_, Types.RebalancerAction rebalancerAction_) {
-        Storage storage s = Utils._getMainStorage();
-
         return Long._triggerRebalancer(lastPrice, longBalance, vaultBalance, remainingCollateral);
     }
 
     function i_calculateFee(int256 fundAsset) external returns (int256 fee_, int256 fundAssetWithFee_) {
-        Storage storage s = Utils._getMainStorage();
-
         return Core._calculateFee(fundAsset);
     }
 
@@ -947,8 +750,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 balanceVault,
         HugeUint.Uint512 memory liqMultiplierAccumulator
     ) external returns (int256 positionValue_) {
-        Storage storage s = Utils._getMainStorage();
-
         CachedProtocolState memory cache = CachedProtocolState({
             totalExpo: totalExpo,
             longBalance: balanceLong,
@@ -968,14 +769,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint24 liquidationPenalty,
         uint128 amount
     ) external returns (PositionId memory posId_) {
-        Storage storage s = Utils._getMainStorage();
-
         return Long._flashOpenPosition(user, neutralPrice, tick, posTotalExpo, liquidationPenalty, amount);
     }
 
     function i_checkPendingFee() external {
-        Storage storage s = Utils._getMainStorage();
-
         Utils._checkPendingFee();
     }
 
@@ -988,8 +785,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         bytes memory rebaseCallbackResult,
         bytes memory priceData
     ) external {
-        Storage storage s = Utils._getMainStorage();
-
         Long._sendRewardsToLiquidator(
             liquidatedTicks, currentPrice, rebased, rebalancerAction, action, rebaseCallbackResult, priceData
         );
@@ -1001,8 +796,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 sharesOutMin,
         bytes calldata currentPriceData
     ) public returns (Vault.InitiateDepositData memory data_) {
-        Storage storage s = Utils._getMainStorage();
-
         return Vault._prepareInitiateDepositData(validator, amount, sharesOutMin, currentPriceData);
     }
 
@@ -1012,8 +805,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         uint256 amountOutMin,
         bytes calldata currentPriceData
     ) public returns (Vault.WithdrawalData memory data_) {
-        Storage storage s = Utils._getMainStorage();
-
         return Vault._prepareWithdrawalData(validator, usdnShares, amountOutMin, currentPriceData);
     }
 
@@ -1021,8 +812,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         external
         returns (ValidateOpenPositionData memory data_, bool liquidated_)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return ActionsLong._prepareValidateOpenPositionData(pending, priceData);
     }
 
@@ -1044,14 +833,10 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         view
         returns (int256 fundingAsset, int256 fundingPerDay)
     {
-        Storage storage s = Utils._getMainStorage();
-
         return Core._fundingAsset(timestamp, ema);
     }
 
     function i_fundingPerDay(int256 ema) external view returns (int256 fundingPerDay_, int256 oldLongExpo_) {
-        Storage storage s = Utils._getMainStorage();
-
         return Core._fundingPerDay(ema);
     }
 
@@ -1069,8 +854,6 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         int24 tickSpacing,
         uint24 liquidationPenalty
     ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
-        Storage storage s = Utils._getMainStorage();
-
         return Long._getTickFromDesiredLiqPrice(
             desiredLiqPriceWithoutPenalty, assetPrice, longTradingExpo, accumulator, tickSpacing, liquidationPenalty
         );
@@ -1082,16 +865,12 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         int24 tickSpacing,
         uint24 liquidationPenalty
     ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_) {
-        Storage storage s = Utils._getMainStorage();
-
         return Long._getTickFromDesiredLiqPrice(
             desiredLiqPriceWithoutPenalty, liqMultiplier, tickSpacing, liquidationPenalty
         );
     }
 
     function i_calcMaxLongBalance(uint256 totalExpo) external pure returns (uint256) {
-        Storage storage s = Utils._getMainStorage();
-
         return Core._calcMaxLongBalance(totalExpo);
     }
 

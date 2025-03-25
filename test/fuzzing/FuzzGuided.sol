@@ -29,12 +29,12 @@ contract FuzzGuided is FuzzUsdnProtocolVault, FuzzUsdnProtocolActions, FuzzRebal
 
         fuzz_guided_depositFlow(1, 20e18);
         for (uint256 i; i < 5; i++) {
-            fuzz_guided_openPosition(1, 1e17);
+            fuzz_guided_openPosition(1);
         }
 
         fuzz_guided_depositFlow(2, 20e18);
         for (uint256 i; i < 5; i++) {
-            fuzz_guided_openPosition(2, 1e17);
+            fuzz_guided_openPosition(2);
         }
     }
 
@@ -47,7 +47,7 @@ contract FuzzGuided is FuzzUsdnProtocolVault, FuzzUsdnProtocolActions, FuzzRebal
         fuzz_guided_depositFlow(1, 75e18);
 
         setActor(USER2);
-        fuzz_guided_openPosition(1, 1e17);
+        fuzz_guided_openPosition(1);
 
         setActor(USER2);
         fuzz_guided_liquidateHighestTick();
@@ -65,7 +65,7 @@ contract FuzzGuided is FuzzUsdnProtocolVault, FuzzUsdnProtocolActions, FuzzRebal
         fuzz_guided_depositFlow(1, 75e18);
 
         setActor(USER2);
-        fuzz_guided_openPosition(1, 1e17);
+        fuzz_guided_openPosition(1);
 
         setActor(USER2);
         fuzz_guided_liquidateHighestTick();
@@ -150,11 +150,11 @@ contract FuzzGuided is FuzzUsdnProtocolVault, FuzzUsdnProtocolActions, FuzzRebal
 
     function fuzz_guided_openBigPosition(uint8 seed) public {
         if (seed % 2 == 0) {
-            fuzz_guided_openPosition(seed, 25e18);
+            fuzz_guided_openPosition(seed);
         } else if (seed % 3 == 0) {
-            fuzz_guided_openPosition(seed, 50e18);
+            fuzz_guided_openPosition(seed);
         } else {
-            fuzz_guided_openPosition(seed, 75e18);
+            fuzz_guided_openPosition(seed);
         }
     }
 
@@ -182,7 +182,7 @@ contract FuzzGuided is FuzzUsdnProtocolVault, FuzzUsdnProtocolActions, FuzzRebal
         fuzz_validateDepositAssets();
     }
 
-    function fuzz_guided_openPosition(uint8 seed, uint256 amount) public {
+    function fuzz_guided_openPosition(uint8 seed) public {
         setActor(getRandomUser(seed));
         fuzz_initiateOpenPosition(uint256(seed) * 1e18, 15e20);
 
@@ -298,6 +298,13 @@ contract FuzzGuided is FuzzUsdnProtocolVault, FuzzUsdnProtocolActions, FuzzRebal
         console2.log("                   CURRENT PROTOCOL STATE                   ");
         console2.log(" ========================================================== ");
         console2.log("                                                            ");
+
+        console2.log("  balanceVault:         %s", balanceVault);
+        console2.log("  pendingBalanceVault:         %s", pendingBalanceVault);
+
+        console2.log("  fundingAsset:         %s", fundingAsset);
+        console2.log("  fundingPerDay:         %s", fundingPerDay);
+        console2.log("  multiplier:         %s", multiplier);
 
         console2.log("  totalPositions:         %s", usdnProtocol.getTotalLongPositions());
         console2.log("  currentTick:            %s", TickMath.getTickAtPrice(uint256(lastPrice)));

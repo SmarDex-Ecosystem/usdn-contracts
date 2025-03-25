@@ -40,7 +40,7 @@ abstract contract Properties_WITHV is PropertiesBase {
         );
     }
 
-    function invariant_WITHV_05(ValidateWithdrawalParams memory params) internal {
+    function invariant_WITHV_05() internal {
         fl.lte(
             states[1].actorStates[address(usdnProtocol)].wstETHBalance,
             states[0].actorStates[address(usdnProtocol)].wstETHBalance - states[1].withdrawAssetToTransferAfterFees,

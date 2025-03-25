@@ -48,11 +48,11 @@ contract MockPyth is IMockPythError {
         price = _price;
     }
 
-    function getPrice() external returns (int64) {
+    function getPrice() external view returns (int64) {
         return price;
     }
 
-    function getLastPublishTime() external returns (uint64) {
+    function getLastPublishTime() external view returns (uint64) {
         return lastPublishTime;
     }
     /**

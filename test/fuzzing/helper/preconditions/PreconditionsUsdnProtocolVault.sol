@@ -109,7 +109,7 @@ abstract contract PreconditionsUsdnProtocolVault is PreconditionsBase {
         InitiateWithdrawalParams memory params;
 
         // Check pending actions first
-        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
+        // IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
 
         params.to = currentActor;
         params.validator = payable(currentActor);

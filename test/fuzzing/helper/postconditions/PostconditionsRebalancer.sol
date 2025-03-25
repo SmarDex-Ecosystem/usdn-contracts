@@ -4,46 +4,37 @@ pragma solidity ^0.8.0;
 import "./PostconditionsBase.sol";
 
 abstract contract PostconditionsRebalancer is PostconditionsBase {
-    function initiateDepositAssetsPostconditions(
-        bool success,
-        bytes memory returnData,
-        address[] memory actorsToUpdate,
-        InitiateDepositAssetsParams memory params
-    ) internal {
+    function initiateDepositAssetsPostconditions(bool success, bytes memory returnData, address[] memory actorsToUpdate)
+        internal
+    {
         if (success) {
             _after(actorsToUpdate);
 
-            onSuccessInvariantsGeneral(returnData);
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }
     }
 
-    function validateDepositAssetsPostconditions(
-        bool success,
-        bytes memory returnData,
-        address[] memory actorsToUpdate,
-        ValidateDepositAssetsParams memory params
-    ) internal {
+    function validateDepositAssetsPostconditions(bool success, bytes memory returnData, address[] memory actorsToUpdate)
+        internal
+    {
         if (success) {
             _after(actorsToUpdate);
 
-            onSuccessInvariantsGeneral(returnData);
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }
     }
 
-    function resetDepositAssetsPostconditions(
-        bool success,
-        bytes memory returnData,
-        address[] memory actorsToUpdate,
-        ResetDepositAssetsParams memory params
-    ) internal {
+    function resetDepositAssetsPostconditions(bool success, bytes memory returnData, address[] memory actorsToUpdate)
+        internal
+    {
         if (success) {
             _after(actorsToUpdate);
 
-            onSuccessInvariantsGeneral(returnData);
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }
@@ -52,13 +43,12 @@ abstract contract PostconditionsRebalancer is PostconditionsBase {
     function initiateWithdrawAssetsPostconditions(
         bool success,
         bytes memory returnData,
-        address[] memory actorsToUpdate,
-        InitiateWithdrawAssetsParams memory params
+        address[] memory actorsToUpdate
     ) internal {
         if (success) {
             _after(actorsToUpdate);
 
-            onSuccessInvariantsGeneral(returnData);
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }
@@ -67,13 +57,12 @@ abstract contract PostconditionsRebalancer is PostconditionsBase {
     function validateWithdrawAssetsPostconditions(
         bool success,
         bytes memory returnData,
-        address[] memory actorsToUpdate,
-        ValidateWithdrawAssetsParams memory params
+        address[] memory actorsToUpdate
     ) internal {
         if (success) {
             _after(actorsToUpdate);
 
-            onSuccessInvariantsGeneral(returnData);
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }
@@ -82,13 +71,12 @@ abstract contract PostconditionsRebalancer is PostconditionsBase {
     function initiateClosePositionPostconditionsInRebalancer(
         bool success,
         bytes memory returnData,
-        address[] memory actorsToUpdate,
-        InitiateClosePositionParamsInRebalancer memory params
+        address[] memory actorsToUpdate
     ) internal {
         if (success) {
             _after(actorsToUpdate);
 
-            onSuccessInvariantsGeneral(returnData);
+            onSuccessInvariantsGeneral();
         } else {
             onFailInvariantsGeneral(returnData);
         }

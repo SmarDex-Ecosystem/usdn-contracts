@@ -39,7 +39,7 @@ abstract contract PreconditionsRebalancer is PreconditionsBase {
 
         params.user = currentActor;
 
-        IRebalancer.UserDeposit memory depositData = rebalancer.getUserDepositData(params.user);
+        // IRebalancer.UserDeposit memory depositData = rebalancer.getUserDepositData(params.user);
 
         IRebalancer.TimeLimits memory timeLimits = rebalancer.getTimeLimits();
 
@@ -96,7 +96,7 @@ abstract contract PreconditionsRebalancer is PreconditionsBase {
 
         require(depositData.amount > 0, "User has no deposits, skipping current run");
 
-        IRebalancer.PositionData memory positionData = rebalancer.getPositionData(rebalancer.getPositionVersion());
+        // IRebalancer.PositionData memory positionData = rebalancer.getPositionData(rebalancer.getPositionVersion());
 
         params.amount = uint88(fl.clamp(amountSeed, 1, depositData.amount));
         params.userMinPrice = 0;

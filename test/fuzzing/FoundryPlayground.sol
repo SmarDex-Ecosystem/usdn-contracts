@@ -23,7 +23,7 @@ contract FoundryPlayground is Reproducers {
 
     function test_openPosition() public {
         fuzz_guided_addLP();
-        fuzz_guided_openPosition(1, 1e18);
+        fuzz_guided_openPosition(1);
     }
 
     function test_price() public {

@@ -21,7 +21,7 @@ deployContracts:
     ["0xfd", "UsdnProtocolVaultLibrary"],
   ]
 
-workers: 3
+workers: 4
 
 testMode: assertion
 

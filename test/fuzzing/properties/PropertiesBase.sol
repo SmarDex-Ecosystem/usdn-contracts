@@ -146,7 +146,7 @@ abstract contract PropertiesBase is FuzzBase, BeforeAfter, PropertiesDescription
         uint128 amountAfterFees,
         uint256 expectedBalanceIncrease,
         uint256 convertedTokens
-    ) internal view {
+    ) internal pure {
         console.log("");
         console.log(StdStyle.green("CALCULATE USDN ON DEPOSIT"));
         console.log(StdStyle.green("-----------------------------------------------------------"));

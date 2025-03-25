@@ -5,7 +5,7 @@ import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsd
 import "../../properties/Properties.sol";
 
 abstract contract PostconditionsBase is Properties {
-    function onSuccessInvariantsGeneral(bytes memory returnData) internal {
+    function onSuccessInvariantsGeneral() internal {
         invariant_GLOB_01();
         invariant_GLOB_02();
         invariant_GLOB_03();

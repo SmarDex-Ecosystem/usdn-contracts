@@ -36,7 +36,7 @@ abstract contract Properties_POSCLOSV is PropertiesBase {
         internal
     {
         int256 baseWstETHBalance = int256(states[0].actorStates[address(usdnProtocol)].wstETHBalance);
-        int256 pendingActions = int256(params.wstethPendingActions);
+        // int256 pendingActions = int256(params.wstethPendingActions);
         int256 positionProfit = int256(states[1].positionProfit);
         int256 newWstETHBalance = int256(states[1].actorStates[address(usdnProtocol)].wstETHBalance);
         if (outcome == Types.LongActionOutcome.Processed) {

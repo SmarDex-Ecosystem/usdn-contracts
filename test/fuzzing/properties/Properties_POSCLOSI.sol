@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "./PropertiesBase.sol";
-// import "../interfaces/IUsdnProtocolTypes.sol";
 
 abstract contract Properties_POSCLOSI is PropertiesBase {
     function invariant_POSCLOSI_01(address sender, Types.LongActionOutcome outcome) internal {
@@ -82,7 +81,7 @@ abstract contract Properties_POSCLOSI is PropertiesBase {
         }
     }
 
-    function invariant_POSCLOSI_05(Types.LongActionOutcome outcome) internal {
+    function invariant_POSCLOSI_05() internal {
         if (!states[1].rebalancerTriggered) {
             if (states[1].feeCollectorCallbackTriggered) {
                 if (states[1].positionsLiquidatable || states[1].positionWasLiqidatedInTheMeanwhile) {
