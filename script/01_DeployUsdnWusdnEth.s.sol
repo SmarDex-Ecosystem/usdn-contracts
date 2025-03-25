@@ -189,8 +189,8 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     function _revokeRoles(IUsdnProtocol usdnProtocol) internal {
         vm.startBroadcast();
 
-        usdnProtocol.revokeRole(Constants.ADMIN_SET_EXTERNAL_ROLE, msg.sender);
         usdnProtocol.revokeRole(Constants.SET_EXTERNAL_ROLE, msg.sender);
+        usdnProtocol.revokeRole(Constants.ADMIN_SET_EXTERNAL_ROLE, msg.sender);
 
         vm.stopBroadcast();
     }
