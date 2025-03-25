@@ -25,7 +25,7 @@ import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsd
 contract DeployUsdnWsteth is UsdnWstethConfig, Script {
     Utils utils;
 
-    constructor() UsdnWstethConfig() {
+    constructor() {
         utils = new Utils();
     }
 
