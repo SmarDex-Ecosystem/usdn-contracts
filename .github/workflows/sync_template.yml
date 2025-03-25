@@ -31,6 +31,7 @@ jobs:
         with:
           source_gh_token: ${{ steps.app-token.outputs.token }}
           source_repo_path: Blockchain-RA2-Tech/foundry-template
+          target_gh_token: ${{ secrets.GITHUB_TOKEN }}  
           upstream_branch: main
           # PR settings
           is_pr_cleanup: true # will remove previous update PR (if not merged) and create a new one
