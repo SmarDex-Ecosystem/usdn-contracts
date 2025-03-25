@@ -19,7 +19,6 @@ import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { Wusdn } from "../../src/Usdn/Wusdn.sol";
 import { UsdnProtocolFallback } from "../../src/UsdnProtocol/UsdnProtocolFallback.sol";
-
 import { UsdnProtocolImpl } from "../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
@@ -55,7 +54,9 @@ contract DeployUsdnWstethFork is UsdnWstethConfig, Script {
             Rebalancer rebalancer_,
             Usdn usdn_,
             Wusdn wusdn_,
-            IUsdnProtocol usdnProtocol_
+            IUsdnProtocol usdnProtocol_,
+            address underlying_,
+            address sdex_
         )
     {
         _setFeeCollector(msg.sender);
@@ -69,6 +70,10 @@ contract DeployUsdnWstethFork is UsdnWstethConfig, Script {
         _initializeProtocol(usdnProtocol_);
 
         utils.validateProtocolConfig(usdnProtocol_, msg.sender);
+
+        underlying_ = address(UNDERLYING_ASSET);
+
+        sdex_ = address(SDEX);
     }
 
     /**
