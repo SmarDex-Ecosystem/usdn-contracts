@@ -68,7 +68,7 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     }
 
     /**
-     * @notice Deploy the oracle middleware, liquidation rewards manager and UsdnNoRebase contracts. Add then to the
+     * @notice Deploy the oracle middleware, liquidation rewards manager and UsdnNoRebase contracts. Add them to the
      * initialization struct.
      * @dev As the USDN token doesn't rebase, there's no need to deploy the WUSDN contract, as wrapping is only useful
      * to avoid messing with the token balances in smart contracts.
