@@ -3,8 +3,7 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import { OracleMiddlewareWithChainlinkDataStreams } from
-    "../../../../src/OracleMiddleware/OracleMiddlewareWithChainlinkDataStreams.sol";
+import { OracleMiddlewareWithDataStreams } from "../../../../src/OracleMiddleware/OracleMiddlewareWithDataStreams.sol";
 import { OracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/OracleMiddlewareWithPyth.sol";
 import { IFeeManager } from "../../../../src/interfaces/OracleMiddleware/IFeeManager.sol";
 import {
@@ -30,7 +29,7 @@ contract OracleMiddlewareHandler is OracleMiddlewareWithPyth, Test {
     }
 }
 
-contract OracleMiddlewareWithChainlinkDataStreamsHandler is OracleMiddlewareWithChainlinkDataStreams, Test {
+contract OracleMiddlewareWithChainlinkDataStreamsHandler is OracleMiddlewareWithDataStreams, Test {
     constructor(
         address pythContract,
         bytes32 pythFeedId,
@@ -39,7 +38,7 @@ contract OracleMiddlewareWithChainlinkDataStreamsHandler is OracleMiddlewareWith
         address chainlinkProxyVerifierAddress,
         bytes32 chainlinkStreamId
     )
-        OracleMiddlewareWithChainlinkDataStreams(
+        OracleMiddlewareWithDataStreams(
             pythContract,
             pythFeedId,
             chainlinkPriceFeed,
