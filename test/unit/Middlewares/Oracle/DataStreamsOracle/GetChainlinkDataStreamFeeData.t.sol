@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { OracleMiddlewareWithChainlinkDataStreamsFixture } from "../../utils/Fixtures.sol";
+import { OracleMiddlewareWithDataStreamsFixture } from "../../utils/Fixtures.sol";
 import { IVerifierFeeManager } from "../../utils/MockStreamVerifierProxy.sol";
 
 import { IFeeManager } from "../../../../../src/interfaces/OracleMiddleware/IFeeManager.sol";
 
 /// @custom:feature The `_getChainlinkDataStreamFeeData` function of the `ChainlinkDataStreamsOracle`.
-contract TestOracleMiddlewareWithChainlinkDataStreamFeeData is OracleMiddlewareWithChainlinkDataStreamsFixture {
+contract TestOracleMiddlewareWithDataStreamFeeData is OracleMiddlewareWithDataStreamsFixture {
     function setUp() public override {
         super.setUp();
     }

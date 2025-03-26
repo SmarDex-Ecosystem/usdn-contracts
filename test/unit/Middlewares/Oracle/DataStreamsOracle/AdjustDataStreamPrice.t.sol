@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { OracleMiddlewareWithChainlinkDataStreamsFixture } from "../../utils/Fixtures.sol";
+import { OracleMiddlewareWithDataStreamsFixture } from "../../utils/Fixtures.sol";
 
 import {
     FormattedDataStreamsPrice,
@@ -9,10 +9,8 @@ import {
     PriceInfo
 } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
-/// @custom:feature The `_getLowLatencyPrice` function of the `OracleMiddlewareWithChainlinkDataStreams`.
-contract TestOracleMiddlewareWithChainlinkDataStreamsAdjustDataStream is
-    OracleMiddlewareWithChainlinkDataStreamsFixture
-{
+/// @custom:feature The `_getLowLatencyPrice` function of the `OracleMiddlewareWithDataStreams`.
+contract TestOracleMiddlewareWithDataStreamsAdjustDataStream is OracleMiddlewareWithDataStreamsFixture {
     FormattedDataStreamsPrice internal formattedPrice;
 
     function setUp() public override {

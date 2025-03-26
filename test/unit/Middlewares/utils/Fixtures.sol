@@ -12,7 +12,7 @@ import { OracleMiddlewareWithRedstoneHandler } from "../utils/HandlerWithRedston
 import { MockChainlinkOnChain } from "../utils/MockChainlinkOnChain.sol";
 import { MockPyth } from "../utils/MockPyth.sol";
 import { EMPTY_STREAM_V3, STREAM_ETH_PRICE } from "./Constants.sol";
-import { OracleMiddlewareWithChainlinkDataStreamsHandler } from "./Handler.sol";
+import { OracleMiddlewareWithDataStreamsHandler } from "./Handler.sol";
 import { MockStreamVerifierProxy } from "./MockStreamVerifierProxy.sol";
 import { MockWETH } from "./MockWETH.sol";
 
@@ -141,15 +141,15 @@ contract OracleMiddlewareWithRedstoneFixture is BaseFixture, ActionsFixture {
 }
 
 /**
- * @title OracleMiddlewareWithChainlinkDataStreamsFixture
+ * @title OracleMiddlewareWithDataStreamsFixture
  * @dev Utils for testing the oracle middleware with chainlink data streams support.
  */
-contract OracleMiddlewareWithChainlinkDataStreamsFixture is BaseFixture, ActionsFixture {
+contract OracleMiddlewareWithDataStreamsFixture is BaseFixture, ActionsFixture {
     MockPyth internal mockPyth;
     MockChainlinkOnChain internal mockChainlinkOnChain;
     MockFeeManager internal mockFeeManager;
     MockStreamVerifierProxy internal mockStreamVerifierProxy;
-    OracleMiddlewareWithChainlinkDataStreamsHandler internal oracleMiddleware;
+    OracleMiddlewareWithDataStreamsHandler internal oracleMiddleware;
     IVerifierProxy.ReportV3 internal report;
 
     address internal wethTargetAddress;
@@ -167,7 +167,7 @@ contract OracleMiddlewareWithChainlinkDataStreamsFixture is BaseFixture, Actions
         mockFeeManager = new MockFeeManager();
         mockStreamVerifierProxy = new MockStreamVerifierProxy(address(mockFeeManager));
 
-        oracleMiddleware = new OracleMiddlewareWithChainlinkDataStreamsHandler(
+        oracleMiddleware = new OracleMiddlewareWithDataStreamsHandler(
             address(mockPyth),
             PYTH_ETH_USD,
             address(mockChainlinkOnChain),

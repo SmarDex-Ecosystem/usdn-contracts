@@ -2,12 +2,10 @@
 pragma solidity 0.8.26;
 
 import { MOCK_PYTH_DATA } from "../../utils/Constants.sol";
-import { OracleMiddlewareWithChainlinkDataStreamsFixture } from "../../utils/Fixtures.sol";
+import { OracleMiddlewareWithDataStreamsFixture } from "../../utils/Fixtures.sol";
 
-/// @custom:feature The `validationCost` function of the `OracleMiddlewareWithChainlinkDataStreams`.
-contract TestOracleMiddlewareWithChainlinkDataStreamsValidationCost is
-    OracleMiddlewareWithChainlinkDataStreamsFixture
-{
+/// @custom:feature The `validationCost` function of the `OracleMiddlewareWithDataStreams`.
+contract TestOracleMiddlewareWithDataStreamsValidationCost is OracleMiddlewareWithDataStreamsFixture {
     function setUp() public override {
         super.setUp();
     }
@@ -43,7 +41,7 @@ contract TestOracleMiddlewareWithChainlinkDataStreamsValidationCost is
      * @custom:when The function is called.
      * @custom:then The fee must be equal to the report native fee.
      */
-    function test_validationCostWithChainlinkDataStream() public view {
+    function test_validationCostWithDataStream() public view {
         uint256 fee = oracleMiddleware.validationCost(payload, actions[0]);
         assertEq(fee, report.nativeFee, "Invalid Chainlink data stream fee");
     }

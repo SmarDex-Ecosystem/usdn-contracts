@@ -4,14 +4,12 @@ pragma solidity 0.8.26;
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { MOCK_PYTH_DATA } from "../../utils/Constants.sol";
-import { OracleMiddlewareWithChainlinkDataStreamsFixture } from "../../utils/Fixtures.sol";
+import { OracleMiddlewareWithDataStreamsFixture } from "../../utils/Fixtures.sol";
 
 import { PriceInfo } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
-/// @custom:feature The `_getLiquidationPrice` function of the `OracleMiddlewareWithChainlinkDataStreams`.
-contract TestOracleMiddlewareWithChainlinkDataStreamsGetLiquidationPrice is
-    OracleMiddlewareWithChainlinkDataStreamsFixture
-{
+/// @custom:feature The `_getLiquidationPrice` function of the `OracleMiddlewareWithDataStreams`.
+contract TestOracleMiddlewareWithDataStreamsGetLiquidationPrice is OracleMiddlewareWithDataStreamsFixture {
     function setUp() public override {
         super.setUp();
     }
@@ -40,7 +38,7 @@ contract TestOracleMiddlewareWithChainlinkDataStreamsGetLiquidationPrice is
      * @custom:when The function is called.
      * @custom:then The price info must be equal to the Chainlink data stream report.
      */
-    function test_getLiquidationPriceWithChainlinkDatastream() public {
+    function test_getLiquidationPriceWithDatastream() public {
         PriceInfo memory price = oracleMiddleware.i_getLiquidationPrice{ value: report.nativeFee }(payload);
         assertEq(int192(int256(price.price)), report.price, "Invalid price");
         assertEq(int192(int256(price.neutralPrice)), report.price, "Invalid neutral price");

@@ -29,7 +29,7 @@ contract OracleMiddlewareHandler is OracleMiddlewareWithPyth, Test {
     }
 }
 
-contract OracleMiddlewareWithChainlinkDataStreamsHandler is OracleMiddlewareWithDataStreams, Test {
+contract OracleMiddlewareWithDataStreamsHandler is OracleMiddlewareWithDataStreams, Test {
     constructor(
         address pythContract,
         bytes32 pythFeedId,
@@ -69,7 +69,7 @@ contract OracleMiddlewareWithChainlinkDataStreamsHandler is OracleMiddlewareWith
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                  OracleMiddlewareWithChainlinkDataStreams                  */
+    /*                  OracleMiddlewareWithDataStreams                  */
     /* -------------------------------------------------------------------------- */
 
     function i_getLowLatencyPrice(

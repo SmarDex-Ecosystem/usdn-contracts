@@ -4,14 +4,12 @@ pragma solidity 0.8.26;
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { OracleMiddlewareWithChainlinkDataStreamsFixture } from "../../utils/Fixtures.sol";
+import { OracleMiddlewareWithDataStreamsFixture } from "../../utils/Fixtures.sol";
 
 import { PriceAdjustment, PriceInfo } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
-/// @custom:feature The `i_getInitiateActionPrice` function of the `OracleMiddlewareWithChainlinkDataStreams`.
-contract TestOracleMiddlewareWithChainlinkDataStreamsGetInitiateActionPrice is
-    OracleMiddlewareWithChainlinkDataStreamsFixture
-{
+/// @custom:feature The `i_getInitiateActionPrice` function of the `OracleMiddlewareWithDataStreams`.
+contract TestOracleMiddlewareWithDataStreamsGetInitiateActionPrice is OracleMiddlewareWithDataStreamsFixture {
     function setUp() public override {
         super.setUp();
     }
@@ -21,7 +19,7 @@ contract TestOracleMiddlewareWithChainlinkDataStreamsGetInitiateActionPrice is
      * @custom:when The function is called.
      * @custom:then The price info must be equal to the data stream report.
      */
-    function test_getInitiateActionPriceWithChainlinkDataStream() public {
+    function test_getInitiateActionPriceWithDataStream() public {
         PriceInfo memory price =
             oracleMiddleware.i_getInitiateActionPrice{ value: report.nativeFee }(payload, PriceAdjustment.None);
 

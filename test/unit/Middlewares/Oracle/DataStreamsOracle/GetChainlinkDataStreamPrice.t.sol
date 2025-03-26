@@ -4,12 +4,12 @@ pragma solidity 0.8.26;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { EMPTY_STREAM_V3, EMPTY_STREAM_V4 } from "../../utils/Constants.sol";
-import { OracleMiddlewareWithChainlinkDataStreamsFixture } from "../../utils/Fixtures.sol";
+import { OracleMiddlewareWithDataStreamsFixture } from "../../utils/Fixtures.sol";
 
 import { FormattedDataStreamsPrice } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 /// @custom:feature The `_getChainlinkDataStreamPrice` function of the `ChainlinkDataStreamsOracle`.
-contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithChainlinkDataStreamsFixture {
+contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStreamsFixture {
     function setUp() public override {
         super.setUp();
     }
