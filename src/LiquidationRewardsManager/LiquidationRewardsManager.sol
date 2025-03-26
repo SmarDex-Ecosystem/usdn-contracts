@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { IWstETH } from "../interfaces/IWstETH.sol";
 import { IBaseLiquidationRewardsManager } from
     "../interfaces/LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
 import { ILiquidationRewardsManager } from "../interfaces/LiquidationRewardsManager/ILiquidationRewardsManager.sol";
@@ -13,10 +12,10 @@ import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnPro
 
 /**
  * @title Liquidation Rewards Manager
- * @notice This contract calculates rewards for liquidators within the USDN protocol.
- * @dev Rewards are computed based on gas costs, position size, and other parameters.
+ * @dev This abstract contract calculates the bonus portion of the rewards based on the size of the liquidated ticks.
+ * The actual reward calculation is left to the implementing contract.
  */
-contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
+abstract contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
@@ -43,30 +42,14 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
     /*                              Storage Variables                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice The address of the wrapped stETH (wstETH) token contract.
-    IWstETH private immutable _wstEth;
+    /// @notice The address of the reward asset.
+    IERC20 internal immutable _rewardAsset;
 
     /**
      * @notice Holds the parameters used for rewards calculation.
      * @dev Parameters should be updated to reflect changes in gas costs or protocol adjustments.
      */
-    RewardsParameters private _rewardsParameters;
-
-    /// @param wstETH The address of the wstETH token.
-    constructor(IWstETH wstETH) Ownable(msg.sender) {
-        _wstEth = wstETH;
-        _rewardsParameters = RewardsParameters({
-            gasUsedPerTick: 53_094,
-            otherGasUsed: 469_537,
-            rebaseGasUsed: 13_765,
-            rebalancerGasUsed: 279_349,
-            baseFeeOffset: 2 gwei,
-            gasMultiplierBps: 10_500, // 1.05
-            positionBonusMultiplierBps: 200, // 0.02
-            fixedReward: 0.001 ether,
-            maxReward: 0.5 ether
-        });
-    }
+    RewardsParameters internal _rewardsParameters;
 
     /// @inheritdoc IBaseLiquidationRewardsManager
     function getLiquidationRewards(
@@ -74,40 +57,10 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
         uint256 currentPrice,
         bool rebased,
         Types.RebalancerAction rebalancerAction,
-        Types.ProtocolAction,
-        bytes calldata,
-        bytes calldata
-    ) external view returns (uint256 wstETHRewards_) {
-        if (liquidatedTicks.length == 0) {
-            return 0;
-        }
-
-        RewardsParameters memory rewardsParameters = _rewardsParameters;
-        // calculate the amount of gas spent during the liquidation
-        uint256 gasUsed = rewardsParameters.otherGasUsed + BASE_GAS_COST
-            + uint256(rewardsParameters.gasUsedPerTick) * liquidatedTicks.length;
-        if (rebased) {
-            gasUsed += rewardsParameters.rebaseGasUsed;
-        }
-        if (uint8(rebalancerAction) > uint8(Types.RebalancerAction.NoCloseNoOpen)) {
-            gasUsed += rewardsParameters.rebalancerGasUsed;
-        }
-
-        uint256 totalRewardETH = rewardsParameters.fixedReward
-            + _calcGasPrice(rewardsParameters.baseFeeOffset) * gasUsed * rewardsParameters.gasMultiplierBps / BPS_DIVISOR;
-
-        uint256 wstEthBonus =
-            _calcPositionSizeBonus(liquidatedTicks, currentPrice, rewardsParameters.positionBonusMultiplierBps);
-
-        totalRewardETH += _wstEth.getStETHByWstETH(wstEthBonus);
-
-        if (totalRewardETH > rewardsParameters.maxReward) {
-            totalRewardETH = rewardsParameters.maxReward;
-        }
-
-        // convert to wstETH
-        wstETHRewards_ = _wstEth.getWstETHByStETH(totalRewardETH);
-    }
+        Types.ProtocolAction action,
+        bytes calldata rebaseCallbackResult,
+        bytes calldata priceData
+    ) external view virtual returns (uint256 rewards_);
 
     /// @inheritdoc ILiquidationRewardsManager
     function getRewardsParameters() external view returns (RewardsParameters memory) {
@@ -178,7 +131,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, Ownable2Step {
      * @param liquidatedTicks Information about the liquidated ticks.
      * @param currentPrice The current asset price.
      * @param multiplier The bonus multiplier (in BPS).
-     * @return bonus_ The calculated bonus (in wstETH).
+     * @return bonus_ The calculated bonus (in _rewardAsset).
      */
     function _calcPositionSizeBonus(
         Types.LiqTickInfo[] calldata liquidatedTicks,

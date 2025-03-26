@@ -119,6 +119,8 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
             revert OracleMiddlewareWrongBidPrice(verifiedReport.bid);
         }
 
+        // The following values (price, ask, bid) have been validated to be greater than 0,
+        // making the casting to uint192 safe.
         return FormattedDataStreamsPrice({
             timestamp: verifiedReport.observationsTimestamp,
             price: uint192(verifiedReport.price),

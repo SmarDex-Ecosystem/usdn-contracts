@@ -108,7 +108,7 @@ contract TestUsdnProtocolProxy is UsdnProtocolBaseFixture {
         _storageSnapshot();
 
         vm.startPrank(ADMIN);
-        UsdnProtocolFallback newProtocolFallback = new UsdnProtocolFallback();
+        UsdnProtocolFallback newProtocolFallback = new UsdnProtocolFallback(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
         UsdnProtocolImplV2 newImplementation = new UsdnProtocolImplV2();
 
         vm.expectEmit();

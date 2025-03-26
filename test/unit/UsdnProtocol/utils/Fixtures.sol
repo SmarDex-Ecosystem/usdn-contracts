@@ -15,10 +15,10 @@ import { RebalancerHandler } from "../../Rebalancer/utils/Handler.sol";
 import { UsdnProtocolHandler } from "./Handler.sol";
 import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
-import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManagerWstEth } from
+    "../../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionUtils } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
@@ -99,7 +99,7 @@ contract UsdnProtocolBaseFixture is
     Sdex public sdex;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
-    LiquidationRewardsManager public liquidationRewardsManager;
+    LiquidationRewardsManagerWstEth public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
     UsdnProtocolHandler public protocol;
     FeeCollector public feeCollector;
@@ -124,7 +124,7 @@ contract UsdnProtocolBaseFixture is
         wstETH = new WstETH();
         sdex = new Sdex();
         oracleMiddleware = new MockOracleMiddleware();
-        liquidationRewardsManager = new LiquidationRewardsManager(wstETH);
+        liquidationRewardsManager = new LiquidationRewardsManagerWstEth(wstETH);
         feeCollector = new FeeCollector();
 
         if (!testParams.flags.enableLiquidationRewards) {
@@ -144,21 +144,20 @@ contract UsdnProtocolBaseFixture is
             });
         }
 
-        UsdnProtocolHandler test = new UsdnProtocolHandler();
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        UsdnProtocolHandler test = new UsdnProtocolHandler(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
 
         _setPeripheralContracts(
             WstEthOracleMiddleware(address(oracleMiddleware)),
             liquidationRewardsManager,
             usdn,
             wstETH,
-            address(protocolFallback),
+            address(0),
             address(feeCollector),
             sdex
         );
 
         address proxy = UnsafeUpgrades.deployUUPSProxy(
-            address(test), abi.encodeCall(UsdnProtocolHandler.initializeStorageHandler, (initStorage))
+            address(test), abi.encodeCall(UsdnProtocolHandler.initializeStorageHandler, initStorage)
         );
         protocol = UsdnProtocolHandler(proxy);
 
