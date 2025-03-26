@@ -11,7 +11,7 @@ import { UsdnWusdnEthConfig } from "./deploymentConfigs/UsdnWusdnEthConfig.sol";
 import { Utils } from "./utils/Utils.s.sol";
 
 import { LiquidationRewardsManagerWusdn } from "../src/LiquidationRewardsManager/LiquidationRewardsManagerWusdn.sol";
-import { WusdnToEthOracleMiddleware } from "../src/OracleMiddleware/WusdnToEthOracleMiddleware.sol";
+import { WusdnToEthOracleMiddlewareWithPyth } from "../src/OracleMiddleware/WusdnToEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { UsdnNoRebase } from "../src/Usdn/UsdnNoRebase.sol";
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
@@ -42,7 +42,7 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     function run()
         external
         returns (
-            WusdnToEthOracleMiddleware wusdnToEthOracleMiddleware_,
+            WusdnToEthOracleMiddlewareWithPyth wusdnToEthOracleMiddleware_,
             LiquidationRewardsManagerWusdn liquidationRewardsManagerWusdn_,
             Rebalancer rebalancer_,
             UsdnNoRebase usdnNoRebase_,
@@ -79,14 +79,14 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     function _deployAndSetPeripheralContracts()
         internal
         returns (
-            WusdnToEthOracleMiddleware wusdnToEthOracleMiddleware_,
+            WusdnToEthOracleMiddlewareWithPyth wusdnToEthOracleMiddleware_,
             LiquidationRewardsManagerWusdn liquidationRewardsManagerWusdn_,
             UsdnNoRebase usdnNoRebase_
         )
     {
         vm.startBroadcast();
         liquidationRewardsManagerWusdn_ = new LiquidationRewardsManagerWusdn(WUSDN);
-        wusdnToEthOracleMiddleware_ = new WusdnToEthOracleMiddleware(
+        wusdnToEthOracleMiddleware_ = new WusdnToEthOracleMiddlewareWithPyth(
             PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WUSDN.USDN()), CHAINLINK_PRICE_VALIDITY
         );
 
@@ -139,9 +139,10 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
      * @param usdnProtocol The USDN protocol.
      * @param wusdnToEthOracleMiddleware The WstETH oracle middleware.
      */
-    function _initializeProtocol(IUsdnProtocol usdnProtocol, WusdnToEthOracleMiddleware wusdnToEthOracleMiddleware)
-        internal
-    {
+    function _initializeProtocol(
+        IUsdnProtocol usdnProtocol,
+        WusdnToEthOracleMiddlewareWithPyth wusdnToEthOracleMiddleware
+    ) internal {
         uint24 liquidationPenalty = usdnProtocol.getLiquidationPenalty();
         int24 tickSpacing = usdnProtocol.getTickSpacing();
         uint256 price = wusdnToEthOracleMiddleware.parseAndValidatePrice(

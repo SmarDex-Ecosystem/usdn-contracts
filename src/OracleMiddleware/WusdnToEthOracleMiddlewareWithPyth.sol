@@ -12,14 +12,14 @@ import { CommonOracleMiddleware, OracleMiddlewareWithPyth } from "./OracleMiddle
  * @notice This contract is used to get the "inverse" price in ETH/WUSDN denomination, so that it can be used for a
  * shorting version of the USDN protocol with WUSDN as the underlying asset.
  */
-contract WusdnToEthOracleMiddleware is OracleMiddlewareWithPyth {
+contract WusdnToEthOracleMiddlewareWithPyth is OracleMiddlewareWithPyth {
     /// @dev One dollar with the middleware decimals.
     uint256 internal constant ONE_DOLLAR = 10 ** MIDDLEWARE_DECIMALS;
 
     /// @dev Max divisor from the USDN token (as constant for gas optimisation).
     uint256 internal constant USDN_MAX_DIVISOR = 1e18;
 
-    /// @dev Numerator for the price calculation in {WusdnToEthOracleMiddleware.parseAndValidatePrice}.
+    /// @dev Numerator for the price calculation in {WusdnToEthOracleMiddlewareWithPyth.parseAndValidatePrice}.
     uint256 internal constant PRICE_NUMERATOR = 10 ** MIDDLEWARE_DECIMALS * ONE_DOLLAR * USDN_MAX_DIVISOR;
 
     /// @notice The USDN token address.
