@@ -14,7 +14,7 @@ import { CommonOracleMiddleware, OracleMiddlewareWithDataStreams } from "./Oracl
  * @dev This version uses Pyth or Chainlink Data Streams for liquidations, and only Chainlink Data Streams for
  * validation actions.
  */
-contract WusdnToEthOracleMiddlewareWithPyth is OracleMiddlewareWithDataStreams {
+contract WusdnToEthOracleMiddlewareWithDataStreams is OracleMiddlewareWithDataStreams {
     /// @dev One dollar with the middleware decimals.
     uint256 internal constant ONE_DOLLAR = 10 ** MIDDLEWARE_DECIMALS;
 
