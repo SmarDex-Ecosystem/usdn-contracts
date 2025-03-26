@@ -12,8 +12,7 @@ import {
     PriceAdjustment,
     PriceInfo
 } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IOracleMiddlewareWithChainlinkDataStreams } from
-    "../interfaces/OracleMiddleware/IOracleMiddlewareWithChainlinkDataStreams.sol";
+import { IOracleMiddlewareWithDataStreams } from "../interfaces/OracleMiddleware/IOracleMiddlewareWithDataStreams.sol";
 import { IVerifierProxy } from "../interfaces/OracleMiddleware/IVerifierProxy.sol";
 import { IUsdnProtocol } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -25,10 +24,10 @@ import { ChainlinkDataStreamsOracle } from "./oracles/ChainlinkDataStreamsOracle
  * @notice This contract is used to get the price of an asset from different oracles.
  * It is used by the USDN protocol to get the price of the USDN underlying asset.
  */
-contract OracleMiddlewareWithChainlinkDataStreams is
+contract OracleMiddlewareWithDataStreams is
     CommonOracleMiddleware,
     ChainlinkDataStreamsOracle,
-    IOracleMiddlewareWithChainlinkDataStreams
+    IOracleMiddlewareWithDataStreams
 {
     /**
      * @param pythContract Address of the Pyth contract.
@@ -81,7 +80,7 @@ contract OracleMiddlewareWithChainlinkDataStreams is
     /*                            Privileged functions                            */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IOracleMiddlewareWithChainlinkDataStreams
+    /// @inheritdoc IOracleMiddlewareWithDataStreams
     function setDataStreamsRecentPriceDelay(uint64 newDelay) external onlyRole(ADMIN_ROLE) {
         if (newDelay < 10 seconds) {
             revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);

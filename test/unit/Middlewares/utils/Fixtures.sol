@@ -12,7 +12,8 @@ import { MockChainlinkOnChain } from "../utils/MockChainlinkOnChain.sol";
 import { MockPyth } from "../utils/MockPyth.sol";
 
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { WusdnToEthOracleMiddleware } from "../../../../src/OracleMiddleware/WusdnToEthOracleMiddleware.sol";
+import { WusdnToEthOracleMiddlewareWithPyth } from
+    "../../../../src/OracleMiddleware/WusdnToEthOracleMiddlewareWithPyth.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { IOracleMiddlewareErrors } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { IOracleMiddlewareEvents } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
@@ -188,7 +189,7 @@ contract WstethBaseFixture is BaseFixture, ActionsFixture {
 contract WusdnToEthBaseFixture is BaseFixture, ActionsFixture {
     MockPyth internal mockPyth;
     MockChainlinkOnChain internal mockChainlinkOnChain;
-    WusdnToEthOracleMiddleware public middleware;
+    WusdnToEthOracleMiddlewareWithPyth public middleware;
     Usdn public usdn;
 
     function setUp() public virtual {
@@ -198,8 +199,9 @@ contract WusdnToEthBaseFixture is BaseFixture, ActionsFixture {
         mockChainlinkOnChain = new MockChainlinkOnChain();
         usdn = new Usdn(address(this), address(this));
         usdn.rebase(9e17);
-        middleware =
-            new WusdnToEthOracleMiddleware(address(mockPyth), 0, address(mockChainlinkOnChain), address(usdn), 1 hours);
+        middleware = new WusdnToEthOracleMiddlewareWithPyth(
+            address(mockPyth), 0, address(mockChainlinkOnChain), address(usdn), 1 hours
+        );
     }
 
     function test_setUp() public {
