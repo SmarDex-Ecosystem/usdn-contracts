@@ -16,11 +16,11 @@ import {
 import { ActionsIntegrationFixture, CommonBaseIntegrationFixture } from "../../utils/Fixtures.sol";
 import { MockFeeManager } from "./MockFeeManager.sol";
 
-import { OracleMiddlewareWithChainlinkDataStreams } from
-    "../../../../../src/OracleMiddleware/OracleMiddlewareWithChainlinkDataStreams.sol";
+import { OracleMiddlewareWithDataStreams } from
+    "../../../../../src/OracleMiddleware/OracleMiddlewareWithDataStreams.sol";
 
 contract ChainlinkDataStreamsFixture is CommonBaseIntegrationFixture, ActionsIntegrationFixture {
-    OracleMiddlewareWithChainlinkDataStreams internal oracleMiddleware;
+    OracleMiddlewareWithDataStreams internal oracleMiddleware;
 
     uint64 internal constant PERCENTAGE_SCALAR = 1e18;
 
@@ -44,7 +44,7 @@ contract ChainlinkDataStreamsFixture is CommonBaseIntegrationFixture, ActionsInt
         chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_ETH);
 
         vm.prank(DEPLOYER);
-        oracleMiddleware = new OracleMiddlewareWithChainlinkDataStreams(
+        oracleMiddleware = new OracleMiddlewareWithDataStreams(
             address(pyth),
             PYTH_ETH_USD,
             address(chainlinkOnChain),

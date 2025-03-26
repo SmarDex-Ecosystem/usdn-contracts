@@ -10,8 +10,8 @@ import { CHAINLINK_DATA_STREAMS_ETH_USD, PYTH_ETH_USD } from "../../../utils/Con
 import { ChainlinkDataStreamsFixture } from "./utils/Fixtures.sol";
 
 /**
- * @custom:feature The `parseAndValidatePrice` function of the `OracleMiddlewareWithChainlinkDataStreams`.
- * @custom:background A deployed OracleMiddlewareWithChainlinkDataStreams.
+ * @custom:feature The `parseAndValidatePrice` function of the `OracleMiddlewareWithDataStreams`.
+ * @custom:background A deployed OracleMiddlewareWithDataStreams.
  */
 contract TestChainlinkDataStreamsOracleMiddlewareParseAndValidatePriceRealData is ChainlinkDataStreamsFixture {
     using Strings for uint256;

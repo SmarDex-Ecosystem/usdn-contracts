@@ -11,7 +11,7 @@ import { ICommonOracleMiddleware } from "./ICommonOracleMiddleware.sol";
  * @dev This middleware uses Chainlink Data Streams and Pyth as the low-latency oracle, and Chainlink Data Feeds as
  * fallback. For liquidations, either Pyth or Data Streams can be used. For validations, only Data Streams is accepted.
  */
-interface IOracleMiddlewareWithChainlinkDataStreams is ICommonOracleMiddleware, IChainlinkDataStreamsOracle {
+interface IOracleMiddlewareWithDataStreams is ICommonOracleMiddleware, IChainlinkDataStreamsOracle {
     /* -------------------------------------------------------------------------- */
     /*                               Owner features                               */
     /* -------------------------------------------------------------------------- */
