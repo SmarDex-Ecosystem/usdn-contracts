@@ -5,21 +5,23 @@ import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracl
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { CommonOracleMiddleware, OracleMiddlewareWithPyth } from "./OracleMiddlewareWithPyth.sol";
+import { CommonOracleMiddleware, OracleMiddlewareWithDataStreams } from "./OracleMiddlewareWithDataStreams.sol";
 
 /**
  * @title Middleware Implementation For Short ETH Protocol
  * @notice This contract is used to get the "inverse" price in ETH/WUSDN denomination, so that it can be used for a
  * shorting version of the USDN protocol with WUSDN as the underlying asset.
+ * @dev This version uses Pyth or Chainlink Data Streams for liquidations, and only Chainlink Data Streams for
+ * validation actions.
  */
-contract WusdnToEthOracleMiddleware is OracleMiddlewareWithPyth {
+contract WusdnToEthOracleMiddlewareWithDataStreams is OracleMiddlewareWithDataStreams {
     /// @dev One dollar with the middleware decimals.
     uint256 internal constant ONE_DOLLAR = 10 ** MIDDLEWARE_DECIMALS;
 
     /// @dev Max divisor from the USDN token (as constant for gas optimisation).
     uint256 internal constant USDN_MAX_DIVISOR = 1e18;
 
-    /// @dev Numerator for the price calculation in {WusdnToEthOracleMiddleware.parseAndValidatePrice}.
+    /// @dev Numerator for the price calculation in {WusdnToEthOracleMiddlewareWithPyth.parseAndValidatePrice}.
     uint256 internal constant PRICE_NUMERATOR = 10 ** MIDDLEWARE_DECIMALS * ONE_DOLLAR * USDN_MAX_DIVISOR;
 
     /// @notice The USDN token address.
@@ -31,14 +33,27 @@ contract WusdnToEthOracleMiddleware is OracleMiddlewareWithPyth {
      * @param chainlinkPriceFeed The address of the ETH Chainlink price feed.
      * @param usdnToken The address of the USDN token.
      * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale.
+     * @param chainlinkProxyVerifierAddress The address of the Chainlink proxy verifier contract.
+     * @param chainlinkStreamId The Chainlink data stream ID for ETH/USD.
      */
     constructor(
         address pythContract,
         bytes32 pythPriceID,
         address chainlinkPriceFeed,
         address usdnToken,
-        uint256 chainlinkTimeElapsedLimit
-    ) OracleMiddlewareWithPyth(pythContract, pythPriceID, chainlinkPriceFeed, chainlinkTimeElapsedLimit) {
+        uint256 chainlinkTimeElapsedLimit,
+        address chainlinkProxyVerifierAddress,
+        bytes32 chainlinkStreamId
+    )
+        OracleMiddlewareWithDataStreams(
+            pythContract,
+            pythPriceID,
+            chainlinkPriceFeed,
+            chainlinkTimeElapsedLimit,
+            chainlinkProxyVerifierAddress,
+            chainlinkStreamId
+        )
+    {
         USDN = IUsdn(usdnToken);
     }
 
