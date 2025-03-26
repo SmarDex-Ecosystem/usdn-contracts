@@ -7,7 +7,7 @@ import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { UsdnWstethConfig } from "./deploymentConfigs/UsdnWstethConfig.sol";
+import { UsdnWstethUsdConfig } from "./deploymentConfigs/UsdnWstethUsdConfig.sol";
 import { Utils } from "./utils/Utils.s.sol";
 
 import { LiquidationRewardsManagerWstEth } from "../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
@@ -22,7 +22,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract DeployUsdnWsteth is UsdnWstethConfig, Script {
+contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
     Utils utils;
 
     constructor() {
