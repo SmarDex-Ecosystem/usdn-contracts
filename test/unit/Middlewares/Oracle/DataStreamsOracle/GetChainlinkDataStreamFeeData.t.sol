@@ -13,10 +13,10 @@ contract TestOracleMiddlewareWithDataStreamFeeData is OracleMiddlewareWithDataSt
     }
 
     /**
-     * @custom:scenario Tests the `getChainlinkDataStreamFeeData` function.
+     * @custom:scenario Tests the `_getChainlinkDataStreamFeeData` function.
      * @custom:when The function is called.
-     * @custom:then The fee data assetAddress equal to weth address.
-     * @custom:and The fee data amount equal to report nativeFee.
+     * @custom:then The `feeData.assetAddress` should match the address of WETH.
+     * @custom:and The `feeData.amount` should be equal to the `report.nativeFee`.
      */
     function test_getChainlinkDataStreamFeeData() public view {
         IFeeManager.Asset memory feeData = oracleMiddleware.i_getChainlinkDataStreamFeeData(payload);
@@ -26,8 +26,8 @@ contract TestOracleMiddlewareWithDataStreamFeeData is OracleMiddlewareWithDataSt
     }
 
     /**
-     * @custom:scenario Tests the `getChainlinkDataStreamFeeData` function without a fee manager.
-     * @custom:when The function is called.
+     * @custom:scenario Tests the `_getChainlinkDataStreamFeeData` function with an empty fee manager.
+     * @custom:when The function is called with an empty fee manager.
      * @custom:then The fee data must be empty.
      */
     function test_getChainlinkDataStreamFeeDataWithoutFeeManager() public {

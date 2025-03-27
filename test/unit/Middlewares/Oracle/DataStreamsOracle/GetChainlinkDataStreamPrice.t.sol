@@ -16,8 +16,8 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
 
     /**
      * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with a large fee.
-     * @custom:when The function is called.
-     * @custom:then It should revert with `OracleMiddlewareDataStreamFeeSafeguard`.
+     * @custom:when The function is called with a large fee.
+     * @custom:then The call should revert with `OracleMiddlewareDataStreamFeeSafeguard`.
      */
     function test_RevertWhen_getChainlinkDataStreamPriceFeeSafeguard() public {
         report.nativeFee = type(uint192).max;
@@ -27,9 +27,9 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
     }
 
     /**
-     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with a incorrect fee.
-     * @custom:when The function is called.
-     * @custom:then It should revert with `OracleMiddlewareIncorrectFee`.
+     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with an incorrect fee.
+     * @custom:when The function is called with an incorrect fee.
+     * @custom:then The call should revert with `OracleMiddlewareIncorrectFee`.
      */
     function test_RevertWhen_getChainlinkDataStreamPriceIncorrectFee() public {
         vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
@@ -37,9 +37,9 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
     }
 
     /**
-     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with a incorrect report version.
-     * @custom:when The function is called.
-     * @custom:then It should revert with `OracleMiddlewareInvalidReportVersion`.
+     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with an incorrect report version.
+     * @custom:when The function is called with an incorrect report version.
+     * @custom:then The call should revert with `OracleMiddlewareInvalidReportVersion`.
      */
     function test_RevertWhen_getChainlinkDataStreamPriceIncorrectReportVersion() public {
         report.feedId = EMPTY_STREAM_V4;
@@ -49,9 +49,9 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
     }
 
     /**
-     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with a invalid stream id.
-     * @custom:when The function is called.
-     * @custom:then It should revert with `OracleMiddlewareInvalidStreamId`.
+     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with an invalid stream id.
+     * @custom:when The function is called  with an invalid stream id.
+     * @custom:then The call should revert with `OracleMiddlewareInvalidStreamId`.
      */
     function test_RevertWhen_getChainlinkDataStreamPriceInvalidStreamId() public {
         report.feedId = bytes32(uint256(EMPTY_STREAM_V3) | 1);
@@ -61,10 +61,10 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
     }
 
     /**
-     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with a invalid timestamp
-     * payload without target timestamp.
+     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with an invalid timestamp
+     * payload that lacks a target timestamp.
      * @custom:when The function is called.
-     * @custom:then It should revert with `OracleMiddlewareDataStreamInvalidTimestamp`.
+     * @custom:then The call should revert with `OracleMiddlewareDataStreamInvalidTimestamp`.
      */
     function test_RevertWhen_getChainlinkDataStreamPriceInvalidTimestampWithoutTargetTimestamp() public {
         report.validFromTimestamp = 0;
@@ -74,10 +74,10 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
     }
 
     /**
-     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with a invalid timestamp
-     * payload and a target timestamp lower than the report `validFromTimestamp`.
+     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with an invalid timestamp
+     * payload and a target timestamp that is lower than the report's `validFromTimestamp`.
      * @custom:when The function is called.
-     * @custom:then It should revert with `OracleMiddlewareDataStreamInvalidTimestamp`.
+     * @custom:then The call should revert with `OracleMiddlewareDataStreamInvalidTimestamp`.
      */
     function test_RevertWhen_getChainlinkDataStreamPriceInvalidTimestampWithTargetTimestampLtValidFromTimestamp()
         public
@@ -89,10 +89,10 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
     }
 
     /**
-     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with a invalid timestamp
-     * payload and a target timestamp greater than the report `observationsTimestamp`.
+     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with an invalid timestamp
+     * payload and a target timestamp that is greater than the report's `observationsTimestamp`.
      * @custom:when The function is called.
-     * @custom:then It should revert with `OracleMiddlewareDataStreamInvalidTimestamp`.
+     * @custom:then The call should revert with `OracleMiddlewareDataStreamInvalidTimestamp`.
      */
     function test_RevertWhen_getChainlinkDataStreamPriceInvalidTimestampWithTargetTimestampGtObservationsTimestamp()
         public
@@ -104,10 +104,10 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
     }
 
     /**
-     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with a invalid timestamp
-     * payload and a target limit lower than the report `observationsTimestamp`.
+     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with an invalid timestamp
+     * payload and a target limit that is lower than the report's `observationsTimestamp`.
      * @custom:when The function is called.
-     * @custom:then It should revert with `OracleMiddlewareDataStreamInvalidTimestamp`.
+     * @custom:then The call should revert with `OracleMiddlewareDataStreamInvalidTimestamp`.
      */
     function test_RevertWhen_getChainlinkDataStreamPriceInvalidTimestampWithTargetLimitLtObservationsTimestamp()
         public
@@ -119,9 +119,9 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
     }
 
     /**
-     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with a report price equal zero.
+     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with a report price equal to zero.
      * @custom:when The function is called.
-     * @custom:then It should revert with `OracleMiddlewareWrongPrice`.
+     * @custom:then The call should revert with `OracleMiddlewareWrongPrice`.
      */
     function test_RevertWhen_getChainlinkDataStreamPriceInvalidTimestampWithInvalidPrice() public {
         report.price = 0;
@@ -131,9 +131,9 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
     }
 
     /**
-     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with a report ask price equal zero.
+     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with a report ask price equal to zero.
      * @custom:when The function is called.
-     * @custom:then It should revert with `OracleMiddlewareWrongAskPrice`.
+     * @custom:then The call should revert with `OracleMiddlewareWrongAskPrice`.
      */
     function test_RevertWhen_getChainlinkDataStreamPriceInvalidTimestampWithInvalidAskPrice() public {
         report.ask = 0;
@@ -143,9 +143,9 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
     }
 
     /**
-     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with a report bid price equal zero.
+     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with a report bid price equal to zero.
      * @custom:when The function is called.
-     * @custom:then It should revert with `OracleMiddlewareWrongBidPrice`.
+     * @custom:then The call should revert with `OracleMiddlewareWrongBidPrice`.
      */
     function test_RevertWhen_getChainlinkDataStreamPriceInvalidTimestampWithInvalidBidPrice() public {
         report.bid = 0;
@@ -157,9 +157,9 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
     /**
      * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function.
      * @custom:when The function is called.
-     * @custom:then The transaction must be successful.
-     * @custom:and The verified report must be equal to the report.
-     * @custom:and The fee manager weth balance must be equal to the report nativeFee value.
+     * @custom:then The transaction should be successful.
+     * @custom:and The verified report must match the report.
+     * @custom:and The fee manager's WETH balance must equal the report's nativeFee value.
      */
     function test_getChainlinkDataStreamPrice() public {
         FormattedDataStreamsPrice memory formattedReport =

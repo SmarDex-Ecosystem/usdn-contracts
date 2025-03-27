@@ -11,9 +11,9 @@ contract TestOracleMiddlewareWithDataStreamsValidationCost is OracleMiddlewareWi
     }
 
     /**
-     * @custom:scenario Tests the `validationCost` with Chainlink onchain.
-     * @custom:when The function is called.
-     * @custom:then The fee must be equal 0.
+     * @custom:scenario Tests the `validationCost` function when using Chainlink on-chain.
+     * @custom:when The function is called without fee data.
+     * @custom:then The fee returned by the function must be equal to 0.
      */
     function test_validationCostWithChainlinkOnchain() public view {
         bytes[] memory pythUpdateFees = new bytes[](1);
@@ -24,9 +24,9 @@ contract TestOracleMiddlewareWithDataStreamsValidationCost is OracleMiddlewareWi
     }
 
     /**
-     * @custom:scenario Tests the `validationCost` with a Pyth data.
-     * @custom:when The function is called.
-     * @custom:then The fee must be equal to the Pyth fee.
+     * @custom:scenario Tests the `validationCost` function with Pyth data.
+     * @custom:when The function is called with a valid Pyth data.
+     * @custom:then The fee returned by the function must be equal to the Pyth fee.
      */
     function test_validationCostWithPyth() public view {
         bytes[] memory pythUpdateFees = new bytes[](1);
@@ -37,9 +37,9 @@ contract TestOracleMiddlewareWithDataStreamsValidationCost is OracleMiddlewareWi
     }
 
     /**
-     * @custom:scenario Tests the `validationCost` with a Chainlink data stream payload.
-     * @custom:when The function is called.
-     * @custom:then The fee must be equal to the report native fee.
+     * @custom:scenario Tests the `validationCost` function with a Chainlink data stream payload.
+     * @custom:when The function is called with a valid Chainlink data stream payload.
+     * @custom:then The fee returned by the function must be equal to the report's native fee.
      */
     function test_validationCostWithDataStream() public view {
         uint256 fee = oracleMiddleware.validationCost(payload, actions[0]);

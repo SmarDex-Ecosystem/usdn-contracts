@@ -10,9 +10,9 @@ contract TestOracleMiddlewareWithDataStreamsSetRecentPriceDelay is OracleMiddlew
     }
 
     /**
-     * @custom:scenario Tests the `setDataStreamsRecentPriceDelay` with a low delay.
-     * @custom:when The function is called.
-     * @custom:then It should revert with `OracleMiddlewareInvalidRecentPriceDelay`.
+     * @custom:scenario Tests the `setDataStreamsRecentPriceDelay` function with a low delay.
+     * @custom:when The function is called with a delay value considered too low.
+     * @custom:then The call should revert with `OracleMiddlewareInvalidRecentPriceDelay`.
      */
     function test_RevertWhen_setRecentPriceDelayLowDelay() public {
         uint64 delay; // = 0
@@ -21,9 +21,9 @@ contract TestOracleMiddlewareWithDataStreamsSetRecentPriceDelay is OracleMiddlew
     }
 
     /**
-     * @custom:scenario Tests the `setDataStreamsRecentPriceDelay` with a high delay.
-     * @custom:when The function is called.
-     * @custom:then It should revert with `OracleMiddlewareInvalidRecentPriceDelay`.
+     * @custom:scenario Tests the `setDataStreamsRecentPriceDelay` function with a high delay.
+     * @custom:when The function is called with a delay value that exceeds the allowed limit.
+     * @custom:then The call should revert with `OracleMiddlewareInvalidRecentPriceDelay`.
      */
     function test_RevertWhen_setRecentPriceDelayHighDelay() public {
         uint64 delay = type(uint64).max;
@@ -32,9 +32,10 @@ contract TestOracleMiddlewareWithDataStreamsSetRecentPriceDelay is OracleMiddlew
     }
 
     /**
-     * @custom:scenario Tests the `setDataStreamsRecentPriceDelay` with a valid delay.
-     * @custom:when The function is called.
-     * @custom:then The `_dataStreamsRecentPriceDelay` value must be updated.
+     * @custom:scenario Tests the `setDataStreamsRecentPriceDelay` function with a valid delay.
+     * @custom:when The function is called with a delay that meets all specified criteria.
+     * @custom:then The transaction must be successful.
+     * @custom:and The `_dataStreamsRecentPriceDelay` value must be updated to the new valid delay.
      */
     function test_setRecentPriceDelayValidDelay() public {
         uint64 delay = 1 minutes;

@@ -9,7 +9,7 @@ import {
     PriceInfo
 } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
-/// @custom:feature The `_getLowLatencyPrice` function of the `OracleMiddlewareWithDataStreams`.
+/// @custom:feature The `_adjustDataStreamPrice` function of the `OracleMiddlewareWithDataStreams`.
 contract TestOracleMiddlewareWithDataStreamsAdjustDataStream is OracleMiddlewareWithDataStreamsFixture {
     FormattedDataStreamsPrice internal formattedPrice;
 
@@ -26,8 +26,8 @@ contract TestOracleMiddlewareWithDataStreamsAdjustDataStream is OracleMiddleware
 
     /**
      * @custom:scenario Tests the `_adjustDataStreamPrice` without adjustment.
-     * @custom:when The function is called.
-     * @custom:then The price info must be returned as expected.
+     * @custom:when The function is called without direction of the price adjustment.
+     * @custom:then The returned price is the `price` attribute of the report.
      */
     function test_adjustDataStreamPriceWithoutAdjustment() public view {
         PriceInfo memory price = oracleMiddleware.i_adjustDataStreamPrice(formattedPrice, PriceAdjustment.None);
@@ -37,9 +37,9 @@ contract TestOracleMiddlewareWithDataStreamsAdjustDataStream is OracleMiddleware
     }
 
     /**
-     * @custom:scenario Tests the `_adjustDataStreamPrice` with a up adjustment.
-     * @custom:when The function is called.
-     * @custom:then The price info must be returned as expected.
+     * @custom:scenario Tests the `_adjustDataStreamPrice` with a `Up` adjustment.
+     * @custom:when The function is called with `Up` for the direction of the price adjustment.
+     * @custom:then The returned price is the `ask` attribute of the report.
      */
     function test_adjustDataStreamPriceWithUpAdjustment() public view {
         PriceInfo memory price = oracleMiddleware.i_adjustDataStreamPrice(formattedPrice, PriceAdjustment.Up);
@@ -49,9 +49,9 @@ contract TestOracleMiddlewareWithDataStreamsAdjustDataStream is OracleMiddleware
     }
 
     /**
-     * @custom:scenario Tests the `_adjustDataStreamPrice` with a down adjustment.
-     * @custom:when The function is called.
-     * @custom:then The price info must be returned as expected.
+     * @custom:scenario Tests the `_adjustDataStreamPrice` with a `Down` adjustment.
+     * @custom:when The function is called with `Down` for the direction of the price adjustment.
+     * @custom:then The returned price is the `bid` attribute of the report.
      */
     function test_adjustDataStreamPriceWithDownAdjustment() public view {
         PriceInfo memory price = oracleMiddleware.i_adjustDataStreamPrice(formattedPrice, PriceAdjustment.Down);

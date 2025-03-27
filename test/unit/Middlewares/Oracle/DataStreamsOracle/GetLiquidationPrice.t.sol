@@ -15,9 +15,9 @@ contract TestOracleMiddlewareWithDataStreamsGetLiquidationPrice is OracleMiddlew
     }
 
     /**
-     * @custom:scenario Tests the `_getLiquidationPrice` with a Pyth price.
+     * @custom:scenario Tests the `_getLiquidationPrice` function using a Pyth price.
      * @custom:when The function is called.
-     * @custom:then The price info must be equal to the Pyth price.
+     * @custom:then The returned price should match the price from Pyth.
      */
     function test_getLiquidationPriceWithPyth() public {
         bytes[] memory pythUpdateFees = new bytes[](1);
@@ -34,9 +34,9 @@ contract TestOracleMiddlewareWithDataStreamsGetLiquidationPrice is OracleMiddlew
     }
 
     /**
-     * @custom:scenario Tests the `_getLiquidationPrice` with a Chainlink data stream price.
+     * @custom:scenario Tests the `_getLiquidationPrice` function using a Chainlink data stream price.
      * @custom:when The function is called.
-     * @custom:then The price info must be equal to the Chainlink data stream report.
+     * @custom:then The returned price should match the report from the Chainlink data stream.
      */
     function test_getLiquidationPriceWithDatastream() public {
         PriceInfo memory price = oracleMiddleware.i_getLiquidationPrice{ value: report.nativeFee }(payload);

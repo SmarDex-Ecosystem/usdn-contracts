@@ -8,14 +8,14 @@ import { OracleMiddlewareWithDataStreamsFixture } from "../../utils/Fixtures.sol
 
 import { PriceAdjustment, PriceInfo } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
-/// @custom:feature The `i_getInitiateActionPrice` function of the `OracleMiddlewareWithDataStreams`.
+/// @custom:feature The `_getInitiateActionPrice` function of the `OracleMiddlewareWithDataStreams`.
 contract TestOracleMiddlewareWithDataStreamsGetInitiateActionPrice is OracleMiddlewareWithDataStreamsFixture {
     function setUp() public override {
         super.setUp();
     }
 
     /**
-     * @custom:scenario Tests the `i_getInitiateActionPrice` with chainlink data stream.
+     * @custom:scenario Tests the `_getInitiateActionPrice` with chainlink data stream.
      * @custom:when The function is called.
      * @custom:then The price info must be equal to the data stream report.
      */
@@ -29,7 +29,7 @@ contract TestOracleMiddlewareWithDataStreamsGetInitiateActionPrice is OracleMidd
     }
 
     /**
-     * @custom:scenario Tests the `i_getInitiateActionPrice` with a chainlink onchain price and a eth value.
+     * @custom:scenario Tests the `_getInitiateActionPrice` with a chainlink onchain price and a eth value.
      * @custom:when The function is called.
      * @custom:then It should revert with `OracleMiddlewareIncorrectFee`.
      */
@@ -39,7 +39,7 @@ contract TestOracleMiddlewareWithDataStreamsGetInitiateActionPrice is OracleMidd
     }
 
     /**
-     * @custom:scenario Tests the `i_getInitiateActionPrice` with a unsafe Pyth price and a old timestamp.
+     * @custom:scenario Tests the `_getInitiateActionPrice` with a unsafe Pyth price and a old timestamp.
      * @custom:when The function is called.
      * @custom:then It should revert with `OracleMiddlewarePriceTooOld`.
      */
@@ -54,7 +54,7 @@ contract TestOracleMiddlewareWithDataStreamsGetInitiateActionPrice is OracleMidd
     }
 
     /**
-     * @custom:scenario Tests the `i_getInitiateActionPrice` with a unsafe Pyth price.
+     * @custom:scenario Tests the `_getInitiateActionPrice` with a unsafe Pyth price.
      * @custom:when The function is called.
      * @custom:then The price info must be equal to the unsafe Pyth price.
      */
@@ -77,7 +77,7 @@ contract TestOracleMiddlewareWithDataStreamsGetInitiateActionPrice is OracleMidd
     }
 
     /**
-     * @custom:scenario Tests the `i_getInitiateActionPrice` with a old chainlink onchain price.
+     * @custom:scenario Tests the `_getInitiateActionPrice` with a old chainlink onchain price.
      * @custom:when The function is called.
      * @custom:then It should revert with `OracleMiddlewarePriceTooOld`.
      */
@@ -90,7 +90,7 @@ contract TestOracleMiddlewareWithDataStreamsGetInitiateActionPrice is OracleMidd
     }
 
     /**
-     * @custom:scenario Tests the `i_getInitiateActionPrice` with a wrong chainlink onchain price.
+     * @custom:scenario Tests the `_getInitiateActionPrice` with a wrong chainlink onchain price.
      * @custom:when The function is called.
      * @custom:then It should revert with `OracleMiddlewareWrongPrice`.
      */
@@ -105,7 +105,7 @@ contract TestOracleMiddlewareWithDataStreamsGetInitiateActionPrice is OracleMidd
     }
 
     /**
-     * @custom:scenario Tests the `i_getInitiateActionPrice` with chainlink onchain.
+     * @custom:scenario Tests the `_getInitiateActionPrice` with chainlink onchain.
      * @custom:when The function is called.
      * @custom:then The price info must be equal to the chainlink onchain price.
      */
