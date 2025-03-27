@@ -25,7 +25,7 @@ contract TestOracleMiddlewareWithDataStreamsAdjustDataStream is OracleMiddleware
     }
 
     /**
-     * @custom:scenario Tests the `_adjustDataStreamPrice` without adjustment.
+     * @custom:scenario Tests the `_adjustDataStreamPrice` without any adjustments.
      * @custom:when The function is called without direction of the price adjustment.
      * @custom:then The returned price is the `price` attribute of the report.
      */

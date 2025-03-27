@@ -15,7 +15,8 @@ contract TestOracleMiddlewareWithDataStreamFeeData is OracleMiddlewareWithDataSt
     /**
      * @custom:scenario Tests the `_getChainlinkDataStreamFeeData` function.
      * @custom:when The function is called.
-     * @custom:then The `feeData.assetAddress` should match the address of WETH.
+     * @custom:then The transaction must be successful.
+     * @custom:and The `feeData.assetAddress` should match the address of WETH.
      * @custom:and The `feeData.amount` should be equal to the `report.nativeFee`.
      */
     function test_getChainlinkDataStreamFeeData() public view {
@@ -28,7 +29,8 @@ contract TestOracleMiddlewareWithDataStreamFeeData is OracleMiddlewareWithDataSt
     /**
      * @custom:scenario Tests the `_getChainlinkDataStreamFeeData` function with an empty fee manager.
      * @custom:when The function is called with an empty fee manager.
-     * @custom:then The fee data must be empty.
+     * @custom:then The transaction must be successful.
+     * @custom:and The fee data must be empty.
      */
     function test_getChainlinkDataStreamFeeDataWithoutFeeManager() public {
         mockStreamVerifierProxy.setFeeManager(IVerifierFeeManager(address(0)));

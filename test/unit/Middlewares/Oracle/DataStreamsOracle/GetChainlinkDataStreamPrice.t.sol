@@ -37,8 +37,8 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
     }
 
     /**
-     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with an incorrect report version.
-     * @custom:when The function is called with an incorrect report version.
+     * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function with an invalid report version.
+     * @custom:when The function is called with an invalid report version.
      * @custom:then The call should revert with `OracleMiddlewareInvalidReportVersion`.
      */
     function test_RevertWhen_getChainlinkDataStreamPriceIncorrectReportVersion() public {
@@ -157,8 +157,8 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
     /**
      * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function.
      * @custom:when The function is called.
-     * @custom:then The transaction should be successful.
-     * @custom:and The verified report must match the report.
+     * @custom:then The transaction must be successful.
+     * @custom:and The verified report must match the Chainlink data streams report.
      * @custom:and The fee manager's WETH balance must equal the report's nativeFee value.
      */
     function test_getChainlinkDataStreamPrice() public {
