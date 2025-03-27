@@ -336,7 +336,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
      * @notice Gets the ratio of SDEX tokens to burn per minted USDN.
      * @return ratio_ The ratio (to be divided by SDEX_BURN_ON_DEPOSIT_DIVISOR).
      */
-    function getSdexBurnOnDepositRatio() external view returns (uint32 ratio_);
+    function getSdexBurnOnDepositRatio() external view returns (uint64 ratio_);
 
     /**
      * @notice Gets the amount of native tokens used as security deposit when opening a new position.
@@ -660,7 +660,7 @@ interface IUsdnProtocolFallback is IUsdnProtocolTypes {
      * constructor argument when the {UsdnProtocolFallback} contract is deployed and is stored in an immutable variable.
      * @param newRatio The new ratio.
      */
-    function setSdexBurnOnDepositRatio(uint32 newRatio) external;
+    function setSdexBurnOnDepositRatio(uint64 newRatio) external;
 
     /**
      * @notice Sets the security deposit value.

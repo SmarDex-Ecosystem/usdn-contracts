@@ -230,7 +230,7 @@ library UsdnProtocolSettersLibrary {
     }
 
     /// @notice See {UsdnProtocolFallback.setSdexBurnOnDepositRatio}.
-    function setSdexBurnOnDepositRatio(uint256 highestPossibleValue, uint32 newRatio) external {
+    function setSdexBurnOnDepositRatio(uint256 highestPossibleValue, uint64 newRatio) external {
         Types.Storage storage s = Utils._getMainStorage();
 
         if (newRatio > highestPossibleValue) {

@@ -314,7 +314,7 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getSdexBurnOnDepositRatio() external view returns (uint32 ratio_) {
+    function getSdexBurnOnDepositRatio() external view returns (uint64 ratio_) {
         return Utils._getMainStorage()._sdexBurnOnDepositRatio;
     }
 
@@ -590,7 +590,7 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+    function setSdexBurnOnDepositRatio(uint64 newRatio) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
         Setters.setSdexBurnOnDepositRatio(MAX_SDEX_BURN_RATIO, newRatio);
     }
 
