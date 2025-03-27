@@ -1,6 +1,6 @@
 {
   "name": "@smardex/usdn-contracts",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Contracts for the USDN token and derivatives protocol",
   "repository": {
     "type": "git",
@@ -34,7 +34,13 @@
     "verify": "tsx script/utils/verifyContracts.ts"
   },
   "main": "dist/index.js",
-  "files": ["dist", "docs", "src/**/*", "foundry.toml", "soldeer.lock"],
+  "files": [
+    "dist",
+    "docs",
+    "src/**/*",
+    "foundry.toml",
+    "soldeer.lock"
+  ],
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
     "@types/luxon": "^3.4.2",
