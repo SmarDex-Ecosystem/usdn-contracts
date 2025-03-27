@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
-import { MockFeeManager } from "../../../integration/Middlewares/ChainlinkDataStreamsOracle/utils/MockFeeManager.sol";
 import { PYTH_ETH_USD, REDSTONE_ETH_USD } from "../../../utils/Constants.sol";
 import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
@@ -13,8 +12,8 @@ import { MockChainlinkOnChain } from "../utils/MockChainlinkOnChain.sol";
 import { MockPyth } from "../utils/MockPyth.sol";
 import { EMPTY_STREAM_V3, STREAM_ETH_PRICE } from "./Constants.sol";
 import { OracleMiddlewareWithDataStreamsHandler } from "./Handler.sol";
+import { MockFeeManager } from "./MockFeeManager.sol";
 import { MockStreamVerifierProxy } from "./MockStreamVerifierProxy.sol";
-import { MockWETH } from "./MockWETH.sol";
 
 import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { WusdnToEthOracleMiddlewareWithPyth } from
@@ -147,8 +146,8 @@ contract OracleMiddlewareWithRedstoneFixture is BaseFixture, ActionsFixture {
 contract OracleMiddlewareWithDataStreamsFixture is BaseFixture, ActionsFixture {
     MockPyth internal mockPyth;
     MockChainlinkOnChain internal mockChainlinkOnChain;
-    MockFeeManager internal mockFeeManager;
     MockStreamVerifierProxy internal mockStreamVerifierProxy;
+    MockFeeManager internal mockFeeManager;
     OracleMiddlewareWithDataStreamsHandler internal oracleMiddleware;
     IVerifierProxy.ReportV3 internal report;
 
@@ -175,10 +174,6 @@ contract OracleMiddlewareWithDataStreamsFixture is BaseFixture, ActionsFixture {
             address(mockStreamVerifierProxy),
             EMPTY_STREAM_V3
         );
-
-        wethTargetAddress = mockFeeManager.i_nativeAddress();
-        bytes memory code = vm.getDeployedCode("MockWETH.sol");
-        vm.etch(wethTargetAddress, code);
 
         report = IVerifierProxy.ReportV3({
             feedId: EMPTY_STREAM_V3,
@@ -215,17 +210,16 @@ contract OracleMiddlewareWithDataStreamsFixture is BaseFixture, ActionsFixture {
         assertEq(priceFeeds[0].price.expo, -8);
         assertEq(priceFeeds[0].price.publishTime, 1000);
 
-        /* ---------------------- Test chainlink on chain mock ---------------------- */
+        /* ---------------------- Test Chainlink on chain mock ---------------------- */
         (, int256 price,, uint256 updatedAt,) = mockChainlinkOnChain.latestRoundData();
         assertEq(price, 2000e8);
         assertEq(updatedAt, block.timestamp);
 
-        /* --------------------- Test chainlink stream verifier --------------------- */
+        /* ------------------- Test Chainlink stream verifier mock ------------------ */
         assertEq(address(mockStreamVerifierProxy.s_feeManager()), address(mockFeeManager));
 
-        /* ----------------------- Test chainlink fee manager ----------------------- */
-        assertEq(mockFeeManager.i_nativeAddress(), wethTargetAddress);
-        assertEq(mockFeeManager.s_nativeSurcharge(), 0);
+        /* --------------------- Test Chainlink fee manager mock -------------------- */
+        assertEq(mockFeeManager.i_nativeAddress(), address(0));
     }
 
     function _encodeReport(IVerifierProxy.ReportV3 memory reportV3)

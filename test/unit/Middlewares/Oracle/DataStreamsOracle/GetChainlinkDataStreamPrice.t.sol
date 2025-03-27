@@ -159,7 +159,6 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
      * @custom:when The function is called.
      * @custom:then The transaction must be successful.
      * @custom:and The verified report must match the Chainlink data streams report.
-     * @custom:and The fee manager's WETH balance must equal the report's nativeFee value.
      */
     function test_getChainlinkDataStreamPrice() public {
         FormattedDataStreamsPrice memory formattedReport =
@@ -169,6 +168,5 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
         assertEq(int192(int256(formattedReport.price)), report.price, "Invalid price");
         assertEq(int192(int256(formattedReport.bid)), report.bid, "Invalid bid");
         assertEq(int192(int256(formattedReport.ask)), report.ask, "Invalid ask");
-        assertEq(IERC20(wethTargetAddress).balanceOf(address(mockFeeManager)), report.nativeFee, "Wrong weth balance");
     }
 }
