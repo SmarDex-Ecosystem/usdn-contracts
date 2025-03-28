@@ -19,7 +19,7 @@ import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol"
  */
 contract Upgrade is UsdnWstethUsdConfig, Script {
     IUsdnProtocol constant USDN_PROTOCOL = IUsdnProtocol(0x656cB8C6d154Aad29d8771384089be5B5141f01a);
-    bytes32 ImplAddrLocation = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+    bytes32 constant IMPL_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
     Utils utils;
 
@@ -37,7 +37,7 @@ contract Upgrade is UsdnWstethUsdConfig, Script {
             USDN_PROTOCOL.hasRole(Constants.PROXY_UPGRADE_ROLE, msg.sender),
             "Sender does not have the permission to upgrade the protocol"
         );
-        bytes32 oldImpl = vm.load(address(USDN_PROTOCOL), ImplAddrLocation);
+        bytes32 oldImpl = vm.load(address(USDN_PROTOCOL), IMPL_SLOT);
 
         vm.startBroadcast();
 
@@ -47,7 +47,7 @@ contract Upgrade is UsdnWstethUsdConfig, Script {
             address(newUsdnProtocolImpl_),
             abi.encodeWithSelector(UsdnProtocolImpl.initializeStorageV2.selector, address(newUsdnProtocolFallback_))
         );
-        bytes32 newImpl = vm.load(address(USDN_PROTOCOL), ImplAddrLocation);
+        bytes32 newImpl = vm.load(address(USDN_PROTOCOL), IMPL_SLOT);
         require(oldImpl != newImpl, "Upgrade failed");
         require(address(uint160(uint256(newImpl))) == address(newUsdnProtocolImpl_), "Upgrade failed");
 
