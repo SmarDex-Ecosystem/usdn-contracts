@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v1.1.0...v1.1.1) (2025-03-28)
+
+
+### Build System
+
+* **npm:** add the 'typescript' dependency to fix the `exportAbi` command ([#896](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/896)) ([a01bc4f](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a01bc4f6b972b56fb34978b4ac9085493e1e3feb))
+
 ## [1.1.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v1.0.1...v1.1.0) (2025-03-27)
 
 
