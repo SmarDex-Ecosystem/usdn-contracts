@@ -3,23 +3,21 @@ pragma solidity 0.8.26;
 
 import { IVerifierProxy } from "../../../../../src/interfaces/OracleMiddleware/IVerifierProxy.sol";
 
-interface IVerifierFeeManager {
-    function processFee(bytes calldata payload, bytes calldata parameterPayload, address subscriber) external payable;
-}
+import { IMockFeeManager } from "./MockFeeManager.sol";
 
 contract MockStreamVerifierProxy {
-    IVerifierFeeManager public s_feeManager;
+    IMockFeeManager public s_feeManager;
 
     constructor(address feeManagerAddress) {
-        s_feeManager = IVerifierFeeManager(feeManagerAddress);
+        s_feeManager = IMockFeeManager(feeManagerAddress);
     }
 
-    function setFeeManager(IVerifierFeeManager newFeeManager) external {
+    function setFeeManager(IMockFeeManager newFeeManager) external {
         s_feeManager = newFeeManager;
     }
 
     function verify(bytes calldata payload, bytes calldata) external payable returns (bytes memory reportData_) {
-        IVerifierFeeManager feeManager = s_feeManager;
+        IMockFeeManager feeManager = s_feeManager;
 
         (, reportData_) = abi.decode(payload, (bytes32[3], bytes));
 

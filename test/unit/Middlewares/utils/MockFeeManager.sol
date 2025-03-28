@@ -4,7 +4,16 @@ pragma solidity 0.8.26;
 import { IFeeManager } from "../../../../../src/interfaces/OracleMiddleware/IFeeManager.sol";
 import { IVerifierProxy } from "../../../../../src/interfaces/OracleMiddleware/IVerifierProxy.sol";
 
-contract MockFeeManager {
+interface IMockFeeManager {
+    function i_nativeAddress() external pure returns (address);
+
+    function getFeeAndReward(address, bytes calldata reportData, address)
+        external
+        pure
+        returns (IFeeManager.Asset memory feeData_, IFeeManager.Asset memory rewardData_, uint256 discount_);
+}
+
+contract MockFeeManager is IMockFeeManager {
     address internal constant NATIVE_ADDRESS = address(1);
 
     function i_nativeAddress() external pure returns (address) {

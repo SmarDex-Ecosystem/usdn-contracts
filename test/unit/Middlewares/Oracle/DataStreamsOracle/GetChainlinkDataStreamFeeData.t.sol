@@ -2,9 +2,10 @@
 pragma solidity 0.8.26;
 
 import { OracleMiddlewareWithDataStreamsFixture } from "../../utils/Fixtures.sol";
-import { IVerifierFeeManager } from "../../utils/MockStreamVerifierProxy.sol";
 
 import { IFeeManager } from "../../../../../src/interfaces/OracleMiddleware/IFeeManager.sol";
+
+import { IMockFeeManager } from "../../utils/MockFeeManager.sol";
 
 /// @custom:feature The `_getChainlinkDataStreamFeeData` function of the `ChainlinkDataStreamsOracle`.
 contract TestOracleMiddlewareWithDataStreamFeeData is OracleMiddlewareWithDataStreamsFixture {
@@ -31,7 +32,7 @@ contract TestOracleMiddlewareWithDataStreamFeeData is OracleMiddlewareWithDataSt
      * @custom:then The fee data must be empty.
      */
     function test_getChainlinkDataStreamFeeDataWithoutFeeManager() public {
-        IVerifierFeeManager emptyFeeManager = IVerifierFeeManager(address(0));
+        IMockFeeManager emptyFeeManager = IMockFeeManager(address(0));
         mockStreamVerifierProxy.setFeeManager(emptyFeeManager);
         IFeeManager.Asset memory feeData = oracleMiddleware.i_getChainlinkDataStreamFeeData(payload);
 

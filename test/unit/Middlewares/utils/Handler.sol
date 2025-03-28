@@ -69,7 +69,7 @@ contract OracleMiddlewareWithDataStreamsHandler is OracleMiddlewareWithDataStrea
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                  OracleMiddlewareWithDataStreams                  */
+    /*                       OracleMiddlewareWithDataStreams                      */
     /* -------------------------------------------------------------------------- */
 
     function i_getLowLatencyPrice(
