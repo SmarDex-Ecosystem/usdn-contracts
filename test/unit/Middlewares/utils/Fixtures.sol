@@ -218,7 +218,7 @@ contract OracleMiddlewareWithDataStreamsFixture is BaseFixture, ActionsFixture {
         assertEq(address(mockStreamVerifierProxy.s_feeManager()), address(mockFeeManager));
 
         /* --------------------- Test Chainlink fee manager mock -------------------- */
-        assertEq(mockFeeManager.i_nativeAddress(), address(0));
+        assertEq(mockFeeManager.i_nativeAddress(), address(1));
     }
 
     function _encodeReport(IVerifierProxy.ReportV3 memory reportV3)

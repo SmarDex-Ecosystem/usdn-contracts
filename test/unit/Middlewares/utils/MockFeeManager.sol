@@ -5,8 +5,10 @@ import { IFeeManager } from "../../../../../src/interfaces/OracleMiddleware/IFee
 import { IVerifierProxy } from "../../../../../src/interfaces/OracleMiddleware/IVerifierProxy.sol";
 
 contract MockFeeManager {
+    address internal constant NATIVE_ADDRESS = address(1);
+
     function i_nativeAddress() external pure returns (address) {
-        return address(1);
+        return NATIVE_ADDRESS;
     }
 
     function getFeeAndReward(address, bytes calldata reportData, address)
@@ -15,7 +17,7 @@ contract MockFeeManager {
         returns (IFeeManager.Asset memory feeData_, IFeeManager.Asset memory rewardData_, uint256 discount_)
     {
         IVerifierProxy.ReportV3 memory report = abi.decode(reportData, (IVerifierProxy.ReportV3));
-        feeData_.amount = report.nativeFee;
+        feeData_ = IFeeManager.Asset({ amount: report.nativeFee, assetAddress: NATIVE_ADDRESS });
         return (feeData_, rewardData_, discount_);
     }
 }

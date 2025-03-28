@@ -33,10 +33,11 @@ contract TestOracleMiddlewareWithDataStreamFeeData is OracleMiddlewareWithDataSt
      * @custom:and The fee data must be empty.
      */
     function test_getChainlinkDataStreamFeeDataWithoutFeeManager() public {
-        mockStreamVerifierProxy.setFeeManager(IVerifierFeeManager(address(0)));
+        IVerifierFeeManager emptyFeeManager = IVerifierFeeManager(address(0));
+        mockStreamVerifierProxy.setFeeManager(emptyFeeManager);
         IFeeManager.Asset memory feeData = oracleMiddleware.i_getChainlinkDataStreamFeeData(payload);
 
-        assertEq(feeData.assetAddress, address(0), "Wrong fee native address");
+        assertEq(feeData.assetAddress, address(emptyFeeManager), "Wrong fee native address");
         assertEq(feeData.amount, 0, "Wrong fee amount");
     }
 }
