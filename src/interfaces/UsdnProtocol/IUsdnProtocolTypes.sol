@@ -624,6 +624,7 @@ interface IUsdnProtocolTypes {
      * @param _tickBitmap The bitmap used to quickly find populated ticks.
      * @param _protocolFallbackAddr The address of the fallback contract.
      * @param _nonce The user EIP712 nonce.
+     * @param __unused Old slot for `_sdexBurnOnDepositRatio`.
      */
     struct Storage {
         // immutable
@@ -660,7 +661,7 @@ interface IUsdnProtocolTypes {
         uint16 _positionFeeBps;
         uint16 _vaultFeeBps;
         uint16 _sdexRewardsRatioBps;
-        uint32 _sdexBurnOnDepositRatio;
+        uint32 __unused;
         address _feeCollector;
         uint64 _securityDepositValue;
         uint128 _targetUsdnPrice;
@@ -692,6 +693,7 @@ interface IUsdnProtocolTypes {
         address _protocolFallbackAddr;
         // EIP712
         mapping(address => uint256) _nonce;
+        uint64 _sdexBurnOnDepositRatio;
     }
 
     /**
@@ -763,7 +765,7 @@ interface IUsdnProtocolTypes {
         uint16 positionFeeBps;
         uint16 vaultFeeBps;
         uint16 sdexRewardsRatioBps;
-        uint32 sdexBurnOnDepositRatio;
+        uint64 sdexBurnOnDepositRatio;
         address feeCollector;
         uint64 securityDepositValue;
         uint128 targetUsdnPrice;

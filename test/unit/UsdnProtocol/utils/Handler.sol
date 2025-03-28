@@ -377,7 +377,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         return Utils._getOraclePrice(action, timestamp, actionId, priceData);
     }
 
-    function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external pure returns (uint256) {
+    function i_calcSdexToBurn(uint256 usdnAmount, uint64 sdexBurnRatio) external pure returns (uint256) {
         return Utils._calcSdexToBurn(usdnAmount, sdexBurnRatio);
     }
 
