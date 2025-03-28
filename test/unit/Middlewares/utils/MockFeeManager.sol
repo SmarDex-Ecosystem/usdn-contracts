@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { IFeeManager } from "../../../../../src/interfaces/OracleMiddleware/IFeeManager.sol";
-import { IVerifierProxy } from "../../../../../src/interfaces/OracleMiddleware/IVerifierProxy.sol";
+import { IFeeManager } from "../../../../src/interfaces/OracleMiddleware/IFeeManager.sol";
+import { IVerifierProxy } from "../../../../src/interfaces/OracleMiddleware/IVerifierProxy.sol";
 
 interface IMockFeeManager {
     function i_nativeAddress() external pure returns (address);
