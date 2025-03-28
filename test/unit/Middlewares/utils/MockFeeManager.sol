@@ -6,15 +6,16 @@ import { IVerifierProxy } from "../../../../../src/interfaces/OracleMiddleware/I
 
 contract MockFeeManager {
     function i_nativeAddress() external pure returns (address) {
-        return address(0);
+        return address(1);
     }
 
     function getFeeAndReward(address, bytes calldata reportData, address)
         external
         pure
-        returns (IFeeManager.Asset memory, IFeeManager.Asset memory, uint256)
+        returns (IFeeManager.Asset memory feeData_, IFeeManager.Asset memory rewardData_, uint256 discount_)
     {
         IVerifierProxy.ReportV3 memory report = abi.decode(reportData, (IVerifierProxy.ReportV3));
-        return (IFeeManager.Asset(address(0), report.nativeFee), IFeeManager.Asset(address(0), 0), 0);
+        feeData_.amount = report.nativeFee;
+        return (feeData_, rewardData_, discount_);
     }
 }

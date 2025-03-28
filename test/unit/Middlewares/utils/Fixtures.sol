@@ -151,7 +151,6 @@ contract OracleMiddlewareWithDataStreamsFixture is BaseFixture, ActionsFixture {
     OracleMiddlewareWithDataStreamsHandler internal oracleMiddleware;
     IVerifierProxy.ReportV3 internal report;
 
-    address internal wethTargetAddress;
     uint256 internal chainlinkTimeElapsedLimit = 1 hours;
     bytes internal reportData;
     bytes internal payload;
