@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { Script } from "forge-std/Script.sol";
 
 import { UsdnWstethUsdConfig } from "./deploymentConfigs/UsdnWstethUsdConfig.sol";
+import { Utils } from "./utils/Utils.s.sol";
 
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
@@ -20,10 +21,18 @@ contract Upgrade is UsdnWstethUsdConfig, Script {
     IUsdnProtocol constant USDN_PROTOCOL = IUsdnProtocol(0x656cB8C6d154Aad29d8771384089be5B5141f01a);
     bytes32 ImplAddrLocation = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
+    Utils utils;
+
+    constructor() {
+        utils = new Utils();
+    }
+
     function run()
         external
         returns (UsdnProtocolFallback newUsdnProtocolFallback_, UsdnProtocolImpl newUsdnProtocolImpl_)
     {
+        utils.validateProtocol("UsdnProtocolImpl", "UsdnProtocolFallback");
+
         require(
             USDN_PROTOCOL.hasRole(Constants.PROXY_UPGRADE_ROLE, msg.sender),
             "Sender does not have the permission to upgrade the protocol"
