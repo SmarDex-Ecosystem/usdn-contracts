@@ -14,8 +14,7 @@ contract TestOracleMiddlewareWithDataStreamsGetLowLatencyPrice is OracleMiddlewa
     /**
      * @custom:scenario Tests the `_getLowLatencyPrice` function without any adjustments.
      * @custom:when The function is called.
-     * @custom:then The transaction must be successful.
-     * @custom:and The returned price should match the report from the Chainlink data stream.
+     * @custom:then The returned price should match the report from the Chainlink data stream.
      */
     function test_getLowLatencyPrice() public {
         PriceInfo memory price =
@@ -28,8 +27,7 @@ contract TestOracleMiddlewareWithDataStreamsGetLowLatencyPrice is OracleMiddlewa
     /**
      * @custom:scenario Tests the `_getLowLatencyPrice` function with an `Up` adjustment.
      * @custom:when The function is called.
-     * @custom:then The transaction must be successful.
-     * @custom:and The returned price should match the report from the Chainlink data stream.
+     * @custom:then The returned price should match the report from the Chainlink data stream.
      */
     function test_getLowLatencyPriceUp() public {
         PriceInfo memory price =
@@ -42,8 +40,7 @@ contract TestOracleMiddlewareWithDataStreamsGetLowLatencyPrice is OracleMiddlewa
     /**
      * @custom:scenario Tests the `_getLowLatencyPrice` function with a `Down` adjustment.
      * @custom:when The function is called.
-     * @custom:then The transaction must be successful.
-     * @custom:and The returned price should match the report from the Chainlink data stream.
+     * @custom:then The returned price should match the report from the Chainlink data stream.
      */
     function test_getLowLatencyPriceDown() public {
         PriceInfo memory price =
@@ -56,8 +53,7 @@ contract TestOracleMiddlewareWithDataStreamsGetLowLatencyPrice is OracleMiddlewa
     /**
      * @custom:scenario Tests the `_getLowLatencyPrice` function with timestamp values.
      * @custom:when The function is called.
-     * @custom:then The transaction must be successful.
-     * @custom:and The returned price must be valid for the given timestamps.
+     * @custom:then The returned price must be valid for the given timestamps.
      */
     function test_getLowLatencyPriceWithTimestamp() public {
         PriceInfo memory price = oracleMiddleware.i_getLowLatencyPrice{ value: report.nativeFee }(

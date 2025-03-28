@@ -34,8 +34,7 @@ contract TestOracleMiddlewareWithDataStreamsSetRecentPriceDelay is OracleMiddlew
     /**
      * @custom:scenario Tests the `setDataStreamsRecentPriceDelay` function with a valid delay.
      * @custom:when The function is called with a delay that meets all specified criteria.
-     * @custom:then The transaction must be successful.
-     * @custom:and The `_dataStreamsRecentPriceDelay` value must be updated to the new valid delay.
+     * @custom:then The `_dataStreamsRecentPriceDelay` value must be updated to the new valid delay.
      */
     function test_setRecentPriceDelayValidDelay() public {
         uint64 delay = 1 minutes;

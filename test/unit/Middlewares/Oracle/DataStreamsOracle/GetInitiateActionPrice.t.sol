@@ -57,8 +57,7 @@ contract TestOracleMiddlewareWithDataStreamsGetInitiateActionPrice is OracleMidd
     /**
      * @custom:scenario Tests the `_getInitiateActionPrice` function with an unsafe Pyth price.
      * @custom:when The function is called.
-     * @custom:then The transaction must be successful.
-     * @custom:and The returned price must be equal to the provided unsafe Pyth price.
+     * @custom:then The returned price must be equal to the provided unsafe Pyth price.
      */
     function test_getInitiateActionPriceUnsafePyth() public {
         mockChainlinkOnChain.setLastPublishTime(0);
@@ -109,8 +108,7 @@ contract TestOracleMiddlewareWithDataStreamsGetInitiateActionPrice is OracleMidd
     /**
      * @custom:scenario Tests the `_getInitiateActionPrice` function with a valid Chainlink on-chain price.
      * @custom:when The function is called.
-     * @custom:then The transaction must be successful.
-     * @custom:and The returned price must be equal to the Chainlink on-chain price.
+     * @custom:then The returned price must be equal to the Chainlink on-chain price.
      */
     function test_getInitiateActionPriceWithChainlinkOnchain() public {
         (, int256 chainlinkOnChainPrice,, uint256 timestamp,) = mockChainlinkOnChain.latestRoundData();

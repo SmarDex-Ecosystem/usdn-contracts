@@ -157,8 +157,7 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
     /**
      * @custom:scenario Tests the `_getChainlinkDataStreamPrice` function.
      * @custom:when The function is called.
-     * @custom:then The transaction must be successful.
-     * @custom:and The verified report must match the Chainlink data streams report.
+     * @custom:then The verified report must match the Chainlink data streams report.
      */
     function test_getChainlinkDataStreamPrice() public {
         FormattedDataStreamsPrice memory formattedReport =
