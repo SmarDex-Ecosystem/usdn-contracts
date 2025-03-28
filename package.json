@@ -54,7 +54,8 @@
     "picocolors": "^1.0.1",
     "solhint": "^5.0.2",
     "tsup": "^8.3.5",
-    "tsx": "^4.19.1"
+    "tsx": "^4.19.1",
+    "typescript": "^5.8.2"
   },
   "dependencies": {
     "viem": "^2.18.5"
