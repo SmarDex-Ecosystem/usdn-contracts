@@ -52,6 +52,16 @@ contract UsdnProtocolImpl is
         Setters.setInitialStorage(initStorage);
     }
 
+    /// @inheritdoc IUsdnProtocolImpl
+    function initializeStorageV2() public reinitializer(2) {
+        Storage storage s = Utils._getMainStorage();
+        // sanity check, only do the upgrade if necessary
+        if (s.__unused == 0 || s._sdexBurnOnDepositRatio > 0) {
+            return;
+        }
+        s._sdexBurnOnDepositRatio = s.__unused;
+    }
+
     /**
      * @inheritdoc UUPSUpgradeable
      * @notice Verifies that the caller is allowed to upgrade the protocol.
