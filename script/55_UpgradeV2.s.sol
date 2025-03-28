@@ -14,7 +14,7 @@ import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol"
 
 /**
  * @title Upgrade script
- * @notice This script is only made for upgrading the Usdn protocol from v1.0.x to v2.0.0.
+ * @notice This script is only made for upgrading the Usdn protocol from v1.x.x to v2.0.0.
  * @dev The sender must already have the `PROXY_UPGRADE_ROLE` before launching this script.
  */
 contract UpgradeV2 is UsdnWstethUsdConfig, Script {
