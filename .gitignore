@@ -39,3 +39,7 @@ target/
 
 # TruffleHog config file
 .trufflehog.yml
+
+# Fuzzing
+crytic-export
+medusa-corpus

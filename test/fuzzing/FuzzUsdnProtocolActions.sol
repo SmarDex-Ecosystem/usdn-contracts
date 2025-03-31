@@ -59,8 +59,15 @@ contract FuzzUsdnProtocolActions is PreconditionsUsdnProtocolActions, Postcondit
         setCurrentActor
         enforceOneActionPerCall
     {
-        InitiateClosePositionParams memory params = InitiateClosePositionPreconditions(amountSeed, closeFull); //prank
+        InitiateClosePositionParams memory params = InitiateClosePositionPreconditions(amountSeed, closeFull); //prank         //
             // inside :)
+
+        // SKIP if no work to do
+        if (params.amountToClose == 0) {
+            emit log("Skipping: amountToClose or positionId is zero.");
+            return;
+        }
+
         fuzz_setPrice(0); //here we are just updating oracle timestamp with the same price we already have
 
         address[] memory actorsToUpdate = new address[](1);

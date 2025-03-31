@@ -60,21 +60,6 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
         usdnProtocolFallback = new UsdnProtocolFallback();
         usdnProtocolHandler = new UsdnProtocolHandler();
 
-        // @TODO change to new implemntation
-        // bytes memory initData = abi.encodeCall(
-        //     usdnProtocolHandler.initializeStorageFuzz,
-        //     (
-        //         usdn,
-        //         sdex,
-        //         wstETH,
-        //         wstEthOracleMiddleware,
-        //         liquidationRewardsManager,
-        //         100, // tick spacing 100 = 1.05%
-        //         address(feeCollector),
-        //         usdnProtocolFallback
-        //     )
-        // );
-
         UsdnProtocolHandler implementation = new UsdnProtocolHandler();
 
         _setPeripheralContracts(
@@ -86,8 +71,6 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
             address(feeCollector),
             sdex
         );
-
-        // ERC1967Proxy proxy = new ERC1967Proxy(address(usdnProtocolHandler), initData);
 
         address proxy = UnsafeUpgrades.deployUUPSProxy(
             address(implementation), abi.encodeCall(UsdnProtocolHandler.initializeStorageHandler, (initStorage))

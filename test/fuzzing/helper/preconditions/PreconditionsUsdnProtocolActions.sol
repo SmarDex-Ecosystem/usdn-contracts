@@ -78,6 +78,11 @@ abstract contract PreconditionsUsdnProtocolActions is PreconditionsBase {
             revert();
         }
 
+        // avoid empty checks
+        if (positionIds.length == 0) {
+            return params;
+        }
+
         uint256 positionIdsIndex;
         if (positionIds.length > 0) {
             positionIdsIndex = fl.clamp(amountSeed, 0, positionIds.length - 1);
