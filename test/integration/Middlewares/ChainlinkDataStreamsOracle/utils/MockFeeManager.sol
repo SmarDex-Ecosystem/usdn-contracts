@@ -8,11 +8,15 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IFeeManager } from "../../../../../src/interfaces/OracleMiddleware/IFeeManager.sol";
 
+interface IVerifierFeeManager {
+    function processFee(bytes calldata payload, bytes calldata parameterPayload, address subscriber) external payable;
+}
+
 interface IWERC20 {
     function deposit() external payable;
 }
 
-contract MockFeeManager is IERC165 {
+contract MockFeeManager is IERC165, IVerifierFeeManager {
     using SafeERC20 for IERC20;
 
     /* -------------------------------------------------------------------------- */

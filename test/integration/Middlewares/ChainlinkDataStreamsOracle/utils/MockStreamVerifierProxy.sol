@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-interface IVerifierFeeManager {
-    function processFee(bytes calldata payload, bytes calldata parameterPayload, address subscriber) external payable;
-}
+import { IVerifierFeeManager } from "./MockFeeManager.sol";
 
 contract MockStreamVerifierProxy {
     IVerifierFeeManager public s_feeManager;
