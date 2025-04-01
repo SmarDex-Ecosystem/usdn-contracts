@@ -593,7 +593,7 @@ interface IUsdnProtocolTypes {
      * @param _positionFeeBps The position fee in basis points.
      * @param _vaultFeeBps The fee for vault deposits and withdrawals, in basis points.
      * @param _sdexRewardsRatioBps The ratio of SDEX rewards to send to the user (in basis points).
-     * @param _sdexBurnOnDepositRatio The ratio of USDN to SDEX tokens to burn on deposit.
+     * @param __unused Old slot for `_sdexBurnOnDepositRatio`.
      * @param _feeCollector The fee collector's address.
      * @param _securityDepositValue The deposit required for a new position.
      * @param _targetUsdnPrice The nominal (target) price of USDN (with _priceFeedDecimals).
@@ -624,7 +624,7 @@ interface IUsdnProtocolTypes {
      * @param _tickBitmap The bitmap used to quickly find populated ticks.
      * @param _protocolFallbackAddr The address of the fallback contract.
      * @param _nonce The user EIP712 nonce.
-     * @param __unused Old slot for `_sdexBurnOnDepositRatio`.
+     * @param _sdexBurnOnDepositRatio The ratio of USDN to SDEX tokens to burn on deposit.
      */
     struct Storage {
         // immutable
