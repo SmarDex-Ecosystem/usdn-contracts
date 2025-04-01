@@ -16,7 +16,10 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
     /// @notice The address of the Chainlink proxy verifier contract.
     IVerifierProxy internal immutable PROXY_VERIFIER;
 
-    /// @notice The ID of the Chainlink data streams.
+    /**
+     * @notice The ID of the Chainlink data streams.
+     * @dev Any data streams are standardized to 18 decimals.
+     */
     bytes32 internal immutable STREAM_ID;
 
     /// @notice The report version.
@@ -95,11 +98,19 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
             revert OracleMiddlewareInvalidStreamId();
         }
 
-        // Report timestamp
         if (targetTimestamp == 0) {
+            // If targetTimestamp is 0, we check if the verified report's validFromTimestamp is older or equal than than
+            // the current block timestamp minus the `_dataStreamsRecentPriceDelay`. This check ensures that the price
+            // data is considered recent enough to be valid for use, while not strictly requiring it to be the current
+            // timestamp.
             if (verifiedReport.validFromTimestamp < block.timestamp - _dataStreamsRecentPriceDelay) {
                 revert OracleMiddlewareDataStreamInvalidTimestamp();
             }
+
+            // If targetTimestamp is provided, we perform multiple checks to ensure that:
+            //   - the targetTimestamp does not precede the first time at which the data was considered valid.
+            //   - the targetTimestamp does not exceed the latest time at which the data was considered valid.
+            //   - the targetLimit does not precede the latest time at which the data was considered valid.
         } else if (
             targetTimestamp < verifiedReport.validFromTimestamp
                 || verifiedReport.observationsTimestamp < targetTimestamp
