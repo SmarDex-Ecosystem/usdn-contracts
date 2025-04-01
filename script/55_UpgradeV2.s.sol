@@ -52,6 +52,8 @@ contract UpgradeV2 is UsdnWstethUsdConfig, Script {
         bytes32 newImpl = vm.load(address(USDN_PROTOCOL), IMPL_SLOT);
         require(oldImpl != newImpl, "Upgrade failed");
         require(address(uint160(uint256(newImpl))) == address(newUsdnProtocolImpl_), "Upgrade failed");
+        require(USDN_PROTOCOL.getSdexBurnOnDepositRatio() > 0, "New storage not initialized");
+        require(USDN_PROTOCOL.getFallbackAddress() == address(newUsdnProtocolFallback_), "New fallback not set");
 
         vm.stopBroadcast();
     }
