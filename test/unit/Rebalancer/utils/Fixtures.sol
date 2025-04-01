@@ -14,8 +14,7 @@ import { RebalancerHandler } from "../utils/Handler.sol";
 
 import { LiquidationRewardsManagerWstEth } from
     "../../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
-import { WstEthOracleMiddlewareWithDataStreams } from
-    "../../../../src/OracleMiddleware/WstEthOracleMiddlewareWithDataStreams.sol";
+import { WstEthOracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
@@ -60,7 +59,7 @@ contract RebalancerFixture is
         UsdnProtocolImpl implementation = new UsdnProtocolImpl();
 
         _setPeripheralContracts(
-            WstEthOracleMiddlewareWithDataStreams(address(oracleMiddleware)),
+            WstEthOracleMiddlewareWithPyth(address(oracleMiddleware)),
             liquidationRewardsManager,
             usdn,
             wstETH,

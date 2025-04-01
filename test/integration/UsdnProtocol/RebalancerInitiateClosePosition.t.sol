@@ -247,7 +247,7 @@ contract TestRebalancerInitiateClosePosition is
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
 
         skip(1 hours);
-        // put the eth price a bit higher to avoid liquidating existing position
+        // put the ETH price a bit higher to avoid liquidating existing position
         wstEthPrice = _setOraclePrices(wstEthPrice * 15 / 10);
 
         vm.startPrank(user);
@@ -405,14 +405,12 @@ contract TestRebalancerInitiateClosePosition is
         // TODO: refactor this test so it's more robust
         vm.startPrank(SET_EXTERNAL_MANAGER);
         protocol.setRebalancer(IBaseRebalancer(address(0)));
-
         oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
         // sanity check
         assertEq(
             prevPosId.tickVersion + 1, protocol.getTickVersion(prevPosId.tick), "Rebalancer tick was not liquidated"
         );
-
         protocol.setRebalancer(IBaseRebalancer(address(rebalancer)));
         vm.stopPrank();
 
@@ -533,7 +531,6 @@ contract TestRebalancerInitiateClosePosition is
         (, payload) = _encodeReport(report);
 
         oracleFee = oracleMiddleware.validationCost(payload, ProtocolAction.ValidateDeposit);
-
         protocol.validateDeposit{ value: oracleFee }(payable(address(this)), payload, EMPTY_PREVIOUS_DATA);
 
         // open a position on the same tick as the rebalancer to avoid an underflow in case of regression
