@@ -245,7 +245,7 @@ contract TestRebalancerInitiateClosePosition is
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
 
         skip(1 hours);
-        // put the eth price a bit higher to avoid liquidating existing position
+        // put the ETH price a bit higher to avoid liquidating existing position
         wstEthPrice = _setOraclePrices(wstEthPrice * 15 / 10);
 
         vm.startPrank(user);
