@@ -3,7 +3,7 @@ pragma solidity 0.8.26;
 
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
-import { IVerifierFeeManager } from "../Middlewares/ChainlinkDataStreamsOracle/utils/MockStreamVerifierProxy.sol";
+import { IVerifierFeeManager } from "../Middlewares/utils/MockStreamVerifierProxy.sol";
 
 /**
  * @custom:feature The Chainlink data streams fee manager for different states.

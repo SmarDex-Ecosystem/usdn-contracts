@@ -7,7 +7,7 @@ import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMi
 import { IVerifierProxy } from "../../../../src/interfaces/OracleMiddleware/IVerifierProxy.sol";
 
 import { CHAINLINK_DATA_STREAMS_ETH_USD, PYTH_ETH_USD } from "../../../utils/Constants.sol";
-import { ChainlinkDataStreamsFixture } from "./utils/Fixtures.sol";
+import { ChainlinkDataStreamsFixture } from "../utils/Fixtures.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of the `OracleMiddlewareWithDataStreams`.
