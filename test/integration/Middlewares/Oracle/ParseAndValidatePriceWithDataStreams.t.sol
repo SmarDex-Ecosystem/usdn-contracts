@@ -13,7 +13,7 @@ import { ChainlinkDataStreamsFixture } from "../utils/Fixtures.sol";
  * @custom:feature The `parseAndValidatePrice` function of the `OracleMiddlewareWithDataStreams`.
  * @custom:background A deployed OracleMiddlewareWithDataStreams.
  */
-contract TestChainlinkDataStreamsOracleMiddlewareParseAndValidatePriceRealData is ChainlinkDataStreamsFixture {
+contract TestDataStreamsOracleMiddlewareParseAndValidatePriceRealData is ChainlinkDataStreamsFixture {
     using Strings for uint256;
 
     string internal constant TIMESTAMP_ERROR = "Wrong timestamp for";
