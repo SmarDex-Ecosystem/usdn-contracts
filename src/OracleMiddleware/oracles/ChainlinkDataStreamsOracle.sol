@@ -99,7 +99,7 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
         }
 
         if (targetTimestamp == 0) {
-            // If targetTimestamp is 0, we check if the verified report's validFromTimestamp is older or equal than than
+            // If targetTimestamp is 0, we check if the verified report's validFromTimestamp is older or equal than
             // the current block timestamp minus the `_dataStreamsRecentPriceDelay`. This check ensures that the price
             // data is considered recent enough to be valid for use, while not strictly requiring it to be the current
             // timestamp.
