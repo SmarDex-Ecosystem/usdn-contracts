@@ -18,7 +18,7 @@ contract TestLiquidationRewardsManagerWusdnGetLiquidationRewards is BaseFixture 
     LiquidationRewardsManagerWusdn internal liquidationRewardsManager;
     ILiquidationRewardsManagerErrorsEventsTypes.RewardsParameters rewardsParameters;
 
-    uint256 internal constant CURRENT_PRICE = 1 ether / 1000; // 0.001 eth/wUsdn
+    uint256 internal constant CURRENT_PRICE = 1 ether / 1000; // 0.001 ETH/WUSDN
 
     Types.LiqTickInfo[] internal _singleLiquidatedTick;
     Types.LiqTickInfo[] internal _liquidatedTicksEmpty;
@@ -41,8 +41,8 @@ contract TestLiquidationRewardsManagerWusdnGetLiquidationRewards is BaseFixture 
                 totalPositions: 1,
                 totalExpo: 10_000 ether,
                 remainingCollateral: -200 ether,
-                tickPrice: 1.02 ether / 1000, // 0.00102 eth/wUsdn
-                priceWithoutPenalty: 1 ether / 1000 // 0.001 eth/wUsdn
+                tickPrice: 1.02 ether / 1000, // 0.00102 ETH/wUsdn
+                priceWithoutPenalty: 1 ether / 1000 // 0.001 ETH/wUsdn
              })
         );
     }

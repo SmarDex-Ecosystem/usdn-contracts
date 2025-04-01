@@ -94,7 +94,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
     /**
      * @custom:scenario Parse and validate price with chainlink on-chain
-     * @custom:given The price feed is eth/usd for chainlink
+     * @custom:given The price feed is ETH/USD for chainlink
      * @custom:when The protocol action is any targeted action
      * @custom:then The price retrieved by the oracle middleware is the same as the one from chainlink on-chain data
      */
@@ -257,7 +257,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
     /**
      * @custom:scenario Parse and validate price with chainlink on-chain
-     * @custom:given The price feed is eth/usd for chainlink
+     * @custom:given The price feed is ETH/USD for chainlink
      * @custom:when Protocol action is an `initiateDeposit`
      * @custom:then The price signature is well-decoded
      * @custom:and The price retrieved by the oracle middleware is the same as the one from the chainlink on-chain data
