@@ -304,70 +304,50 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
     }
 
     /**
-     * @custom:scenario Use cached Pyth value for `initiate` actions if possible
-     * @custom:given A pyth signature was provided to the oracle more recently than the latest chainlink on-chain data
-     * @custom:when A user retrieves a price for a `initiate` action without providing data
-     * @custom:then The price retrieved by the oracle middleware is the one from pyth
+     * @custom:scenario Uses the cached Pyth value for `initiate` actions.
+     * @custom:given A pyth signature was provided to the oracle more recently than the last chainlink price.
+     * @custom:when A user retrieves a price for a `initiate` action without providing data.
+     * @custom:then The price retrieved by the oracle middleware must be equal to the unsafe Pyth price.
      */
     function test_ForkFFIUseCachedPythPrice() public ethMainnetFork reSetUp {
-        // chainlink data
+        vm.rollFork(PYTH_PRICE_BLOCK_NUMBER);
         (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
 
-        // get pyth price that must be more recent than chainlink data
-        (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, chainlinkTimestamp + 1);
-        uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateDeposit);
+        PythStructs.Price memory unsafePythPrice = getPythUnsafePrice();
 
-        // submit to oracle middleware so it gets cached by Pyth
-        vm.warp(chainlinkTimestamp + 2);
-        PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            "",
-            uint128(chainlinkTimestamp + 1 - oracleMiddleware.getValidationDelay()),
-            ProtocolAction.ValidateDeposit,
-            data
-        );
+        uint256 adjustedUnsafePythPrice =
+            uint64(unsafePythPrice.price) * 10 ** uint32(unsafePythPrice.expo + int8(oracleMiddleware.getDecimals()));
 
         // get oracle middleware price without providing data
-        PriceInfo memory cachedMiddlewarePrice =
+        PriceInfo memory middlewarePrice =
             oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
 
         // timestamp check
-        assertEq(cachedMiddlewarePrice.timestamp, middlewarePrice.timestamp, "timestamp equal to pyth timestamp");
-        assertGt(cachedMiddlewarePrice.timestamp, chainlinkTimestamp, "timestamp greater than chainlink timestamp");
+        assertEq(middlewarePrice.timestamp, unsafePythPrice.publishTime, "timestamp equal to pyth unsafe timestamp");
+        assertGt(middlewarePrice.timestamp, chainlinkTimestamp, "timestamp greater than chainlink timestamp");
         // price check
-        assertEq(cachedMiddlewarePrice.neutralPrice, middlewarePrice.neutralPrice, "price equal to pyth price");
-        assertTrue(cachedMiddlewarePrice.neutralPrice != chainlinkPrice, "price different from chainlink price");
+        assertEq(middlewarePrice.neutralPrice, adjustedUnsafePythPrice, "price equal to pyth price");
+        assertTrue(middlewarePrice.neutralPrice != chainlinkPrice, "price different from chainlink price");
     }
 
     /**
-     * @custom:scenario The cached Pyth price for initiate action is too old
-     * @custom:given A pyth signature was provided to the oracle more recently than the last chainlink price
-     * @custom:and The chainlink price is too old (there is a problem with chainlink)
-     * @custom:when A user retrieves a price for a `initiate` action without providing data
+     * @custom:scenario The cached Pyth price for initiate action is too old.
+     * @custom:given A pyth signature was provided to the oracle more recently than the last chainlink price.
+     * @custom:and The chainlink price is too old (there is a problem with chainlink).
+     * @custom:when A user retrieves a price for a `initiate` action without providing data.
      * @custom:then The price is retrieved from Pyth but checked for freshness and the transaction reverts with
-     * `OracleMiddlewarePriceTooOld`
+     * `OracleMiddlewarePriceTooOld`.
      */
     function test_RevertWhen_ForkFFIOldCachedPythPrice() public ethMainnetFork reSetUp {
-        // chainlink data
-        (, uint256 chainlinkTimestamp) = getChainlinkPrice();
+        vm.rollFork(PYTH_PRICE_BLOCK_NUMBER);
+        skip(oracleMiddleware.getChainlinkTimeElapsedLimit());
 
-        // get pyth price that must be more recent than chainlink data
-        (,,,, bytes memory data) = getHermesApiSignature(PYTH_ETH_USD, chainlinkTimestamp + 1);
-        uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateDeposit);
-
-        // submit to oracle middleware so it gets cached by Pyth
-        vm.warp(chainlinkTimestamp + 2);
-        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            "",
-            uint128(chainlinkTimestamp + 1 - oracleMiddleware.getValidationDelay()),
-            ProtocolAction.ValidateDeposit,
-            data
-        );
-
-        // wait for more than _timeElapsedLimit from the middleware
-        skip(oracleMiddleware.getChainlinkTimeElapsedLimit() + 1);
+        PythStructs.Price memory unsafePythPrice = getPythUnsafePrice();
 
         // get oracle middleware price without providing data
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, chainlinkTimestamp + 1));
+        vm.expectRevert(
+            abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, uint64(unsafePythPrice.publishTime))
+        );
         oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
     }
 
