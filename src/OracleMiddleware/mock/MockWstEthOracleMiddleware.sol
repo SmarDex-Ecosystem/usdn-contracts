@@ -9,7 +9,7 @@ import { WstEthOracleMiddleware } from "../WstEthOracleMiddleware.sol";
 
 /**
  * @title Contract to apply and return a mocked wstETH price
- * @notice This contract is used to get the price of wsteth by setting up a price or forwarding it to wstethMiddleware
+ * @notice This contract is used to get the price of wstETH by setting up a price or forwarding it to wstethMiddleware
  * @dev This aims at simulating price action. Do not use in production
  */
 contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
@@ -17,7 +17,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     uint16 internal _wstethMockedConfBps = 20; // default 0.2% conf
 
     /**
-     * @notice Wsteth mocked price
+     * @notice wstETH mocked price
      * @dev This price will be used if greater than zero
      */
     uint256 internal _wstethMockedPrice;
@@ -42,7 +42,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         Types.ProtocolAction action,
         bytes calldata data
     ) public payable override returns (PriceInfo memory price_) {
-        // parse and validate from parent wsteth middleware
+        // parse and validate from parent WstEth middleware
         // this aims to verify pyth price hermes signature in any case
         if (_verifySignature || _wstethMockedPrice == 0) {
             price_ = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
@@ -75,8 +75,8 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     }
 
     /**
-     * @notice Set Wsteth mocked price
-     * @dev If the new mocked wsteth is greater than zero this will validate this mocked price else this will validate
+     * @notice Set WstEth mocked price
+     * @dev If the new mocked WstEth is greater than zero this will validate this mocked price else this will validate
      * the parent middleware price
      * @param newWstethMockedPrice The mock price to set
      */
@@ -94,12 +94,12 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         _wstethMockedConfBps = newWstethMockedConfPct;
     }
 
-    /// @notice Get current wsteth mocked price
+    /// @notice Get current WstEth mocked price
     function getWstethMockedPrice() external view returns (uint256) {
         return _wstethMockedPrice;
     }
 
-    /// @notice Get current wsteth mocked confidence interval
+    /// @notice Get current WstEth mocked confidence interval
     function getWstethMockedConfBps() external view returns (uint64) {
         return _wstethMockedConfBps;
     }

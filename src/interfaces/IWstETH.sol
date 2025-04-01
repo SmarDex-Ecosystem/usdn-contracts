@@ -12,7 +12,7 @@ interface IWstETH is IERC20Metadata, IERC20Permit {
      *  - `_stETHAmount` must be non-zero
      *  - msg.sender must approve at least `_stETHAmount` stETH to this contract
      *  - msg.sender must have at least `_stETHAmount` of stETH
-     * User should first approve `_stETHAmount` to the WstETH contract
+     * User should first approve `_stETHAmount` to the wstETH contract
      * @return Amount of wstETH user receives after wrap
      */
     function wrap(uint256 _stETHAmount) external returns (uint256);

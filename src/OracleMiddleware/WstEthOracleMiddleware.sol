@@ -10,7 +10,7 @@ import { OracleMiddlewareWithPyth } from "./OracleMiddlewareWithPyth.sol";
 
 /**
  * @title Middleware Implementation For WstETH Price
- * @notice This contract is used to get the price of wstETH from the eth price oracle.
+ * @notice This contract is used to get the price of wstETH from the ETH price oracle.
  */
 contract WstEthOracleMiddleware is OracleMiddlewareWithPyth {
     /// @notice The wstETH contract.
@@ -35,7 +35,7 @@ contract WstEthOracleMiddleware is OracleMiddlewareWithPyth {
 
     /**
      * @inheritdoc IBaseOracleMiddleware
-     * @notice Parses and validates `data`, returns the corresponding price data by applying eth/wstETH ratio.
+     * @notice Parses and validates `data`, returns the corresponding price data by applying ETH/wstETH ratio.
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata.
      * Wsteth price is calculated as follows: `ethPrice x stEthPerToken / 1 ether`.
      * A fee amounting to exactly {validationCost} (with the same `data` and `action`) must be sent or the transaction

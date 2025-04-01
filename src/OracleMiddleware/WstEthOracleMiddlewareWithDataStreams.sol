@@ -10,7 +10,7 @@ import { OracleMiddlewareWithDataStreams } from "./OracleMiddlewareWithDataStrea
 
 /**
  * @title Middleware Implementation For WstETH Price With Chainlink Data Streams
- * @notice This contract is used to get the price of wstETH from the eth price or the wstETH price directly.
+ * @notice This contract is used to get the price of wstETH from the ETH price or the wstETH price directly.
  */
 contract WstEthOracleMiddlewareWithDataStreams is OracleMiddlewareWithDataStreams {
     /// @notice The wstETH contract.
@@ -49,7 +49,7 @@ contract WstEthOracleMiddlewareWithDataStreams is OracleMiddlewareWithDataStream
     /**
      * @inheritdoc IBaseOracleMiddleware
      * @notice Parses and validates `data`, returns the corresponding price data,
-     * applying ETH/wstETH ratio if the price is in eth.
+     * applying ETH/wstETH ratio if the price is in ETH.
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata.
      * If needed, the wstETH price is calculated as follows: `ethPrice x stEthPerToken / 1 ether`.
      * A fee amounting to exactly {validationCost} (with the same `data` and `action`) must be sent or the transaction
