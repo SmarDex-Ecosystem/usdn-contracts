@@ -64,7 +64,7 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
      * If zero, then we accept all recent prices.
      * @param targetLimit The most recent timestamp a price can have.
      * Can be zero if `targetTimestamp` is zero.
-     * @return formattedPrice_ The Chainlink formatted price.
+     * @return formattedPrice_ The Chainlink formatted price with 18 decimals.
      */
     function _getChainlinkDataStreamPrice(bytes calldata payload, uint128 targetTimestamp, uint128 targetLimit)
         internal
@@ -98,6 +98,7 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
             revert OracleMiddlewareInvalidStreamId();
         }
 
+        // Report timestamp
         if (targetTimestamp == 0) {
             // If targetTimestamp is 0, we check if the verified report's validFromTimestamp is older or equal than
             // the current block timestamp minus the `_dataStreamsRecentPriceDelay`. This check ensures that the price
