@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { PYTH_ETH_USD } from "../../../utils/Constants.sol";
 import { CHAINLINK_BLOCK_NUMBER, PYTH_PRICE_BLOCK_NUMBER } from "../utils/Constants.sol";
@@ -316,10 +315,8 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
         PythStructs.Price memory unsafePythPrice = getPythUnsafePrice();
 
-        uint256 adjustedUnsafePythPrice = uint256(
-            uint64(unsafePythPrice.price)
-                * 10 ** (oracleMiddleware.getDecimals() - FixedPointMathLib.abs(unsafePythPrice.expo))
-        );
+        uint256 adjustedUnsafePythPrice =
+            uint64(unsafePythPrice.price) * 10 ** uint32(unsafePythPrice.expo + int8(oracleMiddleware.getDecimals()));
 
         // get oracle middleware price without providing data
         PriceInfo memory middlewarePrice =
