@@ -6,13 +6,15 @@ import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import { MOCK_PYTH_DATA } from "../../../unit/Middlewares/utils/Constants.sol";
+import { MOCK_STREAM_V3 } from "../../../unit/Middlewares/utils/Constants.sol";
 import { MockChainlinkOnChain } from "../../../unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { MockPyth } from "../../../unit/Middlewares/utils/MockPyth.sol";
 import { UsdnProtocolHandler } from "../../../unit/UsdnProtocol/utils/Handler.sol";
 import {
     ADMIN,
+    CHAINLINK_DATA_STREAMS_WSTETH_USD,
     CHAINLINK_ORACLE_ETH,
+    CHAINLINK_VERIFIER_PROXY,
     DEPLOYER,
     PYTH_ETH_USD,
     PYTH_ORACLE,
@@ -25,6 +27,9 @@ import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { RolesUtils } from "../../../utils/RolesUtils.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
+import { MockFeeManager } from "../../Middlewares/ChainlinkDataStreamsOracle/utils/MockFeeManager.sol";
+import { MockStreamVerifierProxy } from "../../Middlewares/ChainlinkDataStreamsOracle/utils/MockStreamVerifierProxy.sol";
+import { MockWETH } from "../../Middlewares/ChainlinkDataStreamsOracle/utils/MockWETH.sol";
 import {
     PYTH_DATA_ETH,
     PYTH_DATA_ETH_CONF,
@@ -34,11 +39,13 @@ import {
 
 import { LiquidationRewardsManagerWstEth } from
     "../../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
-import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { WstEthOracleMiddlewareWithDataStreams } from
+    "../../../../src/OracleMiddleware/WstEthOracleMiddlewareWithDataStreams.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IVerifierProxy } from "../../../../src/interfaces/OracleMiddleware/IVerifierProxy.sol";
 import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -95,9 +102,17 @@ contract UsdnProtocolBaseIntegrationFixture is
     WstETH public wstETH;
     MockPyth public mockPyth;
     MockChainlinkOnChain public mockChainlinkOnChain;
-    WstEthOracleMiddleware public oracleMiddleware;
+    MockFeeManager internal mockFeeManager;
+    MockStreamVerifierProxy internal mockStreamVerifierProxy;
+    WstEthOracleMiddlewareWithDataStreams public oracleMiddleware;
     LiquidationRewardsManagerWstEth public liquidationRewardsManager;
     Rebalancer public rebalancer;
+
+    IVerifierProxy.ReportV3 internal report;
+    address internal wethTargetAddress;
+    bytes internal reportData;
+    bytes internal payload;
+    bytes32[3] internal emptySignature;
 
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
@@ -144,11 +159,19 @@ contract UsdnProtocolBaseIntegrationFixture is
             sdex = Sdex(SDEX);
             IPyth pyth = IPyth(PYTH_ORACLE);
             AggregatorV3Interface chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_ETH);
-            oracleMiddleware = new WstEthOracleMiddleware(
-                address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
+
+            oracleMiddleware = new WstEthOracleMiddlewareWithDataStreams(
+                address(pyth),
+                PYTH_ETH_USD,
+                address(chainlinkOnChain),
+                address(wstETH),
+                1 hours,
+                CHAINLINK_VERIFIER_PROXY,
+                CHAINLINK_DATA_STREAMS_WSTETH_USD
             );
             PriceInfo memory currentPrice =
                 oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.Initialize, "");
+            testParams.initialPrice = uint128(currentPrice.neutralPrice);
             testParams.initialLiqPrice = uint128(currentPrice.neutralPrice) / 2;
             liquidationRewardsManager = new LiquidationRewardsManagerWstEth(wstETH);
         } else {
@@ -161,8 +184,36 @@ contract UsdnProtocolBaseIntegrationFixture is
             mockChainlinkOnChain.setLastPrice(
                 int256(wstETH.getWstETHByStETH(uint256(testParams.initialPrice / 10 ** (18 - 8))))
             );
-            oracleMiddleware = new WstEthOracleMiddleware(
-                address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
+
+            mockFeeManager = new MockFeeManager();
+            mockStreamVerifierProxy = new MockStreamVerifierProxy(address(mockFeeManager));
+
+            wethTargetAddress = mockFeeManager.i_nativeAddress();
+            bytes memory code = vm.getDeployedCode("MockWETH.sol");
+            vm.etch(wethTargetAddress, code);
+
+            report = IVerifierProxy.ReportV3({
+                feedId: MOCK_STREAM_V3,
+                validFromTimestamp: uint32(testParams.initialTimestamp),
+                observationsTimestamp: uint32(testParams.initialTimestamp),
+                nativeFee: 0.001 ether,
+                linkFee: 0,
+                expiresAt: uint32(testParams.initialTimestamp) + 100,
+                price: int192(int128(testParams.initialPrice)),
+                bid: int192(int128(testParams.initialPrice)) - 1,
+                ask: int192(int128(testParams.initialPrice)) + 1
+            });
+
+            (reportData, payload) = _encodeReport(report);
+
+            oracleMiddleware = new WstEthOracleMiddlewareWithDataStreams(
+                address(mockPyth),
+                PYTH_ETH_USD,
+                address(mockChainlinkOnChain),
+                address(wstETH),
+                1 hours,
+                address(mockStreamVerifierProxy),
+                MOCK_STREAM_V3
             );
             vm.warp(testParams.initialTimestamp);
             liquidationRewardsManager = new LiquidationRewardsManagerWstEth(wstETH);
@@ -190,7 +241,7 @@ contract UsdnProtocolBaseIntegrationFixture is
 
         if (testParams.initialDeposit == 0) {
             (, uint128 liqPriceWithoutPenalty) = protocol.i_getTickFromDesiredLiqPrice(
-                testParams.initialPrice / 2,
+                testParams.initialLiqPrice,
                 testParams.initialPrice,
                 0,
                 HugeUint.wrap(0),
@@ -228,8 +279,25 @@ contract UsdnProtocolBaseIntegrationFixture is
         return abi.decode(result, (uint256, uint256, uint256, uint256, bytes));
     }
 
+    function getChainlinkDataStreamsApiSignature(bytes32 stream, uint256 timestamp)
+        internal
+        returns (bytes memory payload_)
+    {
+        payload_ = vmFFIRustCommand("chainlink-price", vm.toString(stream), vm.toString(timestamp));
+        require(keccak256(payload_) != keccak256(""), "Rust command returned an error");
+    }
+
     function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
         return (PYTH_DATA_ETH_PRICE, PYTH_DATA_ETH_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA_ETH);
+    }
+
+    function _encodeReport(IVerifierProxy.ReportV3 memory reportV3)
+        internal
+        view
+        returns (bytes memory reportData_, bytes memory payload_)
+    {
+        reportData_ = abi.encode(reportV3);
+        payload_ = abi.encode(emptySignature, reportData_);
     }
 
     function _waitDelay() internal {
@@ -299,9 +367,13 @@ contract UsdnProtocolBaseIntegrationFixture is
 
         _setOraclePrices(2000 ether);
 
-        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit);
+        report.validFromTimestamp = uint32(block.timestamp - 1);
+        report.observationsTimestamp = uint32(block.timestamp - 1);
+        (, payload) = _encodeReport(report);
 
-        protocol.validateDeposit{ value: oracleFee }(user, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+        uint256 oracleFee = oracleMiddleware.validationCost(payload, ProtocolAction.ValidateDeposit);
+
+        protocol.validateDeposit{ value: oracleFee }(user, payload, EMPTY_PREVIOUS_DATA);
 
         // open a position to liquidate and trigger the rebalancer
         (, posToLiquidate_) = protocol.initiateOpenPosition{ value: data.messageValue }(
@@ -320,8 +392,12 @@ contract UsdnProtocolBaseIntegrationFixture is
 
         mockPyth.setLastPublishTime(block.timestamp);
 
-        oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateOpenPosition);
-        protocol.validateOpenPosition{ value: oracleFee }(user, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+        report.validFromTimestamp = uint32(block.timestamp - 1);
+        report.observationsTimestamp = uint32(block.timestamp - 1);
+        (, payload) = _encodeReport(report);
+
+        oracleFee = oracleMiddleware.validationCost(payload, ProtocolAction.ValidateOpenPosition);
+        protocol.validateOpenPosition{ value: oracleFee }(user, payload, EMPTY_PREVIOUS_DATA);
 
         tickToLiquidateData_ = protocol.getTickData(posToLiquidate_.tick);
         vm.stopPrank();
@@ -345,6 +421,14 @@ contract UsdnProtocolBaseIntegrationFixture is
         wstEthPrice_ = uint128(wstETH.getStETHByWstETH(ethPrice * 1e10));
         mockChainlinkOnChain.setLastPublishTime(block.timestamp);
         mockChainlinkOnChain.setLastPrice(int256(uint256(ethPrice)));
+
+        report.validFromTimestamp = uint32(block.timestamp);
+        report.observationsTimestamp = uint32(block.timestamp);
+        report.expiresAt = uint32(block.timestamp) + 1 hours;
+        report.price = int192(int128(wstEthPrice_));
+        report.bid = int192(int128(wstEthPrice_)) - 1;
+        report.ask = int192(int128(wstEthPrice_)) + 1;
+        (reportData, payload) = _encodeReport(report);
     }
 
     /// @dev this function aims to persist the contracts when use vm.rollFork in tests

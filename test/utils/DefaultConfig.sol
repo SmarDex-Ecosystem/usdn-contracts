@@ -4,7 +4,8 @@ pragma solidity 0.8.26;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { LiquidationRewardsManager } from "../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
-import { WstEthOracleMiddleware } from "../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { WstEthOracleMiddlewareWithDataStreams } from
+    "../../src/OracleMiddleware/WstEthOracleMiddlewareWithDataStreams.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
@@ -46,7 +47,7 @@ contract DefaultConfig {
     }
 
     function _setPeripheralContracts(
-        WstEthOracleMiddleware oracleMiddleware,
+        WstEthOracleMiddlewareWithDataStreams oracleMiddleware,
         LiquidationRewardsManager liquidationRewardsManager,
         Usdn usdn,
         IWstETH wstETH,

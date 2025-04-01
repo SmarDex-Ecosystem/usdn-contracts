@@ -271,7 +271,7 @@ contract TestUsdnProtocolCoreFunding is UsdnProtocolBaseFixture {
         int256 ema
     ) public {
         s.fundingSF = bound(sf, 0, 10 ** Constants.FUNDING_SF_DECIMALS);
-        // as a safe upper bound, we use the total supply of ETH with a leverage max of 10x
+        // as a safe upper bound, we use the total supply of eth with a leverage max of 10x
         s.totalExpo = bound(totalExpo, 1 ether, 1.2e9 ether);
         s.balanceLong = bound(balanceLong, 0, s.totalExpo);
         s.balanceVault = bound(balanceVault, 0, 120e6 ether);

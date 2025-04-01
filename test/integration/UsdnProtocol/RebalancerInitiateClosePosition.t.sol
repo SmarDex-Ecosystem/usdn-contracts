@@ -15,6 +15,7 @@ import { IBaseRebalancer } from "../../../src/interfaces/Rebalancer/IBaseRebalan
 import { IRebalancerErrors } from "../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `initiateClosePosition` function of the rebalancer contract
@@ -34,6 +35,7 @@ contract TestRebalancerInitiateClosePosition is
     Position internal protocolPosition;
     uint128 internal wstEthPrice;
     uint128 internal securityDeposit;
+    uint256 internal oracleFee;
     uint256 internal constant USER_PK = 1;
     address user = vm.addr(USER_PK);
 
@@ -56,7 +58,7 @@ contract TestRebalancerInitiateClosePosition is
 
         wstEthPrice = _setOraclePrices(1490 ether);
 
-        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
+        oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
 
         version = rebalancer.getPositionVersion();
@@ -245,7 +247,7 @@ contract TestRebalancerInitiateClosePosition is
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
 
         skip(1 hours);
-        // put the ETH price a bit higher to avoid liquidating existing position
+        // put the eth price a bit higher to avoid liquidating existing position
         wstEthPrice = _setOraclePrices(wstEthPrice * 15 / 10);
 
         vm.startPrank(user);
@@ -283,9 +285,9 @@ contract TestRebalancerInitiateClosePosition is
 
         // snapshot and liquidate to get the liquidated ticks data
         uint256 snapshotId = vm.snapshotState();
-        liqTickInfoArray = protocol.liquidate{
-            value: oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation)
-        }(MOCK_PYTH_DATA);
+
+        oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
+        liqTickInfoArray = protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
         vm.revertToState(snapshotId);
 
         uint256 liquidationRewards = liquidationRewardsManager.getLiquidationRewards(
@@ -375,8 +377,17 @@ contract TestRebalancerInitiateClosePosition is
             EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
-        protocol.validateOpenPosition{ value: securityDeposit }(payable(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+
+        report.validFromTimestamp = uint32(block.timestamp - 1);
+        report.observationsTimestamp = uint32(block.timestamp - 1);
+        report.expiresAt = uint32(block.timestamp) + 1 hours;
+        (, payload) = _encodeReport(report);
+
+        oracleFee = oracleMiddleware.validationCost(payload, Types.ProtocolAction.ValidateDeposit);
+        protocol.validateOpenPosition{ value: oracleFee }(payable(this), payload, EMPTY_PREVIOUS_DATA);
+
         vm.stopPrank();
+
         // wait 1 minute to provide a fresh price
         skip(1 minutes);
 
@@ -394,12 +405,14 @@ contract TestRebalancerInitiateClosePosition is
         // TODO: refactor this test so it's more robust
         vm.startPrank(SET_EXTERNAL_MANAGER);
         protocol.setRebalancer(IBaseRebalancer(address(0)));
-        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
+
+        oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
         protocol.liquidate{ value: oracleFee }(MOCK_PYTH_DATA);
         // sanity check
         assertEq(
             prevPosId.tickVersion + 1, protocol.getTickVersion(prevPosId.tick), "Rebalancer tick was not liquidated"
         );
+
         protocol.setRebalancer(IBaseRebalancer(address(rebalancer)));
         vm.stopPrank();
 
@@ -412,16 +425,22 @@ contract TestRebalancerInitiateClosePosition is
         vm.stopPrank();
 
         vm.startPrank(user);
+        report.validFromTimestamp = uint32(block.timestamp);
+        report.observationsTimestamp = uint32(block.timestamp);
+        (, payload) = _encodeReport(report);
+
+        oracleFee = oracleMiddleware.validationCost(payload, ProtocolAction.InitiateClosePosition);
+
         // revert with a protocol error as the tick should not be accessible anymore
         // but the _lastLiquidatedVersion has not been updated yet
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, 1, 0));
-        rebalancer.initiateClosePosition{ value: securityDeposit }(
+        rebalancer.initiateClosePosition{ value: securityDeposit + oracleFee }(
             1 ether,
             address(this),
             payable(this),
             DISABLE_MIN_PRICE,
             type(uint256).max,
-            MOCK_PYTH_DATA,
+            payload,
             EMPTY_PREVIOUS_DATA,
             ""
         );
@@ -459,7 +478,13 @@ contract TestRebalancerInitiateClosePosition is
             EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
-        protocol.validateOpenPosition{ value: securityDeposit }(payable(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+
+        report.validFromTimestamp = uint32(block.timestamp - 1);
+        report.observationsTimestamp = uint32(block.timestamp - 1);
+        (, payload) = _encodeReport(report);
+
+        oracleFee = oracleMiddleware.validationCost(payload, ProtocolAction.ValidateOpenPosition);
+        protocol.validateOpenPosition{ value: oracleFee }(payable(this), payload, EMPTY_PREVIOUS_DATA);
 
         // wait 1 minute to provide a fresh price
         skip(1 minutes);
@@ -475,7 +500,7 @@ contract TestRebalancerInitiateClosePosition is
             payable(this),
             DISABLE_MIN_PRICE,
             type(uint256).max,
-            MOCK_PYTH_DATA,
+            "",
             EMPTY_PREVIOUS_DATA,
             ""
         );
@@ -495,7 +520,6 @@ contract TestRebalancerInitiateClosePosition is
         protocol.setExpoImbalanceLimits(0, 0, 0, 350, 0, 0);
 
         // deposit assets in the protocol to imbalance it
-        uint256 oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit);
         vm.startPrank(user);
         protocol.initiateDeposit{ value: securityDeposit }(
             100 ether, DISABLE_SHARES_OUT_MIN, address(this), payable(this), type(uint256).max, "", EMPTY_PREVIOUS_DATA
@@ -503,9 +527,14 @@ contract TestRebalancerInitiateClosePosition is
 
         _waitDelay();
 
-        mockPyth.setLastPublishTime(block.timestamp - 1);
+        report.validFromTimestamp = uint32(block.timestamp - 1);
+        report.observationsTimestamp = uint32(block.timestamp - 1);
+        report.expiresAt = uint32(block.timestamp) + 1 hours;
+        (, payload) = _encodeReport(report);
 
-        protocol.validateDeposit{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+        oracleFee = oracleMiddleware.validationCost(payload, ProtocolAction.ValidateDeposit);
+
+        protocol.validateDeposit{ value: oracleFee }(payable(address(this)), payload, EMPTY_PREVIOUS_DATA);
 
         // open a position on the same tick as the rebalancer to avoid an underflow in case of regression
         (, PositionId memory tempPosId) = protocol.initiateOpenPosition{ value: securityDeposit }(
@@ -523,8 +552,13 @@ contract TestRebalancerInitiateClosePosition is
         assertEq(prevPosId.tick, tempPosId.tick, "The opened position should be on the same tick as the rebalancer");
 
         _waitDelay();
-        oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateOpenPosition);
-        protocol.validateOpenPosition{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+
+        report.validFromTimestamp = uint32(block.timestamp - 1);
+        report.observationsTimestamp = uint32(block.timestamp - 1);
+        (, payload) = _encodeReport(report);
+
+        oracleFee = oracleMiddleware.validationCost(payload, ProtocolAction.ValidateOpenPosition);
+        protocol.validateOpenPosition{ value: oracleFee }(payable(address(this)), payload, EMPTY_PREVIOUS_DATA);
 
         // open a position to liquidate and trigger the rebalancer
         // put a high price to avoid liquidating other ticks later
@@ -544,12 +578,20 @@ contract TestRebalancerInitiateClosePosition is
         assertTrue(success, "Position should have been opened");
 
         _waitDelay();
-        protocol.validateOpenPosition{ value: oracleFee }(payable(address(this)), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+
+        report.validFromTimestamp = uint32(block.timestamp - 1);
+        report.observationsTimestamp = uint32(block.timestamp - 1);
+        (, payload) = _encodeReport(report);
+
+        oracleFee = oracleMiddleware.validationCost(payload, ProtocolAction.ValidateOpenPosition);
+        protocol.validateOpenPosition{ value: oracleFee }(payable(address(this)), payload, EMPTY_PREVIOUS_DATA);
 
         skip(5 minutes);
 
         // set a price that liquidates the previously opened position
         _setOraclePrices(1700 ether);
+
+        oracleFee = oracleMiddleware.validationCost(payload, ProtocolAction.InitiateClosePosition);
 
         vm.expectRevert(ReentrancyGuard.ReentrancyGuardReentrantCall.selector);
         rebalancer.initiateClosePosition{ value: securityDeposit + oracleFee }(
@@ -558,7 +600,7 @@ contract TestRebalancerInitiateClosePosition is
             payable(this),
             DISABLE_MIN_PRICE,
             type(uint256).max,
-            MOCK_PYTH_DATA,
+            payload,
             EMPTY_PREVIOUS_DATA,
             ""
         );

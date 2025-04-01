@@ -9,7 +9,8 @@ import { ADMIN, DEPLOYER } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "./utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "./utils/Handler.sol";
 
-import { WstEthOracleMiddleware } from "../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { WstEthOracleMiddlewareWithDataStreams } from
+    "../../../src/OracleMiddleware/WstEthOracleMiddlewareWithDataStreams.sol";
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
@@ -32,7 +33,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         UsdnProtocolHandler test = new UsdnProtocolHandler(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
 
         _setPeripheralContracts(
-            WstEthOracleMiddleware(address(oracleMiddleware)),
+            WstEthOracleMiddlewareWithDataStreams(address(oracleMiddleware)),
             liquidationRewardsManager,
             usdn,
             wstETH,

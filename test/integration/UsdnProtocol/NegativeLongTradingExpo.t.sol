@@ -35,7 +35,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
         // disable imbalance checks to make it easier to have heavy fundings
         vm.prank(SET_PROTOCOL_PARAMS_MANAGER);
         protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0, 0);
-        oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.None);
+        oracleFee = oracleMiddleware.validationCost(payload, ProtocolAction.None);
 
         securityDeposit = protocol.getSecurityDepositValue();
         // deposit assets in the protocol to imbalance it heavily
@@ -51,7 +51,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
             address(this),
             USER_1, // so we can have 2 initiates at the same time
             type(uint256).max,
-            MOCK_PYTH_DATA,
+            payload,
             EMPTY_PREVIOUS_DATA
         );
 
@@ -63,14 +63,21 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
             mockPyth.setPrice(int64(uint64(ethPrice)));
             mockPyth.setLastPublishTime(block.timestamp - 1);
             // the price returned by the oracle middleware
-            pythPrice = uint128(wstETH.getStETHByWstETH(ethPrice) * 1e10) + 7_000_000_000;
+            pythPrice = uint128(uint192(report.price));
         }
 
-        oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.ValidateDeposit);
-        protocol.validateDeposit{ value: oracleFee }(payable(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
-        protocol.validateOpenPosition{ value: oracleFee }(USER_1, MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+        report.validFromTimestamp = uint32(block.timestamp - 1);
+        report.observationsTimestamp = uint32(block.timestamp - 1);
+        report.expiresAt = uint32(block.timestamp + 40 days);
+        (, payload) = _encodeReport(report);
+
+        oracleFee = oracleMiddleware.validationCost(payload, ProtocolAction.ValidateDeposit);
+        protocol.validateDeposit{ value: oracleFee }(payable(this), payload, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition{ value: oracleFee }(USER_1, payload, EMPTY_PREVIOUS_DATA);
 
         skip(5 days);
+
+        oracleFee = oracleMiddleware.validationCost(MOCK_PYTH_DATA, ProtocolAction.Liquidation);
 
         // update the ema
         mockPyth.setLastPublishTime(block.timestamp - 1);
@@ -95,6 +102,11 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
 
         /* --------------------------- close the position --------------------------- */
 
+        oracleFee = oracleMiddleware.validationCost(payload, ProtocolAction.InitiateClosePosition);
+
+        report.validFromTimestamp = uint32(block.timestamp);
+        report.observationsTimestamp = uint32(block.timestamp);
+        (, payload) = _encodeReport(report);
         uint256 balanceOfBefore = wstETH.balanceOf(address(this));
         protocol.initiateClosePosition{ value: oracleFee + securityDeposit }(
             posIdToClose,
@@ -103,7 +115,7 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
             address(this),
             payable(this),
             type(uint256).max,
-            MOCK_PYTH_DATA,
+            payload,
             EMPTY_PREVIOUS_DATA,
             ""
         );
@@ -124,7 +136,13 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
             )
         );
 
-        protocol.validateClosePosition{ value: oracleFee }(payable(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+        report.validFromTimestamp = uint32(block.timestamp - 1);
+        report.observationsTimestamp = uint32(block.timestamp - 1);
+        (, payload) = _encodeReport(report);
+
+        oracleFee = oracleMiddleware.validationCost(payload, ProtocolAction.ValidateClosePosition);
+
+        protocol.validateClosePosition{ value: oracleFee }(payable(this), payload, EMPTY_PREVIOUS_DATA);
 
         assertEq(
             balanceOfBefore + assetToTransfer,
@@ -155,6 +173,12 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
 
         uint128 priceWithFees = uint128(pythPrice - pythPrice * protocol.getPositionFeeBps() / BPS_DIVISOR);
 
+        oracleFee = oracleMiddleware.validationCost(payload, ProtocolAction.InitiateOpenPosition);
+
+        report.validFromTimestamp = uint32(block.timestamp);
+        report.observationsTimestamp = uint32(block.timestamp);
+        (, payload) = _encodeReport(report);
+
         // Make sure we can open a position
         (, PositionId memory posId) = protocol.initiateOpenPosition{ value: securityDeposit + oracleFee }(
             2 ether,
@@ -164,14 +188,20 @@ contract TestUsdnProtocolNegativeLongTradingExpo is UsdnProtocolBaseIntegrationF
             address(this),
             payable(this),
             type(uint256).max,
-            MOCK_PYTH_DATA,
+            payload,
             EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
         mockPyth.setLastPublishTime(block.timestamp - 1);
 
-        protocol.validateOpenPosition{ value: oracleFee }(payable(this), MOCK_PYTH_DATA, EMPTY_PREVIOUS_DATA);
+        oracleFee = oracleMiddleware.validationCost(payload, ProtocolAction.ValidateOpenPosition);
+
+        report.validFromTimestamp = uint32(block.timestamp - 1);
+        report.observationsTimestamp = uint32(block.timestamp - 1);
+        (, payload) = _encodeReport(report);
+
+        protocol.validateOpenPosition{ value: oracleFee }(payable(this), payload, EMPTY_PREVIOUS_DATA);
         assertApproxEqAbs(
             2 ether,
             protocol.getPositionValue(posId, priceWithFees, uint128(block.timestamp)),
