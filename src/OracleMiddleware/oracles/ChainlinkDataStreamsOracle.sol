@@ -108,8 +108,9 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
                 revert OracleMiddlewareDataStreamInvalidTimestamp();
             }
 
-            // The report is considered valid if the `targetTimestamp` is within the interval `[validFromTimestamp,
-            // observationsTimestamp]` and the `observationsTimestamp` does not exceed the `targetLimit`.
+            // The report is considered valid if the `targetTimestamp` is within the interval
+            // `[validFromTimestamp,observationsTimestamp]` and the `observationsTimestamp`
+            // does not exceed the `targetLimit`.
         } else if (
             targetTimestamp < verifiedReport.validFromTimestamp
                 || verifiedReport.observationsTimestamp < targetTimestamp
