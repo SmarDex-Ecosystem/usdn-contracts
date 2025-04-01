@@ -14,16 +14,16 @@ import { OracleMiddlewareWithDataStreams } from "./OracleMiddlewareWithDataStrea
  */
 contract WstEthOracleMiddlewareWithDataStreams is OracleMiddlewareWithDataStreams {
     /// @notice The wstETH contract.
-    IWstETH internal immutable _wstEth;
+    IWstETH internal immutable _wstETH;
 
     /**
      * @param pythContract The address of the Pyth contract.
-     * @param pythFeedId The Pyth price feed ID for the asset.
-     * @param chainlinkPriceFeed The address of the Chainlink price feed.
+     * @param pythFeedId The ETH/USD Pyth price feed ID for the asset.
+     * @param chainlinkPriceFeed The address of the Chainlink ETH/USD price feed.
      * @param wstETH The address of the wstETH contract.
      * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale.
      * @param chainlinkProxyVerifierAddress The address of the Chainlink proxy verifier contract.
-     * @param chainlinkStreamId The supported Chainlink data stream ID.
+     * @param chainlinkStreamId The supported Chainlink wstETH/USD data stream ID.
      */
     constructor(
         address pythContract,
@@ -43,15 +43,15 @@ contract WstEthOracleMiddlewareWithDataStreams is OracleMiddlewareWithDataStream
             chainlinkStreamId
         )
     {
-        _wstEth = IWstETH(wstETH);
+        _wstETH = IWstETH(wstETH);
     }
 
     /**
      * @inheritdoc IBaseOracleMiddleware
      * @notice Parses and validates `data`, returns the corresponding price data,
-     * applying eth/wstETH ratio if the price is in eth.
+     * applying ETH/wstETH ratio if the price is in eth.
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata.
-     * If needed, the Wsteth price is calculated as follows: `ethPrice x stEthPerToken / 1 ether`.
+     * If needed, the wstETH price is calculated as follows: `ethPrice x stEthPerToken / 1 ether`.
      * A fee amounting to exactly {validationCost} (with the same `data` and `action`) must be sent or the transaction
      * will revert.
      * @param actionId A unique identifier for the current action. This identifier can be used to link an `Initiate`
@@ -77,7 +77,7 @@ contract WstEthOracleMiddlewareWithDataStreams is OracleMiddlewareWithDataStream
             return oraclePrice;
         }
 
-        uint256 stEthPerToken = _wstEth.stEthPerToken();
+        uint256 stEthPerToken = _wstETH.stEthPerToken();
 
         return PriceInfo({
             price: oraclePrice.price * stEthPerToken / 1 ether,
