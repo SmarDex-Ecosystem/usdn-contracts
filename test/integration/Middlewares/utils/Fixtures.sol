@@ -170,6 +170,10 @@ contract WstethIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegr
     }
 }
 
+/**
+ * @title ChainlinkDataStreamsFixture
+ * @dev Utils for testing the oracle middleware with  data streams.
+ */
 contract ChainlinkDataStreamsFixture is CommonBaseIntegrationFixture, ActionsIntegrationFixture {
     OracleMiddlewareWithDataStreams internal oracleMiddleware;
 

@@ -4,13 +4,11 @@ pragma solidity 0.8.26;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { LiquidationRewardsManager } from "../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
-import { WstEthOracleMiddlewareWithDataStreams } from
-    "../../src/OracleMiddleware/WstEthOracleMiddlewareWithDataStreams.sol";
-import { WstEthOracleMiddlewareWithPyth } from "../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IWstETH } from "../../src/interfaces/IWstETH.sol";
+import { IBaseOracleMiddleware } from "../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract DefaultConfig {
@@ -48,29 +46,7 @@ contract DefaultConfig {
     }
 
     function _setPeripheralContracts(
-        WstEthOracleMiddlewareWithDataStreams oracleMiddleware,
-        LiquidationRewardsManager liquidationRewardsManager,
-        Usdn usdn,
-        IWstETH wstETH,
-        address usdnProtocolFallback,
-        address feeCollector,
-        IERC20Metadata sdex
-    ) internal {
-        initStorage.oracleMiddleware = oracleMiddleware;
-        uint8 priceFeedDecimals = oracleMiddleware.getDecimals();
-        initStorage.liquidationRewardsManager = liquidationRewardsManager;
-        initStorage.targetUsdnPrice = uint128(10_087 * 10 ** (priceFeedDecimals - 4)); // $1.0087
-        initStorage.usdnRebaseThreshold = uint128(1009 * 10 ** (priceFeedDecimals - 3)); // $1.009
-        initStorage.usdn = usdn;
-        initStorage.asset = wstETH;
-        initStorage.minLongPosition = 2 * 10 ** wstETH.decimals(); // 2 tokens
-        initStorage.protocolFallbackAddr = usdnProtocolFallback;
-        initStorage.feeCollector = feeCollector;
-        initStorage.sdex = sdex;
-    }
-
-    function _setPeripheralContracts(
-        WstEthOracleMiddlewareWithPyth oracleMiddleware,
+        IBaseOracleMiddleware oracleMiddleware,
         LiquidationRewardsManager liquidationRewardsManager,
         Usdn usdn,
         IWstETH wstETH,
