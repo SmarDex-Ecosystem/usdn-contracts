@@ -50,7 +50,6 @@ contract TestUsdnProtocolProfitableDeposit is UsdnProtocolBaseIntegrationFixture
 
         _waitDelay();
 
-        // adjust payload
         report.validFromTimestamp = uint32(block.timestamp - 1);
         report.observationsTimestamp = uint32(block.timestamp - 1);
         report.expiresAt = uint32(block.timestamp);
@@ -78,7 +77,6 @@ contract TestUsdnProtocolProfitableDeposit is UsdnProtocolBaseIntegrationFixture
 
         _waitDelay();
 
-        // adjust payload
         report.validFromTimestamp = uint32(block.timestamp - 1);
         report.observationsTimestamp = uint32(block.timestamp - 1);
         report.expiresAt = uint32(block.timestamp);
@@ -146,7 +144,6 @@ contract TestUsdnProtocolProfitableDeposit is UsdnProtocolBaseIntegrationFixture
 
         _waitDelay();
 
-        // adjust payload
         report.validFromTimestamp = uint32(block.timestamp - 1);
         report.observationsTimestamp = uint32(block.timestamp - 1);
         (, payload) = _encodeReport(report);
@@ -178,7 +175,6 @@ contract TestUsdnProtocolProfitableDeposit is UsdnProtocolBaseIntegrationFixture
 
         _waitDelay();
 
-        // adjust payload
         report.validFromTimestamp = uint32(block.timestamp - 1);
         report.observationsTimestamp = uint32(block.timestamp - 1);
         (, payload) = _encodeReport(report);
