@@ -10,7 +10,7 @@ import { OracleMiddlewareHandler } from "../utils/Handler.sol";
 import { OracleMiddlewareWithRedstoneHandler } from "../utils/HandlerWithRedstone.sol";
 import { MockChainlinkOnChain } from "../utils/MockChainlinkOnChain.sol";
 import { MockPyth } from "../utils/MockPyth.sol";
-import { MOCK_STREAM_V3, STREAM_WSTETH_PRICE } from "./Constants.sol";
+import { EMPTY_STREAM_V3, STREAM_WSTETH_PRICE } from "./Constants.sol";
 import { OracleMiddlewareWithDataStreamsHandler } from "./Handler.sol";
 import { MockFeeManager } from "./MockFeeManager.sol";
 import { MockStreamVerifierProxy } from "./MockStreamVerifierProxy.sol";
@@ -173,11 +173,11 @@ contract OracleMiddlewareWithDataStreamsFixture is BaseFixture, ActionsFixture {
             address(mockChainlinkOnChain),
             chainlinkTimeElapsedLimit,
             address(mockStreamVerifierProxy),
-            MOCK_STREAM_V3
+            EMPTY_STREAM_V3
         );
 
         report = IVerifierProxy.ReportV3({
-            feedId: MOCK_STREAM_V3,
+            feedId: EMPTY_STREAM_V3,
             validFromTimestamp: uint32(block.timestamp),
             observationsTimestamp: uint32(block.timestamp),
             nativeFee: 0.001 ether,
@@ -365,11 +365,11 @@ contract WstethOracleWithDataStreamsBaseFixture is BaseFixture, ActionsFixture {
             address(wsteth),
             chainlinkTimeElapsedLimit,
             address(mockStreamVerifierProxy),
-            MOCK_STREAM_V3
+            EMPTY_STREAM_V3
         );
 
         report = IVerifierProxy.ReportV3({
-            feedId: MOCK_STREAM_V3,
+            feedId: EMPTY_STREAM_V3,
             validFromTimestamp: uint32(block.timestamp),
             observationsTimestamp: uint32(block.timestamp),
             nativeFee: 0.001 ether,

@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { MOCK_STREAM_V3, MOCK_STREAM_V4 } from "../../utils/Constants.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import { EMPTY_STREAM_V3, EMPTY_STREAM_V4 } from "../../utils/Constants.sol";
 import { OracleMiddlewareWithDataStreamsFixture } from "../../utils/Fixtures.sol";
 
 import { FormattedDataStreamsPrice } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -40,7 +42,7 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
      * @custom:then The call should revert with `OracleMiddlewareInvalidReportVersion`.
      */
     function test_RevertWhen_getChainlinkDataStreamPriceIncorrectReportVersion() public {
-        report.feedId = MOCK_STREAM_V4;
+        report.feedId = EMPTY_STREAM_V4;
         (, payload) = _encodeReport(report);
         vm.expectRevert(OracleMiddlewareInvalidReportVersion.selector);
         oracleMiddleware.i_getChainlinkDataStreamPrice{ value: report.nativeFee }(payload, 0, 0);
@@ -52,7 +54,7 @@ contract TestChainlinkDataStreamsOracleGetPrice is OracleMiddlewareWithDataStrea
      * @custom:then The call should revert with `OracleMiddlewareInvalidStreamId`.
      */
     function test_RevertWhen_getChainlinkDataStreamPriceInvalidStreamId() public {
-        report.feedId = bytes32(uint256(MOCK_STREAM_V3) | 1);
+        report.feedId = bytes32(uint256(EMPTY_STREAM_V3) | 1);
         (, payload) = _encodeReport(report);
         vm.expectRevert(OracleMiddlewareInvalidStreamId.selector);
         oracleMiddleware.i_getChainlinkDataStreamPrice{ value: report.nativeFee }(payload, 0, 0);
