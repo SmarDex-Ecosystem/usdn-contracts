@@ -12,7 +12,7 @@ import { WstEthOracleMiddlewareWithPyth } from "../WstEthOracleMiddlewareWithPyt
  * @notice This contract is used to get the price of wstETH by setting up a price or forwarding it to wstethMiddleware
  * @dev This aims at simulating price action. Do not use in production
  */
-contract MockWstEthOracleMiddleware is WstEthOracleMiddlewareWithPyth {
+contract MockWstEthOracleMiddlewareWithPyth is WstEthOracleMiddlewareWithPyth {
     /// @notice Confidence interval percentage numerator
     uint16 internal _wstethMockedConfBps = 20; // default 0.2% conf
 
