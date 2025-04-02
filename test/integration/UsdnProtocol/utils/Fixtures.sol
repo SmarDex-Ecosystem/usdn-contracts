@@ -27,13 +27,14 @@ import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { RolesUtils } from "../../../utils/RolesUtils.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
+
+import { MockFeeManager } from "../../Middlewares/ChainlinkDataStreamsOracle/utils/MockFeeManager.sol";
 import {
     PYTH_DATA_ETH,
     PYTH_DATA_ETH_CONF,
     PYTH_DATA_ETH_PRICE,
     PYTH_DATA_TIMESTAMP
 } from "../../Middlewares/utils/Constants.sol";
-import { MockFeeManager } from "../../Middlewares/utils/MockFeeManager.sol";
 import { MockStreamVerifierProxy } from "../../Middlewares/utils/MockStreamVerifierProxy.sol";
 import { MockWETH } from "../../Middlewares/utils/MockWETH.sol";
 
