@@ -27,6 +27,7 @@ contract TestChainlinkDataStreamsOracleMiddlewareParseAndValidatePriceRealData i
     string internal _validateOpenPriceError = string.concat(PRICE_ERROR, actionNames[VALIDATE_OPEN_ACTION_INDEX]);
 
     /**
+     *
      * @custom:scenario Parse and validate the price using Chainlink data streams API payload for all actions
      * and Pyth Hermes API signature for liquidations.
      * @custom:given The price feed is ETH/USD for both Chainlink and Pyth.
