@@ -11,7 +11,7 @@ import { UsdnWstethUsdConfig } from "./deploymentConfigs/UsdnWstethUsdConfig.sol
 import { Utils } from "./utils/Utils.s.sol";
 
 import { LiquidationRewardsManagerWstEth } from "../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
-import { WstEthOracleMiddlewareWithPyth } from "../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
+import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
 import { Wusdn } from "../src/Usdn/Wusdn.sol";
@@ -41,7 +41,7 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
     function run()
         external
         returns (
-            WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,
+            WstEthOracleMiddleware wstEthOracleMiddleware_,
             LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Rebalancer rebalancer_,
             Usdn usdn_,
@@ -75,7 +75,7 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
     function _deployAndSetPeripheralContracts()
         internal
         returns (
-            WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,
+            WstEthOracleMiddleware wstEthOracleMiddleware_,
             LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Usdn usdn_,
             Wusdn wusdn_
@@ -83,7 +83,7 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
     {
         vm.startBroadcast();
         liquidationRewardsManager_ = new LiquidationRewardsManagerWstEth(WSTETH);
-        wstEthOracleMiddleware_ = new WstEthOracleMiddlewareWithPyth(
+        wstEthOracleMiddleware_ = new WstEthOracleMiddleware(
             PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WSTETH), CHAINLINK_PRICE_VALIDITY
         );
         usdn_ = new Usdn(address(0), address(0));
@@ -145,9 +145,7 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
      * @param usdnProtocol The USDN protocol.
      * @param wstEthOracleMiddleware The WstETH oracle middleware.
      */
-    function _initializeProtocol(IUsdnProtocol usdnProtocol, WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware)
-        internal
-    {
+    function _initializeProtocol(IUsdnProtocol usdnProtocol, WstEthOracleMiddleware wstEthOracleMiddleware) internal {
         uint24 liquidationPenalty = usdnProtocol.getLiquidationPenalty();
         int24 tickSpacing = usdnProtocol.getTickSpacing();
         uint256 price = wstEthOracleMiddleware.parseAndValidatePrice(

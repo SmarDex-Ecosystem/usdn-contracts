@@ -17,7 +17,7 @@ import { MockOracleMiddleware } from "./MockOracleMiddleware.sol";
 
 import { LiquidationRewardsManagerWstEth } from
     "../../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
-import { WstEthOracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
+import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionUtils } from
     "../../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
@@ -147,7 +147,7 @@ contract UsdnProtocolBaseFixture is
         UsdnProtocolHandler test = new UsdnProtocolHandler(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
 
         _setPeripheralContracts(
-            WstEthOracleMiddlewareWithPyth(address(oracleMiddleware)),
+            WstEthOracleMiddleware(address(oracleMiddleware)),
             liquidationRewardsManager,
             usdn,
             wstETH,

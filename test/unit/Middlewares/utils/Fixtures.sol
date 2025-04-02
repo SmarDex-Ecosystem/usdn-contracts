@@ -15,9 +15,9 @@ import { OracleMiddlewareWithDataStreamsHandler } from "./Handler.sol";
 import { MockFeeManager } from "./MockFeeManager.sol";
 import { MockStreamVerifierProxy } from "./MockStreamVerifierProxy.sol";
 
+import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { WstEthOracleMiddlewareWithDataStreams } from
     "../../../../src/OracleMiddleware/WstEthOracleMiddlewareWithDataStreams.sol";
-import { WstEthOracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { WusdnToEthOracleMiddlewareWithPyth } from
     "../../../../src/OracleMiddleware/WusdnToEthOracleMiddlewareWithPyth.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
@@ -240,7 +240,7 @@ contract OracleMiddlewareWithDataStreamsFixture is BaseFixture, ActionsFixture {
 contract WstethBaseFixture is BaseFixture, ActionsFixture {
     MockPyth internal mockPyth;
     MockChainlinkOnChain internal mockChainlinkOnChain;
-    WstEthOracleMiddlewareWithPyth public wstethOracle;
+    WstEthOracleMiddleware public wstethOracle;
     WstETH public wsteth;
 
     function setUp() public virtual {
@@ -249,9 +249,8 @@ contract WstethBaseFixture is BaseFixture, ActionsFixture {
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
         wsteth = new WstETH();
-        wstethOracle = new WstEthOracleMiddlewareWithPyth(
-            address(mockPyth), 0, address(mockChainlinkOnChain), address(wsteth), 1 hours
-        );
+        wstethOracle =
+            new WstEthOracleMiddleware(address(mockPyth), 0, address(mockChainlinkOnChain), address(wsteth), 1 hours);
     }
 
     function test_setUp() public {
