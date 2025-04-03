@@ -6,7 +6,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { IFeeManager } from "../../../../../src/interfaces/OracleMiddleware/IFeeManager.sol";
+import { IFeeManager } from "../../../../src/interfaces/OracleMiddleware/IFeeManager.sol";
 
 interface IWERC20 {
     function deposit() external payable;
