@@ -16,7 +16,10 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
     /// @notice The address of the Chainlink proxy verifier contract.
     IVerifierProxy internal immutable PROXY_VERIFIER;
 
-    /// @notice The ID of the Chainlink data streams.
+    /**
+     * @notice The ID of the Chainlink data streams.
+     * @dev Any data streams are standardized to 18 decimals.
+     */
     bytes32 internal immutable STREAM_ID;
 
     /// @notice The report version.
@@ -61,7 +64,7 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
      * If zero, then we accept all recent prices.
      * @param targetLimit The most recent timestamp a price can have.
      * Can be zero if `targetTimestamp` is zero.
-     * @return formattedPrice_ The Chainlink formatted price.
+     * @return formattedPrice_ The Chainlink formatted price with 18 decimals.
      */
     function _getChainlinkDataStreamPrice(bytes calldata payload, uint128 targetTimestamp, uint128 targetLimit)
         internal
@@ -97,9 +100,17 @@ abstract contract ChainlinkDataStreamsOracle is IOracleMiddlewareErrors, IChainl
 
         // Report timestamp
         if (targetTimestamp == 0) {
+            // If targetTimestamp is 0, we check if the verified report's validFromTimestamp is older or equal than
+            // the current block timestamp minus the `_dataStreamsRecentPriceDelay`. This check ensures that the price
+            // data is considered recent enough to be valid for use, while not strictly requiring it to be the current
+            // timestamp.
             if (verifiedReport.validFromTimestamp < block.timestamp - _dataStreamsRecentPriceDelay) {
                 revert OracleMiddlewareDataStreamInvalidTimestamp();
             }
+
+            // The report is considered valid if the `targetTimestamp` is within the interval
+            // `[validFromTimestamp,observationsTimestamp]` and the `observationsTimestamp`
+            // does not exceed the `targetLimit`.
         } else if (
             targetTimestamp < verifiedReport.validFromTimestamp
                 || verifiedReport.observationsTimestamp < targetTimestamp

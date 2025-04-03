@@ -42,6 +42,7 @@ import { LiquidationRewardsManagerWstEth } from
     "../../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
 import { WstEthOracleMiddlewareWithDataStreams } from
     "../../../../src/OracleMiddleware/WstEthOracleMiddlewareWithDataStreams.sol";
+import { WstEthOracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
@@ -106,6 +107,7 @@ contract UsdnProtocolBaseIntegrationFixture is
     MockFeeManager internal mockFeeManager;
     MockStreamVerifierProxy internal mockStreamVerifierProxy;
     WstEthOracleMiddlewareWithDataStreams public oracleMiddleware;
+    WstEthOracleMiddlewareWithPyth public oracleMiddleware;
     LiquidationRewardsManagerWstEth public liquidationRewardsManager;
     Rebalancer public rebalancer;
 
