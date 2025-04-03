@@ -400,7 +400,7 @@ library UsdnProtocolCoreLibrary {
                 s._pendingActionsQueue.clearAt(rawIndex);
                 delete s._pendingActions[validator];
 
-                //@TODO: added by fuzzer find out why?
+                // Flags when a position was liquidated before pending action could be processed (added by fuzzer)
                 s._positionWasLiquidatedInTheMeantime = true;
 
                 emit IUsdnProtocolEvents.StalePendingActionRemoved(

@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.26;
 
-import "@perimetersec/fuzzlib/src/FuzzBase.sol";
+import { FuzzBase } from "@perimetersec/fuzzlib/src/FuzzBase.sol";
 
-import "../FuzzSetup.sol";
-import "../util/FunctionCalls.sol";
+import { FuzzSetup } from "../FuzzSetup.sol";
+
+import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /* solhint-disable numcast/safe-cast */
 abstract contract FuzzStructs is FuzzSetup {
@@ -14,17 +15,17 @@ abstract contract FuzzStructs is FuzzSetup {
         uint128 wstEthAmount;
         uint256 amountDesired;
         uint256 deadline;
-        IUsdnProtocolTypes.PreviousActionsData previousActionsData;
-        IUsdnProtocolTypes.PendingAction lastAction;
+        Types.PreviousActionsData previousActionsData;
+        Types.PendingAction lastAction;
         uint256 wstethPendingActions;
         uint256 txValue;
     }
 
     struct ValidateDepositParams {
         address payable validator;
-        IUsdnProtocolTypes.DepositPendingAction pendingAction;
-        IUsdnProtocolTypes.PreviousActionsData previousActionsData;
-        IUsdnProtocolTypes.PendingAction lastAction;
+        Types.DepositPendingAction pendingAction;
+        Types.PreviousActionsData previousActionsData;
+        Types.PendingAction lastAction;
         int256 usdnPendingActions;
         uint256 wstethPendingActions;
     }
@@ -35,17 +36,17 @@ abstract contract FuzzStructs is FuzzSetup {
         uint128 usdnShares;
         uint256 amountDesired;
         uint256 deadline;
-        IUsdnProtocolTypes.PreviousActionsData previousActionsData;
-        IUsdnProtocolTypes.PendingAction lastAction;
+        Types.PreviousActionsData previousActionsData;
+        Types.PendingAction lastAction;
         int256 usdnPendingActions;
         uint256 txValue;
     }
 
     struct ValidateWithdrawalParams {
         address payable validator;
-        IUsdnProtocolTypes.PendingAction pendingAction;
-        IUsdnProtocolTypes.PreviousActionsData previousActionsData;
-        IUsdnProtocolTypes.PendingAction lastAction;
+        Types.PendingAction pendingAction;
+        Types.PreviousActionsData previousActionsData;
+        Types.PendingAction lastAction;
         int256 usdnPendingActions;
         uint256 wstethPendingActions;
     }
@@ -58,9 +59,9 @@ abstract contract FuzzStructs is FuzzSetup {
         address to;
         address payable validator;
         uint256 deadline;
-        IUsdnProtocolTypes.PendingAction pendingAction;
-        IUsdnProtocolTypes.PreviousActionsData previousActionsData;
-        IUsdnProtocolTypes.PendingAction lastAction;
+        Types.PendingAction pendingAction;
+        Types.PreviousActionsData previousActionsData;
+        Types.PendingAction lastAction;
         uint256 wstethPendingActions;
         uint256 txValue;
     }
@@ -68,15 +69,15 @@ abstract contract FuzzStructs is FuzzSetup {
     struct ValidateOpenPositionParams {
         address payable validator;
         int256 currentPrice;
-        IUsdnProtocolTypes.PendingAction pendingAction;
-        IUsdnProtocolTypes.PreviousActionsData previousActionsData;
-        IUsdnProtocolTypes.PendingAction lastAction;
+        Types.PendingAction pendingAction;
+        Types.PreviousActionsData previousActionsData;
+        Types.PendingAction lastAction;
         uint256 wstethPendingActions;
         uint256 txValue;
     }
 
     struct InitiateClosePositionParams {
-        IUsdnProtocolTypes.PositionId positionId;
+        Types.PositionId positionId;
         uint128 amountToClose;
         address to;
         address payable validator;
@@ -87,8 +88,8 @@ abstract contract FuzzStructs is FuzzSetup {
         address user;
         address payable validator;
         int256 currentPrice;
-        IUsdnProtocolTypes.PreviousActionsData previousActionsData;
-        IUsdnProtocolTypes.PendingAction lastAction;
+        Types.PreviousActionsData previousActionsData;
+        Types.PendingAction lastAction;
         uint256 wstethPendingActions;
         uint256 txValue;
         uint256 closeAmount;
@@ -96,7 +97,7 @@ abstract contract FuzzStructs is FuzzSetup {
 
     struct ValidateActionablePendingActionsParams {
         address payable validator;
-        IUsdnProtocolTypes.PreviousActionsData previousActionsData;
+        Types.PreviousActionsData previousActionsData;
         uint256 maxValidations;
         uint256 securityDeposit;
         uint256 actionsLength;
@@ -133,8 +134,8 @@ abstract contract FuzzStructs is FuzzSetup {
         uint256 userMinPrice;
         uint256 deadline;
         uint256 txValue;
-        IUsdnProtocolTypes.PreviousActionsData previousActionsData;
-        IUsdnProtocolTypes.PendingAction lastAction;
+        Types.PreviousActionsData previousActionsData;
+        Types.PendingAction lastAction;
         bytes delegationData;
     }
 

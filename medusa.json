@@ -14,7 +14,7 @@
         ],
         "revertReporterEnabled": true,
         "targetContracts": [
-            "Fuzz"
+            "FuzzGuided"
         ],
         "predeployedContracts": {
             "Accumulator": "0xf1",
@@ -101,8 +101,8 @@
     "compilation": {
         "platform": "crytic-compile",
         "platformConfig": {
-            "target": "./test/fuzzing/Fuzz.sol",
-            "solcVersion": "",
+            "target": "./test/fuzzing/FuzzGuided.sol",
+            "solcVersion": "0.8.26",
             "exportDirectory": "",
             "args": [
                 "--compile-libraries=(Accumulator,0xf1),(DoubleEndedQueue,0xf2),(SignedMath,0xf3),(HugeUint,0xf4),(TickMath,0xf5),(UsdnProtocolActionsLongLibrary,0xf6),(UsdnProtocolActionsUtilsLibrary,0xf7),(UsdnProtocolConstantsLibrary,0xf8),(UsdnProtocolCoreLibrary,0xf9),(UsdnProtocolLongLibrary,0xfa),(UsdnProtocolSettersLibrary,0xfb),(UsdnProtocolUtilsLibrary,0xfc),(UsdnProtocolVaultLibrary,0xfd)"

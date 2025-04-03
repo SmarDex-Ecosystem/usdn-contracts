@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.26;
 
-import "./PreconditionsBase.sol";
+import { PreconditionsBase } from "./PreconditionsBase.sol";
+
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /* solhint-disable numcast/safe-cast */
 
@@ -14,12 +16,9 @@ abstract contract PreconditionsUsdnProtocolVault is PreconditionsBase {
         InitiateDepositParams memory params;
 
         // Check pending actions first
-        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
+        Types.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
 
-        if (
-            action.action != IUsdnProtocolTypes.ProtocolAction.InitiateDeposit
-                && action.action != IUsdnProtocolTypes.ProtocolAction.None
-        ) {
+        if (action.action != Types.ProtocolAction.InitiateDeposit && action.action != Types.ProtocolAction.None) {
             revert();
         }
 
@@ -46,12 +45,9 @@ abstract contract PreconditionsUsdnProtocolVault is PreconditionsBase {
 
         params.validator = payable(currentActor);
 
-        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(params.validator);
+        Types.PendingAction memory action = usdnProtocol.getUserPendingAction(params.validator);
 
-        if (
-            action.action != IUsdnProtocolTypes.ProtocolAction.ValidateDeposit
-                && action.action != IUsdnProtocolTypes.ProtocolAction.None
-        ) {
+        if (action.action != Types.ProtocolAction.ValidateDeposit && action.action != Types.ProtocolAction.None) {
             revert();
         }
 
@@ -74,12 +70,9 @@ abstract contract PreconditionsUsdnProtocolVault is PreconditionsBase {
         InitiateWithdrawalParams memory params;
 
         // Check pending actions first
-        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
+        Types.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
 
-        if (
-            action.action != IUsdnProtocolTypes.ProtocolAction.InitiateWithdrawal
-                && action.action != IUsdnProtocolTypes.ProtocolAction.None
-        ) {
+        if (action.action != Types.ProtocolAction.InitiateWithdrawal && action.action != Types.ProtocolAction.None) {
             revert();
         }
 
@@ -109,7 +102,7 @@ abstract contract PreconditionsUsdnProtocolVault is PreconditionsBase {
         InitiateWithdrawalParams memory params;
 
         // Check pending actions first
-        // IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
+        // Types.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
 
         params.to = currentActor;
         params.validator = payable(currentActor);
@@ -135,9 +128,9 @@ abstract contract PreconditionsUsdnProtocolVault is PreconditionsBase {
 
         params.validator = payable(currentActor);
 
-        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(params.validator);
+        Types.PendingAction memory action = usdnProtocol.getUserPendingAction(params.validator);
 
-        if (action.action != IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal) {
+        if (action.action != Types.ProtocolAction.ValidateWithdrawal) {
             revert();
         }
 
@@ -157,7 +150,7 @@ abstract contract PreconditionsUsdnProtocolVault is PreconditionsBase {
 
         params.validator = payable(currentActor);
 
-        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(params.validator);
+        Types.PendingAction memory action = usdnProtocol.getUserPendingAction(params.validator);
 
         params.pendingAction = action;
 

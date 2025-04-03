@@ -1,9 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.26;
 
-import "./FuzzStructs.sol";
+import { IUsdnProtocolHandler } from "../mocks/IUsdnProtocolHandler.sol";
+import { FuzzStructs } from "./FuzzStructs.sol";
+
+import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /* solhint-disable numcast/safe-cast */
+/**
+ * @notice BeforeAfter State Snapshot Contract
+ * @dev  This abstract contract is used to snapshot and compare the protocol state
+ */
 abstract contract BeforeAfter is FuzzStructs {
     mapping(uint8 => State) states;
 
@@ -49,7 +56,7 @@ abstract contract BeforeAfter is FuzzStructs {
         uint256 usdnShares;
         uint256 wstETHBalance;
         uint256 sdexBalance;
-        IUsdnProtocolTypes.PendingAction pendingAction;
+        Types.PendingAction pendingAction;
     }
 
     function _before(address[] memory actors) internal {
@@ -277,8 +284,8 @@ abstract contract BeforeAfter is FuzzStructs {
     function getPendingAcitonsLength(uint8 callNum) internal {
         uint256 totalPending;
         for (uint256 i = 0; i < USERS.length; i++) {
-            IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(USERS[i]);
-            if (action.action != IUsdnProtocolTypes.ProtocolAction.None) {
+            Types.PendingAction memory action = usdnProtocol.getUserPendingAction(USERS[i]);
+            if (action.action != Types.ProtocolAction.None) {
                 totalPending++;
             }
         }
@@ -291,8 +298,7 @@ abstract contract BeforeAfter is FuzzStructs {
         fl.t(success, "getPendingActionsLength call failed");
 
         // Decode the returned data which contains both actions array and another value
-        (IUsdnProtocolTypes.PendingAction[] memory actions,) =
-            abi.decode(returnData, (IUsdnProtocolTypes.PendingAction[], uint128[]));
+        (Types.PendingAction[] memory actions,) = abi.decode(returnData, (Types.PendingAction[], uint128[]));
 
         states[callNum].pendingActionsLength = actions.length;
     }
@@ -303,8 +309,8 @@ abstract contract BeforeAfter is FuzzStructs {
                 continue;
             }
 
-            IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(USERS[i]);
-            if (action.action != IUsdnProtocolTypes.ProtocolAction.None) {
+            Types.PendingAction memory action = usdnProtocol.getUserPendingAction(USERS[i]);
+            if (action.action != Types.ProtocolAction.None) {
                 states[callNum].otherUsersPendingActions = true;
                 return true;
             }
@@ -340,8 +346,7 @@ abstract contract BeforeAfter is FuzzStructs {
 
         uint256 lowLeverageCount = 0;
         bool hasLowLeveragePositions = false;
-        IUsdnProtocolTypes.PositionId[] memory lowLeveragePositions =
-            new IUsdnProtocolTypes.PositionId[](positionIds.length);
+        Types.PositionId[] memory lowLeveragePositions = new Types.PositionId[](positionIds.length);
 
         for (uint256 i = 0; i < positionIds.length; i++) {
             (, uint256 version) = usdnProtocol.i_tickHash(positionIds[i].tick);
@@ -355,8 +360,7 @@ abstract contract BeforeAfter is FuzzStructs {
 
             fl.t(success, "Getting position failed");
 
-            (IUsdnProtocolTypes.Position memory position,) =
-                abi.decode(returnData, (IUsdnProtocolTypes.Position, uint24));
+            (Types.Position memory position,) = abi.decode(returnData, (Types.Position, uint24));
 
             if (position.amount != 0 && (((uint256(position.totalExpo) * 1e21) / uint256(position.amount))) < 1e21) {
                 lowLeveragePositions[lowLeverageCount] = positionIds[i];

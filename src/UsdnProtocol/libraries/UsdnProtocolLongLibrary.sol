@@ -537,8 +537,10 @@ library UsdnProtocolLongLibrary {
         // transfer rewards (assets) to the liquidator
         address(s._asset).safeTransfer(msg.sender, liquidationRewards);
 
-        s._fuzz_liquidator = msg.sender; //TODO: added by fuzzer find out why?
-        s._fuzz_liquidationRewards = liquidationRewards; //TODO: added by fuzzer find out why
+        // Records the address of the liquidator (added by fuzzer)
+        s._fuzz_liquidator = msg.sender;
+        // Records the amount of rewards sent to liquidator (added by fuzzer)
+        s._fuzz_liquidationRewards = liquidationRewards;
 
         emit IUsdnProtocolEvents.LiquidatorRewarded(msg.sender, liquidationRewards);
     }
@@ -685,7 +687,8 @@ library UsdnProtocolLongLibrary {
         // call the rebalancer to update the public bookkeeping
         rebalancer.updatePosition(posId, data.positionValue);
 
-        s._rebalancerTriggered = true; //@TODO added by fuzzer find out why?
+        // Flags when the rebalancer has been triggered (added by fuzzer)
+        s._rebalancerTriggered = true;
 
         if (data.positionValue > 0) {
             action_ = Types.RebalancerAction.ClosedOpened;
@@ -789,7 +792,7 @@ library UsdnProtocolLongLibrary {
         }
         cache.tradingExpo = cache.totalExpo - cache.longBalance;
 
-        //@TODO added by fuzzer find out why?
+        // Records the profit/loss when a position is closed with validation (added by fuzzer)
         s._positionProfit = positionValue_ - Utils._toInt256(pos.amount);
 
         // emit both initiate and validate events
@@ -887,7 +890,7 @@ library UsdnProtocolLongLibrary {
             // update bitmap to reflect that the tick is empty
             s._tickBitmap.unset(index);
 
-            //TODO: added by fuzzer find out why?
+            // Records the lowest tick that was liquidated (added by fuzzer)
             s._lowestLiquidatedTick = data.iTick;
 
             emit IUsdnProtocolEvents.LiquidatedTick(
@@ -913,7 +916,7 @@ library UsdnProtocolLongLibrary {
         (effects_.newLongBalance, effects_.newVaultBalance) =
             _handleNegativeBalances(data.tempLongBalance, data.tempVaultBalance);
 
-        // TODO: changes added by fuzzer find out why?
+        // Tracks if there are positions pending liquidation (added by fuzzer)
         s._liquidationPending = effects_.isLiquidationPending;
         if (effects_.liquidatedPositions > 0) {
             s._positionLiquidated = true;

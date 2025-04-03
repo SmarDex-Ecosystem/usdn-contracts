@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.26;
 
-import "./PreconditionsBase.sol";
+import { PreconditionsBase } from "./PreconditionsBase.sol";
+
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /* solhint-disable numcast/safe-cast */
 
@@ -11,12 +13,9 @@ abstract contract PreconditionsUsdnProtocolActions is PreconditionsBase {
         returns (InitiateOpenPositionParams memory params)
     {
         // Check pending actions first
-        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
+        Types.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
 
-        if (
-            action.action != IUsdnProtocolTypes.ProtocolAction.InitiateOpenPosition
-                && action.action != IUsdnProtocolTypes.ProtocolAction.None
-        ) {
+        if (action.action != Types.ProtocolAction.InitiateOpenPosition && action.action != Types.ProtocolAction.None) {
             revert();
         }
 
@@ -47,12 +46,9 @@ abstract contract PreconditionsUsdnProtocolActions is PreconditionsBase {
         params.validator = payable(currentActor);
 
         // Check pending actions
-        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(params.validator);
+        Types.PendingAction memory action = usdnProtocol.getUserPendingAction(params.validator);
 
-        if (
-            action.action != IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition
-                && action.action != IUsdnProtocolTypes.ProtocolAction.None
-        ) {
+        if (action.action != Types.ProtocolAction.ValidateOpenPosition && action.action != Types.ProtocolAction.None) {
             revert();
         }
 
@@ -69,12 +65,9 @@ abstract contract PreconditionsUsdnProtocolActions is PreconditionsBase {
         returns (InitiateClosePositionParams memory params)
     {
         // Check pending actions first
-        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
+        Types.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
 
-        if (
-            action.action != IUsdnProtocolTypes.ProtocolAction.InitiateClosePosition
-                && action.action != IUsdnProtocolTypes.ProtocolAction.None
-        ) {
+        if (action.action != Types.ProtocolAction.InitiateClosePosition && action.action != Types.ProtocolAction.None) {
             revert();
         }
 
@@ -88,7 +81,7 @@ abstract contract PreconditionsUsdnProtocolActions is PreconditionsBase {
             positionIdsIndex = fl.clamp(amountSeed, 0, positionIds.length - 1);
             params.positionId = positionIds[positionIdsIndex];
         }
-        (IUsdnProtocolTypes.Position memory position,) = usdnProtocol.getLongPosition(params.positionId);
+        (Types.Position memory position,) = usdnProtocol.getLongPosition(params.positionId);
 
         uint256 minLongPosition = usdnProtocol.getMinLongPosition();
 
@@ -109,16 +102,13 @@ abstract contract PreconditionsUsdnProtocolActions is PreconditionsBase {
         params.validator = payable(currentActor);
 
         // Check pending actions
-        IUsdnProtocolTypes.PendingAction memory action = usdnProtocol.getUserPendingAction(params.validator);
+        Types.PendingAction memory action = usdnProtocol.getUserPendingAction(params.validator);
 
-        if (
-            action.action != IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition
-                && action.action != IUsdnProtocolTypes.ProtocolAction.None
-        ) {
+        if (action.action != Types.ProtocolAction.ValidateClosePosition && action.action != Types.ProtocolAction.None) {
             revert();
         }
 
-        IUsdnProtocolTypes.LongPendingAction memory longAction = usdnProtocol.i_toLongPendingAction(action);
+        Types.LongPendingAction memory longAction = usdnProtocol.i_toLongPendingAction(action);
         params.closeAmount = longAction.closeAmount;
         params.user = longAction.to;
 

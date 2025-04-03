@@ -1,8 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import "../helper/FuzzStorageVariables.sol";
+import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
+
+import { FuzzStorageVariables } from "../helper/FuzzStorageVariables.sol";
 import { FuzzActors } from "./FuzzActors.sol";
+
+import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
+import { IUsdnProtocolActions } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
+import { IUsdnProtocolCore } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
+import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolFallback } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
+import { IUsdnProtocolLong } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
+import { IUsdnProtocolLong } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
+import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolVault } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 
 /**
  * @notice Helper contract containing low-level protocol function wrappers for fuzzing
@@ -24,9 +37,7 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
     event LongAssetAvailableWithFundingCall(uint128 currentPrice, uint128 timestamp);
     event LongTradingExpoWithFundingCall(uint128 currentPrice, uint128 timestamp);
 
-    event ValidateDepositCall(
-        address validator, bytes depositPriceData, IUsdnProtocolTypes.PreviousActionsData previousActionsData
-    );
+    event ValidateDepositCall(address validator, bytes depositPriceData, Types.PreviousActionsData previousActionsData);
     event InitiateWithdrawalCall(
         uint152 usdnShares,
         uint256 amountOutMin,
@@ -34,10 +45,10 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
         address validator,
         uint256 deadline,
         bytes currentPriceData,
-        IUsdnProtocolTypes.PreviousActionsData previousActionsData
+        Types.PreviousActionsData previousActionsData
     );
     event ValidateWithdrawalCall(
-        address validator, bytes withdrawalPriceData, IUsdnProtocolTypes.PreviousActionsData previousActionsData
+        address validator, bytes withdrawalPriceData, Types.PreviousActionsData previousActionsData
     );
     event GetActionablePendingActionsCall(address currentUser);
     event UsdnPriceCall(uint128 currentPrice, uint128 timestamp);
@@ -247,7 +258,7 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
         address payable validator,
         uint256 deadline,
         bytes memory currentPriceData,
-        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+        Types.PreviousActionsData memory previousActionsData,
         uint256 txValue
     ) internal returns (bool success, bytes memory returnData) {
         vm.prank(currentActor);
@@ -268,7 +279,7 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
     function _validateDepositCall(
         address payable validator,
         bytes memory depositPriceData,
-        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData
+        Types.PreviousActionsData memory previousActionsData
     ) internal returns (bool success, bytes memory returnData) {
         emit ValidateDepositCall(validator, depositPriceData, previousActionsData);
         vm.prank(currentActor);
@@ -286,7 +297,7 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
         address payable validator,
         uint256 deadline,
         bytes memory currentPriceData,
-        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData,
+        Types.PreviousActionsData memory previousActionsData,
         uint256 txValue
     ) internal returns (bool success, bytes memory returnData) {
         emit InitiateWithdrawalCall(
@@ -310,7 +321,7 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
     function _validateWithdrawalCall(
         address payable validator,
         bytes memory withdrawalPriceData,
-        IUsdnProtocolTypes.PreviousActionsData memory previousActionsData
+        Types.PreviousActionsData memory previousActionsData
     ) internal returns (bool success, bytes memory returnData) {
         emit ValidateWithdrawalCall(validator, withdrawalPriceData, previousActionsData);
         vm.prank(currentActor);

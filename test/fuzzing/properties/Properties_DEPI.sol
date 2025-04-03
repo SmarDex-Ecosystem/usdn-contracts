@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.26;
 
-import "./PropertiesBase.sol";
+import { PropertiesBase } from "./PropertiesBase.sol";
 
 /**
  * @notice Deposit-related invariants for the USDN protocol

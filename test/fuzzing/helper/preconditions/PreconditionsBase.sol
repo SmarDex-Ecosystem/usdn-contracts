@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.26;
 
-import "forge-std/StdStyle.sol";
-import "forge-std/console.sol";
+import { StdStyle, console } from "forge-std/Test.sol";
 
-import "../BeforeAfter.sol";
+import { BeforeAfter } from "../BeforeAfter.sol";
 
 import { UsdnProtocolUtilsLibrary } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /* solhint-disable meta-transactions/no-msg-sender */
 abstract contract PreconditionsBase is BeforeAfter {
@@ -49,13 +49,13 @@ abstract contract PreconditionsBase is BeforeAfter {
         internal
         view
         returns (
-            IUsdnProtocolTypes.PreviousActionsData memory previousActionsData_,
+            Types.PreviousActionsData memory previousActionsData_,
             uint256 securityDeposit_,
-            IUsdnProtocolTypes.PendingAction memory lastAction_,
+            Types.PendingAction memory lastAction_,
             uint256 actionsLength_
         )
     {
-        (IUsdnProtocolTypes.PendingAction[] memory actions, uint128[] memory rawIndices) =
+        (Types.PendingAction[] memory actions, uint128[] memory rawIndices) =
             usdnProtocol.getActionablePendingActions(user, 0, 100);
         if (rawIndices.length == 0) {
             return (previousActionsData_, securityDeposit_, lastAction_, 0);
@@ -67,7 +67,7 @@ abstract contract PreconditionsBase is BeforeAfter {
         }
         lastAction_ = actions[actions.length - 1];
         actionsLength_ = actions.length;
-        previousActionsData_ = IUsdnProtocolTypes.PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
+        previousActionsData_ = Types.PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
     }
     /**
      * @dev Returns the amount of USDN shares and WstETH that will be transferred in the next action
@@ -79,20 +79,19 @@ abstract contract PreconditionsBase is BeforeAfter {
      * @custom:fuzzing price passed with 18 decimals
      */
 
-    function getTokenFromPendingAction(IUsdnProtocolTypes.PendingAction memory action, uint256 price)
+    function getTokenFromPendingAction(Types.PendingAction memory action, uint256 price)
         internal
         view
         returns (int256 usdn_, uint256 wsteth_)
     {
-        if (action.action == IUsdnProtocolTypes.ProtocolAction.ValidateDeposit) {
-            IUsdnProtocolTypes.DepositPendingAction memory depositAction = usdnProtocol.i_toDepositPendingAction(action);
+        if (action.action == Types.ProtocolAction.ValidateDeposit) {
+            Types.DepositPendingAction memory depositAction = usdnProtocol.i_toDepositPendingAction(action);
             (uint256 usdnSharesExpected,) =
                 usdnProtocol.previewDeposit(depositAction.amount, depositAction.assetPrice, uint128(block.timestamp));
             logValidateDeposit(depositAction, usdnSharesExpected);
             return (int256(usdnSharesExpected), 0);
-        } else if (action.action == IUsdnProtocolTypes.ProtocolAction.ValidateWithdrawal) {
-            IUsdnProtocolTypes.WithdrawalPendingAction memory withdrawalAction =
-                usdnProtocol.i_toWithdrawalPendingAction(action);
+        } else if (action.action == Types.ProtocolAction.ValidateWithdrawal) {
+            Types.WithdrawalPendingAction memory withdrawalAction = usdnProtocol.i_toWithdrawalPendingAction(action);
             uint256 amount =
                 usdnProtocol.i_mergeWithdrawalAmountParts(withdrawalAction.sharesLSB, withdrawalAction.sharesMSB);
 
@@ -115,11 +114,11 @@ abstract contract PreconditionsBase is BeforeAfter {
             );
             logValidateWithdrawal(withdrawalAction, amount, assetToTransfer, price);
             return (-int256(amount), assetToTransfer);
-        } else if (action.action == IUsdnProtocolTypes.ProtocolAction.ValidateOpenPosition) {
+        } else if (action.action == Types.ProtocolAction.ValidateOpenPosition) {
             logValidateOpenPosition(usdn_, wsteth_);
             return (usdn_, wsteth_);
-        } else if (action.action == IUsdnProtocolTypes.ProtocolAction.ValidateClosePosition) {
-            IUsdnProtocolTypes.LongPendingAction memory longAction = usdnProtocol.i_toLongPendingAction(action);
+        } else if (action.action == Types.ProtocolAction.ValidateClosePosition) {
+            Types.LongPendingAction memory longAction = usdnProtocol.i_toLongPendingAction(action);
             logValidateClosePosition(longAction);
             return (0, longAction.closeAmount);
         } else {
@@ -185,10 +184,10 @@ abstract contract PreconditionsBase is BeforeAfter {
         console.log(StdStyle.green("-----------------------------------------------------------"));
     }
 
-    function logValidateDeposit(
-        IUsdnProtocolTypes.DepositPendingAction memory depositAction,
-        uint256 usdnSharesExpected
-    ) internal pure {
+    function logValidateDeposit(Types.DepositPendingAction memory depositAction, uint256 usdnSharesExpected)
+        internal
+        pure
+    {
         console.log(StdStyle.green("-----------------------------------------------------------"));
         console.log(StdStyle.green("  Deposit Amount ................ %s"), depositAction.amount);
         console.log(StdStyle.green("  Asset Price ................... %s"), depositAction.assetPrice);
@@ -197,7 +196,7 @@ abstract contract PreconditionsBase is BeforeAfter {
     }
 
     function logValidateWithdrawal(
-        IUsdnProtocolTypes.WithdrawalPendingAction memory withdrawalAction,
+        Types.WithdrawalPendingAction memory withdrawalAction,
         uint256 amount,
         uint256 assetToTransfer,
         uint256 price
@@ -218,7 +217,7 @@ abstract contract PreconditionsBase is BeforeAfter {
         console.log(StdStyle.green("-----------------------------------------------------------"));
     }
 
-    function logValidateClosePosition(IUsdnProtocolTypes.LongPendingAction memory longAction) internal pure {
+    function logValidateClosePosition(Types.LongPendingAction memory longAction) internal pure {
         console.log(StdStyle.green("-----------------------------------------------------------"));
         console.log(StdStyle.green("  Close Amount .................. %s"), longAction.closeAmount);
         console.log(StdStyle.green("-----------------------------------------------------------"));

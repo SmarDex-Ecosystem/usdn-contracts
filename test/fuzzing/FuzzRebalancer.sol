@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.26;
 
-import "./FuzzAdmin.sol";
-import "./helper/postconditions/PostconditionsRebalancer.sol";
-import "./helper/preconditions/PreconditionsRebalancer.sol";
+import { FuzzAdmin } from "./FuzzAdmin.sol";
+import { PostconditionsRebalancer } from "./helper/postconditions/PostconditionsRebalancer.sol";
+import { PreconditionsRebalancer } from "./helper/preconditions/PreconditionsRebalancer.sol";
 
 contract FuzzRebalancer is PreconditionsRebalancer, PostconditionsRebalancer, FuzzAdmin {
     function fuzz_initiateDepositAssets(uint88 amountSeed) public setCurrentActor {

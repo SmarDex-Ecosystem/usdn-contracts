@@ -442,7 +442,7 @@ library UsdnProtocolActionsLongLibrary {
 
         isInitiated_ = true;
 
-        //@TODO: added by fuzzer find out why?
+        // Records the tick of the most recently created position (added by fuzzer)
         s._latestPosIdTIck = posId_.tick;
 
         emit IUsdnProtocolEvents.InitiatedOpenPosition(
@@ -564,7 +564,7 @@ library UsdnProtocolActionsLongLibrary {
         uint256 version;
         (data_.tickHash, version) = Utils._tickHash(data_.action.tick);
         if (version != data_.action.tickVersion) {
-            //@TODO changes added by fuzzer find out why?
+            // Flags when a position was liquidated before pending action could be processed (added by fuzzer)
             s._positionWasLiquidatedInTheMeantime = true;
 
             // the current tick version doesn't match the version from the pending action
@@ -869,7 +869,7 @@ library UsdnProtocolActionsLongLibrary {
 
         isValidated_ = true;
 
-        //@TODO added by fuzzer find out why?
+        // Records the profit/loss when a position is closed with validation (added by fuzzer)
         s._positionProfit = assetToTransfer.toInt256() - Utils._toInt256(long.closeAmount);
 
         emit IUsdnProtocolEvents.ValidatedClosePosition(

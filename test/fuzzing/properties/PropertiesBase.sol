@@ -1,19 +1,27 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
-import "@perimetersec/fuzzlib/src/FuzzBase.sol";
-import "@perimetersec/fuzzlib/src/FuzzLibString.sol";
+import { StdStyle, console, console2 } from "forge-std/Test.sol";
 
-import "../helper/BeforeAfter.sol";
-import "./PropertiesDescriptions.sol";
+import { FuzzBase } from "@perimetersec/fuzzlib/src/FuzzBase.sol";
+// @todo might be used for errors but can probably be removed
+// import "@perimetersec/fuzzlib/src/FuzzLibString.sol";
+
+import { BeforeAfter } from "../helper/BeforeAfter.sol";
+import { PropertiesDescriptions } from "./PropertiesDescriptions.sol";
 
 import { Usdn as usdnEnum } from "../../../src/Usdn/Usdn.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+import { UsdnProtocolUtilsLibrary as Utils } from "../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
+import { PriceInfo } from "../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 abstract contract PropertiesBase is FuzzBase, BeforeAfter, PropertiesDescriptions {
-    function calculateUsdnOnDeposit(
-        uint256 wstethPendingActions,
-        IUsdnProtocolTypes.DepositPendingAction memory deposit
-    ) internal returns (uint256) {
+    function calculateUsdnOnDeposit(uint256 wstethPendingActions, Types.DepositPendingAction memory deposit)
+        internal
+        returns (uint256)
+    {
         int256 available;
 
         PriceInfo memory currentPrice = usdnProtocol.i_getOraclePrice{ value: pythPrice }(
@@ -139,7 +147,7 @@ abstract contract PropertiesBase is FuzzBase, BeforeAfter, PropertiesDescription
 
     function logCalculateUsdnOnDeposit(
         uint256 wstethPendingActions,
-        IUsdnProtocolTypes.DepositPendingAction memory deposit,
+        Types.DepositPendingAction memory deposit,
         uint256 balanceVault,
         PriceInfo memory currentPrice,
         int256 available,

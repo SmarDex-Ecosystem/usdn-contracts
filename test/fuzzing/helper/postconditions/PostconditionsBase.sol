@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 import { IUsdnProtocolTypes } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import "../../properties/Properties.sol";
+import { Properties } from "../../properties/Properties.sol";
 
 abstract contract PostconditionsBase is Properties {
     function onSuccessInvariantsGeneral() internal {

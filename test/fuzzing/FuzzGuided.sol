@@ -1,20 +1,30 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.26;
 
+import { StdStyle, console, console2 } from "forge-std/Test.sol";
+
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 
-import "./FuzzRebalancer.sol";
-import "./FuzzUsdnProtocolActions.sol";
-import "./FuzzUsdnProtocolVault.sol";
+import { FuzzRebalancer } from "./FuzzRebalancer.sol";
+import { FuzzUsdnProtocolActions } from "./FuzzUsdnProtocolActions.sol";
+import { FuzzUsdnProtocolVault } from "./FuzzUsdnProtocolVault.sol";
 
-import "../../src/libraries/SignedMath.sol";
+import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { SignedMath } from "../../src/libraries/SignedMath.sol";
+import { TickMath } from "../../src/libraries/TickMath.sol";
 
 // @todo multiple tests fail on [panic: arithmetic underflow/overflow] in stack trace (fuzz_guided_liquidateHighestTick,
 // fuzz_initiateClosePosition) coming from the guardian perimetersec lib of fl.clamp()
 contract FuzzGuided is FuzzUsdnProtocolVault, FuzzUsdnProtocolActions, FuzzRebalancer {
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
+
+    constructor() payable {
+        vm.warp(1_524_785_992); //medusa starting time
+
+        setup(address(this));
+    }
 
     function fuzz_guided_addLP() public {
         require(!LPAdded);

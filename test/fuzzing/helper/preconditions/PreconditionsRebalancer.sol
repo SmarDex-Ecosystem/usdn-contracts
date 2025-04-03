@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.26;
 
-import "./PreconditionsBase.sol";
+import { PreconditionsBase } from "./PreconditionsBase.sol";
+
+import { IRebalancerTypes } from "../../../../src/interfaces/Rebalancer/IRebalancerTypes.sol";
 
 /* solhint-disable numcast/safe-cast */
 
@@ -14,7 +16,7 @@ abstract contract PreconditionsRebalancer is PreconditionsBase {
         params.to = currentActor;
 
         // Check if the user has an existing deposit
-        IRebalancer.UserDeposit memory existingDeposit = rebalancer.getUserDepositData(params.to);
+        IRebalancerTypes.UserDeposit memory existingDeposit = rebalancer.getUserDepositData(params.to);
         require(existingDeposit.amount == 0 && existingDeposit.initiateTimestamp == 0, "Existing deposit found");
 
         return params;
@@ -24,10 +26,10 @@ abstract contract PreconditionsRebalancer is PreconditionsBase {
         vm.warp(block.timestamp + 25 seconds);
         params.user = currentActor;
 
-        IRebalancer.UserDeposit memory depositData = rebalancer.getUserDepositData(params.user);
+        IRebalancerTypes.UserDeposit memory depositData = rebalancer.getUserDepositData(params.user);
         require(depositData.initiateTimestamp > 0, "No pending deposit");
 
-        IRebalancer.TimeLimits memory timeLimits = rebalancer.getTimeLimits();
+        IRebalancerTypes.TimeLimits memory timeLimits = rebalancer.getTimeLimits();
 
         vm.warp(block.timestamp + timeLimits.validationDelay);
 
@@ -41,7 +43,7 @@ abstract contract PreconditionsRebalancer is PreconditionsBase {
 
         // IRebalancer.UserDeposit memory depositData = rebalancer.getUserDepositData(params.user);
 
-        IRebalancer.TimeLimits memory timeLimits = rebalancer.getTimeLimits();
+        IRebalancerTypes.TimeLimits memory timeLimits = rebalancer.getTimeLimits();
 
         vm.warp(block.timestamp + timeLimits.actionCooldown);
 
@@ -51,12 +53,12 @@ abstract contract PreconditionsRebalancer is PreconditionsBase {
     function initiateWithdrawAssetsPreconditions() internal returns (InitiateWithdrawAssetsParams memory params) {
         params.user = currentActor;
 
-        IRebalancer.UserDeposit memory depositData = rebalancer.getUserDepositData(params.user);
+        IRebalancerTypes.UserDeposit memory depositData = rebalancer.getUserDepositData(params.user);
         require(depositData.entryPositionVersion > rebalancer.getPositionVersion(), "No valid deposit"); //skip invalid
             // runs
 
         if (depositData.initiateTimestamp > 0) {
-            IRebalancer.TimeLimits memory timeLimits = rebalancer.getTimeLimits();
+            IRebalancerTypes.TimeLimits memory timeLimits = rebalancer.getTimeLimits();
             vm.warp(block.timestamp + timeLimits.actionCooldown);
         }
 
@@ -71,9 +73,9 @@ abstract contract PreconditionsRebalancer is PreconditionsBase {
 
         params.user = currentActor;
 
-        IRebalancer.UserDeposit memory depositData = rebalancer.getUserDepositData(params.user);
+        IRebalancerTypes.UserDeposit memory depositData = rebalancer.getUserDepositData(params.user);
 
-        IRebalancer.TimeLimits memory timeLimits = rebalancer.getTimeLimits();
+        IRebalancerTypes.TimeLimits memory timeLimits = rebalancer.getTimeLimits();
 
         vm.warp(block.timestamp + timeLimits.validationDelay);
 
@@ -92,7 +94,7 @@ abstract contract PreconditionsRebalancer is PreconditionsBase {
         params.to = address(rebalancer);
         params.validator = payable(currentActor); //NOTE: currently hardcoded
 
-        IRebalancer.UserDeposit memory depositData = rebalancer.getUserDepositData(params.user);
+        IRebalancerTypes.UserDeposit memory depositData = rebalancer.getUserDepositData(params.user);
 
         require(depositData.amount > 0, "User has no deposits, skipping current run");
 

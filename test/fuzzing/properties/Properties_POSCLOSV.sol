@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.26;
 
-import "./PropertiesBase.sol";
+import { PropertiesBase } from "./PropertiesBase.sol";
+
+import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @notice Position close validation invariants
@@ -40,6 +42,7 @@ abstract contract Properties_POSCLOSV is PropertiesBase {
         internal
     {
         int256 baseWstETHBalance = int256(states[0].actorStates[address(usdnProtocol)].wstETHBalance);
+        //@todo check pending actions is needed or can remove
         // int256 pendingActions = int256(params.wstethPendingActions);
         int256 positionProfit = int256(states[1].positionProfit);
         int256 newWstETHBalance = int256(states[1].actorStates[address(usdnProtocol)].wstETHBalance);
