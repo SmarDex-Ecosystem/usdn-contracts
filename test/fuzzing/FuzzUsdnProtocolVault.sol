@@ -1,11 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
-import "./FuzzAdmin.sol";
-import "./helper/postconditions/PostconditionsUsdnProtocolVault.sol";
-import "./helper/preconditions/PreconditionsUsdnProtocolVault.sol";
+import { FuzzAdmin } from "./FuzzAdmin.sol";
+import { PostconditionsUsdnProtocolVault } from "./helper/postconditions/PostconditionsUsdnProtocolVault.sol";
+import { PreconditionsUsdnProtocolVault } from "./helper/preconditions/PreconditionsUsdnProtocolVault.sol";
 
+/**
+ * @notice Fuzz tests for the UsdnProtocolVault deposit and withdrawal flows
+ * @dev Combines preconditions, postconditions, and actor logic to validate system behavior under fuzzed input
+ */
 contract FuzzUsdnProtocolVault is PreconditionsUsdnProtocolVault, PostconditionsUsdnProtocolVault, FuzzAdmin {
+    /**
+     * @notice Simulates and validates a deposit initiation with randomized inputs
+     * @dev Calls the deposit flow using generated parameters and verifies postconditions
+     */
     function fuzz_initiateDeposit(uint256 ETHAmountSeed, uint128 amountDesiredSeed)
         public
         setCurrentActor
@@ -31,6 +39,10 @@ contract FuzzUsdnProtocolVault is PreconditionsUsdnProtocolVault, Postconditions
         initiateDepositPostconditions(success, returnData, actorsToUpdate, params);
     }
 
+    /**
+     * @notice Simulates and validates deposit finalization
+     * @dev Validates a deposit using current oracle data and actor state
+     */
     function fuzz_validateDeposit() public setCurrentActor enforceOneActionPerCall {
         ValidateDepositParams memory params = validateDepositPreconditions();
 
@@ -49,6 +61,10 @@ contract FuzzUsdnProtocolVault is PreconditionsUsdnProtocolVault, Postconditions
         validateDepositPostconditions(success, returnData, actorsToUpdate, params);
     }
 
+    /**
+     * @notice Simulates and validates a withdrawal initiation with randomized input
+     * @dev Calls the withdrawal flow using generated parameters and verifies postconditions
+     */
     function fuzz_initiateWithdrawal(uint152 usdnSharesSeed) public setCurrentActor enforceOneActionPerCall {
         InitiateWithdrawalParams memory params = initiateWithdrawalPreconditions(usdnSharesSeed);
 
@@ -71,6 +87,10 @@ contract FuzzUsdnProtocolVault is PreconditionsUsdnProtocolVault, Postconditions
         initiateWithdrawalPostconditions(success, returnData, actorsToUpdate, params);
     }
 
+    /**
+     * @notice Fuzz test for validating a withdrawal
+     * @dev Simulates withdrawal validation and checks postconditions using updated oracle timestamp
+     */
     function fuzz_validateWithdrawal() public setCurrentActor enforceOneActionPerCall {
         ValidateWithdrawalParams memory params = validateWithdrawalPreconditions();
 

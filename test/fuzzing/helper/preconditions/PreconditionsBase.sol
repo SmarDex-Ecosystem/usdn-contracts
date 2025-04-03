@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
-
-import "../BeforeAfter.sol";
+pragma solidity 0.8.26;
 
 import "forge-std/StdStyle.sol";
 import "forge-std/console.sol";
 
+import "../BeforeAfter.sol";
+
 import { UsdnProtocolUtilsLibrary } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 
 /* solhint-disable meta-transactions/no-msg-sender */
-
 abstract contract PreconditionsBase is BeforeAfter {
     modifier setCurrentActor() {
         if (block.timestamp < 1_524_785_992) {

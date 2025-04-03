@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
 import "./PropertiesBase.sol";
 
+/**
+ * @notice Withdrawal validation invariants
+ * @dev Ensures accurate state transitions and payouts during withdrawal validation
+ */
 abstract contract Properties_WITHV is PropertiesBase {
     function invariant_WITHV_01(address user) internal {
         if (SINGLE_ACTOR_MODE == false) {

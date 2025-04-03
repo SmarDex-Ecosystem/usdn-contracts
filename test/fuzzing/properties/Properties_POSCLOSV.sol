@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
 import "./PropertiesBase.sol";
 
+/**
+ * @notice Position close validation invariants
+ * @dev Checks post-validation state after a position is closed, including liquidation side effects
+ */
 abstract contract Properties_POSCLOSV is PropertiesBase {
     function invariant_POSCLOSV_01(address sender, Types.LongActionOutcome outcome) internal {
         if (outcome == Types.LongActionOutcome.Processed) {

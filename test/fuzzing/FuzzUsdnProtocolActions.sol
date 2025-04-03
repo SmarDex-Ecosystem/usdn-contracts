@@ -1,11 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
-import "./FuzzAdmin.sol";
-import "./helper/postconditions/PostconditionsUsdnProtocolActions.sol";
-import "./helper/preconditions/PreconditionsUsdnProtocolActions.sol";
+import { FuzzAdmin } from "./FuzzAdmin.sol";
+import { PostconditionsUsdnProtocolActions } from "./helper/postconditions/PostconditionsUsdnProtocolActions.sol";
+import { PreconditionsUsdnProtocolActions } from "./helper/preconditions/PreconditionsUsdnProtocolActions.sol";
 
+/**
+ * @notice Fuzz tests for opening, closing, validating, and liquidating positions in the USDN protocol
+ * @dev Combines precondition, postcondition, and fuzz logic to verify system behavior under arbitrary input
+ */
 contract FuzzUsdnProtocolActions is PreconditionsUsdnProtocolActions, PostconditionsUsdnProtocolActions, FuzzAdmin {
+    /**
+     * @notice Fuzz test for initiating an open position
+     * @dev Generates random parameters and performs an open position call with validation hooks
+     */
     function fuzz_initiateOpenPosition(uint256 amountSeed, uint256 leverageSeed)
         public
         setCurrentActor
@@ -37,6 +45,10 @@ contract FuzzUsdnProtocolActions is PreconditionsUsdnProtocolActions, Postcondit
         initiateOpenPositionPostconditions(success, returnData, actorsToUpdate, params, currentActor);
     }
 
+    /**
+     * @notice Fuzz test for validating an open position
+     * @dev Executes a validation call with mocked price updates and verifies postconditions
+     */
     function fuzz_validateOpenPosition() public setCurrentActor enforceOneActionPerCall {
         ValidateOpenPositionParams memory params = validateOpenPositionPreconditions();
 
@@ -54,6 +66,10 @@ contract FuzzUsdnProtocolActions is PreconditionsUsdnProtocolActions, Postcondit
         validateOpenPositionPostconditions(success, returnData, actorsToUpdate, params);
     }
 
+    /**
+     * @notice Fuzz test for initiating a close position
+     * @dev Skips test if position size is zero. Otherwise, initiates a close position call and verifies results
+     */
     function fuzz_initiateClosePosition(uint256 amountSeed, bool closeFull)
         public
         setCurrentActor
@@ -90,6 +106,10 @@ contract FuzzUsdnProtocolActions is PreconditionsUsdnProtocolActions, Postcondit
         initiateClosePositionPostconditions(success, returnData, actorsToUpdate, params);
     }
 
+    /**
+     * @notice Fuzz test for validating a closed position
+     * @dev Runs the close validation logic and verifies protocol state transitions
+     */
     function fuzz_validateClosePosition() public setCurrentActor enforceOneActionPerCall {
         ValidateClosePositionParams memory params = validateClosePositionPreconditions();
         fuzz_setPrice(0); //here we are just updating oracle timestamp with the same price we already have
@@ -108,6 +128,10 @@ contract FuzzUsdnProtocolActions is PreconditionsUsdnProtocolActions, Postcondit
         validateClosePositionPostconditions(success, returnData, actorsToUpdate, params);
     }
 
+    /**
+     * @notice Fuzz test for validating a batch of actionable pending actions
+     * @dev Uses a randomized batch size to simulate multiple validations in one call
+     */
     function fuzz_validateActionablePendingActions(uint256 maxValidations) public setCurrentActor {
         ValidateActionablePendingActionsParams memory params =
             validateActionablePendingActionsPreconditions(maxValidations);
@@ -124,6 +148,10 @@ contract FuzzUsdnProtocolActions is PreconditionsUsdnProtocolActions, Postcondit
         validateActionablePendingActionsPostconditions(success, returnData, actorsToUpdate, params);
     }
 
+    /**
+     * @notice Fuzz test for liquidating a position
+     * @dev Simulates a liquidation call and verifies state changes for the affected user
+     */
     function fuzz_liquidate() public setCurrentActor {
         LiquidateParams memory params = liquidatePreconditions();
         fuzz_setPrice(0); //here we are just updating oracle timestamp with the same price we already have

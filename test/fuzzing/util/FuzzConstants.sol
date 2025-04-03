@@ -1,12 +1,11 @@
-pragma solidity ^0.8.26;
 // SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.26;
 
 import { IUsdnProtocolTypes } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /*
  * Using constants since we can't read from env
  */
-
 contract FuzzConstants {
     IUsdnProtocolTypes.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         IUsdnProtocolTypes.PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });

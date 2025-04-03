@@ -1,16 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 
+import { PropertiesBase } from "./PropertiesBase.sol";
+
 import { IRebalancerErrors } from "../../../src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { InitializableReentrancyGuard } from "../../../src/utils/InitializableReentrancyGuard.sol";
-import { PropertiesBase } from "./PropertiesBase.sol";
 import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 
+/**
+ * @notice Invariants to detect unexpected or invalid error states
+ * @dev Ensures that no unwhitelisted errors surface during execution
+ */
 abstract contract Properties_ERR is PropertiesBase {
     function invariant_ERR(bytes memory returnData) internal {
         bytes4 returnedError;

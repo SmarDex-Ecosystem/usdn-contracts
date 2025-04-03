@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
 import "./PropertiesBase.sol";
 
+/**
+ * @notice Pending actions validation invariants
+ * @dev Validates the correct number of actions are processed and balances adjusted accordingly
+ */
 abstract contract Properties_PENDACTV is PropertiesBase {
     function invariant_PENDACTV_01(uint256 validatedActions, ValidateActionablePendingActionsParams memory params)
         internal

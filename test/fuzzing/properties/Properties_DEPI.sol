@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
 import "./PropertiesBase.sol";
 
+/**
+ * @notice Deposit-related invariants for the USDN protocol
+ * @dev Contains property-based tests focused on deposit behavior and constraints
+ */
 abstract contract Properties_DEPI is PropertiesBase {
     function invariant_DEPI_01(address user, bool initiatedDeposit) internal {
         if (SINGLE_ACTOR_MODE == false) {

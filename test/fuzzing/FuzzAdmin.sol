@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
-import "./helper/postconditions/PostconditionsAdmin.sol";
-import "./helper/preconditions/PreconditionsAdmin.sol";
+import { PostconditionsAdmin } from "./helper/postconditions/PostconditionsAdmin.sol";
+import { PreconditionsAdmin } from "./helper/preconditions/PreconditionsAdmin.sol";
 
 contract FuzzAdmin is PreconditionsAdmin, PostconditionsAdmin {
     function fuzz_setPrice(int256 priceChangePercent) public {

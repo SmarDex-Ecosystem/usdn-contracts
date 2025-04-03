@@ -2,8 +2,12 @@
 pragma solidity 0.8.26;
 
 import "../helper/FuzzStorageVariables.sol";
-import "./FuzzActors.sol";
+import { FuzzActors } from "./FuzzActors.sol";
 
+/**
+ * @notice Helper contract containing low-level protocol function wrappers for fuzzing
+ * @dev Emits call-specific events and handles direct encoded calls to the USDN protocol and its modules
+ */
 contract FunctionCalls is FuzzStorageVariables, FuzzActors {
     event MinTickCall();
     event GetPositionValueCall(IUsdnProtocolLong.PositionId posId, uint128 price, uint128 timestamp);

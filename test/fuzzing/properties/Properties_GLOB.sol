@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
 import "./PropertiesBase.sol";
 
+/**
+ * @notice Global protocol invariants
+ * @dev Covers fundamental properties that should always hold true across all flows
+ */
 abstract contract Properties_GLOB is PropertiesBase {
     function invariant_GLOB_01() internal {
         if (states[1].highestActualTick != 0) {
@@ -43,11 +47,6 @@ abstract contract Properties_GLOB is PropertiesBase {
     function invariant_GLOB_07() internal {
         int256 calculatedBalance = int256(states[1].vaultBalance) + int256(states[1].balanceLong)
             + int256(states[1].pendingProtocolFee) + states[1].pendingVaultBalance;
-
-        console.log("states[1].vaultBalance", states[1].vaultBalance);
-        console.log("states[1].balanceLong", states[1].balanceLong);
-        console.log("states[1].pendingProtocolFee", states[1].pendingProtocolFee);
-        console.log("states[1].pendingVaultBalance", states[1].pendingVaultBalance);
 
         int256 currentBalance = int256(states[1].actorStates[address(usdnProtocol)].wstETHBalance);
 

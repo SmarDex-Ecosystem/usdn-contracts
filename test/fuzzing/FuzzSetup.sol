@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { StdStyle, console, console2 } from "forge-std/Test.sol";
+
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { DefaultConfig } from "../utils/DefaultConfig.sol";
 import "./util/FunctionCalls.sol";
 
-import "forge-std/StdStyle.sol";
-import "forge-std/Test.sol";
-import "forge-std/console.sol";
-
+/**
+ * @notice Setup contract for fuzz testing the USDN protocol
+ * @dev Handles deployment, initialization, and configuration of all required protocol components and mocks
+ */
 contract FuzzSetup is FunctionCalls, DefaultConfig {
     using SignedMath for int256;
 

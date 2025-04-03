@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
+
+import "@perimetersec/fuzzlib/src/FuzzBase.sol";
 
 import "../FuzzSetup.sol";
 import "../util/FunctionCalls.sol";
-import "@perimetersec/fuzzlib/src/FuzzBase.sol";
 
 /* solhint-disable numcast/safe-cast */
 abstract contract FuzzStructs is FuzzSetup {

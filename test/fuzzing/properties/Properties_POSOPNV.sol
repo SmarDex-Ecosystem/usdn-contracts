@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
 import "./PropertiesBase.sol";
 
+/**
+ * @notice Position open validation invariants
+ * @dev Ensures correct asset movement and protocol adjustments after position is validated
+ */
 abstract contract Properties_POSOPNV is PropertiesBase {
+    // @todo user is not used?
     function invariant_POSOPNV_01(
         address user,
         address validator,

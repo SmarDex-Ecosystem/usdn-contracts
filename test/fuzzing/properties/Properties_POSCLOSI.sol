@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
 import "./PropertiesBase.sol";
 
+/**
+ * @notice Position close initiation invariants
+ * @dev Covers expected behavior and edge cases during position close initiation, including liquidation
+ */
 abstract contract Properties_POSCLOSI is PropertiesBase {
     function invariant_POSCLOSI_01(address sender, Types.LongActionOutcome outcome) internal {
         if (SINGLE_ACTOR_MODE == false) {

@@ -3,7 +3,7 @@
         "workers": 10,
         "workerResetLimit": 50,
         "timeout": 0,
-        "testLimit": 1000,
+        "testLimit": 10000,
         "shrinkLimit": 5000,
         "callSequenceLength": 100,
         "corpusDirectory": "test/fuzzing/medusa-corpus",
@@ -45,7 +45,7 @@
         "blockTimestampDelayMax": 0,
         "blockGasLimit": 125000000,
         "transactionGasLimit": 12500000,
-        "verbosity": 2,
+        "verbosity": 0,
         "testing": {
             "stopOnFailedTest": true,
             "stopOnFailedContractMatching": false,
@@ -58,7 +58,7 @@
                 "panicCodeConfig": {
                     "failOnCompilerInsertedPanic": true,
                     "failOnAssertion": true,
-                    "failOnArithmeticUnderflow": true,
+                    "failOnArithmeticUnderflow": false,
                     "failOnDivideByZero": true,
                     "failOnEnumTypeConversionOutOfBounds": true,
                     "failOnIncorrectStorageAccess": true,

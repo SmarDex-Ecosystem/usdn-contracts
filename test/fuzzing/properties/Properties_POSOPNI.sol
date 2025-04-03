@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
 import "./PropertiesBase.sol";
 
+/**
+ * @notice Position open initiation invariants
+ * @dev Verifies correct balance and state updates when opening a leveraged position
+ */
 abstract contract Properties_POSOPNI is PropertiesBase {
     function invariant_POSOPNI_01(InitiateOpenPositionParams memory params, bool initiatedOpen) internal {
         if (SINGLE_ACTOR_MODE == false) {

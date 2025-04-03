@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
 import "./PropertiesBase.sol";
 
+/**
+ * @notice Withdrawal initiation invariants
+ * @dev Checks that balances and protocol state change correctly during withdrawal initiation
+ */
 abstract contract Properties_WITHI is PropertiesBase {
     function invariant_WITHI_01(address user, bool initiatedWithdrawal) internal {
         if (SINGLE_ACTOR_MODE == false) {

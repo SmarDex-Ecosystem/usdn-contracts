@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
-import "./FuzzGuided.sol";
+import { FuzzGuided } from "./FuzzGuided.sol";
 
 contract Fuzz is FuzzGuided {
     constructor() payable {

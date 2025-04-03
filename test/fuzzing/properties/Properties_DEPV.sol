@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
 import "./PropertiesBase.sol";
 
+/**
+ * @notice Deposit validation invariants
+ * @dev Validates correct state transitions and balance updates after a deposit is validated
+ */
 abstract contract Properties_DEPV is PropertiesBase {
     function invariant_DEPV_01(address user) internal {
         fl.gt(states[1].actorStates[user].usdnShares, states[0].actorStates[user].usdnShares, DEPV_01);
@@ -41,6 +45,7 @@ abstract contract Properties_DEPV is PropertiesBase {
         }
     }
 
+    // @todo validate deposit fails here
     function invariant_DEPV_05(ValidateDepositParams memory params) internal {
         uint256 expectedUsdn = calculateUsdnOnDeposit(params.wstethPendingActions, params.pendingAction);
 
