@@ -12,7 +12,7 @@ import { OracleMiddlewareWithPyth } from "./OracleMiddlewareWithPyth.sol";
  * @title Middleware Implementation For WstETH Price
  * @notice This contract is used to get the price of wstETH from the ETH price oracle.
  */
-contract WstEthOracleMiddleware is OracleMiddlewareWithPyth {
+contract WstEthOracleMiddlewareWithPyth is OracleMiddlewareWithPyth {
     /// @notice The wstETH contract.
     IWstETH internal immutable _wstEth;
 

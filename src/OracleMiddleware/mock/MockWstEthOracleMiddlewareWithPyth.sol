@@ -5,14 +5,14 @@ import { IBaseOracleMiddleware } from "../../interfaces/OracleMiddleware/IBaseOr
 import { PriceInfo } from "../../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolTypes as Types } from "../../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { CommonOracleMiddleware } from "../CommonOracleMiddleware.sol";
-import { WstEthOracleMiddleware } from "../WstEthOracleMiddleware.sol";
+import { WstEthOracleMiddlewareWithPyth } from "../WstEthOracleMiddlewareWithPyth.sol";
 
 /**
  * @title Contract to apply and return a mocked wstETH price
  * @notice This contract is used to get the price of wstETH by setting up a price or forwarding it to wstethMiddleware
  * @dev This aims at simulating price action. Do not use in production
  */
-contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
+contract MockWstEthOracleMiddlewareWithPyth is WstEthOracleMiddlewareWithPyth {
     /// @notice Confidence interval percentage numerator
     uint16 internal _wstethMockedConfBps = 20; // default 0.2% conf
 
@@ -33,7 +33,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         address chainlinkPriceFeed,
         address wsteth,
         uint256 chainlinkTimeElapsedLimit
-    ) WstEthOracleMiddleware(pythContract, pythFeedId, chainlinkPriceFeed, wsteth, chainlinkTimeElapsedLimit) { }
+    ) WstEthOracleMiddlewareWithPyth(pythContract, pythFeedId, chainlinkPriceFeed, wsteth, chainlinkTimeElapsedLimit) { }
 
     /// @inheritdoc CommonOracleMiddleware
     function parseAndValidatePrice(
