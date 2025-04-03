@@ -6,7 +6,7 @@ import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import { MOCK_STREAM_V3 } from "../../../unit/Middlewares/utils/Constants.sol";
+import { EMPTY_STREAM_V3 } from "../../../unit/Middlewares/utils/Constants.sol";
 import { MockChainlinkOnChain } from "../../../unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { MockPyth } from "../../../unit/Middlewares/utils/MockPyth.sol";
 import { UsdnProtocolHandler } from "../../../unit/UsdnProtocol/utils/Handler.sol";
@@ -42,7 +42,6 @@ import { LiquidationRewardsManagerWstEth } from
     "../../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
 import { WstEthOracleMiddlewareWithDataStreams } from
     "../../../../src/OracleMiddleware/WstEthOracleMiddlewareWithDataStreams.sol";
-import { WstEthOracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
@@ -107,7 +106,6 @@ contract UsdnProtocolBaseIntegrationFixture is
     MockFeeManager internal mockFeeManager;
     MockStreamVerifierProxy internal mockStreamVerifierProxy;
     WstEthOracleMiddlewareWithDataStreams public oracleMiddleware;
-    WstEthOracleMiddlewareWithPyth public oracleMiddleware;
     LiquidationRewardsManagerWstEth public liquidationRewardsManager;
     Rebalancer public rebalancer;
 
@@ -196,7 +194,7 @@ contract UsdnProtocolBaseIntegrationFixture is
             vm.etch(wethTargetAddress, code);
 
             report = IVerifierProxy.ReportV3({
-                feedId: MOCK_STREAM_V3,
+                feedId: EMPTY_STREAM_V3,
                 validFromTimestamp: uint32(testParams.initialTimestamp),
                 observationsTimestamp: uint32(testParams.initialTimestamp),
                 nativeFee: 0.001 ether,
@@ -216,7 +214,7 @@ contract UsdnProtocolBaseIntegrationFixture is
                 address(wstETH),
                 1 hours,
                 address(mockStreamVerifierProxy),
-                MOCK_STREAM_V3
+                EMPTY_STREAM_V3
             );
             vm.warp(testParams.initialTimestamp);
             liquidationRewardsManager = new LiquidationRewardsManagerWstEth(wstETH);
