@@ -14,7 +14,8 @@ import { Utils } from "../utils/Utils.s.sol";
 
 import { LiquidationRewardsManagerWstEth } from
     "../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
-import { MockWstEthOracleMiddleware } from "../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
+import { MockWstEthOracleMiddlewareWithPyth } from
+    "../../src/OracleMiddleware/mock/MockWstEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { Wusdn } from "../../src/Usdn/Wusdn.sol";
@@ -49,7 +50,7 @@ contract DeployUsdnWstethFork is UsdnWstethUsdConfig, Script {
     function run()
         external
         returns (
-            MockWstEthOracleMiddleware wstEthOracleMiddleware_,
+            MockWstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,
             LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Rebalancer rebalancer_,
             Usdn usdn_,
@@ -87,7 +88,7 @@ contract DeployUsdnWstethFork is UsdnWstethUsdConfig, Script {
     function _deployAndSetPeripheralContracts()
         internal
         returns (
-            MockWstEthOracleMiddleware wstEthOracleMiddleware_,
+            MockWstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,
             LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Usdn usdn_,
             Wusdn wusdn_
@@ -95,11 +96,11 @@ contract DeployUsdnWstethFork is UsdnWstethUsdConfig, Script {
     {
         vm.startBroadcast();
         liquidationRewardsManager_ = new LiquidationRewardsManagerWstEth(WSTETH);
-        wstEthOracleMiddleware_ = new MockWstEthOracleMiddleware(
+        wstEthOracleMiddleware_ = new MockWstEthOracleMiddlewareWithPyth(
             PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE_MOCKED, address(WSTETH), CHAINLINK_PRICE_VALIDITY
         );
-        MockWstEthOracleMiddleware(wstEthOracleMiddleware_).setVerifySignature(false);
-        MockWstEthOracleMiddleware(wstEthOracleMiddleware_).setWstethMockedPrice(price);
+        MockWstEthOracleMiddlewareWithPyth(wstEthOracleMiddleware_).setVerifySignature(false);
+        MockWstEthOracleMiddlewareWithPyth(wstEthOracleMiddleware_).setWstethMockedPrice(price);
         usdn_ = new Usdn(address(0), address(0));
         wusdn_ = new Wusdn(usdn_);
         vm.stopBroadcast();
