@@ -51,7 +51,7 @@ contract MockWstEthOracleMiddlewareWithDataStreams is WstEthOracleMiddlewareWith
         bytes calldata data
     ) public payable override returns (PriceInfo memory price_) {
         // parse and validate from parent WstEth middleware
-        // this aims to verify pyth price hermes signature in any case
+        // this aims to verify the data stream API signature
         if (_verifySignature || _wstethMockedPrice == 0) {
             price_ = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
         } else {
