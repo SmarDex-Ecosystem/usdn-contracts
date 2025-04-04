@@ -57,6 +57,7 @@ contract OracleMiddlewareWithDataStreams is
     function validationCost(bytes calldata data, Types.ProtocolAction)
         public
         view
+        virtual
         override(CommonOracleMiddleware, IBaseOracleMiddleware)
         returns (uint256 result_)
     {
