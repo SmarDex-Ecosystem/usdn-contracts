@@ -8,7 +8,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from
 import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { ILiquidationRewardsManager } from
     "../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManager.sol";
-import { IOracleMiddlewareWithPyth } from "../../src/interfaces/OracleMiddleware/IOracleMiddlewareWithPyth.sol";
+import { IBaseOracleMiddleware } from "../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdn } from "../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolFallback } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { Sdex } from "../../test/utils/Sdex.sol";
@@ -23,6 +23,9 @@ contract UsdnWstethUsdConfig is DeploymentConfig {
     uint256 constant CHAINLINK_PRICE_VALIDITY = 1 hours + 2 minutes;
     uint256 constant MAX_SDEX_BURN_RATIO = Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 10; // 10%
     uint256 constant MAX_MIN_LONG_POSITION = 10 ether;
+    address constant CHAINLINK_VERIFIER_PROXY = 0x5A1634A86e9b7BfEf33F0f3f3EA3b1aBBc4CC85F;
+    bytes32 constant CHAINLINK_DATA_STREAMS_WSTETH_USD =
+        0x0003e8aed7fa7b939cc969a6db3105e05b4e77a7e9bb546fe21516f22aa1b0f4;
 
     constructor() {
         INITIAL_LONG_AMOUNT = 200 ether;
@@ -61,7 +64,7 @@ contract UsdnWstethUsdConfig is DeploymentConfig {
 
     /// @inheritdoc DeploymentConfig
     function _setPeripheralContracts(
-        IOracleMiddlewareWithPyth oracleMiddleware,
+        IBaseOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         IUsdn usdn
     ) internal override {

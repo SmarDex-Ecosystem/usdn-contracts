@@ -14,6 +14,9 @@ import { Utils } from "../utils/Utils.s.sol";
 
 import { LiquidationRewardsManagerWstEth } from
     "../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
+import { CommonOracleMiddleware } from "../../src/OracleMiddleware/CommonOracleMiddleware.sol";
+import { MockWstEthOracleMiddlewareWithDataStreams } from
+    "../../src/OracleMiddleware/mock/MockWstEthOracleMiddlewareWithDataStreams.sol";
 import { MockWstEthOracleMiddlewareWithPyth } from
     "../../src/OracleMiddleware/mock/MockWstEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
@@ -27,7 +30,7 @@ import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract DeployUsdnWstethFork is UsdnWstethUsdConfig, Script {
+contract DeployUsdnWstethForkWithPyth is UsdnWstethUsdConfig, Script {
     address immutable CHAINLINK_ETH_PRICE_MOCKED = address(new MockChainlinkOnChain());
     uint256 price = 3000 ether;
     Utils utils;
@@ -50,7 +53,7 @@ contract DeployUsdnWstethFork is UsdnWstethUsdConfig, Script {
     function run()
         external
         returns (
-            MockWstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,
+            CommonOracleMiddleware wstEthOracleMiddleware_,
             LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Rebalancer rebalancer_,
             Usdn usdn_,
@@ -87,8 +90,9 @@ contract DeployUsdnWstethFork is UsdnWstethUsdConfig, Script {
      */
     function _deployAndSetPeripheralContracts()
         internal
+        virtual
         returns (
-            MockWstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,
+            CommonOracleMiddleware wstEthOracleMiddleware_,
             LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Usdn usdn_,
             Wusdn wusdn_
@@ -99,8 +103,10 @@ contract DeployUsdnWstethFork is UsdnWstethUsdConfig, Script {
         wstEthOracleMiddleware_ = new MockWstEthOracleMiddlewareWithPyth(
             PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE_MOCKED, address(WSTETH), CHAINLINK_PRICE_VALIDITY
         );
-        MockWstEthOracleMiddlewareWithPyth(wstEthOracleMiddleware_).setVerifySignature(false);
-        MockWstEthOracleMiddlewareWithPyth(wstEthOracleMiddleware_).setWstethMockedPrice(price);
+        MockWstEthOracleMiddlewareWithPyth mockOracleMiddleware =
+            MockWstEthOracleMiddlewareWithPyth(address(wstEthOracleMiddleware_));
+        mockOracleMiddleware.setVerifySignature(false);
+        mockOracleMiddleware.setWstethMockedPrice(price);
         usdn_ = new Usdn(address(0), address(0));
         wusdn_ = new Wusdn(usdn_);
         vm.stopBroadcast();
@@ -197,5 +203,48 @@ contract DeployUsdnWstethFork is UsdnWstethUsdConfig, Script {
         WSTETH.approve(address(usdnProtocol), depositAmount + INITIAL_LONG_AMOUNT);
         usdnProtocol.initialize(uint128(depositAmount), uint128(INITIAL_LONG_AMOUNT), desiredLiqPrice, "");
         vm.stopBroadcast();
+    }
+}
+
+contract DeployUsdnWstethForkWithDataStreams is DeployUsdnWstethForkWithPyth {
+    /**
+     * @notice Deploy the oracle middleware, liquidation rewards manager, USDN and WUSDN contracts. Add then to the
+     * initialization struct.
+     * @return wstEthOracleMiddleware_ The WstETH oracle middleware
+     * @return liquidationRewardsManager_ The liquidation rewards manager
+     * @return usdn_ The USDN contract
+     * @return wusdn_ The WUSDN contract
+     */
+    function _deployAndSetPeripheralContracts()
+        internal
+        virtual
+        override
+        returns (
+            CommonOracleMiddleware wstEthOracleMiddleware_,
+            LiquidationRewardsManagerWstEth liquidationRewardsManager_,
+            Usdn usdn_,
+            Wusdn wusdn_
+        )
+    {
+        vm.startBroadcast();
+        liquidationRewardsManager_ = new LiquidationRewardsManagerWstEth(WSTETH);
+        wstEthOracleMiddleware_ = new MockWstEthOracleMiddlewareWithDataStreams(
+            PYTH_ADDRESS,
+            PYTH_ETH_FEED_ID,
+            CHAINLINK_ETH_PRICE_MOCKED,
+            address(WSTETH),
+            CHAINLINK_PRICE_VALIDITY,
+            CHAINLINK_VERIFIER_PROXY,
+            CHAINLINK_DATA_STREAMS_WSTETH_USD
+        );
+        MockWstEthOracleMiddlewareWithDataStreams mockOracleMiddleware =
+            MockWstEthOracleMiddlewareWithDataStreams(address(wstEthOracleMiddleware_));
+        mockOracleMiddleware.setVerifySignature(false);
+        mockOracleMiddleware.setWstethMockedPrice(price);
+        usdn_ = new Usdn(address(0), address(0));
+        wusdn_ = new Wusdn(usdn_);
+        vm.stopBroadcast();
+
+        _setPeripheralContracts(wstEthOracleMiddleware_, liquidationRewardsManager_, usdn_);
     }
 }

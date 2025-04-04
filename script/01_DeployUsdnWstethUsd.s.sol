@@ -11,6 +11,9 @@ import { UsdnWstethUsdConfig } from "./deploymentConfigs/UsdnWstethUsdConfig.sol
 import { Utils } from "./utils/Utils.s.sol";
 
 import { LiquidationRewardsManagerWstEth } from "../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
+import { CommonOracleMiddleware } from "../src/OracleMiddleware/CommonOracleMiddleware.sol";
+import { WstEthOracleMiddlewareWithDataStreams } from
+    "../src/OracleMiddleware/WstEthOracleMiddlewareWithDataStreams.sol";
 import { WstEthOracleMiddlewareWithPyth } from "../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
@@ -22,7 +25,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
+contract DeployUsdnWstethUsdWithPyth is UsdnWstethUsdConfig, Script {
     Utils utils;
 
     constructor() {
@@ -30,18 +33,18 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
     }
 
     /**
-     * @notice Deploy the USDN ecosystem with the WstETH as underlying
-     * @return wstEthOracleMiddleware_ The WstETH oracle middleware
-     * @return liquidationRewardsManager_ The liquidation rewards manager
-     * @return rebalancer_ The rebalancer
-     * @return usdn_ The USDN contract
-     * @return wusdn_ The WUSDN contract
-     * @return usdnProtocol_ The USDN protocol
+     * @notice Deploy the USDN ecosystem with the WstETH as underlying.
+     * @return wstEthOracleMiddleware_ The WstETH oracle middleware.
+     * @return liquidationRewardsManager_ The liquidation rewards manager.
+     * @return rebalancer_ The rebalancer.
+     * @return usdn_ The USDN contract.
+     * @return wusdn_ The WUSDN contract.
+     * @return usdnProtocol_ The USDN protocol.
      */
     function run()
         external
         returns (
-            WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,
+            CommonOracleMiddleware wstEthOracleMiddleware_,
             LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Rebalancer rebalancer_,
             Usdn usdn_,
@@ -67,15 +70,16 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
     /**
      * @notice Deploy the oracle middleware, liquidation rewards manager, USDN and WUSDN contracts. Add then to the
      * initialization struct.
-     * @return wstEthOracleMiddleware_ The WstETH oracle middleware
-     * @return liquidationRewardsManager_ The liquidation rewards manager
-     * @return usdn_ The USDN contract
-     * @return wusdn_ The WUSDN contract
+     * @return wstEthOracleMiddleware_ The WstETH oracle middleware.
+     * @return liquidationRewardsManager_ The liquidation rewards manager.
+     * @return usdn_ The USDN contract.
+     * @return wusdn_ The WUSDN contract.
      */
     function _deployAndSetPeripheralContracts()
         internal
+        virtual
         returns (
-            WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,
+            CommonOracleMiddleware wstEthOracleMiddleware_,
             LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Usdn usdn_,
             Wusdn wusdn_
@@ -145,9 +149,7 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
      * @param usdnProtocol The USDN protocol.
      * @param wstEthOracleMiddleware The WstETH oracle middleware.
      */
-    function _initializeProtocol(IUsdnProtocol usdnProtocol, WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware)
-        internal
-    {
+    function _initializeProtocol(IUsdnProtocol usdnProtocol, CommonOracleMiddleware wstEthOracleMiddleware) internal {
         uint24 liquidationPenalty = usdnProtocol.getLiquidationPenalty();
         int24 tickSpacing = usdnProtocol.getTickSpacing();
         uint256 price = wstEthOracleMiddleware.parseAndValidatePrice(
@@ -175,5 +177,44 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
         WSTETH.approve(address(usdnProtocol), depositAmount + INITIAL_LONG_AMOUNT);
         usdnProtocol.initialize(uint128(depositAmount), uint128(INITIAL_LONG_AMOUNT), desiredLiqPrice, "");
         vm.stopBroadcast();
+    }
+}
+
+contract DeployUsdnWstethUsdWithDataStreams is DeployUsdnWstethUsdWithPyth {
+    /**
+     * @notice Deploy the oracle middleware with data streams, liquidation rewards manager,
+     * USDN and WUSDN contracts. Add then to the initialization struct.
+     * @return wstEthOracleMiddleware_ The WstETH oracle middleware with data streams.
+     * @return liquidationRewardsManager_ The liquidation rewards manager.
+     * @return usdn_ The USDN contract.
+     * @return wusdn_ The WUSDN contract.
+     */
+    function _deployAndSetPeripheralContracts()
+        internal
+        virtual
+        override
+        returns (
+            CommonOracleMiddleware wstEthOracleMiddleware_,
+            LiquidationRewardsManagerWstEth liquidationRewardsManager_,
+            Usdn usdn_,
+            Wusdn wusdn_
+        )
+    {
+        vm.startBroadcast();
+        liquidationRewardsManager_ = new LiquidationRewardsManagerWstEth(WSTETH);
+        wstEthOracleMiddleware_ = new WstEthOracleMiddlewareWithDataStreams(
+            PYTH_ADDRESS,
+            PYTH_ETH_FEED_ID,
+            CHAINLINK_ETH_PRICE,
+            address(WSTETH),
+            CHAINLINK_PRICE_VALIDITY,
+            CHAINLINK_VERIFIER_PROXY,
+            CHAINLINK_DATA_STREAMS_WSTETH_USD
+        );
+        usdn_ = new Usdn(address(0), address(0));
+        wusdn_ = new Wusdn(usdn_);
+        vm.stopBroadcast();
+
+        _setPeripheralContracts(wstEthOracleMiddleware_, liquidationRewardsManager_, usdn_);
     }
 }
