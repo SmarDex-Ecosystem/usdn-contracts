@@ -34,7 +34,7 @@ import {
 
 import { LiquidationRewardsManagerWstEth } from
     "../../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
-import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { WstEthOracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
@@ -95,7 +95,7 @@ contract UsdnProtocolBaseIntegrationFixture is
     WstETH public wstETH;
     MockPyth public mockPyth;
     MockChainlinkOnChain public mockChainlinkOnChain;
-    WstEthOracleMiddleware public oracleMiddleware;
+    WstEthOracleMiddlewareWithPyth public oracleMiddleware;
     LiquidationRewardsManagerWstEth public liquidationRewardsManager;
     Rebalancer public rebalancer;
 
@@ -144,7 +144,7 @@ contract UsdnProtocolBaseIntegrationFixture is
             sdex = Sdex(SDEX);
             IPyth pyth = IPyth(PYTH_ORACLE);
             AggregatorV3Interface chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_ETH);
-            oracleMiddleware = new WstEthOracleMiddleware(
+            oracleMiddleware = new WstEthOracleMiddlewareWithPyth(
                 address(pyth), PYTH_ETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
             );
             PriceInfo memory currentPrice =
@@ -161,7 +161,7 @@ contract UsdnProtocolBaseIntegrationFixture is
             mockChainlinkOnChain.setLastPrice(
                 int256(wstETH.getWstETHByStETH(uint256(testParams.initialPrice / 10 ** (18 - 8))))
             );
-            oracleMiddleware = new WstEthOracleMiddleware(
+            oracleMiddleware = new WstEthOracleMiddlewareWithPyth(
                 address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
             );
             vm.warp(testParams.initialTimestamp);
