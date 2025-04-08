@@ -820,4 +820,189 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
             )
         );
     }
+
+    function _setValidationDeadlines(uint256 lowLatencyDeadline, uint256 onChainDeadline)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(
+                IUsdnProtocolFallback.setValidatorDeadlines.selector, lowLatencyDeadline, onChainDeadline
+            )
+        );
+    }
+
+    function _setMinLeverage(uint256 minLeverage) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.setMinLeverage.selector, minLeverage)
+        );
+    }
+
+    function _setMaxLeverage(uint256 maxLeverage) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.setMaxLeverage.selector, maxLeverage)
+        );
+    }
+
+    function _setLiquidationPenalty(uint24 liquidationPenalty)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.setLiquidationPenalty.selector, liquidationPenalty)
+        );
+    }
+
+    function _setEMAPeriod(uint128 emaPeriod) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.setEMAPeriod.selector, emaPeriod));
+    }
+
+    function _setFundingSF(uint256 fundingSF) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.setFundingSF.selector, fundingSF));
+    }
+
+    function _setProtocolFeeBps(uint16 protocolFeeBps) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.setProtocolFeeBps.selector, protocolFeeBps)
+        );
+    }
+
+    function _setPositionFeeBps(uint16 positionFee) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.setPositionFeeBps.selector, positionFee)
+        );
+    }
+
+    function _setVaultFeeBps(uint16 vaultFee) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.setVaultFeeBps.selector, vaultFee));
+    }
+
+    function _setSdexRewardsRatioBps(uint16 rewards) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.setSdexRewardsRatioBps.selector, rewards)
+        );
+    }
+
+    function _setRebalancerBonusBps(uint16 bonus) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.setRebalancerBonusBps.selector, bonus)
+        );
+    }
+
+    function _setSdexBurnOnDepositRatio(uint32 ratio) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.setSdexBurnOnDepositRatio.selector, ratio)
+        );
+    }
+
+    function _setSecurityDepositValue(uint64 securityDeposit)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.setSecurityDepositValue.selector, securityDeposit)
+        );
+    }
+
+    function _setExpoImbalanceLimits(
+        uint256 openLimit,
+        uint256 depositLimit,
+        uint256 withdrawalLimit,
+        uint256 closeLimit,
+        uint256 rebalancerCloseLimit,
+        int256 longImbalanceTarget
+    ) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(
+                IUsdnProtocolFallback.setExpoImbalanceLimits.selector,
+                openLimit,
+                depositLimit,
+                withdrawalLimit,
+                closeLimit,
+                rebalancerCloseLimit,
+                longImbalanceTarget
+            )
+        );
+    }
+
+    function _setMinLongPosition(uint256 minLongPosition) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.setMinLongPosition.selector, minLongPosition)
+        );
+    }
+
+    function _setSafetyMarginBps(uint256 safetyMarginBps) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.setSafetyMarginBps.selector, safetyMarginBps)
+        );
+    }
+
+    function _setLiquidationIteration(uint16 liquidationIteration)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.setLiquidationIteration.selector, liquidationIteration)
+        );
+    }
+
+    function _setFeeThreshold(uint256 feeThreshold) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.setFeeThreshold.selector, feeThreshold)
+        );
+    }
+
+    function _setTargetUsdnPrice(uint128 price) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) =
+            address(usdnProtocol).call(abi.encodeWithSelector(IUsdnProtocolFallback.setTargetUsdnPrice.selector, price));
+    }
+
+    function _setUsdnRebaseThreshold(uint128 threshold) internal returns (bool success, bytes memory returnData) {
+        vm.prank(ADMIN);
+
+        (success, returnData) = address(usdnProtocol).call(
+            abi.encodeWithSelector(IUsdnProtocolFallback.setUsdnRebaseThreshold.selector, threshold)
+        );
+    }
 }

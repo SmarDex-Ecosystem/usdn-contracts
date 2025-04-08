@@ -482,4 +482,49 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
     ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_);
 
     function i_calcMaxLongBalance(uint256 totalExpo) external pure returns (uint256);
+
+    function getValidatorDeadlines(uint256 seed) external returns (uint128, uint128);
+
+    function getMinLeverage(uint256 seed) external returns (uint256);
+
+    function getMaxLeverage(uint256 seed) external returns (uint256);
+
+    function getLiquidationPenalty(uint256 seed) external returns (uint24);
+
+    function getEMAPeriod(uint256 seed) external returns (uint128);
+
+    function getFundingSF(uint256 seed) external returns (uint256);
+
+    function getProtocolFeeBps(uint256 seed) external returns (uint16);
+
+    function getPositionFeeBps(uint256 seed) external returns (uint16);
+
+    function getVaultFeeBps(uint256 seed) external returns (uint16);
+
+    function getSdexRewardsRatioBps(uint256 seed) external returns (uint16);
+
+    function getRebalancerBonusBps(uint256 seed) external returns (uint16);
+
+    function getSdexBurnOnDepositRatio(uint256 seed) external returns (uint32);
+
+    function getSecurityDepositValue(uint256 seed) external returns (uint64);
+
+    function getExpoImbalanceLimits(
+        uint256 seed1,
+        uint256 seed2,
+        uint256 seed3,
+        uint256 seed4,
+        uint256 seed5,
+        int256 seed6
+    ) external returns (uint256, uint256, uint256, uint256, uint256, int256);
+
+    function getMinLongPosition(uint256 seed) external returns (uint256);
+
+    function getSafetyMarginBps(uint256 seed) external returns (uint256);
+
+    function getLiquidationIteration(uint256 seed) external returns (uint16);
+
+    function getTargetUsdnPrice(uint256 seed) external returns (uint128);
+
+    function getUsdnRebaseThreshold(uint256 seed) external returns (uint128);
 }

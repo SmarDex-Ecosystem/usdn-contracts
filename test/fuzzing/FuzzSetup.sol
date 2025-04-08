@@ -14,6 +14,7 @@ import { WstETH } from "../utils/WstEth.sol";
 import { IUsdnProtocolHandler } from "./mocks/IUsdnProtocolHandler.sol";
 import { MockPyth } from "./mocks/MockPyth.sol";
 import { FunctionCalls } from "./util/FunctionCalls.sol";
+import { FuzzActors } from "./util/FuzzActors.sol";
 
 import { LiquidationRewardsManager } from "../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
@@ -78,6 +79,7 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
         liquidationRewardsManager = new LiquidationRewardsManager(IWstETH(wstETHAddress));
     }
 
+    // @todo refactor deployment and setup with role assignment
     function deployProtocol() internal {
         feeCollector = new FeeCollector(); //NOTE: added fuzzing contract into collector's constructor
         usdnProtocolFallback = new UsdnProtocolFallback();
@@ -118,6 +120,24 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
         usdnProtocol.grantRole(Constants.PROXY_UPGRADE_ROLE, address(this));
         usdnProtocol.grantRole(Constants.PAUSER_ROLE, address(this));
         usdnProtocol.grantRole(Constants.UNPAUSER_ROLE, address(this));
+
+        usdnProtocol.grantRole(Constants.ADMIN_CRITICAL_FUNCTIONS_ROLE, ADMIN);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, ADMIN);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_PROTOCOL_PARAMS_ROLE, ADMIN);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_USDN_PARAMS_ROLE, ADMIN);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_OPTIONS_ROLE, ADMIN);
+        usdnProtocol.grantRole(Constants.ADMIN_PROXY_UPGRADE_ROLE, ADMIN);
+        usdnProtocol.grantRole(Constants.ADMIN_PAUSER_ROLE, ADMIN);
+        usdnProtocol.grantRole(Constants.ADMIN_UNPAUSER_ROLE, ADMIN);
+
+        usdnProtocol.grantRole(Constants.CRITICAL_FUNCTIONS_ROLE, ADMIN);
+        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, ADMIN);
+        usdnProtocol.grantRole(Constants.SET_PROTOCOL_PARAMS_ROLE, ADMIN);
+        usdnProtocol.grantRole(Constants.SET_USDN_PARAMS_ROLE, ADMIN);
+        usdnProtocol.grantRole(Constants.SET_OPTIONS_ROLE, ADMIN);
+        usdnProtocol.grantRole(Constants.PROXY_UPGRADE_ROLE, ADMIN);
+        usdnProtocol.grantRole(Constants.PAUSER_ROLE, ADMIN);
+        usdnProtocol.grantRole(Constants.UNPAUSER_ROLE, ADMIN);
     }
 
     function deployRebalancer() internal {
@@ -132,7 +152,7 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
     }
 
     function initializeUsdnProtocol() public {
-        // @todo uint256 depositAmount, uint256 longAmount were passed in parameter but  not used?
+        // @todo uint256 depositAmount, uint256 longAmount were passed in parameter but not used?
 
         setPrice(2222);
 

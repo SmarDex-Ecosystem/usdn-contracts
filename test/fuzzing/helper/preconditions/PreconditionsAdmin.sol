@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.26;
 
-import "./PreconditionsBase.sol";
+import { PreconditionsBase } from "./PreconditionsBase.sol";
 
 abstract contract PreconditionsAdmin is PreconditionsBase {
     enum PriceMode {
@@ -73,5 +73,101 @@ abstract contract PreconditionsAdmin is PreconditionsBase {
             minAllowedPrice: minAllowedPrice,
             maxAllowedPrice: maxAllowedPrice
         });
+    }
+
+    function setValidationsDeadlinesPreconditions(uint256 seed)
+        internal
+        returns (uint128 lowLatencyDeadline, uint128 onChainDeadline)
+    {
+        (lowLatencyDeadline, onChainDeadline) = usdnProtocol.getValidatorDeadlines(seed);
+    }
+
+    function setMinLeveragePreconditions(uint256 seed) internal returns (uint256 minLeverage) {
+        minLeverage = usdnProtocol.getMinLeverage(seed);
+    }
+
+    function setMaxLeveragePreconditions(uint256 seed) internal returns (uint256 minLeverage) {
+        minLeverage = usdnProtocol.getMaxLeverage(seed);
+    }
+
+    function setLiquidationPenaltyPreconditions(uint256 seed) internal returns (uint24 liquidationPenalty) {
+        liquidationPenalty = usdnProtocol.getLiquidationPenalty(seed);
+    }
+
+    function setEMAPeriodPreconditions(uint256 seed) internal returns (uint128 emaPeriod) {
+        emaPeriod = usdnProtocol.getEMAPeriod(seed);
+    }
+
+    function setFundingSFPreconditions(uint256 seed) internal returns (uint256 fundingSF) {
+        fundingSF = usdnProtocol.getFundingSF(seed);
+    }
+
+    function setProtocolFeeBpsPreconditions(uint256 seed) internal returns (uint16 protocolFeeBps) {
+        protocolFeeBps = usdnProtocol.getProtocolFeeBps(seed);
+    }
+
+    function setPositionFeeBpsPreconditions(uint256 seed) internal returns (uint16 positionFee) {
+        positionFee = usdnProtocol.getPositionFeeBps(seed);
+    }
+
+    function setVaultFeeBpsPreconditions(uint256 seed) internal returns (uint16 vaultFee) {
+        vaultFee = usdnProtocol.getVaultFeeBps(seed);
+    }
+
+    function setSdexRewardsRatioBpsPreconditions(uint256 seed) internal returns (uint16 rewards) {
+        rewards = usdnProtocol.getSdexRewardsRatioBps(seed);
+    }
+
+    function setRebalancerBonusBpsPreconditions(uint256 seed) internal returns (uint16 bonus) {
+        bonus = usdnProtocol.getRebalancerBonusBps(seed);
+    }
+
+    function setSdexBurnOnDepositRatioPreconditions(uint256 seed) internal returns (uint32 ratio) {
+        ratio = usdnProtocol.getSdexBurnOnDepositRatio(seed);
+    }
+
+    function setSecurityDepositValuePreconditions(uint256 seed) internal returns (uint64 securityDeposit) {
+        securityDeposit = usdnProtocol.getSecurityDepositValue(seed);
+    }
+
+    function setExpoImbalanceLimitsPreconditions(
+        uint256 seed1,
+        uint256 seed2,
+        uint256 seed3,
+        uint256 seed4,
+        uint256 seed5,
+        int256 seed6
+    )
+        internal
+        returns (
+            uint256 openLimit,
+            uint256 depositLimit,
+            uint256 withdrawalLimit,
+            uint256 closeLimit,
+            uint256 rebalancerCloseLimit,
+            int256 longImbalanceTarget
+        )
+    {
+        return usdnProtocol.getExpoImbalanceLimits(seed1, seed2, seed3, seed4, seed5, seed6);
+    }
+
+    function setMinLongPositionPreconditions(uint256 seed) internal returns (uint256 minLongPosition) {
+        minLongPosition = usdnProtocol.getMinLongPosition(seed);
+    }
+
+    function setSafetyMarginBpsPreconditions(uint256 seed) internal returns (uint256 safetyMarginBps) {
+        safetyMarginBps = usdnProtocol.getSafetyMarginBps(seed);
+    }
+
+    function setLiquidationIterationPreconditions(uint256 seed) internal returns (uint16 liquidationIteration) {
+        liquidationIteration = usdnProtocol.getLiquidationIteration(seed);
+    }
+
+    function setTargetUsdnPricePreconditions(uint256 seed) internal returns (uint128 price) {
+        price = usdnProtocol.getTargetUsdnPrice(seed);
+    }
+
+    function setUsdnRebaseThresholdPreconditions(uint256 seed) internal returns (uint128 threshold) {
+        threshold = usdnProtocol.getUsdnRebaseThreshold(seed);
     }
 }

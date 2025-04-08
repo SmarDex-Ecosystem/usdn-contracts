@@ -7,6 +7,8 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../../src/UsdnProtocol//libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolImpl } from "../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolActionsLongLibrary.sol";
@@ -14,6 +16,9 @@ import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
+
+import { UsdnProtocolSettersLibrary as Setters } from
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolSettersLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { PriceInfo } from "../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -870,5 +875,139 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         returns (DepositPendingAction memory)
     {
         return Utils._toDepositPendingAction(action);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                               Admin Functions                              */
+    /* -------------------------------------------------------------------------- */
+
+    function getValidatorDeadlines(uint256 seed)
+        external
+        view
+        returns (uint128 lowLatencyDeadline, uint128 onChainDeadline)
+    {
+        Storage storage s = Utils._getMainStorage();
+
+        uint256 seed1 = uint128(seed); // Lower 128 bits
+        uint256 seed2 = uint128(seed >> 128); // Upper 128 bits
+
+        lowLatencyDeadline =
+            uint128(bound(seed1, Constants.MIN_VALIDATION_DEADLINE, s._oracleMiddleware.getLowLatencyDelay()));
+        onChainDeadline = uint128(bound(seed2, 0, Constants.MAX_VALIDATION_DEADLINE));
+    }
+
+    function getMinLeverage(uint256 seed) external view returns (uint256 minLeverage) {
+        Storage storage s = Utils._getMainStorage();
+
+        minLeverage = bound(seed, (10 ** Constants.LEVERAGE_DECIMALS) + 1, s._maxLeverage - 1);
+    }
+
+    function getMaxLeverage(uint256 seed) external view returns (uint256 maxLeverage) {
+        Storage storage s = Utils._getMainStorage();
+
+        maxLeverage = bound(seed, s._minLeverage + 1, Constants.MAX_LEVERAGE);
+    }
+
+    function getLiquidationPenalty(uint256 seed) external pure returns (uint24 liquidationPenalty) {
+        liquidationPenalty = uint24(bound(seed, 0, Constants.MAX_LIQUIDATION_PENALTY));
+    }
+
+    function getEMAPeriod(uint256 seed) external pure returns (uint128 EMAPeriod) {
+        EMAPeriod = uint128(bound(seed, 0, Constants.MAX_EMA_PERIOD));
+    }
+
+    function getFundingSF(uint256 seed) external pure returns (uint256 fundingSF) {
+        fundingSF = bound(seed, 0, 10 ** Constants.FUNDING_SF_DECIMALS);
+    }
+
+    function getProtocolFeeBps(uint256 seed) external pure returns (uint16 protocolFeeBps) {
+        protocolFeeBps = uint16(bound(seed, 0, Constants.MAX_PROTOCOL_FEE_BPS));
+    }
+
+    function getPositionFeeBps(uint256 seed) external pure returns (uint16 positionFee) {
+        positionFee = uint16(bound(seed, 0, Constants.MAX_POSITION_FEE_BPS));
+    }
+
+    function getVaultFeeBps(uint256 seed) external pure returns (uint16 vaultFee) {
+        vaultFee = uint16(bound(seed, 0, Constants.MAX_VAULT_FEE_BPS));
+    }
+
+    function getSdexRewardsRatioBps(uint256 seed) external pure returns (uint16 rewards) {
+        rewards = uint16(bound(seed, 0, Constants.MAX_SDEX_REWARDS_RATIO_BPS));
+    }
+
+    function getRebalancerBonusBps(uint256 seed) external pure returns (uint16 bonus) {
+        bonus = uint16(bound(seed, 0, Constants.BPS_DIVISOR));
+    }
+
+    function getSdexBurnOnDepositRatio(uint256 seed) external pure returns (uint32 ratio) {
+        ratio = uint32(bound(seed, 0, Constants.MAX_SDEX_BURN_RATIO));
+    }
+
+    function getSecurityDepositValue(uint256 seed) external pure returns (uint64 securityDeposit) {
+        securityDeposit = uint64(bound(seed, 0, Constants.MAX_SECURITY_DEPOSIT));
+    }
+
+    // @todo make dynamic with seeds
+    function getExpoImbalanceLimits(
+        uint256 seed1,
+        uint256 seed2,
+        uint256 seed3,
+        uint256 seed4,
+        uint256 seed5,
+        int256 seed6
+    )
+        external
+        pure
+        returns (
+            uint256 openLimit,
+            uint256 depositLimit,
+            uint256 withdrawalLimit,
+            uint256 closeLimit,
+            uint256 rebalancerCloseLimit,
+            int256 longImbalanceTarget
+        )
+    {
+        openLimit = 5000;
+        depositLimit = 3000;
+        withdrawalLimit = 5000;
+        closeLimit = 3000;
+        rebalancerCloseLimit = 0;
+
+        if (seed6 < 0) {
+            longImbalanceTarget = -1000; // Well above -5000 and -withdrawalLimit
+        } else {
+            longImbalanceTarget = 1000; // Well below closeLimit (3000)
+        }
+
+        return (openLimit, depositLimit, withdrawalLimit, closeLimit, rebalancerCloseLimit, longImbalanceTarget);
+    }
+
+    function getMinLongPosition(uint256 seed) external pure returns (uint256 minLongPosition) {
+        minLongPosition = bound(seed, 0, Constants.MAX_MIN_LONG_POSITION);
+    }
+
+    function getSafetyMarginBps(uint256 seed) external pure returns (uint256 safetyMarginBps) {
+        safetyMarginBps = bound(seed, 0, Constants.MAX_SAFETY_MARGIN_BPS);
+    }
+
+    function getLiquidationIteration(uint256 seed) external pure returns (uint16 liquidationIteration) {
+        liquidationIteration = uint16(bound(seed, 0, Constants.MAX_LIQUIDATION_ITERATION));
+    }
+
+    function getTargetUsdnPrice(uint256 seed) external view returns (uint128 price) {
+        Types.Storage storage s = Utils._getMainStorage();
+        uint128 minPrice = uint128(10 ** s._priceFeedDecimals);
+        uint128 maxPrice = s._usdnRebaseThreshold;
+
+        price = uint128(bound(seed, minPrice, maxPrice));
+    }
+
+    function getUsdnRebaseThreshold(uint256 seed) external view returns (uint128 threshold) {
+        Types.Storage storage s = Utils._getMainStorage();
+        uint128 minThreshold = s._targetUsdnPrice;
+        uint128 maxThreshold = uint128(2 * 10 ** s._priceFeedDecimals);
+
+        threshold = uint128(bound(seed, minThreshold, maxThreshold));
     }
 }
