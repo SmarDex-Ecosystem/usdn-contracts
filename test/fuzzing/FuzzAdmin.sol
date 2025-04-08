@@ -5,6 +5,10 @@ import { PostconditionsAdmin } from "./helper/postconditions/PostconditionsAdmin
 import { PreconditionsAdmin } from "./helper/preconditions/PreconditionsAdmin.sol";
 
 contract FuzzAdmin is PreconditionsAdmin, PostconditionsAdmin {
+    /* -------------------------------------------------------------------------- */
+    /*                                USDN Protocol                               */
+    /* -------------------------------------------------------------------------- */
+
     function fuzz_setValidatorDeadlines(uint256 seed) public {
         (uint128 newLowLatencyDeadline, uint128 newOnChainDeadline) = setValidationsDeadlinesPreconditions(seed);
 
@@ -165,6 +169,38 @@ contract FuzzAdmin is PreconditionsAdmin, PostconditionsAdmin {
         (bool success, bytes memory returnData) = _setUsdnRebaseThreshold(newThreshold);
         setUsdnRebaseThresholdPostconditions(success, returnData);
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                 Rebalancer                                 */
+    /* -------------------------------------------------------------------------- */
+
+    function fuzz_setPositionMaxLeverage(uint256 seed) public {
+        uint256 newMaxLeverage = setPositionMaxLeveragePreconditions(seed);
+
+        (bool success, bytes memory returnData) = _setPositionMaxLeverage(newMaxLeverage);
+        setPositionMaxLeveragePostconditions(success, returnData);
+    }
+
+    function fuzz_setMinAssetDeposit(uint256 seed) public {
+        uint256 newMinAssetDeposit = setMinAssetDepositPreconditions(seed);
+
+        (bool success, bytes memory returnData) = _setMinAssetDeposit(newMinAssetDeposit);
+        setMinAssetDepositPostconditions(success, returnData);
+    }
+
+    function fuzz_setTimeLimits(uint256 seed1) public {
+        (uint64 validationDelay, uint64 validationDeadline, uint64 actionCooldown, uint64 closeDelay) =
+            setTimeLimitsPreconditions(seed1);
+
+        (bool success, bytes memory returnData) =
+            _setTimeLimits(validationDelay, validationDeadline, actionCooldown, closeDelay);
+
+        setTimeLimitsPostconditions(success, returnData);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Liquidation Manger                             */
+    /* -------------------------------------------------------------------------- */
 
     function fuzz_setPrice(int256 priceChangePercent) public {
         SetPricePreconditions memory params = setPricePreconditions(priceChangePercent);

@@ -6,12 +6,12 @@ import { Test } from "forge-std/Test.sol";
 import { FuzzBase } from "@perimetersec/fuzzlib/src/FuzzBase.sol";
 
 import { MockChainlinkOnChain } from "../../../test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
-import { RebalancerHandler } from "../../../test/unit/Rebalancer/utils/Handler.sol";
 import { Sdex } from "../../../test/utils/Sdex.sol";
 import { WstETH } from "../../../test/utils/WstEth.sol";
 import { UsdnHandler } from "../../unit/USDN/utils/Handler.sol";
 import { IUsdnProtocolHandler } from "../mocks/IUsdnProtocolHandler.sol";
 import { MockPyth } from "../mocks/MockPyth.sol";
+import { RebalancerHandler } from "../mocks/RebalancerHandler.sol";
 import { UsdnProtocolHandler } from "../mocks/UsdnProtocolHandler.sol";
 import { FuzzConstants } from "../util/FuzzConstants.sol";
 

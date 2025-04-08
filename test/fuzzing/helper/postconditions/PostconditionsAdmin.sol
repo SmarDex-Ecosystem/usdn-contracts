@@ -5,6 +5,9 @@ import { PostconditionsBase } from "./PostconditionsBase.sol";
 
 // @todo add more admin invariants
 abstract contract PostconditionsAdmin is PostconditionsBase {
+    /* -------------------------------------------------------------------------- */
+    /*                                USDN Protocol                               */
+    /* -------------------------------------------------------------------------- */
     function setValidatorDeadlinesPostconditions(bool success, bytes memory returnData) internal {
         if (success) {
             Invariant_ADMIN_01(success);
@@ -164,4 +167,36 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
             onFailInvariantsGeneral(returnData);
         }
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                 Rebalancer                                 */
+    /* -------------------------------------------------------------------------- */
+
+    function setPositionMaxLeveragePostconditions(bool success, bytes memory returnData) internal {
+        if (success) {
+            Invariant_ADMIN_01(success);
+        } else {
+            onFailInvariantsGeneral(returnData);
+        }
+    }
+
+    function setMinAssetDepositPostconditions(bool success, bytes memory returnData) internal {
+        if (success) {
+            Invariant_ADMIN_01(success);
+        } else {
+            onFailInvariantsGeneral(returnData);
+        }
+    }
+
+    function setTimeLimitsPostconditions(bool success, bytes memory returnData) internal {
+        if (success) {
+            Invariant_ADMIN_01(success);
+        } else {
+            onFailInvariantsGeneral(returnData);
+        }
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Liquidation Manger                             */
+    /* -------------------------------------------------------------------------- */
 }

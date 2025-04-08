@@ -7,6 +7,9 @@ import { FuzzStorageVariables } from "../helper/FuzzStorageVariables.sol";
 import { FuzzActors } from "./FuzzActors.sol";
 
 import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
+
+import { IBaseRebalancer } from "../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
+import { IRebalancer } from "../../../src/interfaces/Rebalancer/IRebalancer.sol";
 import { IUsdnProtocolActions } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IUsdnProtocolCore } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
 import { IUsdnProtocolErrors } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -821,6 +824,10 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
         );
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                              USDN Admin Calls                              */
+    /* -------------------------------------------------------------------------- */
+
     function _setValidationDeadlines(uint256 lowLatencyDeadline, uint256 onChainDeadline)
         internal
         returns (bool success, bytes memory returnData)
@@ -1005,4 +1012,40 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
             abi.encodeWithSelector(IUsdnProtocolFallback.setUsdnRebaseThreshold.selector, threshold)
         );
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                 Rebalancer                                 */
+    /* -------------------------------------------------------------------------- */
+
+    function _setPositionMaxLeverage(uint256 maxLeverage) internal returns (bool success, bytes memory returnData) {
+        vm.prank(DEPLOYER);
+
+        (success, returnData) =
+            address(rebalancer).call(abi.encodeWithSelector(IRebalancer.setPositionMaxLeverage.selector, maxLeverage));
+    }
+
+    function _setMinAssetDeposit(uint256 minAssetDeposit) internal returns (bool success, bytes memory returnData) {
+        vm.prank(DEPLOYER);
+
+        (success, returnData) = address(rebalancer).call(
+            abi.encodeWithSelector(IBaseRebalancer.setMinAssetDeposit.selector, minAssetDeposit)
+        );
+    }
+
+    function _setTimeLimits(uint64 validationDelay, uint64 validationDeadline, uint64 actionCooldown, uint64 closeDelay)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        vm.prank(DEPLOYER);
+
+        (success, returnData) = address(rebalancer).call(
+            abi.encodeWithSelector(
+                IRebalancer.setTimeLimits.selector, validationDelay, validationDeadline, actionCooldown, closeDelay
+            )
+        );
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Liquidation Manger                             */
+    /* -------------------------------------------------------------------------- */
 }

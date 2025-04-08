@@ -75,6 +75,10 @@ abstract contract PreconditionsAdmin is PreconditionsBase {
         });
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                                USDN Protocol                               */
+    /* -------------------------------------------------------------------------- */
+
     function setValidationsDeadlinesPreconditions(uint256 seed)
         internal
         returns (uint128 lowLatencyDeadline, uint128 onChainDeadline)
@@ -170,4 +174,56 @@ abstract contract PreconditionsAdmin is PreconditionsBase {
     function setUsdnRebaseThresholdPreconditions(uint256 seed) internal returns (uint128 threshold) {
         threshold = usdnProtocol.getUsdnRebaseThreshold(seed);
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                 Rebalancer                                 */
+    /* -------------------------------------------------------------------------- */
+
+    function setPositionMaxLeveragePreconditions(uint256 seed) internal view returns (uint256 maxLeverage) {
+        maxLeverage = rebalancer.getPositionMaxLeverage(seed);
+    }
+
+    function setMinAssetDepositPreconditions(uint256 seed) internal view returns (uint256 minAssetDeposit) {
+        minAssetDeposit = rebalancer.getMinAssetDeposit(seed);
+    }
+
+    function setTimeLimitsPreconditions(uint256 seed)
+        internal
+        returns (uint64 validationDelay, uint64 validationDeadline, uint64 actionCooldown, uint64 closeDelay)
+    {
+        return rebalancer.getTimeLimits(seed);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Liquidation Manger                             */
+    /* -------------------------------------------------------------------------- */
+
+    // function setRewardsParametersPreconditions(
+    //     uint256 seed1,
+    //     uint256 seed2,
+    //     uint256 seed3,
+    //     uint256 seed4,
+    //     uint256 seed5,
+    //     uint256 seed6,
+    //     uint256 seed7,
+    //     uint256 seed8,
+    //     uint256 seed9
+    // )
+    //     internal
+    //     returns (
+    //         uint32 gasUsedPerTick,
+    //         uint32 otherGasUsed,
+    //         uint32 rebaseGasUsed,
+    //         uint32 rebalancerGasUsed,
+    //         uint64 baseFeeOffset,
+    //         uint16 gasMultiplierBps,
+    //         uint16 positionBonusMultiplierBps,
+    //         uint128 fixedReward,
+    //         uint128 maxReward
+    //     )
+    // {
+    //     return liquidationRewardsManager.getRewardsParameters(
+    //         seed1, seed2, seed3, seed4, seed5, seed6, seed7, seed8, seed9
+    //     );
+    // }
 }

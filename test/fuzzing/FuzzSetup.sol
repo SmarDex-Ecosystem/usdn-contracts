@@ -6,13 +6,13 @@ import { StdStyle, console, console2 } from "forge-std/Test.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { MockChainlinkOnChain } from "../unit/Middlewares/utils/MockChainlinkOnChain.sol";
-import { RebalancerHandler } from "../unit/Rebalancer/utils/Handler.sol";
 import { UsdnHandler } from "../unit/USDN/utils/Handler.sol";
 import { DefaultConfig } from "../utils/DefaultConfig.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
 import { IUsdnProtocolHandler } from "./mocks/IUsdnProtocolHandler.sol";
 import { MockPyth } from "./mocks/MockPyth.sol";
+import { RebalancerHandler } from "./mocks/RebalancerHandler.sol";
 import { FunctionCalls } from "./util/FunctionCalls.sol";
 import { FuzzActors } from "./util/FuzzActors.sol";
 
