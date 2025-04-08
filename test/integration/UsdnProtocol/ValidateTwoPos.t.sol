@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { PYTH_ETH_USD, USER_1, USER_2 } from "../../utils/Constants.sol";
+import { CHAINLINK_DATA_STREAMS_WSTETH_USD, USER_1, USER_2 } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
 /**
@@ -12,8 +12,8 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.fork = true; // all tests in this contract must be labeled `Fork`
-        params.forkWarp = 1_717_452_000; // Mon Jun 03 2024 22:00:00 UTC
-        params.forkBlock = 20_014_134;
+        params.forkWarp = 1_742_810_039; // Mon Mar 24 2025 09:53:59 UTC (available for 30 days)
+        params.forkBlock = 22_115_995;
         _setUp(params);
     }
 
@@ -69,10 +69,12 @@ contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixtur
 
         // user1's position must be validated with chainlink
         // first round ID after the `forkWarp` timestamp + 20 minutes
-        bytes memory data1 = abi.encode(uint80(110_680_464_442_257_327_600));
+        bytes memory data1 = abi.encode(uint80(129_127_208_515_966_870_798));
         uint256 data1Fee = oracleMiddleware.validationCost(data1, ProtocolAction.ValidateOpenPosition);
         // user2's position must be validated with a low-latency oracle
-        (,,,, bytes memory data2) = getHermesApiSignature(PYTH_ETH_USD, ts2 + oracleMiddleware.getValidationDelay());
+        bytes memory data2 = getChainlinkDataStreamsApiSignature(
+            CHAINLINK_DATA_STREAMS_WSTETH_USD, ts2 + oracleMiddleware.getValidationDelay()
+        );
         uint256 data2Fee = oracleMiddleware.validationCost(data2, ProtocolAction.ValidateOpenPosition);
         bytes[] memory previousData = new bytes[](1);
         previousData[0] = data1;

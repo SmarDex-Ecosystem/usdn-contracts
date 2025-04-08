@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { MOCK_PYTH_DATA } from "../../unit/Middlewares/utils/Constants.sol";
 import { USER_1, USER_2, USER_3 } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
@@ -47,7 +46,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         // oracle)
         uint256 validationCost =
             oracleMiddleware.validationCost(previousData.priceData[2], Types.ProtocolAction.ValidateDeposit);
-        assertEq(validationCost, 1, "validation cost");
+        assertEq(validationCost, report.nativeFee, "validation cost");
         protocol.initiateOpenPosition{ value: securityDeposit + validationCost }(
             2 ether,
             params.initialPrice / 2,
@@ -75,7 +74,7 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         // a bot now validates both actionable pending actions
         uint256 validationCost =
             oracleMiddleware.validationCost(previousData.priceData[2], Types.ProtocolAction.ValidateDeposit);
-        assertEq(validationCost, 1, "validation cost");
+        assertEq(validationCost, report.nativeFee, "validation cost");
         protocol.validateActionablePendingActions{ value: validationCost }(previousData, 10);
         // check that both pending actions were validated
         (Types.PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this), 0, 0);
@@ -165,7 +164,11 @@ contract TestUsdnProtocolActionablePendingActions is UsdnProtocolBaseIntegration
         assertEq(actions.length, 3, "actions length before");
         bytes[] memory priceData = new bytes[](3);
         priceData[0] = abi.encode(9); // round ID after the first initiate
-        priceData[2] = MOCK_PYTH_DATA;
+        report.validFromTimestamp = uint32(actions[2].timestamp + 24 seconds);
+        report.observationsTimestamp = uint32(actions[2].timestamp + 24 seconds);
+        report.expiresAt = uint32(block.timestamp + 1 hours);
+        (, payload) = _encodeReport(report);
+        priceData[2] = payload;
         Types.PreviousActionsData memory previousData =
             Types.PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
         return previousData;
