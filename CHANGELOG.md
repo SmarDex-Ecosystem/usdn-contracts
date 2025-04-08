@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.0.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v1.1.0...v2.0.0) (2025-04-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* this is breaking for consumers which expect a uint32, and it requires a storage update for the existing protocol instances
+
+### Features
+
+* **middleware:** wsteth oracle with data streams ([#898](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/898)) ([fc87703](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/fc87703652d8a17c7b25c548884d047ca87c5408))
+
+
+### Code Refactoring
+
+* sdex burn ratio to uint64 ([#895](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/895)) ([2d34a8d](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/2d34a8d3f6538f116f8d9ee068e11a9c33a3d1de))
+* wsteth middleware name ([#902](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/902)) ([db1779f](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/db1779f379342340de9197b78b0d86405715f534))
+
+
+### Build System
+
+* **npm:** add the 'typescript' dependency to fix the `exportAbi` command ([#896](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/896)) ([a01bc4f](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a01bc4f6b972b56fb34978b4ac9085493e1e3feb))
+
 ## [1.1.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v1.0.1...v1.1.0) (2025-03-27)
 
 
