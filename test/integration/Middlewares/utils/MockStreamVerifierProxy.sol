@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { IVerifierFeeManager } from "../ChainlinkDataStreamsOracle/utils/MockFeeManager.sol";
+import { IVerifierFeeManager } from "./MockFeeManager.sol";
 
 contract MockStreamVerifierProxy {
     IVerifierFeeManager public s_feeManager;

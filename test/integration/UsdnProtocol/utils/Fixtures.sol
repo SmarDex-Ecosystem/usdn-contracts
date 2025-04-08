@@ -6,7 +6,7 @@ import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
-import { EMPTY_STREAM_V3 } from "../../../unit/Middlewares/utils/Constants.sol";
+import { MOCK_STREAM_V3 } from "../../../unit/Middlewares/utils/Constants.sol";
 import { MockChainlinkOnChain } from "../../../unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { MockPyth } from "../../../unit/Middlewares/utils/MockPyth.sol";
 import { UsdnProtocolHandler } from "../../../unit/UsdnProtocol/utils/Handler.sol";
@@ -27,14 +27,13 @@ import { IEventsErrors } from "../../../utils/IEventsErrors.sol";
 import { RolesUtils } from "../../../utils/RolesUtils.sol";
 import { Sdex } from "../../../utils/Sdex.sol";
 import { WstETH } from "../../../utils/WstEth.sol";
-
-import { MockFeeManager } from "../../Middlewares/ChainlinkDataStreamsOracle/utils/MockFeeManager.sol";
 import {
     PYTH_DATA_ETH,
     PYTH_DATA_ETH_CONF,
     PYTH_DATA_ETH_PRICE,
     PYTH_DATA_TIMESTAMP
 } from "../../Middlewares/utils/Constants.sol";
+import { MockFeeManager } from "../../Middlewares/utils/MockFeeManager.sol";
 import { MockStreamVerifierProxy } from "../../Middlewares/utils/MockStreamVerifierProxy.sol";
 import { MockWETH } from "../../Middlewares/utils/MockWETH.sol";
 
@@ -194,7 +193,7 @@ contract UsdnProtocolBaseIntegrationFixture is
             vm.etch(wethTargetAddress, code);
 
             report = IVerifierProxy.ReportV3({
-                feedId: EMPTY_STREAM_V3,
+                feedId: MOCK_STREAM_V3,
                 validFromTimestamp: uint32(testParams.initialTimestamp),
                 observationsTimestamp: uint32(testParams.initialTimestamp),
                 nativeFee: 0.001 ether,
@@ -214,7 +213,7 @@ contract UsdnProtocolBaseIntegrationFixture is
                 address(wstETH),
                 1 hours,
                 address(mockStreamVerifierProxy),
-                EMPTY_STREAM_V3
+                MOCK_STREAM_V3
             );
             vm.warp(testParams.initialTimestamp);
             liquidationRewardsManager = new LiquidationRewardsManagerWstEth(wstETH);
