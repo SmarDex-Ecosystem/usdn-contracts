@@ -10,12 +10,12 @@ import { Sdex } from "../../../test/utils/Sdex.sol";
 import { WstETH } from "../../../test/utils/WstEth.sol";
 import { UsdnHandler } from "../../unit/USDN/utils/Handler.sol";
 import { IUsdnProtocolHandler } from "../mocks/IUsdnProtocolHandler.sol";
+import { LiquidationRewardsManagerHandler } from "../mocks/LiquidationRewardsManagerHandler.sol";
 import { MockPyth } from "../mocks/MockPyth.sol";
 import { RebalancerHandler } from "../mocks/RebalancerHandler.sol";
 import { UsdnProtocolHandler } from "../mocks/UsdnProtocolHandler.sol";
 import { FuzzConstants } from "../util/FuzzConstants.sol";
 
-import { LiquidationRewardsManager } from "../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { Wusdn } from "../../../src/Usdn/Wusdn.sol";
@@ -46,7 +46,7 @@ contract FuzzStorageVariables is FuzzConstants, FuzzBase, Test {
 
     UsdnProtocolFallback internal usdnProtocolFallback;
     UsdnProtocolHandler internal usdnProtocolHandler;
-    LiquidationRewardsManager internal liquidationRewardsManager;
+    LiquidationRewardsManagerHandler internal liquidationRewardsManager;
     MockWstEthOracleMiddleware internal wstEthOracleMiddleware;
 
     Sdex internal sdex;

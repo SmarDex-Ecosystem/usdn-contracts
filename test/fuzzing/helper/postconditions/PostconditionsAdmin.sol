@@ -199,4 +199,12 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
     /* -------------------------------------------------------------------------- */
     /*                             Liquidation Manger                             */
     /* -------------------------------------------------------------------------- */
+
+    function setRewardsParametersPostconditions(bool success, bytes memory returnData) internal {
+        if (success) {
+            Invariant_ADMIN_01(success);
+        } else {
+            onFailInvariantsGeneral(returnData);
+        }
+    }
 }

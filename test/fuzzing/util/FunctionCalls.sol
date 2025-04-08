@@ -8,6 +8,8 @@ import { FuzzActors } from "./FuzzActors.sol";
 
 import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
 
+import { ILiquidationRewardsManager } from
+    "../../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManager.sol";
 import { IBaseRebalancer } from "../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IRebalancer } from "../../../src/interfaces/Rebalancer/IRebalancer.sol";
 import { IUsdnProtocolActions } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
@@ -1048,4 +1050,33 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
     /* -------------------------------------------------------------------------- */
     /*                             Liquidation Manger                             */
     /* -------------------------------------------------------------------------- */
+
+    function _setRewardsParameters(
+        uint32 gasUsedPerTick,
+        uint32 otherGasUsed,
+        uint32 rebaseGasUsed,
+        uint32 rebalancerGasUsed,
+        uint64 baseFeeOffset,
+        uint16 gasMultiplierBps,
+        uint16 positionBonusMultiplierBps,
+        uint128 fixedReward,
+        uint128 maxReward
+    ) internal returns (bool success, bytes memory returnData) {
+        vm.prank(DEPLOYER);
+
+        (success, returnData) = address(liquidationRewardsManager).call(
+            abi.encodeWithSelector(
+                ILiquidationRewardsManager.setRewardsParameters.selector,
+                gasUsedPerTick,
+                otherGasUsed,
+                rebaseGasUsed,
+                rebalancerGasUsed,
+                baseFeeOffset,
+                gasMultiplierBps,
+                positionBonusMultiplierBps,
+                fixedReward,
+                maxReward
+            )
+        );
+    }
 }

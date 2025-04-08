@@ -11,12 +11,13 @@ import { DefaultConfig } from "../utils/DefaultConfig.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
 import { IUsdnProtocolHandler } from "./mocks/IUsdnProtocolHandler.sol";
+
+import { LiquidationRewardsManagerHandler } from "./mocks/LiquidationRewardsManagerHandler.sol";
 import { MockPyth } from "./mocks/MockPyth.sol";
 import { RebalancerHandler } from "./mocks/RebalancerHandler.sol";
 import { FunctionCalls } from "./util/FunctionCalls.sol";
 import { FuzzActors } from "./util/FuzzActors.sol";
 
-import { LiquidationRewardsManager } from "../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
@@ -76,7 +77,7 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
     }
 
     function deployLiquidationRewardsManager(address wstETHAddress) internal {
-        liquidationRewardsManager = new LiquidationRewardsManager(IWstETH(wstETHAddress));
+        liquidationRewardsManager = new LiquidationRewardsManagerHandler(IWstETH(wstETHAddress));
     }
 
     // @todo refactor deployment and setup with role assignment

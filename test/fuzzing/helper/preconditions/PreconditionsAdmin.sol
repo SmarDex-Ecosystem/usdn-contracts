@@ -198,32 +198,20 @@ abstract contract PreconditionsAdmin is PreconditionsBase {
     /*                             Liquidation Manger                             */
     /* -------------------------------------------------------------------------- */
 
-    // function setRewardsParametersPreconditions(
-    //     uint256 seed1,
-    //     uint256 seed2,
-    //     uint256 seed3,
-    //     uint256 seed4,
-    //     uint256 seed5,
-    //     uint256 seed6,
-    //     uint256 seed7,
-    //     uint256 seed8,
-    //     uint256 seed9
-    // )
-    //     internal
-    //     returns (
-    //         uint32 gasUsedPerTick,
-    //         uint32 otherGasUsed,
-    //         uint32 rebaseGasUsed,
-    //         uint32 rebalancerGasUsed,
-    //         uint64 baseFeeOffset,
-    //         uint16 gasMultiplierBps,
-    //         uint16 positionBonusMultiplierBps,
-    //         uint128 fixedReward,
-    //         uint128 maxReward
-    //     )
-    // {
-    //     return liquidationRewardsManager.getRewardsParameters(
-    //         seed1, seed2, seed3, seed4, seed5, seed6, seed7, seed8, seed9
-    //     );
-    // }
+    function setRewardsParametersPreconditions(uint256 seed)
+        internal
+        returns (
+            uint32 gasUsedPerTick,
+            uint32 otherGasUsed,
+            uint32 rebaseGasUsed,
+            uint32 rebalancerGasUsed,
+            uint64 baseFeeOffset,
+            uint16 gasMultiplierBps,
+            uint16 positionBonusMultiplierBps,
+            uint128 fixedReward,
+            uint128 maxReward
+        )
+    {
+        return liquidationRewardsManager.getRewardsParameters(seed);
+    }
 }

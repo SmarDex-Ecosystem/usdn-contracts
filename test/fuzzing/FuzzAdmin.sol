@@ -202,6 +202,38 @@ contract FuzzAdmin is PreconditionsAdmin, PostconditionsAdmin {
     /*                             Liquidation Manger                             */
     /* -------------------------------------------------------------------------- */
 
+    function fuzz_setRewardsParameters(uint256 seed) public {
+        (
+            uint32 gasUsedPerTick,
+            uint32 otherGasUsed,
+            uint32 rebaseGasUsed,
+            uint32 rebalancerGasUsed,
+            uint64 baseFeeOffset,
+            uint16 gasMultiplierBps,
+            uint16 positionBonusMultiplierBps,
+            uint128 fixedReward,
+            uint128 maxReward
+        ) = setRewardsParametersPreconditions(seed);
+
+        (bool success, bytes memory returnData) = _setRewardsParameters(
+            gasUsedPerTick,
+            otherGasUsed,
+            rebaseGasUsed,
+            rebalancerGasUsed,
+            baseFeeOffset,
+            gasMultiplierBps,
+            positionBonusMultiplierBps,
+            fixedReward,
+            maxReward
+        );
+
+        setRewardsParametersPostconditions(success, returnData);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                              Internal Helpers                              */
+    /* -------------------------------------------------------------------------- */
+
     function fuzz_setPrice(int256 priceChangePercent) public {
         SetPricePreconditions memory params = setPricePreconditions(priceChangePercent);
 
