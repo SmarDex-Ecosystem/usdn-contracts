@@ -5,7 +5,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 
 import { ILiquidationRewardsManager } from
     "../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManager.sol";
-import { IOracleMiddlewareWithPyth } from "../../src/interfaces/OracleMiddleware/IOracleMiddlewareWithPyth.sol";
+import { IBaseOracleMiddleware } from "../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdn } from "../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolFallback } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -26,7 +26,7 @@ abstract contract DeploymentConfig {
      * @param usdn The USDN token contract.
      */
     function _setPeripheralContracts(
-        IOracleMiddlewareWithPyth oracleMiddleware,
+        IBaseOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         IUsdn usdn
     ) internal virtual;
