@@ -4,7 +4,13 @@
 
 ### Production mode
 
-For a mainnet deployment, you can use the `01_DeployUsdnWstethUsd.s.sol` script with:
+For a mainnet deployment with Pyth based middleware, you can use the `01_DeployUsdnWstethUsd.s.sol` script with:
+
+```bash
+forge clean && forge script -f RPC_URL script/01_DeployUsdnWstethUsd.s.sol:DeployUsdnWstethUsdWithPyth --broadcast -i 1 --batch-size 5
+```
+
+For a mainnet deployment with Chainlink data streams based middleware, you can use the `01_DeployUsdnWstethUsd.s.sol` script with:
 
 ```bash
 forge clean && forge script -f RPC_URL script/01_DeployUsdnWstethUsd.s.sol:DeployUsdnWstethUsdWithDataStreams --broadcast -i 1 --batch-size 5

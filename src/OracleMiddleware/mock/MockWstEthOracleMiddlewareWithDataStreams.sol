@@ -17,6 +17,7 @@ contract MockWstEthOracleMiddlewareWithDataStreams is WstEthOracleMiddlewareWith
      * @dev This price will be used if greater than zero
      */
     uint256 internal _wstethMockedPrice;
+
     /**
      * @notice If we need to verify the provided signature data or not
      * @dev If _wstethMockedPrice == 0, this setting is ignored

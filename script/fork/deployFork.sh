@@ -9,7 +9,7 @@ rpcUrl=http://localhost:8545
 # Anvil first test private key
 deployerPrivateKey=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
-forge script --non-interactive --private-key $deployerPrivateKey -f "$rpcUrl" ./script/fork/DeployUsdnWstethFork.s.sol:DeployUsdnWstethForkWithDataStreams --broadcast
+forge script --non-interactive --private-key $deployerPrivateKey -f "$rpcUrl" ./script/fork/DeployUsdnWstethFork.s.sol:DeployUsdnWstethForkWithPyth --broadcast
 
 chainId=$(cast chain-id -r "$rpcUrl")
 DEPLOYMENT_LOG=$(cat "./broadcast/DeployUsdnWstethFork.s.sol/$chainId/run-latest.json")
