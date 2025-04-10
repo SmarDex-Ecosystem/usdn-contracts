@@ -916,7 +916,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         EMAPeriod = uint128(bound(seed, 0, Constants.MAX_EMA_PERIOD));
     }
 
-    // @todo fails deposit flow if maxbound is larger value 50-99
+    // @todo fails deposit flow if maxbound is larger value 0.50-0.99
     function getFundingSF(uint256 seed) external pure returns (uint256 fundingSF) {
         uint256 minBound = 12 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2); // 0.12
         uint256 maxBound = 15 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2); // 0.15
