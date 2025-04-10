@@ -14,54 +14,52 @@ contract FuzzUsdnProtocolVault is PreconditionsUsdnProtocolVault, Postconditions
      * @notice Simulates and validates a deposit initiation with randomized inputs
      * @dev Calls the deposit flow using generated parameters and verifies postconditions
      */
-    // @todo refactor cause failing admin invariant
-    // function fuzz_initiateDeposit(uint256 ETHAmountSeed, uint128 amountDesiredSeed)
-    //     public
-    //     setCurrentActor
-    //     enforceOneActionPerCall
-    // {
-    //     InitiateDepositParams memory params = initiateDepositPreconditions(ETHAmountSeed, amountDesiredSeed);
-    //     address[] memory actorsToUpdate = new address[](2);
-    //     actorsToUpdate[0] = params.to;
-    //     actorsToUpdate[1] = params.validator; //NOTE: currently the same addresses
+    function fuzz_initiateDeposit(uint256 ETHAmountSeed, uint128 amountDesiredSeed)
+        public
+        setCurrentActor
+        enforceOneActionPerCall
+    {
+        InitiateDepositParams memory params = initiateDepositPreconditions(ETHAmountSeed, amountDesiredSeed);
+        address[] memory actorsToUpdate = new address[](2);
+        actorsToUpdate[0] = params.to;
+        actorsToUpdate[1] = params.validator; //NOTE: currently the same addresses
 
-    //     _before(actorsToUpdate);
+        _before(actorsToUpdate);
 
-    //     (bool success, bytes memory returnData) = _initiateDepositCall(
-    //         params.wstEthAmount,
-    //         params.amountDesired,
-    //         params.to,
-    //         params.validator,
-    //         params.deadline,
-    //         createPythData(),
-    //         params.previousActionsData,
-    //         params.txValue
-    //     );
-    //     initiateDepositPostconditions(success, returnData, actorsToUpdate, params);
-    // }
+        (bool success, bytes memory returnData) = _initiateDepositCall(
+            params.wstEthAmount,
+            params.amountDesired,
+            params.to,
+            params.validator,
+            params.deadline,
+            createPythData(),
+            params.previousActionsData,
+            params.txValue
+        );
+        initiateDepositPostconditions(success, returnData, actorsToUpdate, params);
+    }
 
     /**
      * @notice Simulates and validates deposit finalization
      * @dev Validates a deposit using current oracle data and actor state
      */
-    // @todo refactor cause failing admin invariant
-    // function fuzz_validateDeposit() public setCurrentActor enforceOneActionPerCall {
-    //     ValidateDepositParams memory params = validateDepositPreconditions();
+    function fuzz_validateDeposit() public setCurrentActor enforceOneActionPerCall {
+        ValidateDepositParams memory params = validateDepositPreconditions();
 
-    //     fuzz_setPrice(0); //here we are just updating oracle timestamp with the same price we already have
+        fuzz_setPrice(0); //here we are just updating oracle timestamp with the same price we already have
 
-    //     address[] memory actorsToUpdate = new address[](3);
-    //     actorsToUpdate[0] = params.pendingAction.to;
-    //     actorsToUpdate[1] = params.validator;
-    //     actorsToUpdate[2] = currentActor;
+        address[] memory actorsToUpdate = new address[](3);
+        actorsToUpdate[0] = params.pendingAction.to;
+        actorsToUpdate[1] = params.validator;
+        actorsToUpdate[2] = currentActor;
 
-    //     _before(actorsToUpdate);
+        _before(actorsToUpdate);
 
-    //     (bool success, bytes memory returnData) =
-    //         _validateDepositCall(params.validator, createPythData(), params.previousActionsData);
+        (bool success, bytes memory returnData) =
+            _validateDepositCall(params.validator, createPythData(), params.previousActionsData);
 
-    //     validateDepositPostconditions(success, returnData, actorsToUpdate, params);
-    // }
+        validateDepositPostconditions(success, returnData, actorsToUpdate, params);
+    }
 
     /**
      * @notice Simulates and validates a withdrawal initiation with randomized input

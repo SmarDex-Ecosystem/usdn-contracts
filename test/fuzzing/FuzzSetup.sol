@@ -10,7 +10,7 @@ import { UsdnHandler } from "../unit/USDN/utils/Handler.sol";
 import { DefaultConfig } from "../utils/DefaultConfig.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
-import { IUsdnProtocolHandler } from "./mocks/IUsdnProtocolHandler.sol";
+import { IUsdnProtocolHandler } from "./mocks/interfaces/IUsdnProtocolHandler.sol";
 
 import { LiquidationRewardsManagerHandler } from "./mocks/LiquidationRewardsManagerHandler.sol";
 import { MockPyth } from "./mocks/MockPyth.sol";
@@ -183,6 +183,8 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
         usdnProtocol.setExpoImbalanceLimits(
             uint256(500), uint256(500), uint256(600), uint256(600), uint256(350), int256(400)
         );
+
+        vm.deal(address(usdnProtocol), 30_000 ether);
     }
 
     function mintTokens() internal {

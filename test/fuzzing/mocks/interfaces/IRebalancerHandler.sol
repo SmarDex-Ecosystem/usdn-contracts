@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
 
 /**
  * @title IRebalancerHandler

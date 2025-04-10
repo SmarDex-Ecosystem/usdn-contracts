@@ -189,6 +189,7 @@ abstract contract PreconditionsAdmin is PreconditionsBase {
 
     function setTimeLimitsPreconditions(uint256 seed)
         internal
+        view
         returns (uint64 validationDelay, uint64 validationDeadline, uint64 actionCooldown, uint64 closeDelay)
     {
         return rebalancer.getTimeLimits(seed);
@@ -200,6 +201,7 @@ abstract contract PreconditionsAdmin is PreconditionsBase {
 
     function setRewardsParametersPreconditions(uint256 seed)
         internal
+        view
         returns (
             uint32 gasUsedPerTick,
             uint32 otherGasUsed,

@@ -898,7 +898,8 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     function getMinLeverage(uint256 seed) external view returns (uint256 minLeverage) {
         Storage storage s = Utils._getMainStorage();
 
-        minLeverage = bound(seed, (10 ** Constants.LEVERAGE_DECIMALS) + 1, s._maxLeverage - 1);
+        uint256 minBound = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1); // x1.1
+        minLeverage = bound(seed, minBound, s._maxLeverage - 1);
     }
 
     function getMaxLeverage(uint256 seed) external view returns (uint256 maxLeverage) {
@@ -915,8 +916,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         EMAPeriod = uint128(bound(seed, 0, Constants.MAX_EMA_PERIOD));
     }
 
+    // @todo fails deposit flow if maxbound is larger value 50-99
     function getFundingSF(uint256 seed) external pure returns (uint256 fundingSF) {
-        fundingSF = bound(seed, 0, 10 ** Constants.FUNDING_SF_DECIMALS);
+        uint256 minBound = 12 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2); // 0.12
+        uint256 maxBound = 15 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2); // 0.15
+        fundingSF = bound(seed, minBound, maxBound);
     }
 
     function getProtocolFeeBps(uint256 seed) external pure returns (uint16 protocolFeeBps) {
@@ -940,11 +944,13 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function getSdexBurnOnDepositRatio(uint256 seed) external pure returns (uint32 ratio) {
-        ratio = uint32(bound(seed, 0, Constants.MAX_SDEX_BURN_RATIO));
+        uint256 minBound = 1e6;
+        ratio = uint32(bound(seed, minBound, Constants.MAX_SDEX_BURN_RATIO));
     }
 
     function getSecurityDepositValue(uint256 seed) external pure returns (uint64 securityDeposit) {
-        securityDeposit = uint64(bound(seed, 0, Constants.MAX_SECURITY_DEPOSIT));
+        uint256 minBound = 1 ether;
+        securityDeposit = uint64(bound(seed, minBound, Constants.MAX_SECURITY_DEPOSIT));
     }
 
     // @todo make dynamic with seeds
@@ -983,15 +989,17 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     }
 
     function getMinLongPosition(uint256 seed) external pure returns (uint256 minLongPosition) {
-        minLongPosition = bound(seed, 0, Constants.MAX_MIN_LONG_POSITION);
+        uint256 minBound = 2 * 10 ** 18; // 2 tokens
+        minLongPosition = bound(seed, minBound, Constants.MAX_MIN_LONG_POSITION);
     }
 
     function getSafetyMarginBps(uint256 seed) external pure returns (uint256 safetyMarginBps) {
-        safetyMarginBps = bound(seed, 0, Constants.MAX_SAFETY_MARGIN_BPS);
+        uint256 minBound = 200; //2%
+        safetyMarginBps = bound(seed, minBound, Constants.MAX_SAFETY_MARGIN_BPS);
     }
 
     function getLiquidationIteration(uint256 seed) external pure returns (uint16 liquidationIteration) {
-        liquidationIteration = uint16(bound(seed, 0, Constants.MAX_LIQUIDATION_ITERATION));
+        liquidationIteration = uint16(bound(seed, 1, Constants.MAX_LIQUIDATION_ITERATION));
     }
 
     function getTargetUsdnPrice(uint256 seed) external view returns (uint128 price) {

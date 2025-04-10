@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.26;
 
-import { IUsdnProtocolHandler } from "../mocks/IUsdnProtocolHandler.sol";
+import { IUsdnProtocolHandler } from "../mocks/interfaces/IUsdnProtocolHandler.sol";
 import { FuzzStructs } from "./FuzzStructs.sol";
 
 import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
