@@ -4,8 +4,6 @@ pragma solidity 0.8.26;
 import { StdStyle, console, console2 } from "forge-std/Test.sol";
 
 import { FuzzBase } from "@perimetersec/fuzzlib/src/FuzzBase.sol";
-// @todo might be used for errors but can probably be removed
-// import "@perimetersec/fuzzlib/src/FuzzLibString.sol";
 
 import { BeforeAfter } from "../helper/BeforeAfter.sol";
 import { PropertiesDescriptions } from "./PropertiesDescriptions.sol";

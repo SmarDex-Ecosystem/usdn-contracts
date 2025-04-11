@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.26;
 
-import { IUsdnProtocolHandler } from "../mocks/IUsdnProtocolHandler.sol";
+import { IUsdnProtocolHandler } from "../mocks/interfaces/IUsdnProtocolHandler.sol";
 import { FuzzStructs } from "./FuzzStructs.sol";
 
 import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -90,7 +90,7 @@ abstract contract BeforeAfter is FuzzStructs {
         getLongBalance(callNum);
         getPendingFee(callNum);
         getLastFunding(callNum);
-        getPendingAcitonsLength(callNum);
+        getPendingActionsLength(callNum);
         checkOtherUsersPendingActions(callNum, currentActor);
         getExpo(callNum);
         snapTotalLongPositions(callNum);
@@ -108,13 +108,7 @@ abstract contract BeforeAfter is FuzzStructs {
 
     function _setActorState(uint8 callNum, address actor) internal {
         getBalances(callNum, actor);
-        getPendingAcitons(callNum, actor);
-    }
-
-    function addCollectedFees(uint256 feeAmount) public {
-        require(msg.sender == address(feeCollector), "FeeCollector calls only");
-        states[1].feeCollectorCallbackTriggered = true;
-        states[1].addedFees = feeAmount;
+        getPendingActions(callNum, actor);
     }
 
     function getBalances(uint8 callNum, address user) internal {
@@ -132,7 +126,7 @@ abstract contract BeforeAfter is FuzzStructs {
         states[callNum].usdnTotalSupply = usdn.totalSupply();
     }
 
-    function getPendingAcitons(uint8 callNum, address user) internal {
+    function getPendingActions(uint8 callNum, address user) internal {
         states[callNum].actorStates[user].pendingAction = usdnProtocol.getUserPendingAction(user);
     }
 
@@ -228,6 +222,16 @@ abstract contract BeforeAfter is FuzzStructs {
 
     function getFeeCollectorBalance(uint8 callNum) internal {
         states[callNum].feeCollectorBalance = wstETH.balanceOf(address(feeCollector));
+
+        if (callNum > 0) {
+            uint256 feeCollectorBalanceDiff =
+                states[callNum].feeCollectorBalance - states[callNum - 1].feeCollectorBalance;
+
+            if (feeCollectorBalanceDiff > 0) {
+                states[callNum].feeCollectorCallbackTriggered = true;
+                states[callNum].addedFees += feeCollectorBalanceDiff;
+            }
+        }
     }
 
     function getVaultBalance(uint8 callNum) internal {
@@ -281,7 +285,7 @@ abstract contract BeforeAfter is FuzzStructs {
         }
     }
 
-    function getPendingAcitonsLength(uint8 callNum) internal {
+    function getPendingActionsLength(uint8 callNum) internal {
         uint256 totalPending;
         for (uint256 i = 0; i < USERS.length; i++) {
             Types.PendingAction memory action = usdnProtocol.getUserPendingAction(USERS[i]);

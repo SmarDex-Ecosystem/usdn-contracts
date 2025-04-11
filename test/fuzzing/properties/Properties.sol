@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
+import { Properties_ADMIN } from "./Properties_ADMIN.sol";
 import { Properties_DEPI } from "./Properties_DEPI.sol";
 import { Properties_DEPV } from "./Properties_DEPV.sol";
 import { Properties_ERR } from "./Properties_ERR.sol";
@@ -15,6 +16,7 @@ import { Properties_WITHI } from "./Properties_WITHI.sol";
 import { Properties_WITHV } from "./Properties_WITHV.sol";
 
 abstract contract Properties is
+    Properties_ADMIN,
     Properties_DEPI,
     Properties_DEPV,
     Properties_WITHI,
