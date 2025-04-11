@@ -953,17 +953,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         securityDeposit = uint64(bound(seed, minBound, Constants.MAX_SECURITY_DEPOSIT));
     }
 
-    // @todo make dynamic with seeds
-    function getExpoImbalanceLimits(
-        uint256 seed1,
-        uint256 seed2,
-        uint256 seed3,
-        uint256 seed4,
-        uint256 seed5,
-        int256 seed6
-    )
+    function getExpoImbalanceLimits(uint256 seed)
         external
-        pure
+        view
         returns (
             uint256 openLimit,
             uint256 depositLimit,
@@ -973,19 +965,126 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
             int256 longImbalanceTarget
         )
     {
-        openLimit = 5000;
-        depositLimit = 3000;
-        withdrawalLimit = 5000;
-        closeLimit = 3000;
-        rebalancerCloseLimit = 0;
+        uint256 parameterToModify = seed % 6;
+        return _getModifiedLimits(parameterToModify, seed);
+    }
 
-        if (seed6 < 0) {
-            longImbalanceTarget = -1000; // Well above -5000 and -withdrawalLimit
-        } else {
-            longImbalanceTarget = 1000; // Well below closeLimit (3000)
+    /**
+     * @dev Get current limits and modify one based on the seed
+     */
+    function _getModifiedLimits(uint256 parameterToModify, uint256 seed)
+        private
+        view
+        returns (
+            uint256 openLimit,
+            uint256 depositLimit,
+            uint256 withdrawalLimit,
+            uint256 closeLimit,
+            uint256 rebalancerCloseLimit,
+            int256 longImbalanceTarget
+        )
+    {
+        Types.Storage storage s = Utils._getMainStorage();
+        int256 openExpoImbalanceLimitBps = s._openExpoImbalanceLimitBps;
+        int256 depositExpoImbalanceLimitBps = s._depositExpoImbalanceLimitBps;
+        int256 withdrawalExpoImbalanceLimitBps = s._withdrawalExpoImbalanceLimitBps;
+        int256 closeExpoImbalanceLimitBps = s._closeExpoImbalanceLimitBps;
+        int256 rebalancerCloseExpoImbalanceLimitBps = s._rebalancerCloseExpoImbalanceLimitBps;
+        int256 longImbalanceTargetBps = s._longImbalanceTargetBps;
+
+        (
+            openExpoImbalanceLimitBps,
+            depositExpoImbalanceLimitBps,
+            withdrawalExpoImbalanceLimitBps,
+            closeExpoImbalanceLimitBps,
+            rebalancerCloseExpoImbalanceLimitBps,
+            longImbalanceTargetBps
+        ) = _modifyOneLimitOnly(
+            parameterToModify,
+            seed,
+            openExpoImbalanceLimitBps,
+            depositExpoImbalanceLimitBps,
+            withdrawalExpoImbalanceLimitBps,
+            closeExpoImbalanceLimitBps,
+            rebalancerCloseExpoImbalanceLimitBps,
+            longImbalanceTargetBps
+        );
+
+        return (
+            uint256(openExpoImbalanceLimitBps),
+            uint256(depositExpoImbalanceLimitBps),
+            uint256(withdrawalExpoImbalanceLimitBps),
+            uint256(closeExpoImbalanceLimitBps),
+            uint256(rebalancerCloseExpoImbalanceLimitBps),
+            longImbalanceTargetBps
+        );
+    }
+
+    /**
+     * @dev Modifies a single limit based on parameterToModify
+     */
+    function _modifyOneLimitOnly(
+        uint256 parameterToModify,
+        uint256 seed,
+        int256 openExpoImbalanceLimitBps,
+        int256 depositExpoImbalanceLimitBps,
+        int256 withdrawalExpoImbalanceLimitBps,
+        int256 closeExpoImbalanceLimitBps,
+        int256 rebalancerCloseExpoImbalanceLimitBps,
+        int256 longImbalanceTargetBps
+    ) private pure returns (int256, int256, int256, int256, int256, int256) {
+        if (parameterToModify == 0) {
+            // Modify openExpoImbalanceLimitBps
+            // min = 300 (3%) and max = withdrawalExpoImbalanceLimitBps
+            openExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(withdrawalExpoImbalanceLimitBps)));
+        } else if (parameterToModify == 1) {
+            // Modify depositExpoImbalanceLimitBps
+            // min = 300 (3%) and max = closeExpoImbalanceLimitBps
+            depositExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(closeExpoImbalanceLimitBps)));
+        } else if (parameterToModify == 2) {
+            // Modify withdrawalExpoImbalanceLimitBps
+            // if != 0, min = openExpoImbalanceLimitBps and max = 100%
+            if (withdrawalExpoImbalanceLimitBps != 0) {
+                withdrawalExpoImbalanceLimitBps =
+                    int256(bound(seed, uint256(openExpoImbalanceLimitBps), Constants.BPS_DIVISOR));
+            }
+        } else if (parameterToModify == 3) {
+            // Modify closeExpoImbalanceLimitBps
+            // if != 0, min = max(depositExpoImbalanceLimitBps, longImbalanceTargetBps,
+            // rebalancerCloseExpoImbalanceLimitBps)
+            // and max = 100%
+            if (closeExpoImbalanceLimitBps != 0) {
+                uint256 min = depositExpoImbalanceLimitBps > longImbalanceTargetBps
+                    ? uint256(depositExpoImbalanceLimitBps)
+                    : uint256(longImbalanceTargetBps);
+                min = rebalancerCloseExpoImbalanceLimitBps > int256(min)
+                    ? uint256(rebalancerCloseExpoImbalanceLimitBps)
+                    : min;
+
+                closeExpoImbalanceLimitBps = int256(bound(seed, min, Constants.BPS_DIVISOR));
+            }
+        } else if (parameterToModify == 4) {
+            // Modify rebalancerCloseExpoImbalanceLimitBps
+            // if != 0, min = 300 (3%) and max = closeExpoImbalanceLimitBps
+            if (rebalancerCloseExpoImbalanceLimitBps != 0) {
+                rebalancerCloseExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(closeExpoImbalanceLimitBps)));
+            }
+        } else if (parameterToModify == 5) {
+            // Modify longImbalanceTargetBps
+            // min = max(-50%, -withdrawalExpoImbalanceLimitBps) and max = closeExpoImbalanceLimitBps
+            int256 min = -500 > -withdrawalExpoImbalanceLimitBps ? -500 : -withdrawalExpoImbalanceLimitBps;
+
+            longImbalanceTargetBps = int256(bound(seed, uint256(min), uint256(closeExpoImbalanceLimitBps)));
         }
 
-        return (openLimit, depositLimit, withdrawalLimit, closeLimit, rebalancerCloseLimit, longImbalanceTarget);
+        return (
+            openExpoImbalanceLimitBps,
+            depositExpoImbalanceLimitBps,
+            withdrawalExpoImbalanceLimitBps,
+            closeExpoImbalanceLimitBps,
+            rebalancerCloseExpoImbalanceLimitBps,
+            longImbalanceTargetBps
+        );
     }
 
     function getMinLongPosition(uint256 seed) external pure returns (uint256 minLongPosition) {
