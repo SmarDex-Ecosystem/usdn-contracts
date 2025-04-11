@@ -49,6 +49,11 @@ abstract contract Properties_DEPV is PropertiesBase {
     function invariant_DEPV_05(ValidateDepositParams memory params) internal {
         uint256 expectedUsdn = calculateUsdnOnDeposit(params.wstethPendingActions, params.pendingAction);
 
+        // If there was a rebase, we need to take it into account
+        if (states[0].divisor != states[1].divisor) {
+            expectedUsdn += ((states[1].divisor * 1e18 / states[0].divisor) * expectedUsdn / 1e18) - expectedUsdn;
+        }
+
         eqWithToleranceWei(
             states[1].usdnTotalSupply,
             states[0].usdnTotalSupply + expectedUsdn,
