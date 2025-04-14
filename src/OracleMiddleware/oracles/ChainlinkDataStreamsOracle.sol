@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.26;
+pragma solidity ^0.8.0;
 
 import { IChainlinkDataStreamsOracle } from "../../interfaces/OracleMiddleware/IChainlinkDataStreamsOracle.sol";
 import { IFeeManager } from "../../interfaces/OracleMiddleware/IFeeManager.sol";
