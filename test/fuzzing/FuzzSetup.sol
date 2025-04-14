@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { StdStyle, console, console2 } from "forge-std/Test.sol";
-
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { MockChainlinkOnChain } from "../unit/Middlewares/utils/MockChainlinkOnChain.sol";
@@ -80,7 +78,6 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
         liquidationRewardsManager = new LiquidationRewardsManagerHandler(IWstETH(wstETHAddress));
     }
 
-    // @todo refactor deployment and setup with role assignment
     function deployProtocol() internal {
         feeCollector = new FeeCollector(); //NOTE: added fuzzing contract into collector's constructor
         usdnProtocolFallback = new UsdnProtocolFallback();
@@ -104,41 +101,8 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
 
         usdnProtocol = IUsdnProtocolHandler(address(proxy));
 
-        usdnProtocol.grantRole(Constants.ADMIN_CRITICAL_FUNCTIONS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.ADMIN_SET_PROTOCOL_PARAMS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.ADMIN_SET_USDN_PARAMS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.ADMIN_SET_OPTIONS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.ADMIN_PROXY_UPGRADE_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.ADMIN_PAUSER_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.ADMIN_UNPAUSER_ROLE, address(this));
-
-        usdnProtocol.grantRole(Constants.CRITICAL_FUNCTIONS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.SET_PROTOCOL_PARAMS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.SET_USDN_PARAMS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.SET_OPTIONS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.PROXY_UPGRADE_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.PAUSER_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.UNPAUSER_ROLE, address(this));
-
-        usdnProtocol.grantRole(Constants.ADMIN_CRITICAL_FUNCTIONS_ROLE, ADMIN);
-        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, ADMIN);
-        usdnProtocol.grantRole(Constants.ADMIN_SET_PROTOCOL_PARAMS_ROLE, ADMIN);
-        usdnProtocol.grantRole(Constants.ADMIN_SET_USDN_PARAMS_ROLE, ADMIN);
-        usdnProtocol.grantRole(Constants.ADMIN_SET_OPTIONS_ROLE, ADMIN);
-        usdnProtocol.grantRole(Constants.ADMIN_PROXY_UPGRADE_ROLE, ADMIN);
-        usdnProtocol.grantRole(Constants.ADMIN_PAUSER_ROLE, ADMIN);
-        usdnProtocol.grantRole(Constants.ADMIN_UNPAUSER_ROLE, ADMIN);
-
-        usdnProtocol.grantRole(Constants.CRITICAL_FUNCTIONS_ROLE, ADMIN);
-        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, ADMIN);
-        usdnProtocol.grantRole(Constants.SET_PROTOCOL_PARAMS_ROLE, ADMIN);
-        usdnProtocol.grantRole(Constants.SET_USDN_PARAMS_ROLE, ADMIN);
-        usdnProtocol.grantRole(Constants.SET_OPTIONS_ROLE, ADMIN);
-        usdnProtocol.grantRole(Constants.PROXY_UPGRADE_ROLE, ADMIN);
-        usdnProtocol.grantRole(Constants.PAUSER_ROLE, ADMIN);
-        usdnProtocol.grantRole(Constants.UNPAUSER_ROLE, ADMIN);
+        _assignUsdnRoles(address(this));
+        _assignUsdnRoles(ADMIN);
     }
 
     function deployRebalancer() internal {
@@ -153,8 +117,6 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
     }
 
     function initializeUsdnProtocol() public {
-        // @todo uint256 depositAmount, uint256 longAmount were passed in parameter but not used?
-
         setPrice(2222);
 
         usdnProtocol.setExpoImbalanceLimits(0, 200, 0, 0, 0, 0); // 2% for deposit
@@ -174,8 +136,6 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
 
         wstETH.approve(address(usdnProtocol), initialDeposit + initialLong);
 
-        // vm.deal(USER1, 1000e18);
-        // vm.prank(USER1);
         usdnProtocol.initialize{ value: 1 }(initialDeposit, initialLong, price, "");
 
         int24 highestTIck = usdnProtocol.getHighestPopulatedTick();
@@ -228,6 +188,26 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
         (, int256 ethPrice,,,) = chainlink.latestRoundData();
         pyth.setLastPublishTime(block.timestamp + wstEthOracleMiddleware.getValidationDelay());
         pyth.setPrice(int64(ethPrice));
+    }
+
+    function _assignUsdnRoles(address assignee) internal {
+        usdnProtocol.grantRole(Constants.ADMIN_CRITICAL_FUNCTIONS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_PROTOCOL_PARAMS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_USDN_PARAMS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_OPTIONS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.ADMIN_PROXY_UPGRADE_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.ADMIN_PAUSER_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.ADMIN_UNPAUSER_ROLE, assignee);
+
+        usdnProtocol.grantRole(Constants.CRITICAL_FUNCTIONS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.SET_PROTOCOL_PARAMS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.SET_USDN_PARAMS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.SET_OPTIONS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.PROXY_UPGRADE_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.PAUSER_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.UNPAUSER_ROLE, assignee);
     }
 
     fallback() external payable { }

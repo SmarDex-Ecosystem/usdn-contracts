@@ -100,14 +100,7 @@ contract FuzzAdmin is PreconditionsAdmin, PostconditionsAdmin {
         setSecurityDepositValuePostconditions(success, returnData);
     }
 
-    function fuzz_setExpoImbalanceLimits(
-        uint256 seed1,
-        uint256 seed2,
-        uint256 seed3,
-        uint256 seed4,
-        uint256 seed5,
-        int256 seed6
-    ) public {
+    function fuzz_setExpoImbalanceLimits(uint256 seed) public {
         (
             uint256 newOpenLimitBps,
             uint256 newDepositLimitBps,
@@ -115,7 +108,7 @@ contract FuzzAdmin is PreconditionsAdmin, PostconditionsAdmin {
             uint256 newCloseLimitBps,
             uint256 newRebalancerCloseLimitBps,
             int256 newLongImbalanceTargetBps
-        ) = setExpoImbalanceLimitsPreconditions(seed1, seed2, seed3, seed4, seed5, seed6);
+        ) = setExpoImbalanceLimitsPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setExpoImbalanceLimits(
             newOpenLimitBps,
@@ -188,9 +181,9 @@ contract FuzzAdmin is PreconditionsAdmin, PostconditionsAdmin {
         setMinAssetDepositPostconditions(success, returnData);
     }
 
-    function fuzz_setTimeLimits(uint256 seed1) public {
+    function fuzz_setTimeLimits(uint256 seed) public {
         (uint64 validationDelay, uint64 validationDeadline, uint64 actionCooldown, uint64 closeDelay) =
-            setTimeLimitsPreconditions(seed1);
+            setTimeLimitsPreconditions(seed);
 
         (bool success, bytes memory returnData) =
             _setTimeLimits(validationDelay, validationDeadline, actionCooldown, closeDelay);

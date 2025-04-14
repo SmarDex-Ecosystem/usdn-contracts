@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { PostconditionsBase } from "./PostconditionsBase.sol";
 
-// @todo add more admin invariants
 abstract contract PostconditionsAdmin is PostconditionsBase {
     /* -------------------------------------------------------------------------- */
     /*                                USDN Protocol                               */
@@ -28,7 +27,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setMaxLeveragePostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -38,7 +36,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setLiquidationPenaltyPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -48,7 +45,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setEMAPeriodPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -58,7 +54,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setFundingSFPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -68,7 +63,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setProtocolFeeBpsPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -78,7 +72,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setPositionFeeBpsPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -88,7 +81,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setVaultFeeBpsPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -98,7 +90,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setSdexRewardsRatioBpsPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -108,7 +99,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setRebalancerBonusBpsPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -118,7 +108,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setSdexBurnOnDepositRatioPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -128,7 +117,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setSecurityDepositValuePostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -138,7 +126,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setExpoImbalanceLimitsPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -148,7 +135,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setMinLongPositionPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -158,7 +144,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setSafetyMarginBpsPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -168,7 +153,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setLiquidationIterationPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -178,7 +162,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setFeeThresholdPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -188,7 +171,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setTargetUsdnPricePostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -198,7 +180,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setUsdnRebaseThresholdPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -212,7 +193,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setPositionMaxLeveragePostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -222,7 +202,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setMinAssetDepositPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -232,7 +211,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setTimeLimitsPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {
@@ -246,7 +224,6 @@ abstract contract PostconditionsAdmin is PostconditionsBase {
 
     function setRewardsParametersPostconditions(bool success, bytes memory returnData) internal {
         Invariant_ADMIN_01(success);
-
         if (success) {
             onSuccessInvariantsAdmin();
         } else {

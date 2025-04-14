@@ -1065,12 +1065,17 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
             // Modify rebalancerCloseExpoImbalanceLimitBps
             // if != 0, min = 300 (3%) and max = closeExpoImbalanceLimitBps
             if (rebalancerCloseExpoImbalanceLimitBps != 0) {
-                rebalancerCloseExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(closeExpoImbalanceLimitBps)));
+                rebalancerCloseExpoImbalanceLimitBps =
+                    int256(bound(seed, 300, longImbalanceTargetBps > 0 ? uint256(longImbalanceTargetBps - 1) : 300));
             }
         } else if (parameterToModify == 5) {
             // Modify longImbalanceTargetBps
             // min = max(-50%, -withdrawalExpoImbalanceLimitBps) and max = closeExpoImbalanceLimitBps
             int256 min = -500 > -withdrawalExpoImbalanceLimitBps ? -500 : -withdrawalExpoImbalanceLimitBps;
+
+            if (rebalancerCloseExpoImbalanceLimitBps != 0) {
+                min = rebalancerCloseExpoImbalanceLimitBps + 1;
+            }
 
             longImbalanceTargetBps = int256(bound(seed, uint256(min), uint256(closeExpoImbalanceLimitBps)));
         }

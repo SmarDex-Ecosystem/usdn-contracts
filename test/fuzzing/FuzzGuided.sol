@@ -157,7 +157,7 @@ contract FuzzGuided is FuzzUsdnProtocolVault, FuzzUsdnProtocolActions, FuzzRebal
         fuzz_initiateDeposit(amount, 1);
 
         setActor(getRandomUser(seed));
-        // fuzz_validateDeposit(); // @todo validate Deposit fails
+        fuzz_validateDeposit();
     }
 
     function fuzz_guided_withdrawalFlow(uint8 seed, uint152 amount) public {

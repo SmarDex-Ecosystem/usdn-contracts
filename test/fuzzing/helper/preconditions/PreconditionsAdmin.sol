@@ -134,14 +134,7 @@ abstract contract PreconditionsAdmin is PreconditionsBase {
         securityDeposit = usdnProtocol.getSecurityDepositValue(seed);
     }
 
-    function setExpoImbalanceLimitsPreconditions(
-        uint256 seed1,
-        uint256 seed2,
-        uint256 seed3,
-        uint256 seed4,
-        uint256 seed5,
-        int256 seed6
-    )
+    function setExpoImbalanceLimitsPreconditions(uint256 seed)
         internal
         returns (
             uint256 openLimit,
@@ -152,7 +145,7 @@ abstract contract PreconditionsAdmin is PreconditionsBase {
             int256 longImbalanceTarget
         )
     {
-        return usdnProtocol.getExpoImbalanceLimits(seed1, seed2, seed3, seed4, seed5, seed6);
+        return usdnProtocol.getExpoImbalanceLimits(seed);
     }
 
     function setMinLongPositionPreconditions(uint256 seed) internal returns (uint256 minLongPosition) {

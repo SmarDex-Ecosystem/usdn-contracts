@@ -509,14 +509,9 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
 
     function getSecurityDepositValue(uint256 seed) external returns (uint64);
 
-    function getExpoImbalanceLimits(
-        uint256 seed1,
-        uint256 seed2,
-        uint256 seed3,
-        uint256 seed4,
-        uint256 seed5,
-        int256 seed6
-    ) external returns (uint256, uint256, uint256, uint256, uint256, int256);
+    function getExpoImbalanceLimits(uint256 seed)
+        external
+        returns (uint256, uint256, uint256, uint256, uint256, int256);
 
     function getMinLongPosition(uint256 seed) external returns (uint256);
 
