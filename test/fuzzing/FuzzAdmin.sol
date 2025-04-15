@@ -144,8 +144,7 @@ contract FuzzAdmin is PreconditionsAdmin, PostconditionsAdmin {
     }
 
     function fuzz_setFeeThreshold(uint256 seed) public {
-        // since there are no restrictions on feeThreshold besides uint256
-        (bool success, bytes memory returnData) = _setFeeThreshold(seed + 1 ether);
+        (bool success, bytes memory returnData) = _setFeeThreshold(seed);
         setFeeThresholdPostconditions(success, returnData);
     }
 

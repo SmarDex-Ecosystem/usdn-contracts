@@ -138,8 +138,8 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
 
         usdnProtocol.initialize{ value: 1 }(initialDeposit, initialLong, price, "");
 
-        int24 highestTIck = usdnProtocol.getHighestPopulatedTick();
-        initialLongPositionPrice = usdnProtocol.getEffectivePriceForTick(highestTIck);
+        int24 highestTick = usdnProtocol.getHighestPopulatedTick();
+        initialLongPositionPrice = usdnProtocol.getEffectivePriceForTick(highestTick);
         usdnProtocol.setExpoImbalanceLimits(
             uint256(500), uint256(500), uint256(600), uint256(600), uint256(350), int256(400)
         );

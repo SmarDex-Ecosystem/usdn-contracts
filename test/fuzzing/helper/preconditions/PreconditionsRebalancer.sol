@@ -12,7 +12,12 @@ abstract contract PreconditionsRebalancer is PreconditionsBase {
         internal
         returns (InitiateDepositAssetsParams memory params)
     {
-        params.amount = uint88(fl.clamp(amountSeed, rebalancer.getMinAssetDeposit(), wstETH.balanceOf(currentActor)));
+        uint88 actorBalance = uint88(fl.clamp(amountSeed, wstETH.balanceOf(currentActor), type(uint88).max));
+        if (rebalancer.getMinAssetDeposit() <= actorBalance) {
+            params.amount = uint88(fl.clamp(amountSeed, rebalancer.getMinAssetDeposit(), actorBalance));
+        } else {
+            params.amount = actorBalance;
+        }
         params.to = currentActor;
 
         // Check if the user has an existing deposit

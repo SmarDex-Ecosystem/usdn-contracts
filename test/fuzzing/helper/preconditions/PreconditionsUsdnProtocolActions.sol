@@ -85,7 +85,7 @@ abstract contract PreconditionsUsdnProtocolActions is PreconditionsBase {
 
         uint256 minLongPosition = usdnProtocol.getMinLongPosition();
 
-        uint256 maxCloseAmount = position.amount > minLongPosition ? position.amount - minLongPosition : 0;
+        uint256 maxCloseAmount = position.amount > minLongPosition ? position.amount - minLongPosition : 10_000;
 
         params.amountToClose = closeFull ? position.amount : uint128(fl.clamp(amountSeed, 10_000, maxCloseAmount));
 
