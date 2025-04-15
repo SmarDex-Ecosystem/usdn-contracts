@@ -116,7 +116,7 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
         usdn.renounceRole(usdn.DEFAULT_ADMIN_ROLE(), DEPLOYER);
     }
 
-    function initializeUsdnProtocol() public {
+    function initializeUsdnProtocol() internal {
         setPrice(2222);
 
         usdnProtocol.setExpoImbalanceLimits(0, 200, 0, 0, 0, 0); // 2% for deposit
