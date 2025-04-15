@@ -27,7 +27,7 @@ contract FuzzGuided is FuzzUsdnProtocolVault, FuzzUsdnProtocolActions, FuzzRebal
     }
 
     function fuzz_guided_addLP() public {
-        require(!LPAdded);
+        require(!LPAdded, "LP already added");
         fuzz_guided_depositFlow(1, 75e18);
 
         LPAdded = true;
