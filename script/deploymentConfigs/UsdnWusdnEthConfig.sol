@@ -41,7 +41,7 @@ contract UsdnWusdnEthConfig is DeploymentConfig {
         initStorage.liquidationPenalty = 200; // 200 ticks -> ~2.02%
         initStorage.emaPeriod = 16 hours;
         initStorage.fundingSF = 75 * 10 ** (Constants.FUNDING_SF_DECIMALS - 2); // 0.75
-        initStorage.feeThreshold = 1 ether;
+        initStorage.feeThreshold = 2000 ether;
         initStorage.openExpoImbalanceLimitBps = 400; // 4%
         initStorage.withdrawalExpoImbalanceLimitBps = 600; // 6%
         initStorage.depositExpoImbalanceLimitBps = 400; // 4%
