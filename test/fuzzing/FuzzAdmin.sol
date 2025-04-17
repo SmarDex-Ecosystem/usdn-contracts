@@ -13,91 +13,91 @@ contract FuzzAdmin is PreconditionsAdmin, PostconditionsAdmin {
         (uint128 newLowLatencyDeadline, uint128 newOnChainDeadline) = setValidationsDeadlinesPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setValidationDeadlines(newLowLatencyDeadline, newOnChainDeadline);
-        setValidatorDeadlinesPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setMinLeverage(uint256 seed) public {
         uint256 newMinLeverage = setMinLeveragePreconditions(seed);
 
         (bool success, bytes memory returnData) = _setMinLeverage(newMinLeverage);
-        setMinLeveragePostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setMaxLeverage(uint256 seed) public {
         uint256 newMaxLeverage = setMaxLeveragePreconditions(seed);
 
         (bool success, bytes memory returnData) = _setMaxLeverage(newMaxLeverage);
-        setMaxLeveragePostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setLiquidationPenalty(uint256 seed) public {
         uint24 newLiquidationPenalty = setLiquidationPenaltyPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setLiquidationPenalty(newLiquidationPenalty);
-        setLiquidationPenaltyPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setEMAPeriod(uint256 seed) public {
         uint128 newEmaPeriod = setEMAPeriodPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setEMAPeriod(newEmaPeriod);
-        setEMAPeriodPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setFundingSF(uint256 seed) public {
         uint256 newFundingSF = setFundingSFPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setFundingSF(newFundingSF);
-        setFundingSFPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setProtocolFeeBps(uint256 seed) public {
         uint16 newProtocolFeeBps = setProtocolFeeBpsPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setProtocolFeeBps(newProtocolFeeBps);
-        setProtocolFeeBpsPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setPositionFeeBps(uint256 seed) public {
         uint16 newPositionFee = setPositionFeeBpsPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setPositionFeeBps(newPositionFee);
-        setPositionFeeBpsPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setVaultFeeBps(uint256 seed) public {
         uint16 newVaultFee = setVaultFeeBpsPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setVaultFeeBps(newVaultFee);
-        setVaultFeeBpsPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setSdexRewardsRatioBps(uint256 seed) public {
         uint16 newRewards = setSdexRewardsRatioBpsPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setSdexRewardsRatioBps(newRewards);
-        setSdexRewardsRatioBpsPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setRebalancerBonusBps(uint256 seed) public {
         uint16 newBonus = setRebalancerBonusBpsPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setRebalancerBonusBps(newBonus);
-        setRebalancerBonusBpsPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setSdexBurnOnDepositRatio(uint256 seed) public {
         uint32 newRatio = setSdexBurnOnDepositRatioPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setSdexBurnOnDepositRatio(newRatio);
-        setSdexBurnOnDepositRatioPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setSecurityDepositValue(uint256 seed) public {
         uint64 newSecurityDeposit = setSecurityDepositValuePreconditions(seed);
 
         (bool success, bytes memory returnData) = _setSecurityDepositValue(newSecurityDeposit);
-        setSecurityDepositValuePostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setExpoImbalanceLimits(uint256 seed) public {
@@ -119,47 +119,48 @@ contract FuzzAdmin is PreconditionsAdmin, PostconditionsAdmin {
             newLongImbalanceTargetBps
         );
 
-        setExpoImbalanceLimitsPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setMinLongPosition(uint256 seed) public {
         uint256 newMinLongPosition = setMinLongPositionPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setMinLongPosition(newMinLongPosition);
-        setMinLongPositionPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setSafetyMarginBps(uint256 seed) public {
         uint256 newSafetyMarginBps = setSafetyMarginBpsPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setSafetyMarginBps(newSafetyMarginBps);
-        setSafetyMarginBpsPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setLiquidationIteration(uint256 seed) public {
         uint16 newLiquidationIteration = setLiquidationIterationPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setLiquidationIteration(newLiquidationIteration);
-        setLiquidationIterationPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setFeeThreshold(uint256 seed) public {
-        (bool success, bytes memory returnData) = _setFeeThreshold(seed);
-        setFeeThresholdPostconditions(success, returnData);
+        // since there are no restrictions on feeThreshold besides uint256
+        (bool success, bytes memory returnData) = _setFeeThreshold(seed + 1 ether);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setTargetUsdnPrice(uint256 seed) public {
         uint128 newPrice = setTargetUsdnPricePreconditions(seed);
 
         (bool success, bytes memory returnData) = _setTargetUsdnPrice(newPrice);
-        setTargetUsdnPricePostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setUsdnRebaseThreshold(uint256 seed) public {
         uint128 newThreshold = setUsdnRebaseThresholdPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setUsdnRebaseThreshold(newThreshold);
-        setUsdnRebaseThresholdPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -170,14 +171,14 @@ contract FuzzAdmin is PreconditionsAdmin, PostconditionsAdmin {
         uint256 newMaxLeverage = setPositionMaxLeveragePreconditions(seed);
 
         (bool success, bytes memory returnData) = _setPositionMaxLeverage(newMaxLeverage);
-        setPositionMaxLeveragePostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setMinAssetDeposit(uint256 seed) public {
         uint256 newMinAssetDeposit = setMinAssetDepositPreconditions(seed);
 
         (bool success, bytes memory returnData) = _setMinAssetDeposit(newMinAssetDeposit);
-        setMinAssetDepositPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     function fuzz_setTimeLimits(uint256 seed) public {
@@ -187,7 +188,7 @@ contract FuzzAdmin is PreconditionsAdmin, PostconditionsAdmin {
         (bool success, bytes memory returnData) =
             _setTimeLimits(validationDelay, validationDeadline, actionCooldown, closeDelay);
 
-        setTimeLimitsPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -219,7 +220,7 @@ contract FuzzAdmin is PreconditionsAdmin, PostconditionsAdmin {
             maxReward
         );
 
-        setRewardsParametersPostconditions(success, returnData);
+        setAdminPostconditions(success, returnData);
     }
 
     /* -------------------------------------------------------------------------- */
