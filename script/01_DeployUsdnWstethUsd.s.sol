@@ -141,9 +141,9 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
     }
 
     /**
-     * @notice Initialize the USDN protocol with a ~2x leverage long position.
+     * @notice Initialize the USDN protocol with a ~2x leverage short position.
      * @param usdnProtocol The USDN protocol.
-     * @param wstEthOracleMiddleware The WstETH oracle middleware.
+     * @param wstEthOracleMiddleware The WUSDN oracle middleware.
      */
     function _initializeProtocol(IUsdnProtocol usdnProtocol, WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware)
         internal
