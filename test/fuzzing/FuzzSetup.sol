@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { StdStyle, console, console2 } from "forge-std/Test.sol";
-
 import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import { MockChainlinkOnChain } from "../unit/Middlewares/utils/MockChainlinkOnChain.sol";
-import { RebalancerHandler } from "../unit/Rebalancer/utils/Handler.sol";
 import { UsdnHandler } from "../unit/USDN/utils/Handler.sol";
 import { DefaultConfig } from "../utils/DefaultConfig.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
-import { IUsdnProtocolHandler } from "./mocks/IUsdnProtocolHandler.sol";
-import { MockPyth } from "./mocks/MockPyth.sol";
-import { FunctionCalls } from "./util/FunctionCalls.sol";
+import { IUsdnProtocolHandler } from "./mocks/interfaces/IUsdnProtocolHandler.sol";
 
-import { LiquidationRewardsManager } from "../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManagerHandler } from "./mocks/LiquidationRewardsManagerHandler.sol";
+import { MockPyth } from "./mocks/MockPyth.sol";
+import { RebalancerHandler } from "./mocks/RebalancerHandler.sol";
+import { FunctionCalls } from "./util/FunctionCalls.sol";
+import { FuzzActors } from "./util/FuzzActors.sol";
+
 import { WstEthOracleMiddleware } from "../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { Usdn } from "../../../src/Usdn/Usdn.sol";
@@ -75,7 +75,7 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
     }
 
     function deployLiquidationRewardsManager(address wstETHAddress) internal {
-        liquidationRewardsManager = new LiquidationRewardsManager(IWstETH(wstETHAddress));
+        liquidationRewardsManager = new LiquidationRewardsManagerHandler(IWstETH(wstETHAddress));
     }
 
     function deployProtocol() internal {
@@ -101,23 +101,8 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
 
         usdnProtocol = IUsdnProtocolHandler(address(proxy));
 
-        usdnProtocol.grantRole(Constants.ADMIN_CRITICAL_FUNCTIONS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.ADMIN_SET_PROTOCOL_PARAMS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.ADMIN_SET_USDN_PARAMS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.ADMIN_SET_OPTIONS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.ADMIN_PROXY_UPGRADE_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.ADMIN_PAUSER_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.ADMIN_UNPAUSER_ROLE, address(this));
-
-        usdnProtocol.grantRole(Constants.CRITICAL_FUNCTIONS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.SET_PROTOCOL_PARAMS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.SET_USDN_PARAMS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.SET_OPTIONS_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.PROXY_UPGRADE_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.PAUSER_ROLE, address(this));
-        usdnProtocol.grantRole(Constants.UNPAUSER_ROLE, address(this));
+        _assignUsdnRoles(address(this));
+        _assignUsdnRoles(ADMIN);
     }
 
     function deployRebalancer() internal {
@@ -131,9 +116,7 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
         usdn.renounceRole(usdn.DEFAULT_ADMIN_ROLE(), DEPLOYER);
     }
 
-    function initializeUsdnProtocol() public {
-        // @todo uint256 depositAmount, uint256 longAmount were passed in parameter but  not used?
-
+    function initializeUsdnProtocol() internal {
         setPrice(2222);
 
         usdnProtocol.setExpoImbalanceLimits(0, 200, 0, 0, 0, 0); // 2% for deposit
@@ -153,15 +136,15 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
 
         wstETH.approve(address(usdnProtocol), initialDeposit + initialLong);
 
-        // vm.deal(USER1, 1000e18);
-        // vm.prank(USER1);
         usdnProtocol.initialize{ value: 1 }(initialDeposit, initialLong, price, "");
 
-        int24 highestTIck = usdnProtocol.getHighestPopulatedTick();
-        initialLongPositionPrice = usdnProtocol.getEffectivePriceForTick(highestTIck);
+        int24 highestTick = usdnProtocol.getHighestPopulatedTick();
+        initialLongPositionPrice = usdnProtocol.getEffectivePriceForTick(highestTick);
         usdnProtocol.setExpoImbalanceLimits(
             uint256(500), uint256(500), uint256(600), uint256(600), uint256(350), int256(400)
         );
+
+        vm.deal(address(usdnProtocol), 30_000 ether);
     }
 
     function mintTokens() internal {
@@ -205,6 +188,26 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
         (, int256 ethPrice,,,) = chainlink.latestRoundData();
         pyth.setLastPublishTime(block.timestamp + wstEthOracleMiddleware.getValidationDelay());
         pyth.setPrice(int64(ethPrice));
+    }
+
+    function _assignUsdnRoles(address assignee) internal {
+        usdnProtocol.grantRole(Constants.ADMIN_CRITICAL_FUNCTIONS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_PROTOCOL_PARAMS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_USDN_PARAMS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_OPTIONS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.ADMIN_PROXY_UPGRADE_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.ADMIN_PAUSER_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.ADMIN_UNPAUSER_ROLE, assignee);
+
+        usdnProtocol.grantRole(Constants.CRITICAL_FUNCTIONS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.SET_PROTOCOL_PARAMS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.SET_USDN_PARAMS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.SET_OPTIONS_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.PROXY_UPGRADE_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.PAUSER_ROLE, assignee);
+        usdnProtocol.grantRole(Constants.UNPAUSER_ROLE, assignee);
     }
 
     fallback() external payable { }

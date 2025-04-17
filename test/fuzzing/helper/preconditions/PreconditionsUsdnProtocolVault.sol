@@ -18,8 +18,8 @@ abstract contract PreconditionsUsdnProtocolVault is PreconditionsBase {
         // Check pending actions first
         Types.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
 
-        if (action.action != Types.ProtocolAction.InitiateDeposit && action.action != Types.ProtocolAction.None) {
-            revert();
+        if (action.action != Types.ProtocolAction.None) {
+            revert("Current actor already has a pending action");
         }
 
         params.to = currentActor;
@@ -48,7 +48,7 @@ abstract contract PreconditionsUsdnProtocolVault is PreconditionsBase {
         Types.PendingAction memory action = usdnProtocol.getUserPendingAction(params.validator);
 
         if (action.action != Types.ProtocolAction.ValidateDeposit && action.action != Types.ProtocolAction.None) {
-            revert();
+            revert("Wrong type of pending action");
         }
 
         params.pendingAction = usdnProtocol.i_toDepositPendingAction(action);
@@ -72,8 +72,8 @@ abstract contract PreconditionsUsdnProtocolVault is PreconditionsBase {
         // Check pending actions first
         Types.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
 
-        if (action.action != Types.ProtocolAction.InitiateWithdrawal && action.action != Types.ProtocolAction.None) {
-            revert();
+        if (action.action != Types.ProtocolAction.None) {
+            revert("Current actor already has a pending action");
         }
 
         params.to = currentActor;
@@ -130,8 +130,8 @@ abstract contract PreconditionsUsdnProtocolVault is PreconditionsBase {
 
         Types.PendingAction memory action = usdnProtocol.getUserPendingAction(params.validator);
 
-        if (action.action != Types.ProtocolAction.ValidateWithdrawal) {
-            revert();
+        if (action.action != Types.ProtocolAction.ValidateWithdrawal && action.action != Types.ProtocolAction.None) {
+            revert("Wrong type of pending action");
         }
 
         params.pendingAction = action;

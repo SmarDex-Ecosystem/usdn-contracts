@@ -47,15 +47,11 @@ abstract contract Properties_POSCLOSV is PropertiesBase {
         int256 positionProfit = int256(states[1].positionProfit);
         int256 newWstETHBalance = int256(states[1].actorStates[address(usdnProtocol)].wstETHBalance);
         if (outcome == Types.LongActionOutcome.Processed) {
-            if (states[1].feeCollectorCallbackTriggered) {
-                fl.eq(
-                    newWstETHBalance,
-                    baseWstETHBalance - int256(params.closeAmount) - positionProfit - int256(states[1].addedFees),
-                    POSCLOSV_03
-                );
-            } else {
-                fl.eq(newWstETHBalance, baseWstETHBalance - int256(params.closeAmount) - positionProfit, POSCLOSV_03);
-            }
+            fl.eq(
+                newWstETHBalance,
+                baseWstETHBalance - int256(params.closeAmount) - positionProfit - int256(states[1].addedFees),
+                POSCLOSV_03
+            );
         }
     }
 

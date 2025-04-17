@@ -15,8 +15,8 @@ abstract contract PreconditionsUsdnProtocolActions is PreconditionsBase {
         // Check pending actions first
         Types.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
 
-        if (action.action != Types.ProtocolAction.InitiateOpenPosition && action.action != Types.ProtocolAction.None) {
-            revert();
+        if (action.action != Types.ProtocolAction.None) {
+            revert("Current actor already has a pending action");
         }
 
         params.amount = uint128(fl.clamp(amountSeed, usdnProtocol.getMinLongPosition(), wstETH.balanceOf(currentActor)));
@@ -49,7 +49,7 @@ abstract contract PreconditionsUsdnProtocolActions is PreconditionsBase {
         Types.PendingAction memory action = usdnProtocol.getUserPendingAction(params.validator);
 
         if (action.action != Types.ProtocolAction.ValidateOpenPosition && action.action != Types.ProtocolAction.None) {
-            revert();
+            revert("Wrong type of pending action");
         }
 
         params.pendingAction = action;
@@ -67,8 +67,8 @@ abstract contract PreconditionsUsdnProtocolActions is PreconditionsBase {
         // Check pending actions first
         Types.PendingAction memory action = usdnProtocol.getUserPendingAction(currentActor);
 
-        if (action.action != Types.ProtocolAction.InitiateClosePosition && action.action != Types.ProtocolAction.None) {
-            revert();
+        if (action.action != Types.ProtocolAction.None) {
+            revert("Current actor already has a pending action");
         }
 
         // avoid empty checks
@@ -85,7 +85,7 @@ abstract contract PreconditionsUsdnProtocolActions is PreconditionsBase {
 
         uint256 minLongPosition = usdnProtocol.getMinLongPosition();
 
-        uint256 maxCloseAmount = position.amount > minLongPosition ? position.amount - minLongPosition : 0;
+        uint256 maxCloseAmount = position.amount > minLongPosition ? position.amount - minLongPosition : 10_000;
 
         params.amountToClose = closeFull ? position.amount : uint128(fl.clamp(amountSeed, 10_000, maxCloseAmount));
 
@@ -105,7 +105,7 @@ abstract contract PreconditionsUsdnProtocolActions is PreconditionsBase {
         Types.PendingAction memory action = usdnProtocol.getUserPendingAction(params.validator);
 
         if (action.action != Types.ProtocolAction.ValidateClosePosition && action.action != Types.ProtocolAction.None) {
-            revert();
+            revert("Wrong type of pending action");
         }
 
         Types.LongPendingAction memory longAction = usdnProtocol.i_toLongPendingAction(action);

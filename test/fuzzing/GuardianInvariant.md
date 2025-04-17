@@ -107,6 +107,14 @@ System-wide invariants ensure overall protocol health:
 
 The invariant suite provides comprehensive coverage of all critical protocol operations while maintaining mathematical correctness and economic safety checks.
 
+### Administrative Controls (ADMIN)
+
+System governance invariants ensure proper protocol management:
+
+- Validates successful parameter updates
+- Maintains configuration boundaries
+- Preserves protocol safety during changes
+
 # Advanced Testing Features
 
 The fuzzing suite implements sophisticated testing mechanisms across several key areas:
@@ -676,6 +684,10 @@ totalLongPositions > 0
 protocolFeeBps == 0 && calculatedBalance >= 0 && currentBalance <= calculatedBalance
 └── Check: calculatedBalance ≈ currentBalance (within 1% tolerance)
 Where calculatedBalance = vaultBalance + balanceLong + pendingProtocolFee + pendingVaultBalance
+
+## ADMIN_01 (Admin Function Success Check)
+
+└── Check: Admin functions should execute successfully when called with valid parameters and global invariants hold true
 ```
 
 ## Fuzzing suite tree
@@ -751,6 +763,7 @@ Where calculatedBalance = vaultBalance + balanceLong + pendingProtocolFee + pend
 
 | Invariant ID | Invariant Description                                                                            | Passed | Remediations | Run Count |
 | ------------ | ------------------------------------------------------------------------------------------------ | ------ | ------------ | --------- |
+| ADMIN-01      | Calls are succesfull with valid params passed                                | ✅     | ✅           | 10m       |
 | GLOB-01      | A positions tick should never be above the \_highestPopulatedTick                                | ✅     | ✅           | 10m       |
 | GLOB-02      | The current divisor should never equal the MIN_DIVISOR.”                                         | ✅     | ✅           | 10m       |
 | GLOB-03      | FundingPerDay should never equal 0                                                               | ✅     | ✅           | 10m       |
