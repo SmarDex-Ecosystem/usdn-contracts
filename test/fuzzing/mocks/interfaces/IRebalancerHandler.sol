@@ -49,28 +49,13 @@ interface IRebalancerHandler {
 
     /**
      * @dev Gets a valid position max leverage for testing
-     * @param seed Random seed to generate the max leverage value
      * @return maxLeverage A valid max leverage value
      */
-    function getPositionMaxLeverage(uint256 seed) external view returns (uint256 maxLeverage);
+    function getPositionMaxLeverage() external view returns (uint256 maxLeverage);
 
     /**
-     * @dev Gets a valid minimum asset deposit value for testing
-     * @param seed Random seed to generate the minimum asset deposit value
-     * @return minAssetDeposit A valid minimum asset deposit value
+     * @dev Gets a valid minimum long position value for testing
+     * @return minLongPosition A valid minimum long position deposit value
      */
-    function getMinAssetDeposit(uint256 seed) external view returns (uint256 minAssetDeposit);
-
-    /**
-     * @dev Gets valid time limits for testing
-     * @param seed Random seed for data generation
-     * @return validationDelay The validation delay
-     * @return validationDeadline The validation deadline
-     * @return actionCooldown The action cooldown period
-     * @return closeDelay The close delay period
-     */
-    function getTimeLimits(uint256 seed)
-        external
-        pure
-        returns (uint64 validationDelay, uint64 validationDeadline, uint64 actionCooldown, uint64 closeDelay);
+    function getMinLongAssetDeposit() external view returns (uint256 minLongPosition);
 }

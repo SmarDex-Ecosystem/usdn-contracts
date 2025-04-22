@@ -880,243 +880,30 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
     /*                               Admin Functions                              */
     /* -------------------------------------------------------------------------- */
 
-    function getValidatorDeadlines(uint256 seed)
-        external
-        view
-        returns (uint128 lowLatencyDeadline, uint128 onChainDeadline)
-    {
+    function getValidatorDeadlines() external view returns (uint16 delay) {
         Storage storage s = Utils._getMainStorage();
-
-        uint256 seed1 = uint128(seed); // Lower 128 bits
-        uint256 seed2 = uint128(seed >> 128); // Upper 128 bits
-
-        lowLatencyDeadline =
-            uint128(bound(seed1, Constants.MIN_VALIDATION_DEADLINE, s._oracleMiddleware.getLowLatencyDelay()));
-        onChainDeadline = uint128(bound(seed2, 0, Constants.MAX_VALIDATION_DEADLINE));
+        delay = s._oracleMiddleware.getLowLatencyDelay();
     }
 
-    function getMinLeverage(uint256 seed) external view returns (uint256 minLeverage) {
+    function getMinLeverage() external view returns (uint256 maxLeverageBound) {
         Storage storage s = Utils._getMainStorage();
-
-        uint256 minBound = 10 ** Constants.LEVERAGE_DECIMALS + 10 ** (Constants.LEVERAGE_DECIMALS - 1); // x1.1
-        minLeverage = bound(seed, minBound, s._maxLeverage - 1);
+        maxLeverageBound = s._maxLeverage - 1;
     }
 
-    function getMaxLeverage(uint256 seed) external view returns (uint256 maxLeverage) {
+    function getMaxLeverage() external view returns (uint256 minLeverageBound) {
         Storage storage s = Utils._getMainStorage();
-
-        maxLeverage = bound(seed, s._minLeverage + 1, Constants.MAX_LEVERAGE);
+        minLeverageBound = s._minLeverage + 1;
     }
 
-    function getLiquidationPenalty(uint256 seed) external pure returns (uint24 liquidationPenalty) {
-        liquidationPenalty = uint24(bound(seed, 0, Constants.MAX_LIQUIDATION_PENALTY));
-    }
-
-    function getEMAPeriod(uint256 seed) external pure returns (uint128 EMAPeriod) {
-        EMAPeriod = uint128(bound(seed, 0, Constants.MAX_EMA_PERIOD));
-    }
-
-    function getFundingSF(uint256 seed) external pure returns (uint256 fundingSF) {
-        uint256 maxBound = 10 ** Constants.FUNDING_SF_DECIMALS;
-        fundingSF = bound(seed, 0, maxBound);
-    }
-
-    function getProtocolFeeBps(uint256 seed) external pure returns (uint16 protocolFeeBps) {
-        protocolFeeBps = uint16(bound(seed, 0, Constants.MAX_PROTOCOL_FEE_BPS));
-    }
-
-    function getPositionFeeBps(uint256 seed) external pure returns (uint16 positionFee) {
-        positionFee = uint16(bound(seed, 0, Constants.MAX_POSITION_FEE_BPS));
-    }
-
-    function getVaultFeeBps(uint256 seed) external pure returns (uint16 vaultFee) {
-        vaultFee = uint16(bound(seed, 0, Constants.MAX_VAULT_FEE_BPS));
-    }
-
-    function getSdexRewardsRatioBps(uint256 seed) external pure returns (uint16 rewards) {
-        rewards = uint16(bound(seed, 0, Constants.MAX_SDEX_REWARDS_RATIO_BPS));
-    }
-
-    function getRebalancerBonusBps(uint256 seed) external pure returns (uint16 bonus) {
-        bonus = uint16(bound(seed, 0, Constants.BPS_DIVISOR));
-    }
-
-    function getSdexBurnOnDepositRatio(uint256 seed) external pure returns (uint32 ratio) {
-        uint256 minBound = 1e6;
-        ratio = uint32(bound(seed, minBound, Constants.MAX_SDEX_BURN_RATIO));
-    }
-
-    function getSecurityDepositValue(uint256 seed) external pure returns (uint64 securityDeposit) {
-        uint256 minBound = 1 ether;
-        securityDeposit = uint64(bound(seed, minBound, Constants.MAX_SECURITY_DEPOSIT));
-    }
-
-    function getExpoImbalanceLimits(uint256 seed)
-        external
-        view
-        returns (
-            uint256 openLimit,
-            uint256 depositLimit,
-            uint256 withdrawalLimit,
-            uint256 closeLimit,
-            uint256 rebalancerCloseLimit,
-            int256 longImbalanceTarget
-        )
-    {
-        uint256 parameterToModify = seed % 6;
-        return _getModifiedLimits(parameterToModify, seed);
-    }
-
-    /**
-     * @dev Get current limits and modify one based on the seed
-     */
-    function _getModifiedLimits(uint256 parameterToModify, uint256 seed)
-        private
-        view
-        returns (
-            uint256 openLimit,
-            uint256 depositLimit,
-            uint256 withdrawalLimit,
-            uint256 closeLimit,
-            uint256 rebalancerCloseLimit,
-            int256 longImbalanceTarget
-        )
-    {
+    function getTargetUsdnPriceBounds() external view returns (uint128 minPrice, uint128 maxPrice) {
         Types.Storage storage s = Utils._getMainStorage();
-        int256 openExpoImbalanceLimitBps = s._openExpoImbalanceLimitBps;
-        int256 depositExpoImbalanceLimitBps = s._depositExpoImbalanceLimitBps;
-        int256 withdrawalExpoImbalanceLimitBps = s._withdrawalExpoImbalanceLimitBps;
-        int256 closeExpoImbalanceLimitBps = s._closeExpoImbalanceLimitBps;
-        int256 rebalancerCloseExpoImbalanceLimitBps = s._rebalancerCloseExpoImbalanceLimitBps;
-        int256 longImbalanceTargetBps = s._longImbalanceTargetBps;
-
-        (
-            openExpoImbalanceLimitBps,
-            depositExpoImbalanceLimitBps,
-            withdrawalExpoImbalanceLimitBps,
-            closeExpoImbalanceLimitBps,
-            rebalancerCloseExpoImbalanceLimitBps,
-            longImbalanceTargetBps
-        ) = _modifyOneLimitOnly(
-            parameterToModify,
-            seed,
-            openExpoImbalanceLimitBps,
-            depositExpoImbalanceLimitBps,
-            withdrawalExpoImbalanceLimitBps,
-            closeExpoImbalanceLimitBps,
-            rebalancerCloseExpoImbalanceLimitBps,
-            longImbalanceTargetBps
-        );
-
-        return (
-            uint256(openExpoImbalanceLimitBps),
-            uint256(depositExpoImbalanceLimitBps),
-            uint256(withdrawalExpoImbalanceLimitBps),
-            uint256(closeExpoImbalanceLimitBps),
-            uint256(rebalancerCloseExpoImbalanceLimitBps),
-            longImbalanceTargetBps
-        );
+        minPrice = uint128(10 ** s._priceFeedDecimals);
+        maxPrice = s._usdnRebaseThreshold;
     }
 
-    /**
-     * @dev Modifies a single limit based on parameterToModify
-     */
-    function _modifyOneLimitOnly(
-        uint256 parameterToModify,
-        uint256 seed,
-        int256 openExpoImbalanceLimitBps,
-        int256 depositExpoImbalanceLimitBps,
-        int256 withdrawalExpoImbalanceLimitBps,
-        int256 closeExpoImbalanceLimitBps,
-        int256 rebalancerCloseExpoImbalanceLimitBps,
-        int256 longImbalanceTargetBps
-    ) private pure returns (int256, int256, int256, int256, int256, int256) {
-        if (parameterToModify == 0) {
-            // Modify openExpoImbalanceLimitBps
-            // min = 300 (3%) and max = withdrawalExpoImbalanceLimitBps
-            openExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(withdrawalExpoImbalanceLimitBps)));
-        } else if (parameterToModify == 1) {
-            // Modify depositExpoImbalanceLimitBps
-            // min = 300 (3%) and max = closeExpoImbalanceLimitBps
-            depositExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(closeExpoImbalanceLimitBps)));
-        } else if (parameterToModify == 2) {
-            // Modify withdrawalExpoImbalanceLimitBps
-            // if != 0, min = openExpoImbalanceLimitBps and max = 100%
-            if (withdrawalExpoImbalanceLimitBps != 0) {
-                withdrawalExpoImbalanceLimitBps =
-                    int256(bound(seed, uint256(openExpoImbalanceLimitBps), Constants.BPS_DIVISOR));
-            }
-        } else if (parameterToModify == 3) {
-            // Modify closeExpoImbalanceLimitBps
-            // if != 0, min = max(depositExpoImbalanceLimitBps, longImbalanceTargetBps,
-            // rebalancerCloseExpoImbalanceLimitBps)
-            // and max = 100%
-            if (closeExpoImbalanceLimitBps != 0) {
-                uint256 min = depositExpoImbalanceLimitBps > longImbalanceTargetBps
-                    ? uint256(depositExpoImbalanceLimitBps)
-                    : uint256(longImbalanceTargetBps);
-                min = rebalancerCloseExpoImbalanceLimitBps > int256(min)
-                    ? uint256(rebalancerCloseExpoImbalanceLimitBps)
-                    : min;
-
-                closeExpoImbalanceLimitBps = int256(bound(seed, min, Constants.BPS_DIVISOR));
-            }
-        } else if (parameterToModify == 4) {
-            // Modify rebalancerCloseExpoImbalanceLimitBps
-            // if != 0, min = 300 (3%) and max = closeExpoImbalanceLimitBps
-            if (rebalancerCloseExpoImbalanceLimitBps != 0) {
-                rebalancerCloseExpoImbalanceLimitBps =
-                    int256(bound(seed, 300, longImbalanceTargetBps > 0 ? uint256(longImbalanceTargetBps - 1) : 300));
-            }
-        } else if (parameterToModify == 5) {
-            // Modify longImbalanceTargetBps
-            // min = max(-50%, -withdrawalExpoImbalanceLimitBps) and max = closeExpoImbalanceLimitBps
-            int256 min = -500 > -withdrawalExpoImbalanceLimitBps ? -500 : -withdrawalExpoImbalanceLimitBps;
-
-            if (rebalancerCloseExpoImbalanceLimitBps != 0) {
-                min = rebalancerCloseExpoImbalanceLimitBps + 1;
-            }
-
-            longImbalanceTargetBps = int256(bound(seed, uint256(min), uint256(closeExpoImbalanceLimitBps)));
-        }
-
-        return (
-            openExpoImbalanceLimitBps,
-            depositExpoImbalanceLimitBps,
-            withdrawalExpoImbalanceLimitBps,
-            closeExpoImbalanceLimitBps,
-            rebalancerCloseExpoImbalanceLimitBps,
-            longImbalanceTargetBps
-        );
-    }
-
-    function getMinLongPosition(uint256 seed) external pure returns (uint256 minLongPosition) {
-        uint256 minBound = 2 * 10 ** 18; // 2 tokens
-        minLongPosition = bound(seed, minBound, Constants.MAX_MIN_LONG_POSITION);
-    }
-
-    function getSafetyMarginBps(uint256 seed) external pure returns (uint256 safetyMarginBps) {
-        uint256 minBound = 200; //2%
-        safetyMarginBps = bound(seed, minBound, Constants.MAX_SAFETY_MARGIN_BPS);
-    }
-
-    function getLiquidationIteration(uint256 seed) external pure returns (uint16 liquidationIteration) {
-        liquidationIteration = uint16(bound(seed, 1, Constants.MAX_LIQUIDATION_ITERATION));
-    }
-
-    function getTargetUsdnPrice(uint256 seed) external view returns (uint128 price) {
+    function getUsdnRebaseThresholdBounds() external view returns (uint128 minThreshold, uint128 maxThreshold) {
         Types.Storage storage s = Utils._getMainStorage();
-        uint128 minPrice = uint128(10 ** s._priceFeedDecimals);
-        uint128 maxPrice = s._usdnRebaseThreshold;
-
-        price = uint128(bound(seed, minPrice, maxPrice));
-    }
-
-    function getUsdnRebaseThreshold(uint256 seed) external view returns (uint128 threshold) {
-        Types.Storage storage s = Utils._getMainStorage();
-        uint128 minThreshold = s._targetUsdnPrice;
-        uint128 maxThreshold = uint128(2 * 10 ** s._priceFeedDecimals);
-
-        threshold = uint128(bound(seed, minThreshold, maxThreshold));
+        minThreshold = s._targetUsdnPrice;
+        maxThreshold = uint128(2 * 10 ** s._priceFeedDecimals);
     }
 }

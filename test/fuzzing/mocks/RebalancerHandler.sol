@@ -41,43 +41,11 @@ contract RebalancerHandler is Rebalancer, Test {
         return _initiateClosePosition(data, currentPriceData, previousActionsData, delegationData);
     }
 
-    function getPositionMaxLeverage(uint256 seed) external view returns (uint256 maxLeverage) {
-        uint256 protocolMaxLeverage = this.getPositionMaxLeverage();
-        uint256 minLeverage = Constants.REBALANCER_MIN_LEVERAGE;
-
-        if (minLeverage >= protocolMaxLeverage) {
-            return minLeverage + 1;
-        }
-
-        maxLeverage = bound(seed, minLeverage + 1, protocolMaxLeverage);
-
-        return maxLeverage;
+    function getPositionMaxLeverageBound() external view returns (uint256 maxLeverage) {
+        maxLeverage = this.getPositionMaxLeverage();
     }
 
-    function getMinAssetDeposit(uint256 seed) external view returns (uint256 minAssetDeposit) {
-        uint256 minLongPosition = _usdnProtocol.getMinLongPosition();
-        uint256 maxBound = 100 ether;
-
-        minAssetDeposit = bound(seed, minLongPosition, maxBound);
-
-        return minAssetDeposit;
-    }
-
-    function getTimeLimits(uint256 seed)
-        external
-        pure
-        returns (uint64 validationDelay, uint64 validationDeadline, uint64 actionCooldown, uint64 closeDelay)
-    {
-        uint64 seed1 = uint64(seed);
-        uint64 seed2 = uint64(seed >> 64);
-        uint64 seed3 = uint64(seed >> 128);
-        uint64 seed4 = uint64(seed >> 192);
-
-        validationDelay = uint64(bound(seed1, 1 minutes, 1 hours));
-        validationDeadline = uint64(bound(seed2, validationDelay + 1 minutes, validationDelay + 24 hours));
-        actionCooldown = uint64(bound(seed3, validationDeadline, MAX_ACTION_COOLDOWN));
-        closeDelay = uint64(bound(seed4, 0, MAX_CLOSE_DELAY));
-
-        return (validationDelay, validationDeadline, actionCooldown, closeDelay);
+    function getMinLongAssetDeposit() external view returns (uint256 minLongPosition) {
+        minLongPosition = _usdnProtocol.getMinLongPosition();
     }
 }
