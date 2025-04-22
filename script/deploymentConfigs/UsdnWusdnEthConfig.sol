@@ -51,9 +51,8 @@ contract UsdnWusdnEthConfig is DeploymentConfig {
         initStorage.positionFeeBps = 1; // 0.01%
         initStorage.vaultFeeBps = 4; // 0.04%
         initStorage.sdexRewardsRatioBps = 100; // 1%
-        // As the amount of syntETH minted will be low, we need a high ratio for the amount burned to be significant.
-        // TODO temporary (but usable) value, an improvement of the scaling of this variable is in the work
-        initStorage.sdexBurnOnDepositRatio = uint32(MAX_SDEX_BURN_RATIO);
+        // for each syntETH, 75 SDEX will be burned
+        initStorage.sdexBurnOnDepositRatio = uint64(75 * Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR); // x75
         initStorage.securityDepositValue = 0.15 ether;
         initStorage.EMA = int256(3 * 10 ** (Constants.FUNDING_RATE_DECIMALS - 4)); // 0.0003
         initStorage.tickSpacing = 100;
