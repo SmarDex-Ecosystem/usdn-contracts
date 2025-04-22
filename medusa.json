@@ -39,7 +39,8 @@
         "senderAddresses": [
             "0x10000",
             "0x20000",
-            "0x30000"
+            "0x30000",
+            "0x40000"
         ],
         "blockNumberDelayMax": 0,
         "blockTimestampDelayMax": 0,

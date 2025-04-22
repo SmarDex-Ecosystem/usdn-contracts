@@ -7,6 +7,8 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../../../src/UsdnProtocol//libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolImpl } from "../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolActionsLongLibrary.sol";
@@ -14,6 +16,8 @@ import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolSettersLibrary as Setters } from
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolSettersLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { UsdnProtocolVaultLibrary as Vault } from "../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
 import { PriceInfo } from "../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -870,5 +874,36 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
         returns (DepositPendingAction memory)
     {
         return Utils._toDepositPendingAction(action);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                               Admin Functions                              */
+    /* -------------------------------------------------------------------------- */
+
+    function getValidatorDeadlines() external view returns (uint16 delay) {
+        Storage storage s = Utils._getMainStorage();
+        delay = s._oracleMiddleware.getLowLatencyDelay();
+    }
+
+    function getMinLeverage() external view returns (uint256 maxLeverageBound) {
+        Storage storage s = Utils._getMainStorage();
+        maxLeverageBound = s._maxLeverage - 1;
+    }
+
+    function getMaxLeverage() external view returns (uint256 minLeverageBound) {
+        Storage storage s = Utils._getMainStorage();
+        minLeverageBound = s._minLeverage + 1;
+    }
+
+    function getTargetUsdnPriceBounds() external view returns (uint128 minPrice, uint128 maxPrice) {
+        Types.Storage storage s = Utils._getMainStorage();
+        minPrice = uint128(10 ** s._priceFeedDecimals);
+        maxPrice = s._usdnRebaseThreshold;
+    }
+
+    function getUsdnRebaseThresholdBounds() external view returns (uint128 minThreshold, uint128 maxThreshold) {
+        Types.Storage storage s = Utils._getMainStorage();
+        minThreshold = s._targetUsdnPrice;
+        maxThreshold = uint128(2 * 10 ** s._priceFeedDecimals);
     }
 }

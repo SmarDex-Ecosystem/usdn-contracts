@@ -7,6 +7,7 @@ contract FuzzActors {
     address internal constant USER1 = address(0x10000);
     address internal constant USER2 = address(0x20000);
     address internal constant USER3 = address(0x30000);
+    address internal constant ADMIN = address(0x40000);
 
-    address[] internal USERS = [USER1, USER2, USER3];
+    address[] internal USERS = [USER1, USER2, USER3, ADMIN];
 }

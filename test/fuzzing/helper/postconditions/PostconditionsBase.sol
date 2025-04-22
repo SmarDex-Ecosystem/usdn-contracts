@@ -15,6 +15,16 @@ abstract contract PostconditionsBase is Properties {
         invariant_GLOB_07();
     }
 
+    // Admin functions don't need to check funding (invariant_GLOB_03)
+    function onSuccessInvariantsAdmin() internal {
+        invariant_GLOB_01();
+        invariant_GLOB_02();
+        invariant_GLOB_04();
+        invariant_GLOB_05();
+        invariant_GLOB_06();
+        invariant_GLOB_07();
+    }
+
     function onFailInvariantsGeneral(bytes memory returnData) internal {
         invariant_ERR(returnData);
     }

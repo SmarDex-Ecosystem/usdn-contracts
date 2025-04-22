@@ -3,12 +3,12 @@ pragma solidity 0.8.26;
 
 import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 
-import { UsdnProtocolHandler } from "./UsdnProtocolHandler.sol";
+import { UsdnProtocolHandler } from ".././UsdnProtocolHandler.sol";
 
-import { UsdnProtocolVaultLibrary as Vault } from "../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
-import { PriceInfo } from "../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { IUsdnProtocol } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolVaultLibrary as Vault } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolVaultLibrary.sol";
+import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolHandler
@@ -482,4 +482,14 @@ interface IUsdnProtocolHandler is IUsdnProtocol {
     ) external pure returns (int24 tickWithPenalty_, uint128 liqPriceWithoutPenalty_);
 
     function i_calcMaxLongBalance(uint256 totalExpo) external pure returns (uint256);
+
+    function getValidatorDeadlines() external view returns (uint16);
+
+    function getMinLeverage() external view returns (uint256);
+
+    function getMaxLeverage() external view returns (uint256);
+
+    function getTargetUsdnPriceBounds() external view returns (uint128, uint128);
+
+    function getUsdnRebaseThresholdBounds() external view returns (uint128, uint128);
 }
