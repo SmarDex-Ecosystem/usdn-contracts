@@ -3,7 +3,32 @@
 [![Main workflow](https://github.com/SmarDex-Ecosystem/usdn-contracts/actions/workflows/ci.yml/badge.svg)](https://github.com/SmarDex-Ecosystem/usdn-contracts/actions/workflows/ci.yml)
 [![Release Workflow](https://github.com/SmarDex-Ecosystem/usdn-contracts/actions/workflows/release.yml/badge.svg)](https://github.com/SmarDex-Ecosystem/usdn-contracts/actions/workflows/release.yml)
 
-## Installation
+## Using from Other Projects
+
+To import contracts, interfaces or ABIs into other projects, you can use one of the following options:
+
+### Soldeer
+
+```bash
+[forge] soldeer install @smardex-usdn-contracts~1.1.0
+```
+
+### NPM, pnpm
+
+```bash
+npm i @smardex/usdn-contracts
+pnpm add @smardex/usdn-contracts
+```
+
+### JSR
+
+```bash
+deno add jsr:@smardex/usdn-contracts
+bunx jsr add @smardex/usdn-contracts
+pnpm i jsr:@smardex/usdn-contracts
+```
+
+## Install Development Environment
 
 ### Foundry
 
@@ -71,7 +96,7 @@ The environment provides the following tools:
 
 ### Tests
 
-Compile the test utils by running the following command at the root of the repo:
+Compile the test utils by running the following command at the root of the repo (requires the [Rust toolchain](https://rustup.rs/)):
 
 ```bash
 cargo build --release
@@ -82,7 +107,7 @@ everything.
 
 To run tests, use `forge test -vvv` or `npm run test`.
 
-### Deployment scripts
+### Deployment Scripts
 
 Deployment for anvil forks should be done with a custom bash script at `script/fork/deployFork.sh` which can be run without
 arguments. It must set up any environment variable required by the foundry deployment script.
@@ -146,4 +171,3 @@ Implemented by [Stéphane Ballmer](https://github.com/sballmer),
 [Léo Fasano](https://github.com/Yashiru),
 [Alfred Gaillard](https://github.com/blablalf),
 [Paul-Alexandre Tessier](https://github.com/Paulalex85)
-
