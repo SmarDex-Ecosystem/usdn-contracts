@@ -82,14 +82,14 @@ The environment provides the following tools:
 
 - load `.env` file as environment variables
 - foundry
-- solc v0.8.26
 - lcov
 - Node 20 + Typescript
 - Rust toolchain
 - just
+- lintspec
 - mdbook
 - trufflehog
-- typist (with gyre-fonts)
+- typst (with gyre-fonts)
 - `test_utils` dependencies
 
 ## Usage
