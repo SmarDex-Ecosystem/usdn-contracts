@@ -230,12 +230,12 @@ abstract contract PreconditionsAdmin is PreconditionsBase {
     ) private pure returns (int256, int256, int256, int256, int256, int256) {
         if (parameterToModify == 0) {
             // Modify openExpoImbalanceLimitBps
-            // min = 300 (3%) and max = withdrawalExpoImbalanceLimitBps
-            openExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(withdrawalExpoImbalanceLimitBps)));
+            // min = 0 and max = withdrawalExpoImbalanceLimitBps
+            openExpoImbalanceLimitBps = int256(bound(seed, 0, uint256(withdrawalExpoImbalanceLimitBps)));
         } else if (parameterToModify == 1) {
             // Modify depositExpoImbalanceLimitBps
-            // min = 300 (3%) and max = closeExpoImbalanceLimitBps
-            depositExpoImbalanceLimitBps = int256(bound(seed, 300, uint256(closeExpoImbalanceLimitBps)));
+            // min = 0 and max = closeExpoImbalanceLimitBps
+            depositExpoImbalanceLimitBps = int256(bound(seed, 0, uint256(closeExpoImbalanceLimitBps)));
         } else if (parameterToModify == 2) {
             // Modify withdrawalExpoImbalanceLimitBps
             // if != 0, min = openExpoImbalanceLimitBps and max = 100%
@@ -260,15 +260,17 @@ abstract contract PreconditionsAdmin is PreconditionsBase {
             }
         } else if (parameterToModify == 4) {
             // Modify rebalancerCloseExpoImbalanceLimitBps
-            // if != 0, min = 300 (3%) and max = closeExpoImbalanceLimitBps
+            // if != 0, min = 1 (0.01%) and max = closeExpoImbalanceLimitBps
             if (rebalancerCloseExpoImbalanceLimitBps != 0) {
                 rebalancerCloseExpoImbalanceLimitBps =
-                    int256(bound(seed, 300, longImbalanceTargetBps > 0 ? uint256(longImbalanceTargetBps - 1) : 300));
+                    int256(bound(seed, 1, longImbalanceTargetBps > 0 ? uint256(longImbalanceTargetBps - 1) : 1));
             }
         } else if (parameterToModify == 5) {
             // Modify longImbalanceTargetBps
             // min = max(-50%, -withdrawalExpoImbalanceLimitBps) and max = closeExpoImbalanceLimitBps
-            int256 min = -500 > -withdrawalExpoImbalanceLimitBps ? -500 : -withdrawalExpoImbalanceLimitBps;
+            int256 min = -int256(Constants.BPS_DIVISOR / 2) > -withdrawalExpoImbalanceLimitBps
+                ? -int256(Constants.BPS_DIVISOR / 2)
+                : -withdrawalExpoImbalanceLimitBps;
 
             if (rebalancerCloseExpoImbalanceLimitBps != 0) {
                 min = rebalancerCloseExpoImbalanceLimitBps + 1;
