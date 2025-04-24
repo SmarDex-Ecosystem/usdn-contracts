@@ -234,7 +234,7 @@ abstract contract PreconditionsAdmin is PreconditionsBase {
             openExpoImbalanceLimitBps = int256(bound(seed, 0, uint256(withdrawalExpoImbalanceLimitBps)));
         } else if (parameterToModify == 1) {
             // Modify depositExpoImbalanceLimitBps
-            // min =0 and max = closeExpoImbalanceLimitBps
+            // min = 0 and max = closeExpoImbalanceLimitBps
             depositExpoImbalanceLimitBps = int256(bound(seed, 0, uint256(closeExpoImbalanceLimitBps)));
         } else if (parameterToModify == 2) {
             // Modify withdrawalExpoImbalanceLimitBps
