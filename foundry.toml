@@ -32,8 +32,9 @@ remappings = [
     "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-5.1.0/",
     "@pythnetwork/pyth-sdk-solidity/=dependencies/@pythnetwork-pyth-sdk-solidity-3.1.0/",
     "@redstone-finance/evm-connector/=dependencies/@redstone-finance-evm-connector-0.6.2/",
+    "@smardex-dex-contracts/=dependencies/@smardex-dex-contracts-1.0.1/",
     "@smardex-solidity-libraries-1/=dependencies/@smardex-solidity-libraries-1.0.1/src/",
-    "@smardex-universal-router-1.0.0/=dependencies/@smardex-universal-router-1.0.0/",
+    "@smardex-universal-router/=dependencies/@smardex-universal-router-1.0.0/",
     "@uniswap/permit2/=dependencies/@uniswap-permit2-1.0.0/",
     "@uniswapV3=dependencies/@uniswap-v3-core-1.0.2-solc-0.8-simulate/",
     "forge-std/=dependencies/forge-std-1.9.4/src/",
@@ -56,6 +57,7 @@ sort_imports = true
 
 [profile.local]
 ffi = true
+
 
 # ---------------------------------- Fuzzing --------------------------------- #
 
@@ -142,6 +144,7 @@ mainnet = { key = "${ETHERSCAN_API_KEY}" }
 remappings_generate = true
 remappings_location = "config"
 remappings_version = true
+recursive_deps = true
 
 [dependencies]
 "@chainlink" = { version = "1.2.0", url = "https://github.com/smartcontractkit/chainlink/archive/c3dc764bba9e1c57b3f7933bcb804a1740fab695.zip" }
@@ -156,3 +159,4 @@ solady = "0.0.228"
 "@smardex-solidity-libraries" = "1"
 "@smardex-universal-router" = "1.0.0"
 "@uniswap-v3-core" = "1.0.2-solc-0.8-simulate"
+"@smardex-dex-contracts" = "1.0.1"

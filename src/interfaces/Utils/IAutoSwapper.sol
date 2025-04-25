@@ -1,14 +1,34 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { ISmardexPair } from "@smardex-dex-contracts/contracts/ethereum/core/v2/interfaces/ISmardexPair.sol";
+
 interface IAutoSwapper {
     /**
-     * @notice Executes a two-step swap: wstETH → WETH → SDEX.
-     * @dev If the first swap fails, the second is skipped.
-     * If the second swap fails, it is silently ignored.
-     * @param _amount Amount of wstETH to process.
+     * @notice swap parameters used by function _swapAndSend
+     * @param zeroForOne true if we swap the token0 with token1, false otherwise
+     * @param balanceIn balance of in-token to be swapped
+     * @param pair pair address
+     * @param fictiveReserve0 fictive reserve of token0 of the pair
+     * @param fictiveReserve1 fictive reserve of token1 of the pair
+     * @param oldPriceAv0 priceAverage of token0 of the pair before the swap
+     * @param oldPriceAv1 priceAverage of token1 of the pair before the swap
+     * @param oldPriceAvTimestamp priceAverageLastTimestamp of the pair before the swap
+     * @param newPriceAvIn priceAverage of token0 of the pair after the swap
+     * @param newPriceAvOut priceAverage of token1 of the pair after the swap
      */
-    function processSwap(uint256 _amount) external;
+    struct SwapCallParams {
+        bool zeroForOne;
+        uint256 balanceIn;
+        ISmardexPair pair;
+        uint256 fictiveReserve0;
+        uint256 fictiveReserve1;
+        uint256 oldPriceAv0;
+        uint256 oldPriceAv1;
+        uint256 oldPriceAvTimestamp;
+        uint256 newPriceAvIn;
+        uint256 newPriceAvOut;
+    }
 
     /**
      * @notice onlyOwner function to swap token in SDEX.
@@ -64,53 +84,72 @@ interface IAutoSwapper {
      * @notice Emitted when the swap from wstETH to SDEX completes successfully
      * @param wstEthAmount The amount of wstETH that was swapped
      */
-    event sucessfullSwap(uint256 wstEthAmount);
+    event SucessfullSwap(uint256 wstEthAmount);
 
     /**
      * @notice Emitted when the swap from wstETH to WETH fails
      * @param wstEthAmount The amount of wstETH attempted to be swapped
      */
-    event failedWstEthSwap(uint256 wstEthAmount);
+    event FailedWstEthSwap(uint256 wstEthAmount);
 
     /**
      * @notice Emitted when the swap from WETH to SDEX fails
      * @param wEthAmount The amount of WETH attempted to be swapped
      */
-    event failedWEthSwap(uint256 wEthAmount);
+    event FailedWEthSwap(uint256 wEthAmount);
+
+    /**
+     * @notice Emitted when the TWAP interval is updated
+     * @param newTwapInterval The new TWAP interval
+     */
+    event TwapIntervalUpdated(uint32 newTwapInterval);
+
+    /**
+     * @notice Emitted when the Uniswap pair address is updated
+     * @param newPair The new pair address
+     */
+    event UniswapPairUpdated(address newPair);
+
+    /**
+     * @notice Emitted when the Uniswap fee tier is updated
+     * @param newFeeTier The new fee tier
+     */
+    event UniswapFeeTierUpdated(uint24 newFeeTier);
+
+    /**
+     * @notice Emitted when the swap slippage percentage is updated
+     * @param newSwapSlippage The new swap slippage percentage
+     */
+    event SwapSlippageUpdated(uint256 newSwapSlippage);
 
     /* -------------------------------------------------------------------------- */
     /*                                   Errors                                   */
     /* -------------------------------------------------------------------------- */
-    /// @notice Thrown when the wstETH address provided is invalid (zero address).
-    error InvalidWstETHAddress();
-
-    /// @notice Thrown when the WETH address provided is invalid (zero address).
-    error InvalidWETHAddress();
-
-    /// @notice Thrown when the SDEX token address provided is invalid (zero address).
-    error InvalidSDEXAddress();
-
-    /// @notice Thrown when the router address provided is invalid (zero address).
-    error InvalidRouterAddress();
 
     /// @notice Thrown when an empty swap path is provided.
-    error InvalidPath();
+    error AutoSwapperInvalidPath();
 
     /// @notice Thrown when the last token in the path is not SDEX.
-    error InvalidLastToken();
+    error AutoSwapperInvalidLastToken();
 
     /// @notice Thrown when a swap is attempted with zero amount.
-    error InvalidAmount();
+    error AutoSwapperInvalidAmount();
 
     /// @notice Thrown when the TWAP interval is set to zero.
-    error InvalidTwapInterval();
+    error AutoSwapperInvalidTwapInterval();
 
     /// @notice Thrown when an invalid Uniswap pair address is set.
-    error InvalidPairAddress();
+    error AutoSwapperInvalidPairAddress();
 
     /// @notice Thrown when the Uniswap fee tier is invalid
-    error InvalidUniswapFee();
+    error AutoSwapperInvalidUniswapFee();
 
     /// @notice Thrown when slippage configuration is invalid.
-    error InvalidSwapSlippage();
+    error AutoSwapperInvalidSwapSlippage();
+
+    /// @notice Thrown when the calculated minimum amount out after slippage is zero.
+    error AutoSwapperInvalidSlippageCalculation();
+
+    /// @notice Thrown when a caller is not authorized to perform the requested action.
+    error AutoSwapperUnauthorized();
 }
