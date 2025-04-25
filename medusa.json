@@ -111,8 +111,8 @@
         }
     },
     "slither": {
-        "useSlither": false,
-        "cachePath": ""
+        "useSlither": true,
+        "cachePath": "slither_results.json"
     },
     "logging": {
         "level": "info",
