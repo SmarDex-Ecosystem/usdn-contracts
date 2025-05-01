@@ -42,7 +42,7 @@ contract TestAutoSwapper is Test {
         sDEX = IERC20(sDEXAddress);
 
         vm.prank(user);
-        swapper = new AutoSwapper(wstETHAddress, wETHAddress, sDEXAddress, routerAddress, smardexFactory, uniswapPair);
+        swapper = new AutoSwapper(routerAddress);
 
         vm.startPrank(address(swapper));
         wstETH.approve(address(router), type(uint256).max);

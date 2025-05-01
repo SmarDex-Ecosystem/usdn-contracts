@@ -45,12 +45,6 @@ interface IAutoSwapper {
         external;
 
     /**
-     * @notice Swaps WETH to SDEX via the Universal Router.
-     * @param wethAmount Amount of wstETH to swap.
-     */
-    function safeSwapSmarDex(uint256 wethAmount) external;
-
-    /**
      * @notice Updates the allowed slippage percentage for swaps.
      * @param swapSlippage The new slippage value (in percent, e.g., 2 for 2%).
      * @dev Reverts if the provided slippage is zero.

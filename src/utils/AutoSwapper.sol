@@ -6,8 +6,6 @@ import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/Saf
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { ISmardexFactory } from "@smardex-dex-contracts/contracts/ethereum/core/v2/interfaces/ISmardexFactory.sol";
 import { ISmardexPair } from "@smardex-dex-contracts/contracts/ethereum/core/v2/interfaces/ISmardexPair.sol";
 import { SmardexLibrary } from "@smardex-dex-contracts/contracts/ethereum/core/v2/libraries/SmardexLibrary.sol";
 import { IUniversalRouter } from "@smardex-universal-router/src/interfaces/IUniversalRouter.sol";
@@ -26,7 +24,7 @@ import { IAutoSwapper } from "./../interfaces/Utils/IAutoSwapper.sol";
  */
 contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollectorCallback, ERC165 {
     using SafeERC20 for IERC20;
-    using SafeCast for uint256;
+    using SafeERC20 for IWstETH;
 
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
@@ -41,74 +39,50 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
     uint8 private constant SMARDEX_SWAP_EXACT_IN = 0x38;
 
     /// @notice Burn address for receiving output tokens.
-    address internal constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
+    address internal constant DEAD_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
     /// @notice Permit2 contract used for token approvals with signatures.
     IAllowanceTransfer constant PERMIT2 = IAllowanceTransfer(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 
-    /* -------------------------------------------------------------------------- */
-    /*                                 Immutables                                 */
-    /* -------------------------------------------------------------------------- */
+    ISmardexPair constant SMARDEX_WETH_SDEX_PAIR = ISmardexPair(0xf3a4B8eFe3e3049F6BC71B47ccB7Ce6665420179);
 
     /// @notice Wrapped staked ETH token used as input for swaps.
-    IERC20 internal immutable _wstETH;
+    IWstETH internal constant WSTETH = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
 
     /// @notice Wrapped ETH token received from Uniswap V3 swaps.
-    IERC20 internal immutable _wETH;
+    IERC20 internal constant WETH = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
     /// @notice Final output token after SmarDex swap.
-    IERC20 internal immutable _smardexToken;
+    IERC20 internal constant SDEX = IERC20(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
 
     /// @notice Universal Router instance for performing multi-hop swaps.
     IUniversalRouter internal immutable _router;
 
-    /// @notice SmarDex factory used to fetch trading pairs for swaps.
-    ISmardexFactory internal immutable _factory;
-
-    bool internal ZERO_FOR_ONE;
-
-    /* -------------------------------------------------------------------------- */
-    /*                          Admin Configurable Params                         */
-    /* -------------------------------------------------------------------------- */
+    bool internal UNISWAP_ZERO_FOR_ONE;
+    bool internal SMARDEX_ZERO_FOR_ONE;
 
     /// @notice Uniswap V3 pool used for wstETH → WETH swap.
-    address internal _uniswapPair;
+    address internal constant UNI_WSTETH_WETH_PAIR = 0x109830a1AAaD605BbF02a9dFA7B0B92EC2FB7dAa;
 
     /// @notice Allowed slippage percentage for Uniswap V3 swaps.
     uint256 internal _swapSlippage = 100; // 1%
 
     /// @notice SmarDex LP fee (700 = 0.07% of FEES_BASE 1,000,000)
-    uint128 internal _smardexFeesLP = 700;
+    uint128 internal constant SMARDEX_FEE_LP = 700;
 
     /// @notice SmarDex protocol fee (200 = 0.02% of FEES_BASE 1,000,000)
-    uint128 internal _smardexFeesPool = 200;
+    uint128 internal constant SMARDEX_FEE_POOL = 200;
 
     /// @notice Fee tier used for Uniswap V3 path.
-    uint24 internal _uniswapFeeTier = 1; // 0.01% fee tier
+    uint24 internal constant UNISWAP_FEE_TIER = 1; // 0.01% fee tier
 
     /**
-     * @param wstETH Address of the wstETH token.
-     * @param wETH Address of the WETH token.
-     * @param smardexToken Address of the SDEX token.
      * @param router Address of the Universal Router.
-     * @param factory Address of the factory of Smardex..
-     * @param uniswapPair Address of the Uniswap Pair.
      */
-    constructor(
-        address wstETH,
-        address wETH,
-        address smardexToken,
-        address router,
-        address factory,
-        address uniswapPair
-    ) Ownable(msg.sender) {
-        _wstETH = IERC20(wstETH);
-        _wETH = IERC20(wETH);
-        _smardexToken = IERC20(smardexToken);
+    constructor(address router) Ownable(msg.sender) {
         _router = IUniversalRouter(router);
-        _factory = ISmardexFactory(factory);
-        _uniswapPair = uniswapPair;
-        ZERO_FOR_ONE = _wstETH < _wETH;
+        UNISWAP_ZERO_FOR_ONE = WSTETH < WETH;
+        SMARDEX_ZERO_FOR_ONE = WETH < SDEX;
     }
 
     /// @inheritdoc ERC165
@@ -124,28 +98,20 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
         _processSwap();
     }
 
-    /// @inheritdoc IAutoSwapper
-    function safeSwapSmarDex(uint256 wethAmount) external {
-        if (msg.sender != address(this)) {
-            revert AutoSwapperUnauthorized();
-        }
-        _swapSmarDex(wethAmount);
-    }
-
     /**
      * @notice Executes a two-step swap: wstETH --> WETH --> SDEX.
      * @dev If the first swap fails, the second is skipped.
      * If the second swap fails, it is silently ignored.
      */
     function _processSwap() internal {
-        uint256 wstEthAmount = _wstETH.balanceOf(address(this));
+        uint256 wstEthAmount = WSTETH.balanceOf(address(this));
         if (wstEthAmount == 0) {
             revert AutoSwapperInvalidAmount();
         }
 
         try this.uniWstethToWeth(wstEthAmount) {
-            uint256 wethAmount = _wETH.balanceOf(address(this));
-            try this.safeSwapSmarDex(wethAmount) {
+            uint256 wethAmount = WETH.balanceOf(address(this));
+            try this.smarDexWethToSdex(wethAmount) {
                 emit SuccessfulSwap(wstEthAmount);
             } catch {
                 emit FailedWEthSwap(wethAmount);
@@ -156,28 +122,26 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
     }
 
     function uniWstethToWeth(uint256 wstethAmount) external {
-        (int256 amount0, int256 amount1) = IUniswapV3Pool(_uniswapPair).swap(
+        (int256 amount0, int256 amount1) = IUniswapV3Pool(UNI_WSTETH_WETH_PAIR).swap(
             address(this),
-            ZERO_FOR_ONE,
+            UNISWAP_ZERO_FOR_ONE,
             int256(wstethAmount),
             TickMath.getSqrtRatioAtTick(0),
-            abi.encode(abi.encodePacked(_wstETH, _uniswapFeeTier, _wETH), msg.sender)
+            abi.encode(abi.encodePacked(WSTETH, UNISWAP_FEE_TIER, WETH), msg.sender)
         );
 
-        uint256 amountOut = uint256(-(ZERO_FOR_ONE ? amount1 : amount0));
+        uint256 amountOut = uint256(-(UNISWAP_ZERO_FOR_ONE ? amount1 : amount0));
         uint256 minAmountOut =
-            IWstETH(address(_wstETH)).getStETHByWstETH(wstethAmount) * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
+            IWstETH(address(WSTETH)).getStETHByWstETH(wstethAmount) * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
 
         require(amountOut >= minAmountOut);
     }
 
     function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
-        require(msg.sender == _uniswapPair, "Caller is not the Uniswap V3 pool");
-        require(amount0Delta > 0 || amount1Delta > 0);
+        require(msg.sender == UNI_WSTETH_WETH_PAIR, "Caller is not the Uniswap V3 pool");
 
         uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
-
-        _wstETH.transfer(msg.sender, amountToPay);
+        WSTETH.safeTransfer(msg.sender, amountToPay);
     }
 
     /**
@@ -185,10 +149,10 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
      * @dev Uses Permit2 for approvals, calculates minimum output with slippage protection
      * @param wethAmount Amount of WETH to swap
      */
-    function _swapSmarDex(uint256 wethAmount) internal {
+    function smarDexWethToSdex(uint256 wethAmount) external {
         SwapCallParams memory _params = SwapCallParams({
             balanceIn: wethAmount,
-            pair: ISmardexPair(_factory.getPair(address(_wETH), address(_smardexToken))),
+            pair: SMARDEX_WETH_SDEX_PAIR,
             fictiveReserve0: 0,
             fictiveReserve1: 0,
             oldPriceAv0: 0,
@@ -199,8 +163,9 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
         });
 
         // get reserves and pricesAv
-        (_params.fictiveReserve0, _params.fictiveReserve1) = _params.pair.getFictiveReserves();
-        (_params.oldPriceAv0, _params.oldPriceAv1, _params.oldPriceAvTimestamp) = _params.pair.getPriceAverage();
+        (_params.fictiveReserve0, _params.fictiveReserve1) = SMARDEX_WETH_SDEX_PAIR.getFictiveReserves();
+        (_params.oldPriceAv0, _params.oldPriceAv1, _params.oldPriceAvTimestamp) =
+            SMARDEX_WETH_SDEX_PAIR.getPriceAverage();
 
         (_params.newPriceAvIn, _params.newPriceAvOut) = SmardexLibrary.getUpdatedPriceAverage(
             _params.fictiveReserve1,
@@ -211,7 +176,7 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
             block.timestamp
         );
 
-        (uint256 reservesOut, uint256 reservesIn) = _params.pair.getReserves();
+        (uint256 reservesOut, uint256 reservesIn) = SMARDEX_WETH_SDEX_PAIR.getReserves();
 
         SmardexLibrary.GetAmountParameters memory smardexParams = SmardexLibrary.GetAmountParameters({
             amount: wethAmount,
@@ -221,26 +186,27 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
             fictiveReserveOut: _params.fictiveReserve0,
             priceAverageIn: _params.newPriceAvOut,
             priceAverageOut: _params.newPriceAvIn,
-            feesLP: _smardexFeesLP,
-            feesPool: _smardexFeesPool
+            feesLP: SMARDEX_FEE_LP,
+            feesPool: SMARDEX_FEE_POOL
         });
 
         (uint256 amountOut,,,,) = SmardexLibrary.getAmountOut(smardexParams);
         uint256 minAmountOut = amountOut * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
+        uint256 deadAddrBalanceBefore = SDEX.balanceOf(DEAD_ADDRESS);
 
-        if (minAmountOut == 0) {
-            revert AutoSwapperInvalidSlippageCalculation();
-        }
+        SMARDEX_WETH_SDEX_PAIR.swap(DEAD_ADDRESS, SMARDEX_ZERO_FOR_ONE, int256(wethAmount), "");
 
-        bytes memory commands = abi.encodePacked(SMARDEX_SWAP_EXACT_IN);
-        bytes[] memory inputs = new bytes[](1);
-
-        inputs[0] = abi.encode(
-            BURN_ADDRESS, wethAmount, minAmountOut, abi.encodePacked(address(_wETH), address(_smardexToken)), true
+        require(
+            IERC20(SDEX).balanceOf(DEAD_ADDRESS) - deadAddrBalanceBefore >= minAmountOut,
+            "AutoSwapper: SmarDex swap failed"
         );
+    }
 
-        _permit2Approve(_wETH, address(_router), wethAmount);
-        _router.execute(commands, inputs);
+    function smardexSwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
+        require(msg.sender == address(SMARDEX_WETH_SDEX_PAIR), "SmarDexRouter: INVALID_PAIR");
+
+        uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
+        IERC20(WETH).safeTransfer(msg.sender, amountToPay);
     }
 
     /// @inheritdoc IAutoSwapper
@@ -251,19 +217,19 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
         if (path.length == 0) {
             revert AutoSwapperInvalidPath();
         }
-        if (path[path.length - 1] != address(_smardexToken)) {
+        if (path[path.length - 1] != address(SDEX)) {
             revert AutoSwapperInvalidLastToken();
         }
 
         IERC20 inputToken = IERC20(path[0]);
-        inputToken.transferFrom(msg.sender, address(this), amountToSwap);
+        inputToken.safeTransferFrom(msg.sender, address(this), amountToSwap);
 
         bytes memory commands = abi.encodePacked(command);
         bytes[] memory inputs = new bytes[](1);
 
-        inputs[0] = abi.encode(BURN_ADDRESS, amountToSwap, amountOutMin, abi.encodePacked(path[0], path[1]), true);
+        inputs[0] = abi.encode(DEAD_ADDRESS, amountToSwap, amountOutMin, abi.encodePacked(path[0], path[1]), true);
 
-        _permit2Approve(_wETH, address(_router), amountToSwap);
+        _permit2Approve(WETH, address(_router), amountToSwap);
         _router.execute(commands, inputs);
     }
 
