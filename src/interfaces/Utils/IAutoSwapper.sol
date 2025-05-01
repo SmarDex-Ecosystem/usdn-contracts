@@ -3,22 +3,25 @@ pragma solidity 0.8.26;
 
 import { ISmardexPair } from "@smardex-dex-contracts/contracts/ethereum/core/v2/interfaces/ISmardexPair.sol";
 
+/**
+ * @title IAutoSwapper
+ * @notice Interface for the AutoSwapper contract that provides automated token swapping functionality.
+ * @dev Handles token swaps via SmarDex and Uniswap V3 with price protection mechanisms.
+ */
 interface IAutoSwapper {
     /**
-     * @notice swap parameters used by function _swapAndSend.
-     * @param zeroForOne true if we swap the token0 with token1, false otherwise.
-     * @param balanceIn balance of in-token to be swapped.
-     * @param pair pair address.
-     * @param fictiveReserve0 fictive reserve of token0 of the pair.
-     * @param fictiveReserve1 fictive reserve of token1 of the pair.
-     * @param oldPriceAv0 priceAverage of token0 of the pair before the swap.
-     * @param oldPriceAv1 priceAverage of token1 of the pair before the swap.
-     * @param oldPriceAvTimestamp priceAverageLastTimestamp of the pair before the swap.
-     * @param newPriceAvIn priceAverage of token0 of the pair after the swap.
-     * @param newPriceAvOut priceAverage of token1 of the pair after the swap.
+     * @notice Swap parameters used by function _swapAndSend.
+     * @param balanceIn Balance of in-token to be swapped.
+     * @param pair Pair address.
+     * @param fictiveReserve0 Fictive reserve of token0 of the pair.
+     * @param fictiveReserve1 Fictive reserve of token1 of the pair.
+     * @param oldPriceAv0 Price average of token0 of the pair before the swap.
+     * @param oldPriceAv1 Price average of token1 of the pair before the swap.
+     * @param oldPriceAvTimestamp Price average of last timestamp of the pair before the swap.
+     * @param newPriceAvIn Price average of token0 of the pair after the swap.
+     * @param newPriceAvOut Price average of token1 of the pair after the swap.
      */
     struct SwapCallParams {
-        bool zeroForOne;
         uint256 balanceIn;
         ISmardexPair pair;
         uint256 fictiveReserve0;
@@ -31,11 +34,12 @@ interface IAutoSwapper {
     }
 
     /**
-     * @notice onlyOwner function to swap token in SDEX.
-     * @param amountToSwap amount of tokens from _path[0] to be converted into SDEX.
+     * @notice Function to swap token in SDEX.
+     * @dev Can only be called by the owner.
+     * @param amountToSwap Amount of tokens from _path[0] to be converted into SDEX.
      * @param amountOutMin The minimum SDEX amount required to prevent the transaction from reverting.
      * @param path An array of token addresses.
-     * @param command instruction for router to excecute.
+     * @param command Instruction for router to excecute.
      */
     function swapTokenWithPath(uint256 amountToSwap, uint256 amountOutMin, address[] calldata path, uint8 command)
         external;
@@ -54,19 +58,19 @@ interface IAutoSwapper {
 
     /**
      * @notice Updates the Uniswap V3 fee tier used when constructing the swap path.
-     * @param feeTier The new fee tier (in hundredths of a bip, e.g. 500 = 0.05%).
+     * @param feeTier The new fee tier.
      */
     function updateUniswapFeeTier(uint24 feeTier) external;
 
     /**
      * @notice Updates the address of the Uniswap pool used for TWAP calculations.
-     * @param newPair The new Uniswap pool address. Must not be the zero address.
+     * @param newPair The new Uniswap pool address.
      */
     function updateUniswapPair(address newPair) external;
 
     /**
      * @notice Updates the TWAP interval used for price calculations.
-     * @param newTwapInterval The new interval in seconds. Must be greater than zero.
+     * @param newTwapInterval The new interval in seconds.
      */
     function updateTwapInterval(uint32 newTwapInterval) external;
 
