@@ -13,7 +13,6 @@ import { ISmardexPair } from "@smardex-dex-contracts/contracts/ethereum/core/v2/
 import { SmardexLibrary } from "@smardex-dex-contracts/contracts/ethereum/core/v2/libraries/SmardexLibrary.sol";
 import { ISmardexRouter } from "@smardex-dex-contracts/contracts/ethereum/periphery/interfaces/ISmardexRouterV2.sol";
 import { IUniversalRouter } from "@smardex-universal-router/src/interfaces/IUniversalRouter.sol";
-
 import { IAllowanceTransfer } from "@uniswap/permit2/src/interfaces/IAllowanceTransfer.sol";
 // to do : check this import
 import { IUniswapV3Pool } from "@uniswapV3/contracts/interfaces/IUniswapV3Pool.sol";
@@ -22,8 +21,11 @@ import { FullMath } from "@uniswapV3/contracts/libraries/FullMath.sol";
 import { SqrtPriceMath } from "@uniswapV3/contracts/libraries/SqrtPriceMath.sol";
 import { TickMath } from "@uniswapV3/contracts/libraries/TickMath.sol";
 
+import { IWstETH } from "./../interfaces/IWstETH.sol";
 import { IFeeCollectorCallback } from "./../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
 import { IAutoSwapper } from "./../interfaces/Utils/IAutoSwapper.sol";
+
+import { console } from "forge-std/Test.sol";
 
 /**
  * @title AutoSwapper
@@ -37,8 +39,7 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice Base denominator for slippage calculation (e.g., 100 = 100%).
-    uint256 private constant AUTOSWAP_SLIPPAGE_BASE = 100;
+    uint16 internal constant BPS_DIVISOR = 10_000;
 
     /// @notice Uniswap V3 command code for exact input swap.
     uint8 private constant V3_SWAP_EXACT_IN = 0x00;
@@ -81,7 +82,7 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
     address internal _uniswapPair;
 
     /// @notice Allowed slippage percentage for Uniswap V3 swaps.
-    uint256 internal _swapSlippage = 2; // 2%
+    uint256 internal _swapSlippage = 100; // 1%
 
     /// @notice SmarDex LP fee (700 = 0.07% of FEES_BASE 1,000,000)
     uint128 internal _smardexFeesLP = 700;
@@ -90,7 +91,7 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
     uint128 internal _smardexFeesPool = 200;
 
     /// @notice Fee tier used for Uniswap V3 path.
-    uint24 internal _uniswapFeeTier = 100; // 0.01% fee tier
+    uint24 internal _uniswapFeeTier = 1; // 0.01% fee tier
 
     /// @notice Time interval (in seconds) used for TWAP calculation.
     uint32 internal _twapInterval = 300; // 5 min
@@ -131,7 +132,7 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
     }
 
     /// @inheritdoc IFeeCollectorCallback
-    function feeCollectorCallback(uint256 amount) external override nonReentrant {
+    function feeCollectorCallback(uint256) external override nonReentrant {
         _processSwap();
     }
 
@@ -174,9 +175,29 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
         }
     }
 
-    function exactInputSingle() external {
-        uint256 amountOut;
-        // require(amountOut >= amountOutMin);
+    function exactInputSingle(uint256 wstethAmount) external {
+        (int256 amount0, int256 amount1) = IUniswapV3Pool(_uniswapPair).swap(
+            address(this),
+            ZERO_FOR_ONE,
+            int256(wstethAmount),
+            TickMath.getSqrtRatioAtTick(0),
+            abi.encode(abi.encodePacked(_wstETH, _uniswapFeeTier, _wETH), msg.sender)
+        );
+
+        uint256 amountOut = uint256(-(ZERO_FOR_ONE ? amount1 : amount0));
+        uint256 minAmountOut =
+            IWstETH(address(_wstETH)).getStETHByWstETH(wstethAmount) * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
+
+        require(amountOut >= minAmountOut);
+    }
+
+    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
+        require(msg.sender == _uniswapPair, "Caller is not the Uniswap V3 pool");
+        require(amount0Delta > 0 || amount1Delta > 0);
+
+        uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
+
+        _wstETH.transfer(msg.sender, amountToPay);
     }
 
     /**
@@ -186,7 +207,7 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
      */
     function _swapV3(uint256 wstEthAmount) internal {
         uint256 expectedOutput = _getTwapAmountOut(_uniswapPair, uint128(wstEthAmount));
-        uint256 minAmountOut = (expectedOutput * (AUTOSWAP_SLIPPAGE_BASE - _swapSlippage)) / AUTOSWAP_SLIPPAGE_BASE;
+        uint256 minAmountOut = (expectedOutput * (BPS_DIVISOR - _swapSlippage)) / BPS_DIVISOR;
 
         bytes memory commands = abi.encodePacked(V3_SWAP_EXACT_IN);
         bytes memory path = abi.encodePacked(address(_wstETH), _uniswapFeeTier, address(_wETH));
@@ -244,7 +265,7 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
         });
 
         (uint256 amountOut,,,,) = SmardexLibrary.getAmountOut(smardexParams);
-        uint256 minAmountOut = amountOut * (AUTOSWAP_SLIPPAGE_BASE - _swapSlippage) / AUTOSWAP_SLIPPAGE_BASE;
+        uint256 minAmountOut = amountOut * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
 
         if (minAmountOut == 0) {
             revert AutoSwapperInvalidSlippageCalculation();

@@ -32,7 +32,7 @@ contract TestAutoSwapper is Test {
     address uniswapPair = 0x109830a1AAaD605BbF02a9dFA7B0B92EC2FB7dAa;
 
     function setUp() public {
-        vm.createSelectFork("https://ethereum.publicnode.com/", 22_329_656);
+        vm.createSelectFork("https://ethereum.publicnode.com/");
 
         user = makeAddr("user_one");
 
