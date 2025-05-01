@@ -63,7 +63,7 @@ contract TestAutoSwapper is Test {
      * @custom:scenario Test the AutoSwapper's full swap execution via processSwap
      * @custom:given The contract holds wstETH and is configured correctly
      * @custom:when processSwap is called with a valid amount
-     * @custom:then It should perform both swaps and emit the `sucessfullSwap` event
+     * @custom:then It should perform both swaps and emit the `SuccessfulSwap` event
      */
     function test_processSwap_emitsEventAndBurnsTokens() public {
         uint256 amountToSwap = 5 ether;
@@ -74,7 +74,7 @@ contract TestAutoSwapper is Test {
 
         //Expect the success event
         vm.expectEmit(true, false, false, true);
-        emit IAutoSwapper.SucessfullSwap(amountToSwap);
+        emit IAutoSwapper.SuccessfulSwap(amountToSwap);
 
         vm.prank(address(this));
         swapper.feeCollectorCallback(amountToSwap);

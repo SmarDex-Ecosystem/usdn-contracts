@@ -45,34 +45,10 @@ interface IAutoSwapper {
         external;
 
     /**
-     * @notice Swaps wstETH to WETH via Uniswap V3.
-     * @param wstEthAmount Amount of wstETH to swap.
-     */
-    function safeSwapV3(uint256 wstEthAmount) external;
-
-    /**
      * @notice Swaps WETH to SDEX via the Universal Router.
      * @param wethAmount Amount of wstETH to swap.
      */
     function safeSwapSmarDex(uint256 wethAmount) external;
-
-    /**
-     * @notice Updates the Uniswap V3 fee tier used when constructing the swap path.
-     * @param feeTier The new fee tier.
-     */
-    function updateUniswapFeeTier(uint24 feeTier) external;
-
-    /**
-     * @notice Updates the address of the Uniswap pool used for TWAP calculations.
-     * @param newPair The new Uniswap pool address.
-     */
-    function updateUniswapPair(address newPair) external;
-
-    /**
-     * @notice Updates the TWAP interval used for price calculations.
-     * @param newTwapInterval The new interval in seconds.
-     */
-    function updateTwapInterval(uint32 newTwapInterval) external;
 
     /**
      * @notice Updates the allowed slippage percentage for swaps.
@@ -80,18 +56,6 @@ interface IAutoSwapper {
      * @dev Reverts if the provided slippage is zero.
      */
     function updateSwapSlippage(uint256 swapSlippage) external;
-
-    /**
-     * @notice Updates the SmarDex LP fee.
-     * @param newFeesLP New LP fee.
-     */
-    function updateSmardexFeesLP(uint128 newFeesLP) external;
-
-    /**
-     * @notice Updates the SmarDex protocol fee.
-     * @param newFeesPool New protocol fee.
-     */
-    function updateSmardexFeesPool(uint128 newFeesPool) external;
 
     /* -------------------------------------------------------------------------- */
     /*                                   Events                                   */
@@ -101,7 +65,7 @@ interface IAutoSwapper {
      * @notice Emitted when the swap from wstETH to SDEX completes successfully.
      * @param wstEthAmount The amount of wstETH that was swapped.
      */
-    event SucessfullSwap(uint256 wstEthAmount);
+    event SuccessfulSwap(uint256 wstEthAmount);
 
     /**
      * @notice Emitted when the swap from wstETH to WETH fails.

@@ -7,25 +7,18 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-
 import { ISmardexFactory } from "@smardex-dex-contracts/contracts/ethereum/core/v2/interfaces/ISmardexFactory.sol";
 import { ISmardexPair } from "@smardex-dex-contracts/contracts/ethereum/core/v2/interfaces/ISmardexPair.sol";
 import { SmardexLibrary } from "@smardex-dex-contracts/contracts/ethereum/core/v2/libraries/SmardexLibrary.sol";
-import { ISmardexRouter } from "@smardex-dex-contracts/contracts/ethereum/periphery/interfaces/ISmardexRouterV2.sol";
 import { IUniversalRouter } from "@smardex-universal-router/src/interfaces/IUniversalRouter.sol";
 import { IAllowanceTransfer } from "@uniswap/permit2/src/interfaces/IAllowanceTransfer.sol";
 // to do : check this import
 import { IUniswapV3Pool } from "@uniswapV3/contracts/interfaces/IUniswapV3Pool.sol";
-import { FixedPoint96 } from "@uniswapV3/contracts/libraries/FixedPoint96.sol";
-import { FullMath } from "@uniswapV3/contracts/libraries/FullMath.sol";
-import { SqrtPriceMath } from "@uniswapV3/contracts/libraries/SqrtPriceMath.sol";
 import { TickMath } from "@uniswapV3/contracts/libraries/TickMath.sol";
 
 import { IWstETH } from "./../interfaces/IWstETH.sol";
 import { IFeeCollectorCallback } from "./../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
 import { IAutoSwapper } from "./../interfaces/Utils/IAutoSwapper.sol";
-
-import { console } from "forge-std/Test.sol";
 
 /**
  * @title AutoSwapper
@@ -93,11 +86,6 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
     /// @notice Fee tier used for Uniswap V3 path.
     uint24 internal _uniswapFeeTier = 1; // 0.01% fee tier
 
-    /// @notice Time interval (in seconds) used for TWAP calculation.
-    uint32 internal _twapInterval = 300; // 5 min
-
-    // @todo think about short usdn and check if its compatible with wUSDN, if its possible look into
-
     /**
      * @param wstETH Address of the wstETH token.
      * @param wETH Address of the WETH token.
@@ -137,14 +125,6 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
     }
 
     /// @inheritdoc IAutoSwapper
-    function safeSwapV3(uint256 wstEthAmount) external {
-        if (msg.sender != address(this)) {
-            revert AutoSwapperUnauthorized();
-        }
-        _swapV3(wstEthAmount);
-    }
-
-    /// @inheritdoc IAutoSwapper
     function safeSwapSmarDex(uint256 wethAmount) external {
         if (msg.sender != address(this)) {
             revert AutoSwapperUnauthorized();
@@ -163,10 +143,10 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
             revert AutoSwapperInvalidAmount();
         }
 
-        try this.safeSwapV3(wstEthAmount) {
+        try this.uniWstethToWeth(wstEthAmount) {
             uint256 wethAmount = _wETH.balanceOf(address(this));
             try this.safeSwapSmarDex(wethAmount) {
-                emit SucessfullSwap(wstEthAmount);
+                emit SuccessfulSwap(wstEthAmount);
             } catch {
                 emit FailedWEthSwap(wethAmount);
             }
@@ -175,7 +155,7 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
         }
     }
 
-    function exactInputSingle(uint256 wstethAmount) external {
+    function uniWstethToWeth(uint256 wstethAmount) external {
         (int256 amount0, int256 amount1) = IUniswapV3Pool(_uniswapPair).swap(
             address(this),
             ZERO_FOR_ONE,
@@ -198,25 +178,6 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
         uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
 
         _wstETH.transfer(msg.sender, amountToPay);
-    }
-
-    /**
-     * @notice Swaps wstETH for WETH using Uniswap V3.
-     * @dev Uses TWAP for price calculation with slippage protection.
-     * @param wstEthAmount Amount of wstETH to swap.
-     */
-    function _swapV3(uint256 wstEthAmount) internal {
-        uint256 expectedOutput = _getTwapAmountOut(_uniswapPair, uint128(wstEthAmount));
-        uint256 minAmountOut = (expectedOutput * (BPS_DIVISOR - _swapSlippage)) / BPS_DIVISOR;
-
-        bytes memory commands = abi.encodePacked(V3_SWAP_EXACT_IN);
-        bytes memory path = abi.encodePacked(address(_wstETH), _uniswapFeeTier, address(_wETH));
-
-        bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(address(this), wstEthAmount, minAmountOut, path, true);
-
-        _permit2Approve(_wstETH, address(_router), wstEthAmount);
-        _router.execute(commands, inputs, block.timestamp);
     }
 
     /**
@@ -307,41 +268,6 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
     }
 
     /**
-     * @notice Calculates the TWAP-based output amount for a given input amount.
-     * @param pool The address of the Uniswap V3 pool to query.
-     * @param amountIn The input token amount.
-     * @return amountOut_ The estimated output amount based on TWAP.
-     */
-    function _getTwapAmountOut(address pool, uint128 amountIn) internal view returns (uint256 amountOut_) {
-        if (_twapInterval == 0) {
-            revert AutoSwapperInvalidTwapInterval();
-        }
-
-        // Get tick cumulative values for current and past time
-        uint32[] memory secondsAgos = new uint32[](2);
-        secondsAgos[0] = _twapInterval;
-        secondsAgos[1] = 0; // now
-
-        (int56[] memory tickCumulatives,) = IUniswapV3Pool(pool).observe(secondsAgos);
-
-        int56 tickDelta = tickCumulatives[1] - tickCumulatives[0];
-        int24 averageTick = int24(tickDelta / int56(uint56(_twapInterval)));
-
-        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(averageTick);
-        amountOut_ = _getQuoteAtSqrtPrice(amountIn, sqrtPriceX96);
-    }
-
-    /**
-     * @notice Quotes the token output amount using a Uniswap sqrt price.
-     * @param amountIn The input token amount.
-     * @param sqrtPriceX96 The sqrt price as a Q64.96 fixed-point value.
-     * @return The quoted output amount.
-     */
-    function _getQuoteAtSqrtPrice(uint256 amountIn, uint160 sqrtPriceX96) internal pure returns (uint256) {
-        return FullMath.mulDiv(amountIn, sqrtPriceX96, FixedPoint96.Q96);
-    }
-
-    /**
      * @notice Approves the Permit2 contract to transfer tokens and grants Permit2 approval to a spender.
      * @dev Uses SafeCast to ensure proper type conversion for Permit2.
      * @param token The ERC20 token to approve.
@@ -354,56 +280,11 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
     }
 
     /// @inheritdoc IAutoSwapper
-    function updateTwapInterval(uint32 newTwapInterval) external onlyOwner {
-        if (newTwapInterval == 0) {
-            revert AutoSwapperInvalidTwapInterval();
-        }
-        _twapInterval = newTwapInterval;
-        emit TwapIntervalUpdated(newTwapInterval);
-    }
-
-    /// @inheritdoc IAutoSwapper
-    function updateUniswapPair(address newPair) external onlyOwner {
-        if (newPair == address(0)) {
-            revert AutoSwapperInvalidPairAddress();
-        }
-        _uniswapPair = newPair;
-        emit UniswapPairUpdated(newPair);
-    }
-
-    /// @inheritdoc IAutoSwapper
-    function updateUniswapFeeTier(uint24 newFeeTier) external onlyOwner {
-        if (newFeeTier == 0) {
-            revert AutoSwapperInvalidUniswapFee();
-        }
-        _uniswapFeeTier = newFeeTier;
-        emit UniswapFeeTierUpdated(newFeeTier);
-    }
-
-    /// @inheritdoc IAutoSwapper
     function updateSwapSlippage(uint256 newSwapSlippage) external onlyOwner {
         if (newSwapSlippage == 0) {
             revert AutoSwapperInvalidSwapSlippage();
         }
         _swapSlippage = newSwapSlippage;
         emit SwapSlippageUpdated(newSwapSlippage);
-    }
-
-    /// @inheritdoc IAutoSwapper
-    function updateSmardexFeesLP(uint128 newFeesLP) external onlyOwner {
-        if (newFeesLP + _smardexFeesPool >= SmardexLibrary.FEES_MAX) {
-            revert AutoSwapperFeesExceedMaximum();
-        }
-        _smardexFeesLP = newFeesLP;
-        emit SmardexFeesLPUpdated(newFeesLP);
-    }
-
-    /// @inheritdoc IAutoSwapper
-    function updateSmardexFeesPool(uint128 newFeesPool) external onlyOwner {
-        if (newFeesPool + _smardexFeesPool >= SmardexLibrary.FEES_MAX) {
-            revert AutoSwapperFeesExceedMaximum();
-        }
-        _smardexFeesPool = newFeesPool;
-        emit SmardexFeesPoolUpdated(newFeesPool);
     }
 }
