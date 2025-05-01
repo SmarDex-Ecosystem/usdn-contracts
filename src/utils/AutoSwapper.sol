@@ -15,6 +15,7 @@ import { ISmardexRouter } from "@smardex-dex-contracts/contracts/ethereum/periph
 import { IUniversalRouter } from "@smardex-universal-router/src/interfaces/IUniversalRouter.sol";
 
 import { IAllowanceTransfer } from "@uniswap/permit2/src/interfaces/IAllowanceTransfer.sol";
+// to do : check this import
 import { IUniswapV3Pool } from "@uniswapV3/contracts/interfaces/IUniswapV3Pool.sol";
 import { FixedPoint96 } from "@uniswapV3/contracts/libraries/FixedPoint96.sol";
 import { FullMath } from "@uniswapV3/contracts/libraries/FullMath.sol";
@@ -70,6 +71,8 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
     /// @notice SmarDex factory used to fetch trading pairs for swaps.
     ISmardexFactory internal immutable _factory;
 
+    bool internal ZERO_FOR_ONE;
+
     /* -------------------------------------------------------------------------- */
     /*                          Admin Configurable Params                         */
     /* -------------------------------------------------------------------------- */
@@ -116,6 +119,7 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
         _router = IUniversalRouter(router);
         _factory = ISmardexFactory(factory);
         _uniswapPair = uniswapPair;
+        ZERO_FOR_ONE = _wstETH < _wETH;
     }
 
     /// @inheritdoc ERC165
@@ -170,6 +174,11 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
         }
     }
 
+    function exactInputSingle() external {
+        uint256 amountOut;
+        // require(amountOut >= amountOutMin);
+    }
+
     /**
      * @notice Swaps wstETH for WETH using Uniswap V3.
      * @dev Uses TWAP for price calculation with slippage protection.
@@ -196,7 +205,6 @@ contract AutoSwapper is Ownable2Step, ReentrancyGuard, IAutoSwapper, IFeeCollect
      */
     function _swapSmarDex(uint256 wethAmount) internal {
         SwapCallParams memory _params = SwapCallParams({
-            zeroForOne: _wETH < _smardexToken,
             balanceIn: wethAmount,
             pair: ISmardexPair(_factory.getPair(address(_wETH), address(_smardexToken))),
             fictiveReserve0: 0,
