@@ -7,7 +7,6 @@ import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ISmardexPair } from "@smardex-dex-contracts/contracts/ethereum/core/v2/interfaces/ISmardexPair.sol";
 import { SmardexLibrary } from "@smardex-dex-contracts/contracts/ethereum/core/v2/libraries/SmardexLibrary.sol";
-// to do : check this import
 import { IUniswapV3Pool } from "@uniswapV3/contracts/interfaces/IUniswapV3Pool.sol";
 
 import { IWstETH } from "./../interfaces/IWstETH.sol";
@@ -61,7 +60,7 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
     ISmardexPair constant SMARDEX_WETH_SDEX_PAIR = ISmardexPair(0xf3a4B8eFe3e3049F6BC71B47ccB7Ce6665420179);
 
     /// @notice Uniswap V3 pair address for WSTETH/WETH swaps.
-    address internal constant UNI_WSTETH_WETH_PAIR = 0x109830a1AAaD605BbF02a9dFA7B0B92EC2FB7dAa;
+    IUniswapV3Pool internal constant UNI_WSTETH_WETH_PAIR = IUniswapV3Pool(0x109830a1AAaD605BbF02a9dFA7B0B92EC2FB7dAa);
 
     /// @notice SmarDex fee for LP.
     uint128 internal constant SMARDEX_FEE_LP = 500;
@@ -95,25 +94,12 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
         }
     }
 
-    /// @inheritdoc ERC165
-    function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
-        if (interfaceId == type(IFeeCollectorCallback).interfaceId) {
-            return true;
-        }
-        return super.supportsInterface(interfaceId);
-    }
-
     /// @inheritdoc IAutoSwapperWstethSdex
     function uniWstethToWeth(uint256 wstethAmount) external {
         require(msg.sender == address(this), AutoSwapperInvalidCaller());
 
-        (int256 amount0, int256 amount1) = IUniswapV3Pool(UNI_WSTETH_WETH_PAIR).swap(
-            address(this),
-            UNISWAP_ZERO_FOR_ONE,
-            int256(wstethAmount),
-            UNISWAP_SQRT_RATIO,
-            abi.encode(abi.encodePacked(WSTETH, UNISWAP_FEE_TIER, WETH), msg.sender)
-        );
+        (int256 amount0, int256 amount1) =
+            UNI_WSTETH_WETH_PAIR.swap(address(this), UNISWAP_ZERO_FOR_ONE, int256(wstethAmount), UNISWAP_SQRT_RATIO, "");
 
         uint256 wethAmountOut = uint256(-(UNISWAP_ZERO_FOR_ONE ? amount1 : amount0));
         uint256 minWethAmount =
@@ -124,7 +110,7 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
 
     /// @inheritdoc IAutoSwapperWstethSdex
     function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
-        require(msg.sender == UNI_WSTETH_WETH_PAIR, AutoSwapperInvalidCaller());
+        require(msg.sender == address(UNI_WSTETH_WETH_PAIR), AutoSwapperInvalidCaller());
 
         uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
         WSTETH.safeTransfer(msg.sender, amountToPay);
@@ -134,30 +120,17 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
     function smarDexWethToSdex(uint256 wethAmount) external {
         require(msg.sender == address(this), AutoSwapperInvalidCaller());
 
-        SwapCallParams memory _params = SwapCallParams({
-            balanceIn: wethAmount,
-            pair: SMARDEX_WETH_SDEX_PAIR,
-            fictiveReserve0: 0,
-            fictiveReserve1: 0,
-            oldPriceAv0: 0,
-            oldPriceAv1: 0,
-            oldPriceAvTimestamp: 0,
-            newPriceAvIn: 0,
-            newPriceAvOut: 0
-        });
+        uint256 newPriceAvIn;
+        uint256 newPriceAvOut;
+        (uint256 fictiveReserve0, uint256 fictiveReserve1) = SMARDEX_WETH_SDEX_PAIR.getFictiveReserves();
+        {
+            (uint256 oldPriceAv0, uint256 oldPriceAv1, uint256 oldPriceAvTimestamp) =
+                SMARDEX_WETH_SDEX_PAIR.getPriceAverage();
 
-        (_params.fictiveReserve0, _params.fictiveReserve1) = SMARDEX_WETH_SDEX_PAIR.getFictiveReserves();
-        (_params.oldPriceAv0, _params.oldPriceAv1, _params.oldPriceAvTimestamp) =
-            SMARDEX_WETH_SDEX_PAIR.getPriceAverage();
-
-        (_params.newPriceAvIn, _params.newPriceAvOut) = SmardexLibrary.getUpdatedPriceAverage(
-            _params.fictiveReserve1,
-            _params.fictiveReserve0,
-            _params.oldPriceAvTimestamp,
-            _params.oldPriceAv1,
-            _params.oldPriceAv0,
-            block.timestamp
-        );
+            (newPriceAvIn, newPriceAvOut) = SmardexLibrary.getUpdatedPriceAverage(
+                fictiveReserve1, fictiveReserve0, oldPriceAvTimestamp, oldPriceAv1, oldPriceAv0, block.timestamp
+            );
+        }
 
         (uint256 reservesOut, uint256 reservesIn) = SMARDEX_WETH_SDEX_PAIR.getReserves();
 
@@ -165,10 +138,10 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
             amount: wethAmount,
             reserveIn: reservesIn,
             reserveOut: reservesOut,
-            fictiveReserveIn: _params.fictiveReserve1,
-            fictiveReserveOut: _params.fictiveReserve0,
-            priceAverageIn: _params.newPriceAvOut,
-            priceAverageOut: _params.newPriceAvIn,
+            fictiveReserveIn: fictiveReserve1,
+            fictiveReserveOut: fictiveReserve0,
+            priceAverageIn: newPriceAvOut,
+            priceAverageOut: newPriceAvIn,
             feesLP: SMARDEX_FEE_LP,
             feesPool: SMARDEX_FEE_POOL
         });
@@ -180,14 +153,14 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
             SMARDEX_WETH_SDEX_PAIR.swap(DEAD_ADDRESS, SMARDEX_ZERO_FOR_ONE, int256(wethAmount), "");
         uint256 sdexAmount = uint256(-(SMARDEX_ZERO_FOR_ONE ? amount1 : amount0));
 
-        require(sdexAmount >= minSdexAmount, "AutoSwapper: SmarDex swap failed");
+        require(sdexAmount >= minSdexAmount, AutoSwapperSwapFailed());
 
         emit SuccessfulSwap(sdexAmount);
     }
 
     /// @inheritdoc IAutoSwapperWstethSdex
     function smardexSwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
-        require(msg.sender == address(SMARDEX_WETH_SDEX_PAIR), "SmarDexRouter: INVALID_PAIR");
+        require(msg.sender == address(SMARDEX_WETH_SDEX_PAIR), AutoSwapperInvalidCaller());
 
         uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
         IERC20(WETH).safeTransfer(msg.sender, amountToPay);
@@ -200,10 +173,16 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
 
     /// @inheritdoc IAutoSwapperWstethSdex
     function updateSwapSlippage(uint256 newSwapSlippage) external onlyOwner {
-        if (newSwapSlippage == 0) {
-            revert AutoSwapperInvalidSwapSlippage();
-        }
+        require(newSwapSlippage > 0, AutoSwapperInvalidSwapSlippage());
         _swapSlippage = newSwapSlippage;
         emit SwapSlippageUpdated(newSwapSlippage);
+    }
+
+    /// @inheritdoc ERC165
+    function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
+        if (interfaceId == type(IFeeCollectorCallback).interfaceId) {
+            return true;
+        }
+        return super.supportsInterface(interfaceId);
     }
 }
