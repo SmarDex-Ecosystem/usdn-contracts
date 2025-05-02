@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.26;
+pragma solidity 0.8.27;
 
-import { Test, console } from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IUniversalRouter } from "@smardex-universal-router/src/interfaces/IUniversalRouter.sol";
-import { IAllowanceTransfer } from "@uniswap/permit2/src/interfaces/IAllowanceTransfer.sol";
 
-import { IAutoSwapper } from "../../../src/interfaces/Utils/IAutoSwapper.sol";
-import { AutoSwapper } from "../../../src/utils/AutoSwapper.sol";
+import { IAutoSwapperWstethSdex } from "../../../src/interfaces/Utils/IAutoSwapperWstethSdex.sol";
+import { AutoSwapperWstethSdex } from "../../../src/utils/AutoSwapperWstethSdex.sol";
 
 /**
  * @custom:feature The callback function of the `FeeCollector` contract
@@ -16,7 +15,7 @@ import { AutoSwapper } from "../../../src/utils/AutoSwapper.sol";
  */
 contract TestAutoSwapper is Test {
     IUniversalRouter public router;
-    AutoSwapper public swapper;
+    AutoSwapperWstethSdex public swapper;
 
     IERC20 public wstETH;
     IERC20 public wETH;
@@ -30,6 +29,7 @@ contract TestAutoSwapper is Test {
     address BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
     address smardexFactory = 0xB878DC600550367e14220d4916Ff678fB284214F;
     address uniswapPair = 0x109830a1AAaD605BbF02a9dFA7B0B92EC2FB7dAa;
+    address constant USDN_PROTOCOL = 0x656cB8C6d154Aad29d8771384089be5B5141f01a;
 
     function setUp() public {
         vm.createSelectFork("https://ethereum.publicnode.com/");
@@ -42,7 +42,7 @@ contract TestAutoSwapper is Test {
         sDEX = IERC20(sDEXAddress);
 
         vm.prank(user);
-        swapper = new AutoSwapper(routerAddress);
+        swapper = new AutoSwapperWstethSdex();
 
         vm.startPrank(address(swapper));
         wstETH.approve(address(router), type(uint256).max);
@@ -73,37 +73,11 @@ contract TestAutoSwapper is Test {
         wstETH.transfer(address(swapper), amountToSwap);
 
         //Expect the success event
-        vm.expectEmit(true, false, false, true);
-        emit IAutoSwapper.SuccessfulSwap(amountToSwap);
+        vm.expectEmit(false, false, false, false);
+        emit IAutoSwapperWstethSdex.SuccessfulSwap(1);
 
-        vm.prank(address(this));
+        vm.prank(USDN_PROTOCOL);
         swapper.feeCollectorCallback(amountToSwap);
-
-        uint256 finalBurnAddressBalance = IERC20(sDEXAddress).balanceOf(BURN_ADDRESS);
-        assertGt(finalBurnAddressBalance, initialBurnAddressBalance, "Swap did not increase burn address SDEX balance");
-    }
-
-    /**
-     * @custom:scenario Test the owner's ability to swap tokens via the swapTokenWithPath function
-     * @custom:given The owner has WETH tokens and wants to swap them for SDEX
-     * @custom:when The owner transfers WETH to the router and calls swapTokenWithPath with the correct path
-     * @custom:then The swap should execute successfully and route the tokens through SmarDex
-     */
-    function test_swapTokenWithPath() public {
-        uint256 initialBurnAddressBalance = IERC20(sDEXAddress).balanceOf(BURN_ADDRESS);
-
-        vm.startPrank(user);
-
-        wETH.transfer(address(router), 1 ether);
-
-        // Prepare path
-        address[] memory path = new address[](2);
-        path[0] = wETHAddress;
-        path[1] = sDEXAddress;
-
-        swapper.swapTokenWithPath(1 ether, 0, path, 0x38);
-
-        vm.stopPrank();
 
         uint256 finalBurnAddressBalance = IERC20(sDEXAddress).balanceOf(BURN_ADDRESS);
         assertGt(finalBurnAddressBalance, initialBurnAddressBalance, "Swap did not increase burn address SDEX balance");
