@@ -4,7 +4,6 @@ pragma solidity >=0.8.0;
 /**
  * @title IAutoSwapperWstethSdex
  * @notice Interface for the AutoSwapperWstethSdex contract that provides automated token swapping functionality.
- * @dev Handles token swaps via SmarDex and Uniswap V3 with price protection mechanisms.
  */
 interface IAutoSwapperWstethSdex {
     /// @notice Swaps wstETH for WETH on Uniswap V3.
@@ -30,11 +29,10 @@ interface IAutoSwapperWstethSdex {
     function smardexSwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata data) external;
 
     /**
-     * @notice Admin function to send tokens to a specified address.
+     * @notice Admin function to send the contract token balance to a specified address.
      * @param token The address of the token to send.
-     * @param to The address to send the tokens.
+     * @param to The recipient address.
      * @param amount The amount of tokens to send.
-     * @dev Can only be called by the contract owner.
      */
     function sweep(address token, address to, uint256 amount) external;
 
@@ -43,8 +41,7 @@ interface IAutoSwapperWstethSdex {
 
     /**
      * @notice Updates the allowed slippage percentage for swaps.
-     * @param swapSlippage The new slippage value (in percent, e.g., 2 for 2%).
-     * @dev Reverts if the provided slippage is zero.
+     * @param swapSlippage The new slippage value (in BPS).
      */
     function updateSwapSlippage(uint256 swapSlippage) external;
 
@@ -60,7 +57,7 @@ interface IAutoSwapperWstethSdex {
 
     /**
      * @notice Emitted when the swap slippage percentage is updated.
-     * @param newSwapSlippage The new swap slippage percentage.
+     * @param newSwapSlippage The new swap slippage (in BPS).
      */
     event SwapSlippageUpdated(uint256 newSwapSlippage);
 
