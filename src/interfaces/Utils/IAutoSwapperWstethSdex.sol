@@ -7,11 +7,8 @@ pragma solidity >=0.8.0;
  * @dev Handles token swaps via SmarDex and Uniswap V3 with price protection mechanisms.
  */
 interface IAutoSwapperWstethSdex {
-    /**
-     * @notice Swaps wstETH for WETH on Uniswap V3.
-     * @param wstethAmount The amount of wstETH to swap.
-     */
-    function uniWstethToWeth(uint256 wstethAmount) external;
+    /// @notice Swaps wstETH for WETH on Uniswap V3.
+    function uniWstethToWeth() external;
 
     /**
      * @notice Callback function for Uniswap V3 swaps.
@@ -21,11 +18,8 @@ interface IAutoSwapperWstethSdex {
      */
     function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata data) external;
 
-    /**
-     * @notice Swaps WETH for SDEX token using the SmarDex protocol.
-     * @param wethAmount The amount of WETH to swap.
-     */
-    function smarDexWethToSdex(uint256 wethAmount) external;
+    /// @notice Swaps WETH for SDEX token using the SmarDex protocol.
+    function smarDexWethToSdex() external;
 
     /**
      * @notice Callback function for SmarDex swaps.
@@ -58,12 +52,6 @@ interface IAutoSwapperWstethSdex {
     /*                                   Events                                   */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @notice Emitted when the swap from wstETH to SDEX completes successfully.
-     * @param wstEthAmount The amount of wstETH that was swapped.
-     */
-    event SuccessfulSwap(uint256 wstEthAmount);
-
     /// @notice Emitted when the swap from wstETH to WETH fails.
     event FailedWstEthSwap();
 
@@ -79,9 +67,6 @@ interface IAutoSwapperWstethSdex {
     /* -------------------------------------------------------------------------- */
     /*                                   Errors                                   */
     /* -------------------------------------------------------------------------- */
-
-    /// @notice Thrown when a swap is attempted with zero amount.
-    error AutoSwapperInvalidAmount();
 
     /// @notice Thrown when a swap fails.
     error AutoSwapperSwapFailed();

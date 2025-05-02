@@ -83,15 +83,15 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
     }
 
     /// @inheritdoc IAutoSwapperWstethSdex
-    function uniWstethToWeth(uint256 wstethAmount) external {
+    function uniWstethToWeth() external {
         require(msg.sender == address(this), AutoSwapperInvalidCaller());
+        uint256 wstEthAmount = WSTETH.balanceOf(address(this));
 
         (int256 amount0, int256 amount1) =
-            UNI_WSTETH_WETH_PAIR.swap(address(this), UNISWAP_ZERO_FOR_ONE, int256(wstethAmount), UNISWAP_SQRT_RATIO, "");
+            UNI_WSTETH_WETH_PAIR.swap(address(this), UNISWAP_ZERO_FOR_ONE, int256(wstEthAmount), UNISWAP_SQRT_RATIO, "");
 
         uint256 wethAmountOut = uint256(-(UNISWAP_ZERO_FOR_ONE ? amount1 : amount0));
-        uint256 minWethAmount =
-            IWstETH(address(WSTETH)).getStETHByWstETH(wstethAmount) * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
+        uint256 minWethAmount = WSTETH.getStETHByWstETH(wstEthAmount) * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
 
         require(wethAmountOut >= minWethAmount);
     }
@@ -105,8 +105,9 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
     }
 
     /// @inheritdoc IAutoSwapperWstethSdex
-    function smarDexWethToSdex(uint256 wethAmount) external {
+    function smarDexWethToSdex() external {
         require(msg.sender == address(this), AutoSwapperInvalidCaller());
+        uint256 wethAmount = WETH.balanceOf(address(this));
 
         uint256 newPriceAvIn;
         uint256 newPriceAvOut;
@@ -121,20 +122,20 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
         }
 
         (uint256 reservesOut, uint256 reservesIn) = SMARDEX_WETH_SDEX_PAIR.getReserves();
+        (uint256 amountOut,,,,) = SmardexLibrary.getAmountOut(
+            SmardexLibrary.GetAmountParameters({
+                amount: wethAmount,
+                reserveIn: reservesIn,
+                reserveOut: reservesOut,
+                fictiveReserveIn: fictiveReserve1,
+                fictiveReserveOut: fictiveReserve0,
+                priceAverageIn: newPriceAvOut,
+                priceAverageOut: newPriceAvIn,
+                feesLP: SMARDEX_FEE_LP,
+                feesPool: SMARDEX_FEE_POOL
+            })
+        );
 
-        SmardexLibrary.GetAmountParameters memory smardexParams = SmardexLibrary.GetAmountParameters({
-            amount: wethAmount,
-            reserveIn: reservesIn,
-            reserveOut: reservesOut,
-            fictiveReserveIn: fictiveReserve1,
-            fictiveReserveOut: fictiveReserve0,
-            priceAverageIn: newPriceAvOut,
-            priceAverageOut: newPriceAvIn,
-            feesLP: SMARDEX_FEE_LP,
-            feesPool: SMARDEX_FEE_POOL
-        });
-
-        (uint256 amountOut,,,,) = SmardexLibrary.getAmountOut(smardexParams);
         uint256 minSdexAmount = amountOut * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
 
         (int256 amount0, int256 amount1) =
@@ -142,8 +143,6 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
         uint256 sdexAmount = uint256(-(SMARDEX_ZERO_FOR_ONE ? amount1 : amount0));
 
         require(sdexAmount >= minSdexAmount, AutoSwapperSwapFailed());
-
-        emit SuccessfulSwap(sdexAmount);
     }
 
     /// @inheritdoc IAutoSwapperWstethSdex
@@ -151,7 +150,7 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
         require(msg.sender == address(SMARDEX_WETH_SDEX_PAIR), AutoSwapperInvalidCaller());
 
         uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
-        IERC20(WETH).safeTransfer(msg.sender, amountToPay);
+        WETH.safeTransfer(msg.sender, amountToPay);
     }
 
     /// @inheritdoc IAutoSwapperWstethSdex
@@ -181,12 +180,8 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
 
     /// @notice Attempts to swap WSTETH to SDEX via Uniswap V3 and SmarDex.
     function _trySwap() internal {
-        uint256 wstEthAmount = WSTETH.balanceOf(address(this));
-        require(wstEthAmount > 0, AutoSwapperInvalidAmount());
-
-        try this.uniWstethToWeth(wstEthAmount) {
-            uint256 wethAmount = WETH.balanceOf(address(this));
-            try this.smarDexWethToSdex(wethAmount) { }
+        try this.uniWstethToWeth() {
+            try this.smarDexWethToSdex() { }
             catch {
                 emit FailedWEthSwap();
             }
