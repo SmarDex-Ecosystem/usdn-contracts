@@ -44,6 +44,9 @@ interface IAutoSwapperWstethSdex {
      */
     function sweep(address token, address to, uint256 amount) external;
 
+    /// @notice Initiates a swap from wstETH to SDEX.
+    function forceSwap() external;
+
     /**
      * @notice Updates the allowed slippage percentage for swaps.
      * @param swapSlippage The new slippage value (in percent, e.g., 2 for 2%).

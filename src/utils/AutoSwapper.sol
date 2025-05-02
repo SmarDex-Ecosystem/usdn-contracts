@@ -79,19 +79,7 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
     /// @inheritdoc IFeeCollectorCallback
     function feeCollectorCallback(uint256) external {
         require(msg.sender == address(USDN_PROTOCOL), AutoSwapperInvalidCaller());
-
-        uint256 wstEthAmount = WSTETH.balanceOf(address(this));
-        require(wstEthAmount > 0, AutoSwapperInvalidAmount());
-
-        try this.uniWstethToWeth(wstEthAmount) {
-            uint256 wethAmount = WETH.balanceOf(address(this));
-            try this.smarDexWethToSdex(wethAmount) { }
-            catch {
-                emit FailedWEthSwap();
-            }
-        } catch {
-            emit FailedWstEthSwap();
-        }
+        _trySwap();
     }
 
     /// @inheritdoc IAutoSwapperWstethSdex
@@ -172,6 +160,11 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
     }
 
     /// @inheritdoc IAutoSwapperWstethSdex
+    function forceSwap() external onlyOwner {
+        _trySwap();
+    }
+
+    /// @inheritdoc IAutoSwapperWstethSdex
     function updateSwapSlippage(uint256 newSwapSlippage) external onlyOwner {
         require(newSwapSlippage > 0, AutoSwapperInvalidSwapSlippage());
         _swapSlippage = newSwapSlippage;
@@ -184,5 +177,21 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
             return true;
         }
         return super.supportsInterface(interfaceId);
+    }
+
+    /// @notice Attempts to swap WSTETH to SDEX via Uniswap V3 and SmarDex.
+    function _trySwap() internal {
+        uint256 wstEthAmount = WSTETH.balanceOf(address(this));
+        require(wstEthAmount > 0, AutoSwapperInvalidAmount());
+
+        try this.uniWstethToWeth(wstEthAmount) {
+            uint256 wethAmount = WETH.balanceOf(address(this));
+            try this.smarDexWethToSdex(wethAmount) { }
+            catch {
+                emit FailedWEthSwap();
+            }
+        } catch {
+            emit FailedWstEthSwap();
+        }
     }
 }
