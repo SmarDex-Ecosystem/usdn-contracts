@@ -103,6 +103,7 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
         return super.supportsInterface(interfaceId);
     }
 
+    /// @inheritdoc IAutoSwapperWstethSdex
     function uniWstethToWeth(uint256 wstethAmount) external {
         require(msg.sender == address(this), AutoSwapperInvalidCaller());
 
@@ -121,6 +122,7 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
         require(wethAmountOut >= minWethAmount);
     }
 
+    /// @inheritdoc IAutoSwapperWstethSdex
     function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
         require(msg.sender == UNI_WSTETH_WETH_PAIR, AutoSwapperInvalidCaller());
 
@@ -128,11 +130,7 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
         WSTETH.safeTransfer(msg.sender, amountToPay);
     }
 
-    /**
-     * @notice Swaps WETH for SDEX token using the SmarDex protocol
-     * @dev Uses Permit2 for approvals, calculates minimum output with slippage protection
-     * @param wethAmount Amount of WETH to swap
-     */
+    /// @inheritdoc IAutoSwapperWstethSdex
     function smarDexWethToSdex(uint256 wethAmount) external {
         require(msg.sender == address(this), AutoSwapperInvalidCaller());
 
@@ -180,13 +178,14 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
 
         (int256 amount0, int256 amount1) =
             SMARDEX_WETH_SDEX_PAIR.swap(DEAD_ADDRESS, SMARDEX_ZERO_FOR_ONE, int256(wethAmount), "");
-        uint256 sdexAmount =  uint256(-(SMARDEX_ZERO_FOR_ONE ? amount1 : amount0));
+        uint256 sdexAmount = uint256(-(SMARDEX_ZERO_FOR_ONE ? amount1 : amount0));
 
         require(sdexAmount >= minSdexAmount, "AutoSwapper: SmarDex swap failed");
 
         emit SuccessfulSwap(sdexAmount);
     }
 
+    /// @inheritdoc IAutoSwapperWstethSdex
     function smardexSwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
         require(msg.sender == address(SMARDEX_WETH_SDEX_PAIR), "SmarDexRouter: INVALID_PAIR");
 
@@ -194,6 +193,7 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
         IERC20(WETH).safeTransfer(msg.sender, amountToPay);
     }
 
+    /// @inheritdoc IAutoSwapperWstethSdex
     function sweep(address token, address to, uint256 amount) external onlyOwner {
         IERC20(token).safeTransfer(to, amount);
     }
