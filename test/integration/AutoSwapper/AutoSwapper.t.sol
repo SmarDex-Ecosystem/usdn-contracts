@@ -72,10 +72,6 @@ contract TestAutoSwapper is Test {
         vm.prank(user);
         wstETH.transfer(address(swapper), amountToSwap);
 
-        //Expect the success event
-        // vm.expectEmit(false, false, false, false);
-        // emit IAutoSwapperWstethSdex.SuccessfulSwap(1);
-
         vm.prank(USDN_PROTOCOL);
         swapper.feeCollectorCallback(amountToSwap);
 
