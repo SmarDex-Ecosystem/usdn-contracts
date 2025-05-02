@@ -7,7 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"
 import { IUniversalRouter } from "@smardex-universal-router/src/interfaces/IUniversalRouter.sol";
 
 import { IAutoSwapperWstethSdex } from "../../../src/interfaces/Utils/IAutoSwapperWstethSdex.sol";
-import { AutoSwapperWstethSdex } from "../../../src/utils/AutoSwapperWstethSdex.sol";
+import { AutoSwapperWstethSdex } from "../../../src/utils/AutoSwapper.sol";
 
 /**
  * @custom:feature The callback function of the `FeeCollector` contract
