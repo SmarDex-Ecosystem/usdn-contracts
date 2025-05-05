@@ -13,7 +13,7 @@ import { AutoSwapperWstethSdex } from "../../../src/utils/AutoSwapperWstethSdex.
  * @custom:feature The `AutoSwapperWstethSdex` contract
  * @custom:background Given a `AutoSwapperWstethSdex` contract and a forked mainnet
  */
-contract TestAutoSwapperWstethSdex is Test {
+contract TestForkAutoSwapperWstethSdex is Test {
     AutoSwapperWstethSdex public autoSwapper;
 
     address constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
@@ -46,16 +46,17 @@ contract TestAutoSwapperWstethSdex is Test {
         autoSwapper.feeCollectorCallback(1);
         vm.stopPrank();
 
+        assertEq(WSTETH.balanceOf(address(autoSwapper)), 0, "wstETH balance not zero");
+        assertEq(WETH.balanceOf(address(autoSwapper)), 0, "WETH balance not zero");
+        assertEq(SDEX.balanceOf(address(autoSwapper)), 0, "SDEX balance not zero");
         assertGt(
             SDEX.balanceOf(BURN_ADDRESS), initialBurnAddressBalance, "Swap did not increase burn address SDEX balance"
         );
-        assertEq(WSTETH.balanceOf(address(autoSwapper)), 0, "wstETH balance not zero");
-        assertEq(WETH.balanceOf(address(autoSwapper)), 0, "WETH balance not zero");
     }
 
     /**
      * @custom:scenario Test the `Ownable` access control of the AutoSwapper
-     * @custom:when the `sweep`, `forceSwap`, and `updateSwapSlippage` functions are called
+     * @custom:when the `sweep` and `updateSwapSlippage` functions are called
      * @custom:then It should revert with the `OwnableUnauthorizedAccount` error
      */
     function test_ForkAdmin() public {
@@ -66,9 +67,6 @@ contract TestAutoSwapperWstethSdex is Test {
         autoSwapper.sweep(address(0), address(0), 1);
 
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, user));
-        autoSwapper.forceSwap();
-
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, user));
         autoSwapper.updateSwapSlippage(1);
 
         vm.stopPrank();
@@ -76,19 +74,12 @@ contract TestAutoSwapperWstethSdex is Test {
 
     /**
      * @custom:scenario Test the external function calls of the AutoSwapper
-     * @custom:when the `swapWstethToSdex`, `smarDexWethToSdex`, and `smardexSwapCallback` functions are called
+     * @custom:when the `uniswapV3SwapCallback` and `smardexSwapCallback` functions are called
      * @custom:then it should revert with the `AutoSwapperInvalidCaller` error
-     * @custom:and the `feeCollectorCallback` function should revert with the same error
      */
     function test_ForkInvalidCaller() public {
         address user = vm.addr(1);
         vm.startPrank(user);
-
-        vm.expectRevert(IAutoSwapperWstethSdex.AutoSwapperInvalidCaller.selector);
-        autoSwapper.feeCollectorCallback(1);
-
-        vm.expectRevert(IAutoSwapperWstethSdex.AutoSwapperInvalidCaller.selector);
-        autoSwapper.swapWstethToSdex();
 
         vm.expectRevert(IAutoSwapperWstethSdex.AutoSwapperInvalidCaller.selector);
         autoSwapper.uniswapV3SwapCallback(1, 1, "");

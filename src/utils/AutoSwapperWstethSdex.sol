@@ -88,8 +88,6 @@ contract AutoSwapperWstethSdex is
 
     /// @inheritdoc IFeeCollectorCallback
     function feeCollectorCallback(uint256) external {
-        require(msg.sender == USDN_PROTOCOL, AutoSwapperInvalidCaller());
-
         try this.swapWstethToSdex() { }
         catch {
             emit FailedSwap();
@@ -98,8 +96,6 @@ contract AutoSwapperWstethSdex is
 
     /// @inheritdoc IAutoSwapperWstethSdex
     function swapWstethToSdex() external {
-        require(msg.sender == address(this), AutoSwapperInvalidCaller());
-
         _uniWstethToWeth();
         _smarDexWethToSdex();
     }
@@ -126,11 +122,6 @@ contract AutoSwapperWstethSdex is
     }
 
     /// @inheritdoc IAutoSwapperWstethSdex
-    function forceSwap() external onlyOwner {
-        this.swapWstethToSdex();
-    }
-
-    /// @inheritdoc IAutoSwapperWstethSdex
     function updateSwapSlippage(uint256 newSwapSlippage) external onlyOwner {
         require(newSwapSlippage > 0, AutoSwapperInvalidSwapSlippage());
         _swapSlippage = newSwapSlippage;
@@ -148,7 +139,6 @@ contract AutoSwapperWstethSdex is
 
     /// @notice Swaps wstETH for WETH on Uniswap V3.
     function _uniWstethToWeth() internal {
-        require(msg.sender == address(this), AutoSwapperInvalidCaller());
         uint256 wstEthAmount = WSTETH.balanceOf(address(this));
 
         (int256 amount0, int256 amount1) =
