@@ -10,6 +10,7 @@ import { ISmardexSwapCallback } from
     "@smardex-dex-contracts/contracts/ethereum/core/v2/interfaces/ISmardexSwapCallback.sol";
 import { SmardexLibrary } from "@smardex-dex-contracts/contracts/ethereum/core/v2/libraries/SmardexLibrary.sol";
 import { IUniswapV3Pool } from "@uniswapV3/contracts/interfaces/IUniswapV3Pool.sol";
+import { IUniswapV3SwapCallback } from "@uniswapV3/contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
 
 import { IWstETH } from "./../interfaces/IWstETH.sol";
 import { IFeeCollectorCallback } from "./../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
@@ -24,7 +25,8 @@ contract AutoSwapperWstethSdex is
     IAutoSwapperWstethSdex,
     IFeeCollectorCallback,
     ERC165,
-    ISmardexSwapCallback
+    ISmardexSwapCallback,
+    IUniswapV3SwapCallback
 {
     using SafeERC20 for IERC20;
     using SafeERC20 for IWstETH;
@@ -104,7 +106,7 @@ contract AutoSwapperWstethSdex is
         require(wethAmountOut >= minWethAmount);
     }
 
-    /// @inheritdoc IAutoSwapperWstethSdex
+    /// @inheritdoc IUniswapV3SwapCallback
     function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
         require(msg.sender == address(UNI_WSTETH_WETH_PAIR), AutoSwapperInvalidCaller());
 

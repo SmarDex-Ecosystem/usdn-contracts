@@ -9,14 +9,6 @@ interface IAutoSwapperWstethSdex {
     /// @notice Swaps wstETH for WETH on Uniswap V3.
     function uniWstethToWeth() external;
 
-    /**
-     * @notice Callback function for Uniswap V3 swaps.
-     * @param amount0Delta The amount of token0 swapped.
-     * @param amount1Delta The amount of token1 swapped.
-     * @param data Additional data passed to the callback.
-     */
-    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata data) external;
-
     /// @notice Swaps WETH for SDEX token using the SmarDex protocol.
     function smarDexWethToSdex() external;
 
