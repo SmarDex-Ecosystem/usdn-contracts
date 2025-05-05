@@ -25,7 +25,7 @@ interface IAutoSwapperWstethSdex {
 
     /**
      * @notice Updates the allowed slippage percentage for swaps.
-     * @param swapSlippage The new slippage value (in BPS).
+     * @param swapSlippage The new slippage value (in basis points).
      */
     function updateSwapSlippage(uint256 swapSlippage) external;
 
@@ -38,7 +38,7 @@ interface IAutoSwapperWstethSdex {
 
     /**
      * @notice Emitted when the swap slippage percentage is updated.
-     * @param newSwapSlippage The new swap slippage (in BPS).
+     * @param newSwapSlippage The new swap slippage (in basis points).
      */
     event SwapSlippageUpdated(uint256 newSwapSlippage);
 
