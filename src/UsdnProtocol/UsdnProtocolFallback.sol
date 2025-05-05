@@ -14,6 +14,8 @@ import { IBaseLiquidationRewardsManager } from
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../interfaces/Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
+import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "../interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "../utils/InitializableReentrancyGuard.sol";
@@ -26,6 +28,8 @@ import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVault
 
 contract UsdnProtocolFallback is
     IUsdnProtocolFallback,
+    IUsdnProtocolErrors,
+    IUsdnProtocolEvents,
     InitializableReentrancyGuard,
     PausableUpgradeable,
     AccessControlDefaultAdminRulesUpgradeable

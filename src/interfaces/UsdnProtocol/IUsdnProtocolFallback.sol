@@ -8,15 +8,13 @@ import { IBaseLiquidationRewardsManager } from "../LiquidationRewardsManager/IBa
 import { IBaseOracleMiddleware } from "../OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IBaseRebalancer } from "../Rebalancer/IBaseRebalancer.sol";
 import { IUsdn } from "../Usdn/IUsdn.sol";
-import { IUsdnProtocolErrors } from "./IUsdnProtocolErrors.sol";
-import { IUsdnProtocolEvents } from "./IUsdnProtocolEvents.sol";
 import { IUsdnProtocolTypes } from "./IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolFallback
  * @notice Interface for the USDN protocol fallback functions
  */
-interface IUsdnProtocolFallback is IUsdnProtocolTypes, IUsdnProtocolEvents, IUsdnProtocolErrors {
+interface IUsdnProtocolFallback is IUsdnProtocolTypes {
     /**
      * @notice Retrieves the list of pending actions that must be validated by the next user action in the protocol.
      * @dev If this function returns a non-empty list of pending actions, then the next user action MUST include the
