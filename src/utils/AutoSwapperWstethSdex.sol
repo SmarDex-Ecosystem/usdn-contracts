@@ -35,11 +35,11 @@ contract AutoSwapperWstethSdex is
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice Decimal points for basis points (in basis points).
+    /// @notice Decimal points for basis points (bps).
     uint16 internal constant BPS_DIVISOR = 10_000;
 
     /// @notice Dead address for burning tokens.
-    address internal constant DEAD_ADDRESS = 0x000000000000000000000000000000000000dEaD;
+    address internal constant DEAD_ADDRESS = address(0xdead);
 
     /// @notice USDN protocol address.
     address constant USDN_PROTOCOL = 0x656cB8C6d154Aad29d8771384089be5B5141f01a;
@@ -67,7 +67,7 @@ contract AutoSwapperWstethSdex is
         : 1_461_446_703_485_210_103_287_273_052_203_988_822_378_723_970_342 - 1;
 
     /// @notice SmarDex pair address for WETH/SDEX swaps.
-    ISmardexPair constant SMARDEX_WETH_SDEX_PAIR = ISmardexPair(0xf3a4B8eFe3e3049F6BC71B47ccB7Ce6665420179);
+    ISmardexPair internal constant SMARDEX_WETH_SDEX_PAIR = ISmardexPair(0xf3a4B8eFe3e3049F6BC71B47ccB7Ce6665420179);
 
     /// @notice Uniswap V3 pair address for WSTETH/WETH swaps.
     IUniswapV3Pool internal constant UNI_WSTETH_WETH_PAIR = IUniswapV3Pool(0x109830a1AAaD605BbF02a9dFA7B0B92EC2FB7dAa);
@@ -88,7 +88,7 @@ contract AutoSwapperWstethSdex is
 
     /// @inheritdoc IFeeCollectorCallback
     function feeCollectorCallback(uint256) external {
-        require(msg.sender == address(USDN_PROTOCOL), AutoSwapperInvalidCaller());
+        require(msg.sender == USDN_PROTOCOL, AutoSwapperInvalidCaller());
 
         try this.swapWstethToSdex() { }
         catch {
@@ -157,7 +157,7 @@ contract AutoSwapperWstethSdex is
         uint256 wethAmountOut = uint256(-(UNISWAP_ZERO_FOR_ONE ? amount1 : amount0));
         uint256 minWethAmount = WSTETH.getStETHByWstETH(wstEthAmount) * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
 
-        require(wethAmountOut >= minWethAmount);
+        require(wethAmountOut >= minWethAmount, AutoSwapperSwapFailed());
     }
 
     /// @notice Swaps WETH for SDEX token using the SmarDex protocol.
