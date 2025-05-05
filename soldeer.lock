@@ -48,13 +48,6 @@ checksum = "01e5cabc6e7f5b7e4300956cf872693a3f04bd7349c0059feb5b98b5c3d9b339"
 integrity = "7edabc9154bf7675c5f947f80c8d91f00ab5b6a4242c9dd0477176f6669be46d"
 
 [[dependencies]]
-name = "@smardex-universal-router"
-version = "1.0.0"
-url = "https://soldeer-revisions.s3.amazonaws.com/@smardex-universal-router/1_0_0_07-04-2025_16:26:03_universal-router.zip"
-checksum = "03f79570089b54362392b71d60ab1fd63a0e38ab4d379804526abdbaf3137d0b"
-integrity = "b7ab757a6ac9152fe4c0b6d34216a9ff53ae56f101db03c48e0f0cfb6673befa"
-
-[[dependencies]]
 name = "@uniswap-permit2"
 version = "1.0.0"
 url = "https://github.com/Uniswap/permit2/archive/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219.zip"
