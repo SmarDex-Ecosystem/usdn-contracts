@@ -89,11 +89,65 @@ contract AutoSwapperWstethSdex is
     /// @inheritdoc IFeeCollectorCallback
     function feeCollectorCallback(uint256) external {
         require(msg.sender == address(USDN_PROTOCOL), AutoSwapperInvalidCaller());
-        _trySwap();
+
+        try this.swapWstethToSdex() { }
+        catch {
+            emit FailedSwap();
+        }
     }
 
     /// @inheritdoc IAutoSwapperWstethSdex
-    function uniWstethToWeth() external {
+    function swapWstethToSdex() external {
+        require(msg.sender == address(this), AutoSwapperInvalidCaller());
+
+        _uniWstethToWeth();
+        _smarDexWethToSdex();
+    }
+
+    /// @inheritdoc IUniswapV3SwapCallback
+    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
+        require(msg.sender == address(UNI_WSTETH_WETH_PAIR), AutoSwapperInvalidCaller());
+
+        uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
+        WSTETH.safeTransfer(msg.sender, amountToPay);
+    }
+
+    /// @inheritdoc ISmardexSwapCallback
+    function smardexSwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
+        require(msg.sender == address(SMARDEX_WETH_SDEX_PAIR), AutoSwapperInvalidCaller());
+
+        uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
+        WETH.safeTransfer(msg.sender, amountToPay);
+    }
+
+    /// @inheritdoc IAutoSwapperWstethSdex
+    function sweep(address token, address to, uint256 amount) external onlyOwner {
+        IERC20(token).safeTransfer(to, amount);
+    }
+
+    /// @inheritdoc IAutoSwapperWstethSdex
+    function forceSwap() external onlyOwner {
+        this.swapWstethToSdex();
+    }
+
+    /// @inheritdoc IAutoSwapperWstethSdex
+    function updateSwapSlippage(uint256 newSwapSlippage) external onlyOwner {
+        require(newSwapSlippage > 0, AutoSwapperInvalidSwapSlippage());
+        _swapSlippage = newSwapSlippage;
+        emit SwapSlippageUpdated(newSwapSlippage);
+    }
+
+    /// @inheritdoc ERC165
+    function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
+        if (interfaceId == type(IFeeCollectorCallback).interfaceId) {
+            return true;
+        }
+
+        return super.supportsInterface(interfaceId);
+    }
+
+    /// @notice Swaps wstETH for WETH on Uniswap V3.
+    function _uniWstethToWeth() internal {
         require(msg.sender == address(this), AutoSwapperInvalidCaller());
         uint256 wstEthAmount = WSTETH.balanceOf(address(this));
 
@@ -106,17 +160,8 @@ contract AutoSwapperWstethSdex is
         require(wethAmountOut >= minWethAmount);
     }
 
-    /// @inheritdoc IUniswapV3SwapCallback
-    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
-        require(msg.sender == address(UNI_WSTETH_WETH_PAIR), AutoSwapperInvalidCaller());
-
-        uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
-        WSTETH.safeTransfer(msg.sender, amountToPay);
-    }
-
-    /// @inheritdoc IAutoSwapperWstethSdex
-    function smarDexWethToSdex() external {
-        require(msg.sender == address(this), AutoSwapperInvalidCaller());
+    /// @notice Swaps WETH for SDEX token using the SmarDex protocol.
+    function _smarDexWethToSdex() internal {
         uint256 wethAmount = WETH.balanceOf(address(this));
 
         uint256 newPriceAvIn;
@@ -153,50 +198,5 @@ contract AutoSwapperWstethSdex is
         uint256 sdexAmount = uint256(-(SMARDEX_ZERO_FOR_ONE ? amount1 : amount0));
 
         require(sdexAmount >= minSdexAmount, AutoSwapperSwapFailed());
-    }
-
-    /// @inheritdoc ISmardexSwapCallback
-    function smardexSwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
-        require(msg.sender == address(SMARDEX_WETH_SDEX_PAIR), AutoSwapperInvalidCaller());
-
-        uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
-        WETH.safeTransfer(msg.sender, amountToPay);
-    }
-
-    /// @inheritdoc IAutoSwapperWstethSdex
-    function sweep(address token, address to, uint256 amount) external onlyOwner {
-        IERC20(token).safeTransfer(to, amount);
-    }
-
-    /// @inheritdoc IAutoSwapperWstethSdex
-    function forceSwap() external onlyOwner {
-        _trySwap();
-    }
-
-    /// @inheritdoc IAutoSwapperWstethSdex
-    function updateSwapSlippage(uint256 newSwapSlippage) external onlyOwner {
-        require(newSwapSlippage > 0, AutoSwapperInvalidSwapSlippage());
-        _swapSlippage = newSwapSlippage;
-        emit SwapSlippageUpdated(newSwapSlippage);
-    }
-
-    /// @inheritdoc ERC165
-    function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
-        if (interfaceId == type(IFeeCollectorCallback).interfaceId) {
-            return true;
-        }
-        return super.supportsInterface(interfaceId);
-    }
-
-    /// @notice Attempts to swap WSTETH to SDEX via Uniswap V3 and SmarDex.
-    function _trySwap() internal {
-        try this.uniWstethToWeth() {
-            try this.smarDexWethToSdex() { }
-            catch {
-                emit FailedWEthSwap();
-            }
-        } catch {
-            emit FailedWstEthSwap();
-        }
     }
 }

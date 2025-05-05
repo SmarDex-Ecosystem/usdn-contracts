@@ -6,11 +6,11 @@ pragma solidity >=0.8.0;
  * @notice Interface for the AutoSwapperWstethSdex contract that provides automated token swapping functionality.
  */
 interface IAutoSwapperWstethSdex {
-    /// @notice Swaps wstETH for WETH on Uniswap V3.
-    function uniWstethToWeth() external;
-
-    /// @notice Swaps WETH for SDEX token using the SmarDex protocol.
-    function smarDexWethToSdex() external;
+    /**
+     * @notice Swap wstETH to SDEX.
+     * @dev This function can only be called by the contract itself.
+     */
+    function swapWstethToSdex() external;
 
     /**
      * @notice Admin function to send the contract token balance to a specified address.
@@ -33,11 +33,8 @@ interface IAutoSwapperWstethSdex {
     /*                                   Events                                   */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice Emitted when the swap from wstETH to WETH fails.
-    event FailedWstEthSwap();
-
-    /// @notice Emitted when the swap from WETH to SDEX fails.
-    event FailedWEthSwap();
+    /// @notice Emitted when a swap fails.
+    event FailedSwap();
 
     /**
      * @notice Emitted when the swap slippage percentage is updated.

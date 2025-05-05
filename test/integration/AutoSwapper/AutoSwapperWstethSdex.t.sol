@@ -76,8 +76,7 @@ contract TestAutoSwapperWstethSdex is Test {
 
     /**
      * @custom:scenario Test the external function calls of the AutoSwapper
-     * @custom:when the `uniWstethToWeth`, `uniswapV3SwapCallback`, `smarDexWethToSdex`, and `smardexSwapCallback`
-     * functions are called
+     * @custom:when the `swapWstethToSdex`, `smarDexWethToSdex`, and `smardexSwapCallback` functions are called
      * @custom:then it should revert with the `AutoSwapperInvalidCaller` error
      * @custom:and the `feeCollectorCallback` function should revert with the same error
      */
@@ -89,13 +88,10 @@ contract TestAutoSwapperWstethSdex is Test {
         autoSwapper.feeCollectorCallback(1);
 
         vm.expectRevert(IAutoSwapperWstethSdex.AutoSwapperInvalidCaller.selector);
-        autoSwapper.uniWstethToWeth();
+        autoSwapper.swapWstethToSdex();
 
         vm.expectRevert(IAutoSwapperWstethSdex.AutoSwapperInvalidCaller.selector);
         autoSwapper.uniswapV3SwapCallback(1, 1, "");
-
-        vm.expectRevert(IAutoSwapperWstethSdex.AutoSwapperInvalidCaller.selector);
-        autoSwapper.smarDexWethToSdex();
 
         vm.expectRevert(IAutoSwapperWstethSdex.AutoSwapperInvalidCaller.selector);
         autoSwapper.smardexSwapCallback(1, 1, "");
