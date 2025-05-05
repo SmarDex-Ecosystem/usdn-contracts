@@ -6,6 +6,8 @@ import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/Saf
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ISmardexPair } from "@smardex-dex-contracts/contracts/ethereum/core/v2/interfaces/ISmardexPair.sol";
+import { ISmardexSwapCallback } from
+    "@smardex-dex-contracts/contracts/ethereum/core/v2/interfaces/ISmardexSwapCallback.sol";
 import { SmardexLibrary } from "@smardex-dex-contracts/contracts/ethereum/core/v2/libraries/SmardexLibrary.sol";
 import { IUniswapV3Pool } from "@uniswapV3/contracts/interfaces/IUniswapV3Pool.sol";
 
@@ -17,7 +19,13 @@ import { IAutoSwapperWstethSdex } from "./../interfaces/Utils/IAutoSwapperWsteth
  * @title AutoSwapperWstethSdex
  * @notice Automates protocol fee conversion from wstETH to SDEX via Uniswap V3 and Smardex.
  */
-contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeCollectorCallback, ERC165 {
+contract AutoSwapperWstethSdex is
+    Ownable2Step,
+    IAutoSwapperWstethSdex,
+    IFeeCollectorCallback,
+    ERC165,
+    ISmardexSwapCallback
+{
     using SafeERC20 for IERC20;
     using SafeERC20 for IWstETH;
 
@@ -145,7 +153,7 @@ contract AutoSwapperWstethSdex is Ownable2Step, IAutoSwapperWstethSdex, IFeeColl
         require(sdexAmount >= minSdexAmount, AutoSwapperSwapFailed());
     }
 
-    /// @inheritdoc IAutoSwapperWstethSdex
+    /// @inheritdoc ISmardexSwapCallback
     function smardexSwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
         require(msg.sender == address(SMARDEX_WETH_SDEX_PAIR), AutoSwapperInvalidCaller());
 

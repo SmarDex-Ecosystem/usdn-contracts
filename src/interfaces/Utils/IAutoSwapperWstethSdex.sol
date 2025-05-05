@@ -21,14 +21,6 @@ interface IAutoSwapperWstethSdex {
     function smarDexWethToSdex() external;
 
     /**
-     * @notice Callback function for SmarDex swaps.
-     * @param amount0Delta The amount of token0 swapped.
-     * @param amount1Delta The amount of token1 swapped.
-     * @param data Additional data passed to the callback.
-     */
-    function smardexSwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata data) external;
-
-    /**
      * @notice Admin function to send the contract token balance to a specified address.
      * @param token The address of the token to send.
      * @param to The recipient address.
