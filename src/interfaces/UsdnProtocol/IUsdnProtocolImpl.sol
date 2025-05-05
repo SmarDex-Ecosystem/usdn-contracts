@@ -7,6 +7,7 @@ import { IERC5267 } from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 
 import { IUsdnProtocolActions } from "./IUsdnProtocolActions.sol";
 import { IUsdnProtocolCore } from "./IUsdnProtocolCore.sol";
+import { IUsdnProtocolErrors } from "./IUsdnProtocolErrors.sol";
 import { IUsdnProtocolFallback } from "./IUsdnProtocolFallback.sol";
 import { IUsdnProtocolLong } from "./IUsdnProtocolLong.sol";
 import { IUsdnProtocolVault } from "./IUsdnProtocolVault.sol";
@@ -20,6 +21,7 @@ interface IUsdnProtocolImpl is
     IUsdnProtocolVault,
     IUsdnProtocolLong,
     IUsdnProtocolCore,
+    IUsdnProtocolErrors,
     IAccessControlDefaultAdminRules,
     IERC5267
 {

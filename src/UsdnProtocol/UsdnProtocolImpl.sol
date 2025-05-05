@@ -20,7 +20,6 @@ import { UsdnProtocolSettersLibrary as Setters } from "./libraries/UsdnProtocolS
 import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 
 contract UsdnProtocolImpl is
-    IUsdnProtocolErrors,
     IUsdnProtocolImpl,
     UsdnProtocolActions,
     UsdnProtocolCore,
