@@ -35,7 +35,7 @@ contract AutoSwapperWstethSdex is
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice Decimal points for basis points (BPS).
+    /// @notice Decimal points for basis points (in basis points).
     uint16 internal constant BPS_DIVISOR = 10_000;
 
     /// @notice Dead address for burning tokens.
@@ -78,7 +78,7 @@ contract AutoSwapperWstethSdex is
     /// @notice SmarDex fee for the pool.
     uint128 internal constant SMARDEX_FEE_POOL = 200;
 
-    /// @notice Fee tier used for Uniswap V3 path (in PIBS)
+    /// @notice Fee tier used for Uniswap V3 path (in pips)
     uint24 internal constant UNISWAP_FEE_TIER = 100; // 0.01% fee tier
 
     /// @notice Allowed slippage for swaps (in basis points).
