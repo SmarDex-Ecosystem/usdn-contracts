@@ -10,8 +10,8 @@ import { IAutoSwapperWstethSdex } from "../../../src/interfaces/Utils/IAutoSwapp
 import { AutoSwapperWstethSdex } from "../../../src/utils/AutoSwapperWstethSdex.sol";
 
 /**
- * @custom:feature The callback function of the `AutoSwapperWstethSdex` contract
- * @custom:background Given a `AutoSwapperWstethSdex` contract
+ * @custom:feature The `AutoSwapperWstethSdex` contract
+ * @custom:background Given a `AutoSwapperWstethSdex` contract and a forked mainnet
  */
 contract TestAutoSwapperWstethSdex is Test {
     AutoSwapperWstethSdex public autoSwapper;
