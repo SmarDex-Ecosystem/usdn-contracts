@@ -6,6 +6,24 @@ pragma solidity >=0.8.0;
  * @notice Interface for the AutoSwapperWstethSdex contract that provides automated token swapping functionality.
  */
 interface IAutoSwapperWstethSdex {
+    /// @notice Emitted when a swap fails.
+    event FailedSwap();
+
+    /**
+     * @notice Emitted when the swap slippage percentage is updated.
+     * @param newSwapSlippage The new swap slippage (in basis points).
+     */
+    event SwapSlippageUpdated(uint256 newSwapSlippage);
+
+    /// @notice Thrown when a swap fails.
+    error AutoSwapperSwapFailed();
+
+    /// @notice Thrown when slippage configuration is invalid.
+    error AutoSwapperInvalidSwapSlippage();
+
+    /// @notice Thrown when the caller is not authorized to perform the operation.
+    error AutoSwapperInvalidCaller();
+
     /**
      * @notice Swap wstETH to SDEX.
      * @dev This function can only be called by the contract itself.
@@ -28,30 +46,4 @@ interface IAutoSwapperWstethSdex {
      * @param swapSlippage The new slippage value (in basis points).
      */
     function updateSwapSlippage(uint256 swapSlippage) external;
-
-    /* -------------------------------------------------------------------------- */
-    /*                                   Events                                   */
-    /* -------------------------------------------------------------------------- */
-
-    /// @notice Emitted when a swap fails.
-    event FailedSwap();
-
-    /**
-     * @notice Emitted when the swap slippage percentage is updated.
-     * @param newSwapSlippage The new swap slippage (in basis points).
-     */
-    event SwapSlippageUpdated(uint256 newSwapSlippage);
-
-    /* -------------------------------------------------------------------------- */
-    /*                                   Errors                                   */
-    /* -------------------------------------------------------------------------- */
-
-    /// @notice Thrown when a swap fails.
-    error AutoSwapperSwapFailed();
-
-    /// @notice Thrown when slippage configuration is invalid.
-    error AutoSwapperInvalidSwapSlippage();
-
-    /// @notice Thrown when the caller is not authorized to perform the operation.
-    error AutoSwapperInvalidCaller();
 }
