@@ -6,14 +6,13 @@ import { Test } from "forge-std/Test.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IUniversalRouter } from "@smardex-universal-router/src/interfaces/IUniversalRouter.sol";
 
-import { IAutoSwapperWstethSdex } from "../../../src/interfaces/Utils/IAutoSwapperWstethSdex.sol";
-import { AutoSwapperWstethSdex } from "../../../src/utils/AutoSwapper.sol";
+import { AutoSwapperWstethSdex } from "../../../src/utils/AutoSwapperWstethSdex.sol";
 
 /**
- * @custom:feature The callback function of the `FeeCollector` contract
- * @custom:background Given a `FeeCollector` contract
+ * @custom:feature The callback function of the `AutoSwapperWstethSdex` contract
+ * @custom:background Given a `AutoSwapperWstethSdex` contract
  */
-contract TestAutoSwapper is Test {
+contract TestAutoSwapperWstethSdex is Test {
     IUniversalRouter public router;
     AutoSwapperWstethSdex public swapper;
 
