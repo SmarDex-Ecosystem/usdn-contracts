@@ -42,7 +42,7 @@ contract AutoSwapperWstethSdex is
     address internal constant DEAD_ADDRESS = address(0xdead);
 
     /// @notice USDN protocol address.
-    address constant USDN_PROTOCOL = 0x656cB8C6d154Aad29d8771384089be5B5141f01a;
+    address internal constant USDN_PROTOCOL = 0x656cB8C6d154Aad29d8771384089be5B5141f01a;
 
     /// @notice Wrapped staked ETH token address.
     IWstETH internal constant WSTETH = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
