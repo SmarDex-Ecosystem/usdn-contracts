@@ -57,7 +57,6 @@ sort_imports = true
 [profile.local]
 ffi = true
 
-
 # ---------------------------------- Fuzzing --------------------------------- #
 
 [profile.local.fuzz]
@@ -143,7 +142,6 @@ mainnet = { key = "${ETHERSCAN_API_KEY}" }
 remappings_generate = true
 remappings_location = "config"
 remappings_version = true
-recursive_deps = true
 
 [dependencies]
 "@chainlink" = { version = "1.2.0", url = "https://github.com/smartcontractkit/chainlink/archive/c3dc764bba9e1c57b3f7933bcb804a1740fab695.zip" }
