@@ -53,30 +53,17 @@ contract AutoSwapperWstethSdex is
     /// @notice SDEX token address.
     IERC20 internal constant SDEX = IERC20(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
 
-    /// @notice Direction of the swap for Uniswap V3.
-    bool internal constant UNISWAP_ZERO_FOR_ONE = WSTETH < WETH;
-
-    /// @notice Direction of the swap for SmarDex.
-    bool internal constant SMARDEX_ZERO_FOR_ONE = WETH < SDEX;
-
-    /// @notice Slippage for Uniswap V3 swaps.
-    uint160 internal constant UNISWAP_SQRT_RATIO = UNISWAP_ZERO_FOR_ONE
-        // equivalent to getSqrtRatioAtTick(MIN_TICK)
-        ? 4_295_128_739 + 1
-        // equivalent to getSqrtRatioAtTick(MAX_TICK)
-        : 1_461_446_703_485_210_103_287_273_052_203_988_822_378_723_970_342 - 1;
+    /**
+     * @notice Slippage for Uniswap V3 swaps.
+     * @dev Equivalent to getSqrtRatioAtTick(MIN_TICK) -> unlimited slippage.
+     */
+    uint160 internal constant UNISWAP_SQRT_RATIO = 4_295_128_739 + 1;
 
     /// @notice SmarDex pair address for WETH/SDEX swaps.
     ISmardexPair internal constant SMARDEX_WETH_SDEX_PAIR = ISmardexPair(0xf3a4B8eFe3e3049F6BC71B47ccB7Ce6665420179);
 
     /// @notice Uniswap V3 pair address for WSTETH/WETH swaps.
     IUniswapV3Pool internal constant UNI_WSTETH_WETH_PAIR = IUniswapV3Pool(0x109830a1AAaD605BbF02a9dFA7B0B92EC2FB7dAa);
-
-    /// @notice SmarDex fee for LP.
-    uint128 internal constant SMARDEX_FEE_LP = 500;
-
-    /// @notice SmarDex fee for the pool.
-    uint128 internal constant SMARDEX_FEE_POOL = 200;
 
     /// @notice Fee tier used for Uniswap V3 path (in pips)
     uint24 internal constant UNISWAP_FEE_TIER = 100; // 0.01% fee tier
@@ -141,13 +128,12 @@ contract AutoSwapperWstethSdex is
     function _uniWstethToWeth() internal {
         uint256 wstEthAmount = WSTETH.balanceOf(address(this));
 
-        (int256 amount0, int256 amount1) =
-            UNI_WSTETH_WETH_PAIR.swap(address(this), UNISWAP_ZERO_FOR_ONE, int256(wstEthAmount), UNISWAP_SQRT_RATIO, "");
+        (, int256 amount1) =
+            UNI_WSTETH_WETH_PAIR.swap(address(this), true, int256(wstEthAmount), UNISWAP_SQRT_RATIO, "");
 
-        uint256 wethAmountOut = uint256(-(UNISWAP_ZERO_FOR_ONE ? amount1 : amount0));
         uint256 minWethAmount = WSTETH.getStETHByWstETH(wstEthAmount) * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
 
-        require(wethAmountOut >= minWethAmount, AutoSwapperSwapFailed());
+        require(uint256(-amount1) >= minWethAmount, AutoSwapperSwapFailed());
     }
 
     /// @notice Swaps WETH for SDEX token using the SmarDex protocol.
@@ -156,37 +142,42 @@ contract AutoSwapperWstethSdex is
 
         uint256 newPriceAvIn;
         uint256 newPriceAvOut;
-        (uint256 fictiveReserve0, uint256 fictiveReserve1) = SMARDEX_WETH_SDEX_PAIR.getFictiveReserves();
+        (uint256 fictiveReserveSdex, uint256 fictiveReserveWeth) = SMARDEX_WETH_SDEX_PAIR.getFictiveReserves();
         {
-            (uint256 oldPriceAv0, uint256 oldPriceAv1, uint256 oldPriceAvTimestamp) =
+            (uint256 oldPriceAvSdex, uint256 oldPriceAvWeth, uint256 oldPriceAvTimestamp) =
                 SMARDEX_WETH_SDEX_PAIR.getPriceAverage();
 
             (newPriceAvIn, newPriceAvOut) = SmardexLibrary.getUpdatedPriceAverage(
-                fictiveReserve1, fictiveReserve0, oldPriceAvTimestamp, oldPriceAv1, oldPriceAv0, block.timestamp
+                fictiveReserveWeth,
+                fictiveReserveSdex,
+                oldPriceAvTimestamp,
+                oldPriceAvWeth,
+                oldPriceAvSdex,
+                block.timestamp
             );
         }
 
-        (uint256 reservesOut, uint256 reservesIn) = SMARDEX_WETH_SDEX_PAIR.getReserves();
+        (uint256 reservesSdex, uint256 reservesWeth) = SMARDEX_WETH_SDEX_PAIR.getReserves();
         (uint256 amountOut,,,,) = SmardexLibrary.getAmountOut(
             SmardexLibrary.GetAmountParameters({
                 amount: wethAmount,
-                reserveIn: reservesIn,
-                reserveOut: reservesOut,
-                fictiveReserveIn: fictiveReserve1,
-                fictiveReserveOut: fictiveReserve0,
+                reserveIn: reservesWeth,
+                reserveOut: reservesSdex,
+                fictiveReserveIn: fictiveReserveWeth,
+                fictiveReserveOut: fictiveReserveSdex,
                 priceAverageIn: newPriceAvOut,
                 priceAverageOut: newPriceAvIn,
-                feesLP: SMARDEX_FEE_LP,
-                feesPool: SMARDEX_FEE_POOL
+                // SmarDex LP fee for v1 pools
+                feesLP: 500,
+                // SmarDex pool fee for v1 pools.
+                feesPool: 200
             })
         );
 
         uint256 minSdexAmount = amountOut * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
 
-        (int256 amount0, int256 amount1) =
-            SMARDEX_WETH_SDEX_PAIR.swap(DEAD_ADDRESS, SMARDEX_ZERO_FOR_ONE, int256(wethAmount), "");
-        uint256 sdexAmount = uint256(-(SMARDEX_ZERO_FOR_ONE ? amount1 : amount0));
+        (int256 amount0,) = SMARDEX_WETH_SDEX_PAIR.swap(DEAD_ADDRESS, false, int256(wethAmount), "");
 
-        require(sdexAmount >= minSdexAmount, AutoSwapperSwapFailed());
+        require(uint256(-amount0) >= minSdexAmount, AutoSwapperSwapFailed());
     }
 }

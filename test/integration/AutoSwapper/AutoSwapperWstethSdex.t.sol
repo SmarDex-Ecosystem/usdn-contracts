@@ -6,7 +6,7 @@ import { Test } from "forge-std/Test.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { SDEX, WETH, WSTETH } from "../../utils/Constants.sol";
+import { SDEX as SDEX_ADDR, WETH as WETH_ADDR, WSTETH as WSTETH_ADDR } from "../../utils/Constants.sol";
 
 import { IAutoSwapperWstethSdex } from "../../../src/interfaces/Utils/IAutoSwapperWstethSdex.sol";
 import { AutoSwapperWstethSdex } from "../../../src/utils/AutoSwapperWstethSdex.sol";
@@ -20,9 +20,9 @@ contract TestForkAutoSwapperWstethSdex is Test {
 
     address constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
     address constant USDN_PROTOCOL = 0x656cB8C6d154Aad29d8771384089be5B5141f01a;
-    IERC20 constant SDEX = IERC20(SDEX);
-    IERC20 constant WETH = IERC20(WETH);
-    IERC20 constant WSTETH = IERC20(WSTETH);
+    IERC20 constant SDEX = IERC20(SDEX_ADDR);
+    IERC20 constant WETH = IERC20(WETH_ADDR);
+    IERC20 constant WSTETH = IERC20(WSTETH_ADDR);
 
     function setUp() public {
         vm.createSelectFork("mainnet");
