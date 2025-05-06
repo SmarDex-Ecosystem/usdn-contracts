@@ -70,23 +70,21 @@ contract AutoSwapperWstethSdex is
     }
 
     /// @inheritdoc IUniswapV3SwapCallback
-    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
+    function uniswapV3SwapCallback(int256 amountWstethIn, int256, bytes calldata) external {
         if (msg.sender != address(UNI_WSTETH_WETH_PAIR)) {
             revert AutoSwapperInvalidCaller();
         }
 
-        uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
-        WSTETH.safeTransfer(msg.sender, amountToPay);
+        WSTETH.safeTransfer(msg.sender, uint256(amountWstethIn));
     }
 
     /// @inheritdoc ISmardexSwapCallback
-    function smardexSwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
+    function smardexSwapCallback(int256, int256 amountWethIn, bytes calldata) external {
         if (msg.sender != address(SMARDEX_WETH_SDEX_PAIR)) {
             revert AutoSwapperInvalidCaller();
         }
 
-        uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
-        WETH.safeTransfer(msg.sender, amountToPay);
+        WETH.safeTransfer(msg.sender, uint256(amountWethIn));
     }
 
     /// @inheritdoc IAutoSwapperWstethSdex
