@@ -140,14 +140,14 @@ contract AutoSwapperWstethSdex is
     function _smarDexWethToSdex() internal {
         uint256 wethAmount = WETH.balanceOf(address(this));
 
-        uint256 newPriceAvIn;
-        uint256 newPriceAvOut;
+        uint256 newPriceAvWeth;
+        uint256 newPriceAvSdex;
         (uint256 fictiveReserveSdex, uint256 fictiveReserveWeth) = SMARDEX_WETH_SDEX_PAIR.getFictiveReserves();
         {
             (uint256 oldPriceAvSdex, uint256 oldPriceAvWeth, uint256 oldPriceAvTimestamp) =
                 SMARDEX_WETH_SDEX_PAIR.getPriceAverage();
 
-            (newPriceAvIn, newPriceAvOut) = SmardexLibrary.getUpdatedPriceAverage(
+            (newPriceAvWeth, newPriceAvSdex) = SmardexLibrary.getUpdatedPriceAverage(
                 fictiveReserveWeth,
                 fictiveReserveSdex,
                 oldPriceAvTimestamp,
@@ -158,15 +158,15 @@ contract AutoSwapperWstethSdex is
         }
 
         (uint256 reservesSdex, uint256 reservesWeth) = SMARDEX_WETH_SDEX_PAIR.getReserves();
-        (uint256 amountOut,,,,) = SmardexLibrary.getAmountOut(
+        (uint256 amountSdexOut,,,,) = SmardexLibrary.getAmountOut(
             SmardexLibrary.GetAmountParameters({
                 amount: wethAmount,
                 reserveIn: reservesWeth,
                 reserveOut: reservesSdex,
                 fictiveReserveIn: fictiveReserveWeth,
                 fictiveReserveOut: fictiveReserveSdex,
-                priceAverageIn: newPriceAvOut,
-                priceAverageOut: newPriceAvIn,
+                priceAverageIn: newPriceAvWeth,
+                priceAverageOut: newPriceAvSdex,
                 // SmarDex LP fee for v1 pools
                 feesLP: 500,
                 // SmarDex pool fee for v1 pools.
@@ -174,7 +174,7 @@ contract AutoSwapperWstethSdex is
             })
         );
 
-        uint256 minSdexAmount = amountOut * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
+        uint256 minSdexAmount = amountSdexOut * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
 
         (int256 amount0,) = SMARDEX_WETH_SDEX_PAIR.swap(DEAD_ADDRESS, false, int256(wethAmount), "");
 
