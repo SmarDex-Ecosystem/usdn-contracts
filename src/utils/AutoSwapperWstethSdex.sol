@@ -38,29 +38,17 @@ contract AutoSwapperWstethSdex is
     /// @notice Decimal points for basis points (bps).
     uint16 internal constant BPS_DIVISOR = 10_000;
 
-    /// @notice Dead address for burning tokens.
-    address internal constant DEAD_ADDRESS = address(0xdead);
-
-    /// @notice USDN protocol address.
-    address internal constant USDN_PROTOCOL = 0x656cB8C6d154Aad29d8771384089be5B5141f01a;
-
     /// @notice Wrapped staked ETH token address.
     IWstETH internal constant WSTETH = IWstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
 
     /// @notice Wrapped ETH token address.
     IERC20 internal constant WETH = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
-    /// @notice SDEX token address.
-    IERC20 internal constant SDEX = IERC20(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
-
     /// @notice SmarDex pair address for WETH/SDEX swaps.
     ISmardexPair internal constant SMARDEX_WETH_SDEX_PAIR = ISmardexPair(0xf3a4B8eFe3e3049F6BC71B47ccB7Ce6665420179);
 
     /// @notice Uniswap V3 pair address for WSTETH/WETH swaps.
     IUniswapV3Pool internal constant UNI_WSTETH_WETH_PAIR = IUniswapV3Pool(0x109830a1AAaD605BbF02a9dFA7B0B92EC2FB7dAa);
-
-    /// @notice Fee tier used for Uniswap V3 path (in pips)
-    uint24 internal constant UNISWAP_FEE_TIER = 100; // 0.01% fee tier
 
     /// @notice Allowed slippage for swaps (in basis points).
     uint256 internal _swapSlippage = 100; // 1%
@@ -179,7 +167,7 @@ contract AutoSwapperWstethSdex is
 
         uint256 minSdexAmount = avAmountSdexOut * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
 
-        (int256 amountSdexOut,) = SMARDEX_WETH_SDEX_PAIR.swap(DEAD_ADDRESS, false, int256(wethAmount), "");
+        (int256 amountSdexOut,) = SMARDEX_WETH_SDEX_PAIR.swap(address(0xdead), false, int256(wethAmount), "");
 
         if (uint256(-amountSdexOut) < minSdexAmount) {
             revert AutoSwapperSwapFailed();
