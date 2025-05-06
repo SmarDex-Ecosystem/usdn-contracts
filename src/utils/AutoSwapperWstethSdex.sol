@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.27;
+pragma solidity 0.8.26;
 
 import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -89,7 +89,9 @@ contract AutoSwapperWstethSdex is
 
     /// @inheritdoc IUniswapV3SwapCallback
     function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
-        require(msg.sender == address(UNI_WSTETH_WETH_PAIR), AutoSwapperInvalidCaller());
+        if (msg.sender != address(UNI_WSTETH_WETH_PAIR)) {
+            revert AutoSwapperInvalidCaller();
+        }
 
         uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
         WSTETH.safeTransfer(msg.sender, amountToPay);
@@ -97,7 +99,9 @@ contract AutoSwapperWstethSdex is
 
     /// @inheritdoc ISmardexSwapCallback
     function smardexSwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata) external {
-        require(msg.sender == address(SMARDEX_WETH_SDEX_PAIR), AutoSwapperInvalidCaller());
+        if (msg.sender != address(SMARDEX_WETH_SDEX_PAIR)) {
+            revert AutoSwapperInvalidCaller();
+        }
 
         uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
         WETH.safeTransfer(msg.sender, amountToPay);
@@ -110,7 +114,9 @@ contract AutoSwapperWstethSdex is
 
     /// @inheritdoc IAutoSwapperWstethSdex
     function updateSwapSlippage(uint256 newSwapSlippage) external onlyOwner {
-        require(newSwapSlippage > 0, AutoSwapperInvalidSwapSlippage());
+        if (newSwapSlippage == 0) {
+            revert AutoSwapperInvalidSwapSlippage();
+        }
         _swapSlippage = newSwapSlippage;
         emit SwapSlippageUpdated(newSwapSlippage);
     }
@@ -128,12 +134,14 @@ contract AutoSwapperWstethSdex is
     function _uniWstethToWeth() internal {
         uint256 wstEthAmount = WSTETH.balanceOf(address(this));
 
-        (, int256 amount1) =
+        (, int256 amountWethOut) =
             UNI_WSTETH_WETH_PAIR.swap(address(this), true, int256(wstEthAmount), UNISWAP_SQRT_RATIO, "");
 
         uint256 minWethAmount = WSTETH.getStETHByWstETH(wstEthAmount) * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
 
-        require(uint256(-amount1) >= minWethAmount, AutoSwapperSwapFailed());
+        if (uint256(-amountWethOut) < minWethAmount) {
+            revert AutoSwapperSwapFailed();
+        }
     }
 
     /// @notice Swaps WETH for SDEX token using the SmarDex protocol.
@@ -158,7 +166,7 @@ contract AutoSwapperWstethSdex is
         }
 
         (uint256 reservesSdex, uint256 reservesWeth) = SMARDEX_WETH_SDEX_PAIR.getReserves();
-        (uint256 amountSdexOut,,,,) = SmardexLibrary.getAmountOut(
+        (uint256 avAmountSdexOut,,,,) = SmardexLibrary.getAmountOut(
             SmardexLibrary.GetAmountParameters({
                 amount: wethAmount,
                 reserveIn: reservesWeth,
@@ -174,10 +182,12 @@ contract AutoSwapperWstethSdex is
             })
         );
 
-        uint256 minSdexAmount = amountSdexOut * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
+        uint256 minSdexAmount = avAmountSdexOut * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
 
-        (int256 amount0,) = SMARDEX_WETH_SDEX_PAIR.swap(DEAD_ADDRESS, false, int256(wethAmount), "");
+        (int256 amountSdexOut,) = SMARDEX_WETH_SDEX_PAIR.swap(DEAD_ADDRESS, false, int256(wethAmount), "");
 
-        require(uint256(-amount0) >= minSdexAmount, AutoSwapperSwapFailed());
+        if (uint256(-amountSdexOut) < minSdexAmount) {
+            revert AutoSwapperSwapFailed();
+        }
     }
 }

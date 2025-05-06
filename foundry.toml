@@ -5,7 +5,7 @@
 # --------------------------------- Compiler --------------------------------- #
 
 [profile.default]
-auto_detect_solc = true
+solc_version = "0.8.26"
 evm_version = "cancun"
 optimizer = true
 optimizer_runs = 20_000
