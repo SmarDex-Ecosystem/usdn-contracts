@@ -53,12 +53,6 @@ contract AutoSwapperWstethSdex is
     /// @notice SDEX token address.
     IERC20 internal constant SDEX = IERC20(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
 
-    /**
-     * @notice Slippage for Uniswap V3 swaps.
-     * @dev Equivalent to getSqrtRatioAtTick(MIN_TICK) -> unlimited slippage.
-     */
-    uint160 internal constant UNISWAP_SQRT_RATIO = 4_295_128_739 + 1;
-
     /// @notice SmarDex pair address for WETH/SDEX swaps.
     ISmardexPair internal constant SMARDEX_WETH_SDEX_PAIR = ISmardexPair(0xf3a4B8eFe3e3049F6BC71B47ccB7Ce6665420179);
 
@@ -135,7 +129,8 @@ contract AutoSwapperWstethSdex is
         uint256 wstEthAmount = WSTETH.balanceOf(address(this));
 
         (, int256 amountWethOut) =
-            UNI_WSTETH_WETH_PAIR.swap(address(this), true, int256(wstEthAmount), UNISWAP_SQRT_RATIO, "");
+        // 4_295_128_740 is equivalent to getSqrtRatioAtTick(MIN_TICK) -> unlimited slippage.
+         UNI_WSTETH_WETH_PAIR.swap(address(this), true, int256(wstEthAmount), 4_295_128_740, "");
 
         uint256 minWethAmount = WSTETH.getStETHByWstETH(wstEthAmount) * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
 
