@@ -59,7 +59,7 @@ contract WusdnToEthOracleMiddlewareWithDataStreams is OracleMiddlewareWithDataSt
 
     /**
      * @inheritdoc IBaseOracleMiddleware
-     * @dev This function returns an approximation of the price ETH/WUSDN, so how much ETH each WUSDN token is worth.
+     * @dev This function returns an approximation of the price, so how much ETH each WUSDN token is worth.
      * The exact formula would be to divide the $/WUSDN price by the $/ETH price, which would look like this (as a
      * decimal number):
      * p = pWUSDN / pETH = (pUSDN * MAX_DIVISOR / divisor) / pETH = (pUSDN * MAX_DIVISOR) / (pETH * divisor)
