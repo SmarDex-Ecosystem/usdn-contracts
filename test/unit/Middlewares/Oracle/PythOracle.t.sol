@@ -18,17 +18,18 @@ contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {
      * @custom:given The price of the asset is $10 and the confidence interval is $30.
      * @custom:when The `parseAndValidatePrice` function is called with an action that uses the lower bound of the conf
      * interval.
-     * @custom:then The price is adjusted to 1 wei to avoid being negative or zero.
+     * @custom:then The function reverts with the error {OracleMiddlewareConfValueTooHigh}.
      */
     function test_pythConfGreaterThanPrice() public {
+        uint256 validationCost = oracleMiddleware.validationCost(MOCK_PYTH_DATA, Types.ProtocolAction.ValidateDeposit);
+
         mockPyth.setPrice(10e8);
         mockPyth.setConf(30e8);
 
-        // ValidateDeposit adjusts down with conf
-        PriceInfo memory price = oracleMiddleware.parseAndValidatePrice{
-            value: oracleMiddleware.validationCost(MOCK_PYTH_DATA, Types.ProtocolAction.ValidateDeposit)
-        }("", uint128(block.timestamp), Types.ProtocolAction.ValidateDeposit, MOCK_PYTH_DATA);
-        assertEq(price.price, 1, "price should be 1");
+        vm.expectRevert(OracleMiddlewareConfValueTooHigh.selector);
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            "", uint128(block.timestamp), Types.ProtocolAction.ValidateDeposit, MOCK_PYTH_DATA
+        );
     }
 
     /**

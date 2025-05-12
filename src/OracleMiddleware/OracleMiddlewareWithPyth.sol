@@ -147,19 +147,19 @@ contract OracleMiddlewareWithPyth is CommonOracleMiddleware, IOracleMiddlewareWi
         view
         returns (PriceInfo memory price_)
     {
+        uint256 adjust = (pythPrice.conf * _confRatioBps) / BPS_DIVISOR;
+
+        if (adjust >= pythPrice.price) {
+            revert OracleMiddlewareConfValueTooHigh();
+        }
+
         if (dir == PriceAdjustment.Down) {
-            uint256 adjust = (pythPrice.conf * _confRatioBps) / BPS_DIVISOR;
-            if (adjust >= pythPrice.price) {
-                // avoid underflow or zero price due to confidence interval adjustment
-                price_.price = 1;
-            } else {
-                // strictly positive
-                unchecked {
-                    price_.price = pythPrice.price - adjust;
-                }
+            unchecked {
+                // adjust is always less than pythPrice.price so we can safely subtract it
+                price_.price = pythPrice.price - adjust;
             }
         } else if (dir == PriceAdjustment.Up) {
-            price_.price = pythPrice.price + ((pythPrice.conf * _confRatioBps) / BPS_DIVISOR);
+            price_.price = pythPrice.price + adjust;
         } else {
             price_.price = pythPrice.price;
         }
