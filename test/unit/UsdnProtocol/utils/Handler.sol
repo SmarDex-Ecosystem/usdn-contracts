@@ -43,7 +43,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         UsdnProtocolFallback(maxSdexBurnRatio, maxMinLongPosition)
     { }
 
-    function initializeStorageHandler(InitStorage calldata initStorage) external initializer {
+    function initializeStorageHandler(InitStorage calldata initStorage) external {
         initializeStorage(initStorage);
     }
 

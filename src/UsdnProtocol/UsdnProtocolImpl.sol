@@ -26,7 +26,7 @@ contract UsdnProtocolImpl is
     }
 
     /// @inheritdoc IUsdnProtocolImpl
-    function initializeStorage(InitStorage calldata initStorage) public initializer {
+    function initializeStorage(InitStorage calldata initStorage) public reinitializer(2) {
         __AccessControlDefaultAdminRules_init(0, msg.sender);
         __initializeReentrancyGuard_init();
         __Pausable_init();
@@ -42,17 +42,6 @@ contract UsdnProtocolImpl is
         _setRoleAdmin(Constants.UNPAUSER_ROLE, Constants.ADMIN_UNPAUSER_ROLE);
 
         Setters.setInitialStorage(initStorage);
-    }
-
-    /// @inheritdoc IUsdnProtocolImpl
-    function initializeStorageV2(address newFallback) public reinitializer(2) {
-        Storage storage s = Utils._getMainStorage();
-        // sanity check, only do the upgrade if necessary
-        if (s.__unused == 0 || s._sdexBurnOnDepositRatio > 0) {
-            return;
-        }
-        s._sdexBurnOnDepositRatio = s.__unused;
-        s._protocolFallbackAddr = newFallback;
     }
 
     /**
