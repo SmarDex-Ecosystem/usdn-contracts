@@ -97,9 +97,16 @@ contract WusdnToEthOracleMiddlewareWithPyth is OracleMiddlewareWithPyth {
             uint256 adjustedPrice;
             if (FixedPointMathLib.abs(adjustmentDelta) >= ethPrice.neutralPrice) {
                 revert OracleMiddlewareConfValueTooHigh();
-            } else {
-                adjustedPrice = uint256(int256(ethPrice.neutralPrice) - adjustmentDelta);
             }
+
+            if (adjustmentDelta > 0) {
+                unchecked {
+                    adjustedPrice = ethPrice.neutralPrice - uint256(adjustmentDelta);
+                }
+            } else {
+                adjustedPrice = ethPrice.neutralPrice + uint256(-adjustmentDelta);
+            }
+
             return PriceInfo({
                 price: PRICE_NUMERATOR / (adjustedPrice * divisor),
                 neutralPrice: PRICE_NUMERATOR / (ethPrice.neutralPrice * divisor),
