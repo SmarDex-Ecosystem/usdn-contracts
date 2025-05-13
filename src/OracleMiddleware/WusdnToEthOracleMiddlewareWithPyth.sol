@@ -11,7 +11,7 @@ import { CommonOracleMiddleware, OracleMiddlewareWithPyth } from "./OracleMiddle
 
 /**
  * @title Middleware Implementation For Short ETH Protocol
- * @notice This contract is used to get the "inverse" price in ETH/WUSDN denomination, so that it can be used for a
+ * @notice This contract is used to get the "inverse" price in number of ETH per WUSDN, so that it can be used for a
  * shorting version of the USDN protocol with WUSDN as the underlying asset.
  * @dev This version uses Pyth for low-latency prices used during validation actions and liquidations.
  */
