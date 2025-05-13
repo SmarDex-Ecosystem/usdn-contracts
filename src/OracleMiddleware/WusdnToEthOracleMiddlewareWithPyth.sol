@@ -100,6 +100,7 @@ contract WusdnToEthOracleMiddlewareWithPyth is OracleMiddlewareWithPyth {
             }
 
             if (adjustmentDelta > 0) {
+                // adjustmentDelta is strictly smaller than neutralPrice so we can safely subtract it
                 unchecked {
                     adjustedPrice = ethPrice.neutralPrice - uint256(adjustmentDelta);
                 }
