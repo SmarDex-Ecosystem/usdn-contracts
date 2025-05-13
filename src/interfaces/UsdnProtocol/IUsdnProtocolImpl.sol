@@ -31,13 +31,4 @@ interface IUsdnProtocolImpl is
      * Any call with a function signature not present in this contract will be delegated to the fallback contract.
      */
     function initializeStorage(InitStorage calldata initStorage) external;
-
-    /**
-     * @notice Updates the protocol's storage from V1 to V2.
-     * @dev This specifically re-assigns the value for `sdexBurnOnDepositRatio` to a new storage slot, and updates
-     * the address of the fallback contract.
-     * It can only be called once and should only be called if the protocol was initially deployed as V1.
-     * @param newFallback The address of the new fallback contract that was deployed.
-     */
-    function initializeStorageV2(address newFallback) external;
 }
