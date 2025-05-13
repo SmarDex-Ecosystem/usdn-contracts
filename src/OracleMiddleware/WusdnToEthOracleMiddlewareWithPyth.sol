@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
 import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
@@ -45,7 +47,7 @@ contract WusdnToEthOracleMiddlewareWithPyth is OracleMiddlewareWithPyth {
 
     /**
      * @inheritdoc IBaseOracleMiddleware
-     * @dev This function returns an approximation of the price ETH/WUSDN, so how much ETH each WUSDN token is worth.
+     * @dev This function returns an approximation of the price, so how much ETH each WUSDN token is worth.
      * The exact formula would be to divide the $/WUSDN price by the $/ETH price, which would look like this (as a
      * decimal number):
      * p = pWUSDN / pETH = (pUSDN * MAX_DIVISOR / divisor) / pETH = (pUSDN * MAX_DIVISOR) / (pETH * divisor)
@@ -93,9 +95,8 @@ contract WusdnToEthOracleMiddlewareWithPyth is OracleMiddlewareWithPyth {
         // invert the sign of the confidence interval if necessary
         if (adjustmentDelta != 0) {
             uint256 adjustedPrice;
-            if (adjustmentDelta >= int256(ethPrice.neutralPrice)) {
-                // avoid underflow or zero price due to confidence interval adjustment
-                adjustedPrice = 1;
+            if (FixedPointMathLib.abs(adjustmentDelta) >= ethPrice.neutralPrice) {
+                revert OracleMiddlewareConfValueTooHigh();
             } else {
                 adjustedPrice = uint256(int256(ethPrice.neutralPrice) - adjustmentDelta);
             }
