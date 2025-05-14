@@ -52,22 +52,14 @@ contract AutoSwapperWusdnSdex is
     function swapWusdnToSdex() external {
         uint256 wusdnAmount = WUSDN.balanceOf(address(this));
 
-        uint256 newPriceAvWusdn;
-        uint256 newPriceAvSdex;
         (uint256 fictiveReserveSdex, uint256 fictiveReserveWusdn) = SMARDEX_WUSDN_SDEX_PAIR.getFictiveReserves();
-        {
-            (uint256 oldPriceAvSdex, uint256 oldPriceAvWusdn, uint256 oldPriceAvTimestamp) =
-                SMARDEX_WUSDN_SDEX_PAIR.getPriceAverage();
 
-            (newPriceAvWusdn, newPriceAvSdex) = SmardexLibrary.getUpdatedPriceAverage(
-                fictiveReserveWusdn,
-                fictiveReserveSdex,
-                oldPriceAvTimestamp,
-                oldPriceAvWusdn,
-                oldPriceAvSdex,
-                block.timestamp
-            );
-        }
+        (uint256 priceAvSdex, uint256 priceAvWusdn, uint256 priceAvTimestamp) =
+            SMARDEX_WUSDN_SDEX_PAIR.getPriceAverage();
+
+        (priceAvWusdn, priceAvSdex) = SmardexLibrary.getUpdatedPriceAverage(
+            fictiveReserveWusdn, fictiveReserveSdex, priceAvTimestamp, priceAvWusdn, priceAvSdex, block.timestamp
+        );
 
         (uint256 reservesSdex, uint256 reservesWusdn) = SMARDEX_WUSDN_SDEX_PAIR.getReserves();
         (uint256 avAmountSdexOut,,,,) = SmardexLibrary.getAmountOut(
@@ -77,8 +69,8 @@ contract AutoSwapperWusdnSdex is
                 reserveOut: reservesSdex,
                 fictiveReserveIn: fictiveReserveWusdn,
                 fictiveReserveOut: fictiveReserveSdex,
-                priceAverageIn: newPriceAvWusdn,
-                priceAverageOut: newPriceAvSdex,
+                priceAverageIn: priceAvWusdn,
+                priceAverageOut: priceAvSdex,
                 feesLP: 9000,
                 feesPool: 1000
             })
