@@ -13,6 +13,8 @@ import { SmardexLibrary } from "@smardex-dex-contracts/contracts/ethereum/core/v
 import { IFeeCollectorCallback } from "./../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
 import { IAutoSwapperWusdnSdex } from "./../interfaces/Utils/IAutoSwapperWusdnSdex.sol";
 
+import { console } from "forge-std/console.sol";
+
 /**
  * @title SDEX buy-back and burn Autoswapper
  * @notice Automates protocol fee conversion from WUSDN to SDEX via Smardex.
@@ -52,8 +54,18 @@ contract AutoSwapperWusdnSdex is
     function swapWusdnToSdex() external {
         uint256 wusdnAmount = WUSDN.balanceOf(address(this));
 
-        (uint256 fictiveReserveSdex, uint256 fictiveReserveWusdn) = SMARDEX_WUSDN_SDEX_PAIR.getFictiveReserves();
+        uint256 quoteAmountSdexOut = _quoteAmountOut(wusdnAmount);
+        uint256 minSdexAmount = quoteAmountSdexOut * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
+        (int256 amountSdexOut,) = SMARDEX_WUSDN_SDEX_PAIR.swap(address(0xdead), false, int256(wusdnAmount), "");
 
+        if (uint256(-amountSdexOut) < minSdexAmount) {
+            revert AutoSwapperSwapFailed();
+        }
+    }
+
+    function _quoteAmountOut(uint256 amountIn) internal view returns (uint256 amountOut_) {
+        (uint256 fictiveReserveSdex, uint256 fictiveReserveWusdn) = SMARDEX_WUSDN_SDEX_PAIR.getFictiveReserves();
+        (uint256 reservesSdex, uint256 reservesWusdn) = SMARDEX_WUSDN_SDEX_PAIR.getReserves();
         (uint256 priceAvSdex, uint256 priceAvWusdn, uint256 priceAvTimestamp) =
             SMARDEX_WUSDN_SDEX_PAIR.getPriceAverage();
 
@@ -61,10 +73,12 @@ contract AutoSwapperWusdnSdex is
             fictiveReserveWusdn, fictiveReserveSdex, priceAvTimestamp, priceAvWusdn, priceAvSdex, block.timestamp
         );
 
-        (uint256 reservesSdex, uint256 reservesWusdn) = SMARDEX_WUSDN_SDEX_PAIR.getReserves();
-        (uint256 avAmountSdexOut,,,,) = SmardexLibrary.getAmountOut(
+        (fictiveReserveWusdn, fictiveReserveSdex) =
+            SmardexLibrary.computeFictiveReserves(reservesWusdn, reservesSdex, fictiveReserveWusdn, fictiveReserveSdex);
+
+        (amountOut_,,,,) = SmardexLibrary.applyKConstRuleOut(
             SmardexLibrary.GetAmountParameters({
-                amount: wusdnAmount,
+                amount: amountIn,
                 reserveIn: reservesWusdn,
                 reserveOut: reservesSdex,
                 fictiveReserveIn: fictiveReserveWusdn,
@@ -75,14 +89,6 @@ contract AutoSwapperWusdnSdex is
                 feesPool: 1000
             })
         );
-
-        uint256 minSdexAmount = avAmountSdexOut * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
-
-        (int256 amountSdexOut,) = SMARDEX_WUSDN_SDEX_PAIR.swap(address(0xdead), false, int256(wusdnAmount), "");
-
-        if (uint256(-amountSdexOut) < minSdexAmount) {
-            revert AutoSwapperSwapFailed();
-        }
     }
 
     /// @inheritdoc ISmardexSwapCallback
