@@ -11,7 +11,7 @@ import { ISmardexSwapCallback } from
 import { SmardexLibrary } from "@smardex-dex-contracts/contracts/ethereum/core/v2/libraries/SmardexLibrary.sol";
 
 import { IFeeCollectorCallback } from "./../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
-import { IAutoSwapperWstethSdex } from "./../interfaces/Utils/IAutoSwapperWstethSdex.sol";
+// import { IAutoSwapperWusdnSdex } from "./../interfaces/Utils/IAutoSwapperWusdnSdex.sol";
 
 import { console } from "forge-std/Test.sol";
 
@@ -19,9 +19,9 @@ import { console } from "forge-std/Test.sol";
  * @title SDEX buy-back and burn Autoswapper
  * @notice Automates protocol fee conversion from wstETH to SDEX via Uniswap V3 and Smardex.
  */
-contract AutoSwapperWstethSdex is
+contract AutoSwapperWusdnSdex is
     Ownable2Step,
-    IAutoSwapperWstethSdex,
+    // IAutoSwapperWusdnSdex,
     IFeeCollectorCallback,
     ERC165,
     ISmardexSwapCallback
@@ -48,38 +48,38 @@ contract AutoSwapperWstethSdex is
 
     /// @inheritdoc IFeeCollectorCallback
     function feeCollectorCallback(uint256) external {
-        try this.swapWstethToSdex() { }
+        try this.swapWusdnToSdex() { }
         catch {
-            emit FailedSwap();
+            // emit FailedSwap();
         }
     }
 
-    /// @inheritdoc IAutoSwapperWstethSdex
-    function swapWstethToSdex() external {
+    // / @inheritdoc IAutoSwapperWusdnSdex
+    function swapWusdnToSdex() external {
         _smarDexWusdnToSdex();
     }
 
     /// @inheritdoc ISmardexSwapCallback
     function smardexSwapCallback(int256, int256 amountWusdnIn, bytes calldata) external {
         if (msg.sender != address(SMARDEX_WUSDN_SDEX_PAIR)) {
-            revert AutoSwapperInvalidCaller();
+            // revert AutoSwapperInvalidCaller();
         }
 
         WUSDN.safeTransfer(msg.sender, uint256(amountWusdnIn));
     }
 
-    /// @inheritdoc IAutoSwapperWstethSdex
+    // / @inheritdoc IAutoSwapperWusdnSdex
     function sweep(address token, address to, uint256 amount) external onlyOwner {
         IERC20(token).safeTransfer(to, amount);
     }
 
-    /// @inheritdoc IAutoSwapperWstethSdex
+    // / @inheritdoc IAutoSwapperWusdnSdex
     function updateSwapSlippage(uint256 newSwapSlippage) external onlyOwner {
         if (newSwapSlippage == 0) {
-            revert AutoSwapperInvalidSwapSlippage();
+            // revert AutoSwapperInvalidSwapSlippage();
         }
         _swapSlippage = newSwapSlippage;
-        emit SwapSlippageUpdated(newSwapSlippage);
+        // emit SwapSlippageUpdated(newSwapSlippage);
     }
 
     /// @inheritdoc ERC165
@@ -134,7 +134,7 @@ contract AutoSwapperWstethSdex is
         console.log("SDEX amount out: %s", uint256(-amountSdexOut));
         console.log("Minimum SDEX amount: %s", minSdexAmount);
         if (uint256(-amountSdexOut) < minSdexAmount) {
-            revert AutoSwapperSwapFailed();
+            // revert AutoSwapperSwapFailed();
         }
     }
 }
