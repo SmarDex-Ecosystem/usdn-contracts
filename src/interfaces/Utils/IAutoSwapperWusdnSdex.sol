@@ -21,7 +21,7 @@ interface IAutoSwapperWusdnSdex {
     /// @notice Thrown when the caller is not authorized to perform the operation.
     error AutoSwapperInvalidCaller();
 
-    /// @notice Swap wstETH to SDEX.
+    /// @notice Swap WUSDN to SDEX.
     function swapWusdnToSdex() external;
 
     /**

@@ -13,11 +13,9 @@ import { SmardexLibrary } from "@smardex-dex-contracts/contracts/ethereum/core/v
 import { IFeeCollectorCallback } from "./../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
 import { IAutoSwapperWusdnSdex } from "./../interfaces/Utils/IAutoSwapperWusdnSdex.sol";
 
-import { console } from "forge-std/Test.sol";
-
 /**
  * @title SDEX buy-back and burn Autoswapper
- * @notice Automates protocol fee conversion from wstETH to SDEX via Uniswap V3 and Smardex.
+ * @notice Automates protocol fee conversion from WUSDN to SDEX via Smardex.
  */
 contract AutoSwapperWusdnSdex is
     Ownable2Step,
@@ -27,10 +25,6 @@ contract AutoSwapperWusdnSdex is
     ISmardexSwapCallback
 {
     using SafeERC20 for IERC20;
-
-    /* -------------------------------------------------------------------------- */
-    /*                                  Constants                                 */
-    /* -------------------------------------------------------------------------- */
 
     /// @notice Decimal points for basis points (bps).
     uint16 internal constant BPS_DIVISOR = 10_000;
@@ -50,50 +44,13 @@ contract AutoSwapperWusdnSdex is
     function feeCollectorCallback(uint256) external {
         try this.swapWusdnToSdex() { }
         catch {
-            // emit FailedSwap();
+            emit FailedSwap();
         }
     }
 
     /// @inheritdoc IAutoSwapperWusdnSdex
     function swapWusdnToSdex() external {
-        _smarDexWusdnToSdex();
-    }
-
-    /// @inheritdoc ISmardexSwapCallback
-    function smardexSwapCallback(int256, int256 amountWusdnIn, bytes calldata) external {
-        if (msg.sender != address(SMARDEX_WUSDN_SDEX_PAIR)) {
-            // revert AutoSwapperInvalidCaller();
-        }
-
-        WUSDN.safeTransfer(msg.sender, uint256(amountWusdnIn));
-    }
-
-    /// @inheritdoc IAutoSwapperWusdnSdex
-    function sweep(address token, address to, uint256 amount) external onlyOwner {
-        IERC20(token).safeTransfer(to, amount);
-    }
-
-    /// @inheritdoc IAutoSwapperWusdnSdex
-    function updateSwapSlippage(uint256 newSwapSlippage) external onlyOwner {
-        if (newSwapSlippage == 0) {
-            // revert AutoSwapperInvalidSwapSlippage();
-        }
-        _swapSlippage = newSwapSlippage;
-        // emit SwapSlippageUpdated(newSwapSlippage);
-    }
-
-    /// @inheritdoc ERC165
-    function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
-        if (interfaceId == type(IFeeCollectorCallback).interfaceId) {
-            return true;
-        }
-        return super.supportsInterface(interfaceId);
-    }
-
-    /// @notice Swaps WUSDN for SDEX token using the SmarDex protocol.
-    function _smarDexWusdnToSdex() internal {
         uint256 wusdnAmount = WUSDN.balanceOf(address(this));
-        console.log("WUSDN amount to swap: %s", wusdnAmount);
 
         uint256 newPriceAvWusdn;
         uint256 newPriceAvSdex;
@@ -131,10 +88,39 @@ contract AutoSwapperWusdnSdex is
 
         (int256 amountSdexOut,) = SMARDEX_WUSDN_SDEX_PAIR.swap(address(0xdead), false, int256(wusdnAmount), "");
 
-        console.log("SDEX amount out: %s", uint256(-amountSdexOut));
-        console.log("Minimum SDEX amount: %s", minSdexAmount);
         if (uint256(-amountSdexOut) < minSdexAmount) {
-            // revert AutoSwapperSwapFailed();
+            revert AutoSwapperSwapFailed();
         }
+    }
+
+    /// @inheritdoc ISmardexSwapCallback
+    function smardexSwapCallback(int256, int256 amountWusdnIn, bytes calldata) external {
+        if (msg.sender != address(SMARDEX_WUSDN_SDEX_PAIR)) {
+            revert AutoSwapperInvalidCaller();
+        }
+
+        WUSDN.safeTransfer(msg.sender, uint256(amountWusdnIn));
+    }
+
+    /// @inheritdoc IAutoSwapperWusdnSdex
+    function sweep(address token, address to, uint256 amount) external onlyOwner {
+        IERC20(token).safeTransfer(to, amount);
+    }
+
+    /// @inheritdoc IAutoSwapperWusdnSdex
+    function updateSwapSlippage(uint256 newSwapSlippage) external onlyOwner {
+        if (newSwapSlippage == 0) {
+            revert AutoSwapperInvalidSwapSlippage();
+        }
+        _swapSlippage = newSwapSlippage;
+        emit SwapSlippageUpdated(newSwapSlippage);
+    }
+
+    /// @inheritdoc ERC165
+    function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
+        if (interfaceId == type(IFeeCollectorCallback).interfaceId) {
+            return true;
+        }
+        return super.supportsInterface(interfaceId);
     }
 }

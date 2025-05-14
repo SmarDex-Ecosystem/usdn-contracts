@@ -31,10 +31,6 @@ contract AutoSwapperWstethSdex is
     using SafeERC20 for IERC20;
     using SafeERC20 for IWstETH;
 
-    /* -------------------------------------------------------------------------- */
-    /*                                  Constants                                 */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice Decimal points for basis points (bps).
     uint16 internal constant BPS_DIVISOR = 10_000;
 
