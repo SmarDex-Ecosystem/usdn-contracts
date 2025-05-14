@@ -29,16 +29,24 @@ contract AutoSwapperWusdnSdex is
     /// @notice Decimal points for basis points (bps).
     uint16 internal constant BPS_DIVISOR = 10_000;
 
+    /// @notice Wrapped USDN token address.
+    IERC20 internal constant WUSDN = IERC20(0x99999999999999Cc837C997B882957daFdCb1Af9);
+
     /// @notice SmarDex pair address for WUSDN/SDEX swaps.
     ISmardexPair internal constant SMARDEX_WUSDN_SDEX_PAIR = ISmardexPair(0x11443f5B134c37903705e64129BEFc20e35a3725);
 
-    /// @notice Wrapped USDN token address.
-    IERC20 internal constant WUSDN = IERC20(0x99999999999999Cc837C997B882957daFdCb1Af9);
+    /// @notice Fee rates for LP on the SmarDex pair.
+    uint128 immutable FEE_LP;
+
+    /// @notice Fee rates for the pool on the SmarDex pair.
+    uint128 immutable FEE_POOL;
 
     /// @notice Allowed slippage for swaps (in basis points).
     uint256 internal _swapSlippage = 100; // 1%
 
-    constructor() Ownable(msg.sender) { }
+    constructor() Ownable(msg.sender) {
+        (FEE_LP, FEE_POOL) = SMARDEX_WUSDN_SDEX_PAIR.getPairFees();
+    }
 
     /// @inheritdoc IFeeCollectorCallback
     function feeCollectorCallback(uint256) external {
@@ -94,8 +102,8 @@ contract AutoSwapperWusdnSdex is
 
     /**
      * @notice Calculates the amount of SDEX that can be obtained from a given amount of WUSDN.
-     * @param amountIn Amount of WUSDN to swap
-     * @return amountOut_ Amount of SDEX that can be obtained
+     * @param amountIn The amount of WUSDN to swap
+     * @return amountOut_ The amount of SDEX that can be obtained
      */
     function _quoteAmountOut(uint256 amountIn) internal view returns (uint256 amountOut_) {
         (uint256 fictiveReserveSdex, uint256 fictiveReserveWusdn) = SMARDEX_WUSDN_SDEX_PAIR.getFictiveReserves();
@@ -119,8 +127,8 @@ contract AutoSwapperWusdnSdex is
                 fictiveReserveOut: fictiveReserveSdex,
                 priceAverageIn: priceAvWusdn,
                 priceAverageOut: priceAvSdex,
-                feesLP: 9000,
-                feesPool: 1000
+                feesLP: FEE_LP,
+                feesPool: FEE_POOL
             })
         );
     }
