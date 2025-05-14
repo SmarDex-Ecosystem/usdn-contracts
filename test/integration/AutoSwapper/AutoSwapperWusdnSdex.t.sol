@@ -48,7 +48,6 @@ contract TestForkAutoSwapperWusdnSdex is Test {
         assertGt(
             SDEX.balanceOf(BURN_ADDRESS), initialBurnAddressBalance, "Swap did not increase burn address SDEX balance"
         );
-        emit log_named_decimal_uint("amount", SDEX.balanceOf(BURN_ADDRESS) - initialBurnAddressBalance, 18);
     }
 
     /**
