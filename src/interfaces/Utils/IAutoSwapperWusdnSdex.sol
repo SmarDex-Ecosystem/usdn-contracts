@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-/// @notice Interface for the AutoSwapperWstethSdex contract that provides automated token swapping functionality.
-interface IAutoSwapperWstethSdex {
+/// @notice Interface for the AutoSwapperWusdnSdex contract that provides automated token swapping functionality.
+interface IAutoSwapperWusdnSdex {
     /// @notice Emitted when a swap fails.
     event FailedSwap();
 
@@ -22,7 +22,7 @@ interface IAutoSwapperWstethSdex {
     error AutoSwapperInvalidCaller();
 
     /// @notice Swap wstETH to SDEX.
-    function swapWstethToSdex() external;
+    function swapWusdnToSdex() external;
 
     /**
      * @notice Admin function to send the contract token balance to a specified address.

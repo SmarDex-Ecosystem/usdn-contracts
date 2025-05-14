@@ -11,7 +11,7 @@ import { ISmardexSwapCallback } from
 import { SmardexLibrary } from "@smardex-dex-contracts/contracts/ethereum/core/v2/libraries/SmardexLibrary.sol";
 
 import { IFeeCollectorCallback } from "./../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
-// import { IAutoSwapperWusdnSdex } from "./../interfaces/Utils/IAutoSwapperWusdnSdex.sol";
+import { IAutoSwapperWusdnSdex } from "./../interfaces/Utils/IAutoSwapperWusdnSdex.sol";
 
 import { console } from "forge-std/Test.sol";
 
@@ -21,7 +21,7 @@ import { console } from "forge-std/Test.sol";
  */
 contract AutoSwapperWusdnSdex is
     Ownable2Step,
-    // IAutoSwapperWusdnSdex,
+    IAutoSwapperWusdnSdex,
     IFeeCollectorCallback,
     ERC165,
     ISmardexSwapCallback
@@ -54,7 +54,7 @@ contract AutoSwapperWusdnSdex is
         }
     }
 
-    // / @inheritdoc IAutoSwapperWusdnSdex
+    /// @inheritdoc IAutoSwapperWusdnSdex
     function swapWusdnToSdex() external {
         _smarDexWusdnToSdex();
     }
@@ -68,12 +68,12 @@ contract AutoSwapperWusdnSdex is
         WUSDN.safeTransfer(msg.sender, uint256(amountWusdnIn));
     }
 
-    // / @inheritdoc IAutoSwapperWusdnSdex
+    /// @inheritdoc IAutoSwapperWusdnSdex
     function sweep(address token, address to, uint256 amount) external onlyOwner {
         IERC20(token).safeTransfer(to, amount);
     }
 
-    // / @inheritdoc IAutoSwapperWusdnSdex
+    /// @inheritdoc IAutoSwapperWusdnSdex
     function updateSwapSlippage(uint256 newSwapSlippage) external onlyOwner {
         if (newSwapSlippage == 0) {
             // revert AutoSwapperInvalidSwapSlippage();
