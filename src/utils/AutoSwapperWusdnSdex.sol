@@ -9,6 +9,7 @@ import { ISmardexPair } from "@smardex-dex-contracts/contracts/ethereum/core/v2/
 import { ISmardexSwapCallback } from
     "@smardex-dex-contracts/contracts/ethereum/core/v2/interfaces/ISmardexSwapCallback.sol";
 import { SmardexLibrary } from "@smardex-dex-contracts/contracts/ethereum/core/v2/libraries/SmardexLibrary.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IFeeCollectorCallback } from "./../interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
 import { IAutoSwapperWusdnSdex } from "./../interfaces/Utils/IAutoSwapperWusdnSdex.sol";
@@ -36,10 +37,10 @@ contract AutoSwapperWusdnSdex is
     ISmardexPair internal constant SMARDEX_WUSDN_SDEX_PAIR = ISmardexPair(0x11443f5B134c37903705e64129BEFc20e35a3725);
 
     /// @notice Fee rates for LP on the SmarDex pair.
-    uint128 immutable FEE_LP;
+    uint128 internal immutable FEE_LP;
 
     /// @notice Fee rates for the pool on the SmarDex pair.
-    uint128 immutable FEE_POOL;
+    uint128 internal immutable FEE_POOL;
 
     /// @notice Allowed slippage for swaps (in basis points).
     uint256 internal _swapSlippage = 100; // 1%
@@ -61,7 +62,7 @@ contract AutoSwapperWusdnSdex is
         uint256 wusdnAmount = WUSDN.balanceOf(address(this));
 
         uint256 quoteAmountSdexOut = _quoteAmountOut(wusdnAmount);
-        uint256 minSdexAmount = quoteAmountSdexOut * (BPS_DIVISOR - _swapSlippage) / BPS_DIVISOR;
+        uint256 minSdexAmount = FixedPointMathLib.mulDiv(quoteAmountSdexOut, BPS_DIVISOR - _swapSlippage, BPS_DIVISOR);
         (int256 amountSdexOut,) = SMARDEX_WUSDN_SDEX_PAIR.swap(address(0xdead), false, int256(wusdnAmount), "");
 
         if (uint256(-amountSdexOut) < minSdexAmount) {
@@ -81,6 +82,11 @@ contract AutoSwapperWusdnSdex is
     /// @inheritdoc IAutoSwapperWusdnSdex
     function sweep(address token, address to, uint256 amount) external onlyOwner {
         IERC20(token).safeTransfer(to, amount);
+    }
+
+    /// @inheritdoc IAutoSwapperWusdnSdex
+    function getSwapSlippage() external view returns (uint256) {
+        return _swapSlippage;
     }
 
     /// @inheritdoc IAutoSwapperWusdnSdex

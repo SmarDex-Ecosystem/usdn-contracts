@@ -33,6 +33,12 @@ interface IAutoSwapperWusdnSdex {
     function sweep(address token, address to, uint256 amount) external;
 
     /**
+     * @notice Get the current swap slippage setting (in basis points)
+     * @return Current slippage tolerance
+     */
+    function getSwapSlippage() external view returns (uint256);
+
+    /**
      * @notice Updates the allowed slippage percentage for swaps.
      * @param swapSlippage The new slippage value (in basis points).
      */
