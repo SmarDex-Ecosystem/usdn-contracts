@@ -281,7 +281,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 assertApproxEqAbs(middlewarePrice.timestamp, pythWstethTimestamp, 5, "Wrong similar timestamp");
 
                 // should obtain a short different price between the pyth wsteth price feed
-                // and the pyth eth price feed adjusted with ratio.
+                // and the pyth ETH price feed adjusted with ratio.
                 // We are ok with a delta below the pyth wsteth confidence.
                 assertApproxEqAbs(
                     middlewarePrice.price,

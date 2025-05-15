@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.26;
+pragma solidity >=0.8.0;
 
 /* -------------------------------------------------------------------------- */
 /*                              General Constants                             */
@@ -50,9 +50,14 @@ address constant WSTETH = address(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
 
 address constant PYTH_ORACLE = address(0x4305FB66699C3B2702D4d05CF36551390A4c69C6);
 address constant CHAINLINK_ORACLE_ETH = address(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419); // ETH-USD
+address constant CHAINLINK_VERIFIER_PROXY = address(0x5A1634A86e9b7BfEf33F0f3f3EA3b1aBBc4CC85F);
 bytes32 constant PYTH_ETH_USD = bytes32(0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace);
 bytes32 constant PYTH_WSTETH_USD = bytes32(0x6df640f3b8963d8f8358f791f352b8364513f6ab1cca5ed3f1f7b5448980e784);
 bytes32 constant REDSTONE_ETH_USD = bytes32("ETH");
+bytes32 constant CHAINLINK_DATA_STREAMS_WSTETH_USD =
+    bytes32(0x0003e8aed7fa7b939cc969a6db3105e05b4e77a7e9bb546fe21516f22aa1b0f4);
+bytes32 constant CHAINLINK_DATA_STREAMS_ETH_USD =
+    bytes32(0x000362205e10b3a147d02792eccee483dca6c7b44ecce7012cb8c6e0b68b3ae9);
 
 /* -------------------------------------------------------------------------- */
 /*                               Polygon mainnet                              */

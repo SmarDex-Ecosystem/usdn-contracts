@@ -543,7 +543,7 @@ library UsdnProtocolUtilsLibrary {
      * @param sdexBurnRatio The ratio of SDEX burned per minted USDN.
      * @return sdexToBurn_ The amount of SDEX tokens to burn.
      */
-    function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) internal pure returns (uint256 sdexToBurn_) {
+    function _calcSdexToBurn(uint256 usdnAmount, uint64 sdexBurnRatio) internal pure returns (uint256 sdexToBurn_) {
         sdexToBurn_ = FixedPointMathLib.fullMulDivUp(usdnAmount, sdexBurnRatio, Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR);
     }
 

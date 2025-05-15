@@ -27,14 +27,29 @@ import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtils
 import { UsdnProtocolVaultLibrary as Vault } from "./libraries/UsdnProtocolVaultLibrary.sol";
 
 contract UsdnProtocolFallback is
+    IUsdnProtocolFallback,
     IUsdnProtocolErrors,
     IUsdnProtocolEvents,
-    IUsdnProtocolFallback,
     InitializableReentrancyGuard,
     PausableUpgradeable,
     AccessControlDefaultAdminRulesUpgradeable
 {
     using SafeTransferLib for address;
+
+    /// @notice The highest value allowed for the ratio of SDEX to burn per minted USDN on deposit.
+    uint256 internal immutable MAX_SDEX_BURN_RATIO;
+
+    /// @notice The highest value allowed for the minimum long position setting.
+    uint256 internal immutable MAX_MIN_LONG_POSITION;
+
+    /**
+     * @param maxSdexBurnRatio The value of `MAX_SDEX_BURN_RATIO`.
+     * @param maxMinLongPosition The value of `MAX_MIN_LONG_POSITION`.
+     */
+    constructor(uint256 maxSdexBurnRatio, uint256 maxMinLongPosition) {
+        MAX_SDEX_BURN_RATIO = maxSdexBurnRatio;
+        MAX_MIN_LONG_POSITION = maxMinLongPosition;
+    }
 
     /// @inheritdoc IUsdnProtocolFallback
     function getActionablePendingActions(address currentUser, uint256 lookAhead, uint256 maxIter)
@@ -299,7 +314,7 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function getSdexBurnOnDepositRatio() external view returns (uint32 ratio_) {
+    function getSdexBurnOnDepositRatio() external view returns (uint64 ratio_) {
         return Utils._getMainStorage()._sdexBurnOnDepositRatio;
     }
 
@@ -575,8 +590,8 @@ contract UsdnProtocolFallback is
     }
 
     /// @inheritdoc IUsdnProtocolFallback
-    function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setSdexBurnOnDepositRatio(newRatio);
+    function setSdexBurnOnDepositRatio(uint64 newRatio) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
+        Setters.setSdexBurnOnDepositRatio(MAX_SDEX_BURN_RATIO, newRatio);
     }
 
     /// @inheritdoc IUsdnProtocolFallback
@@ -608,7 +623,7 @@ contract UsdnProtocolFallback is
 
     /// @inheritdoc IUsdnProtocolFallback
     function setMinLongPosition(uint256 newMinLongPosition) external onlyRole(Constants.SET_PROTOCOL_PARAMS_ROLE) {
-        Setters.setMinLongPosition(newMinLongPosition);
+        Setters.setMinLongPosition(MAX_MIN_LONG_POSITION, newMinLongPosition);
     }
 
     /* -------------------------------------------------------------------------- */

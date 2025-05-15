@@ -3,13 +3,13 @@ pragma solidity 0.8.26;
 
 import {
     ChainlinkPriceInfo,
-    ConfidenceInterval,
     FormattedPythPrice,
+    PriceAdjustment,
     PriceInfo,
     RedstonePriceInfo
 } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IOracleMiddlewareWithRedstone } from "../interfaces/OracleMiddleware/IOracleMiddlewareWithRedstone.sol";
-import { OracleMiddleware } from "./OracleMiddleware.sol";
+import { OracleMiddlewareWithPyth } from "./OracleMiddlewareWithPyth.sol";
 import { RedstoneOracle } from "./oracles/RedstoneOracle.sol";
 
 /**
@@ -19,7 +19,7 @@ import { RedstoneOracle } from "./oracles/RedstoneOracle.sol";
  * @dev This contract allows users to use the Redstone oracle and exists in case the Pyth infrastructure fails and we
  * need a temporary solution. Redstone and Pyth are used concurrently, which could introduce arbitrage opportunities.
  */
-contract OracleMiddlewareWithRedstone is IOracleMiddlewareWithRedstone, OracleMiddleware, RedstoneOracle {
+contract OracleMiddlewareWithRedstone is IOracleMiddlewareWithRedstone, OracleMiddlewareWithPyth, RedstoneOracle {
     /// @notice The penalty for using a non-Pyth price with low latency oracle (in basis points).
     uint16 internal _penaltyBps = 25; // 0.25%
 
@@ -37,7 +37,7 @@ contract OracleMiddlewareWithRedstone is IOracleMiddlewareWithRedstone, OracleMi
         address chainlinkPriceFeed,
         uint256 chainlinkTimeElapsedLimit
     )
-        OracleMiddleware(pythContract, pythFeedId, chainlinkPriceFeed, chainlinkTimeElapsedLimit)
+        OracleMiddlewareWithPyth(pythContract, pythFeedId, chainlinkPriceFeed, chainlinkTimeElapsedLimit)
         RedstoneOracle(redstoneFeedId)
     { }
 
@@ -55,17 +55,16 @@ contract OracleMiddlewareWithRedstone is IOracleMiddlewareWithRedstone, OracleMi
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @inheritdoc OracleMiddleware
+     * @inheritdoc OracleMiddlewareWithPyth
      * @notice Gets the price from the low-latency oracle (Pyth or Redstone).
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
      * prices younger than {PythOracle._pythRecentPriceDelay} or {RedstoneOracle._redstoneRecentPriceDelay}.
      */
-    function _getLowLatencyPrice(
-        bytes calldata data,
-        uint128 actionTimestamp,
-        ConfidenceInterval dir,
-        uint128 targetLimit
-    ) internal override returns (PriceInfo memory price_) {
+    function _getLowLatencyPrice(bytes calldata data, uint128 actionTimestamp, PriceAdjustment dir, uint128 targetLimit)
+        internal
+        override
+        returns (PriceInfo memory price_)
+    {
         // if actionTimestamp is 0 we're performing a liquidation and we don't add the validation delay
         if (actionTimestamp > 0) {
             // add the validation delay to the action timestamp to get the timestamp of the price data used to
@@ -103,14 +102,14 @@ contract OracleMiddlewareWithRedstone is IOracleMiddlewareWithRedstone, OracleMi
      * @param dir The direction to apply the penalty.
      * @return price_ The adjusted price according to the penalty.
      */
-    function _adjustRedstonePrice(RedstonePriceInfo memory redstonePrice, ConfidenceInterval dir)
+    function _adjustRedstonePrice(RedstonePriceInfo memory redstonePrice, PriceAdjustment dir)
         internal
         view
         returns (PriceInfo memory price_)
     {
-        if (dir == ConfidenceInterval.Down) {
+        if (dir == PriceAdjustment.Down) {
             price_.price = redstonePrice.price - (redstonePrice.price * _penaltyBps / BPS_DIVISOR);
-        } else if (dir == ConfidenceInterval.Up) {
+        } else if (dir == PriceAdjustment.Up) {
             price_.price = redstonePrice.price + (redstonePrice.price * _penaltyBps / BPS_DIVISOR);
         } else {
             price_.price = redstonePrice.price;

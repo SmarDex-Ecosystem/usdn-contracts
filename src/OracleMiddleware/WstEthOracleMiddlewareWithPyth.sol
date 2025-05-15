@@ -2,15 +2,17 @@
 pragma solidity 0.8.26;
 
 import { IWstETH } from "../interfaces/IWstETH.sol";
+import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { OracleMiddleware } from "./OracleMiddleware.sol";
+import { CommonOracleMiddleware } from "./CommonOracleMiddleware.sol";
+import { OracleMiddlewareWithPyth } from "./OracleMiddlewareWithPyth.sol";
 
 /**
  * @title Middleware Implementation For WstETH Price
- * @notice This contract is used to get the price of wstETH from the eth price oracle.
+ * @notice This contract is used to get the price of wstETH from the ETH price oracle.
  */
-contract WstEthOracleMiddleware is OracleMiddleware {
+contract WstEthOracleMiddlewareWithPyth is OracleMiddlewareWithPyth {
     /// @notice The wstETH contract.
     IWstETH internal immutable _wstEth;
 
@@ -27,13 +29,13 @@ contract WstEthOracleMiddleware is OracleMiddleware {
         address chainlinkPriceFeed,
         address wstETH,
         uint256 chainlinkTimeElapsedLimit
-    ) OracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, chainlinkTimeElapsedLimit) {
+    ) OracleMiddlewareWithPyth(pythContract, pythPriceID, chainlinkPriceFeed, chainlinkTimeElapsedLimit) {
         _wstEth = IWstETH(wstETH);
     }
 
     /**
-     * @inheritdoc OracleMiddleware
-     * @notice Parses and validates `data`, returns the corresponding price data by applying eth/wstETH ratio.
+     * @inheritdoc IBaseOracleMiddleware
+     * @notice Parses and validates `data`, returns the corresponding price data by applying ETH/wstETH ratio.
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata.
      * Wsteth price is calculated as follows: `ethPrice x stEthPerToken / 1 ether`.
      * A fee amounting to exactly {validationCost} (with the same `data` and `action`) must be sent or the transaction
@@ -53,7 +55,7 @@ contract WstEthOracleMiddleware is OracleMiddleware {
         uint128 targetTimestamp,
         Types.ProtocolAction action,
         bytes calldata data
-    ) public payable virtual override returns (PriceInfo memory) {
+    ) public payable virtual override(IBaseOracleMiddleware, CommonOracleMiddleware) returns (PriceInfo memory) {
         PriceInfo memory ethPrice = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
         uint256 stEthPerToken = _wstEth.stEthPerToken();
 
