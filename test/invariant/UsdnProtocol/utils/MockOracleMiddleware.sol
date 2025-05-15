@@ -6,13 +6,15 @@ import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableM
 import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 import { CommonOracleMiddleware } from "../../../../src/OracleMiddleware/CommonOracleMiddleware.sol";
+import { OracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/OracleMiddlewareWithPyth.sol";
+import { IBaseOracleMiddleware } from "../../../../src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @notice Contract to apply and return a mocked wstETH price
  * @dev This contract always returns a mocked wstETH price
  */
-contract MockOracleMiddleware is CommonOracleMiddleware {
+contract MockOracleMiddleware is OracleMiddlewareWithPyth {
     using EnumerableMap for EnumerableMap.UintToUintMap;
 
     uint256 internal constant MAX_CONF_BPS = 200; // 2% max
@@ -20,7 +22,7 @@ contract MockOracleMiddleware is CommonOracleMiddleware {
 
     EnumerableMap.UintToUintMap internal _prices; // append-only map of timestamps to prices
 
-    constructor(uint128 initialPrice) CommonOracleMiddleware(address(0), "", address(0), 0) {
+    constructor(uint128 initialPrice) OracleMiddlewareWithPyth(address(0), "", address(0), 0) {
         _prices.set(block.timestamp, initialPrice);
     }
 
@@ -45,11 +47,10 @@ contract MockOracleMiddleware is CommonOracleMiddleware {
         }
     }
 
-    /// @inheritdoc CommonOracleMiddleware
     function parseAndValidatePrice(bytes32, uint128 targetTimestamp, Types.ProtocolAction action, bytes calldata)
         public
         payable
-        override
+        override(CommonOracleMiddleware, IBaseOracleMiddleware)
         returns (PriceInfo memory price_)
     {
         // register a new latest price if needed (new block)
@@ -130,11 +131,10 @@ contract MockOracleMiddleware is CommonOracleMiddleware {
         price_.price = lastPrice;
     }
 
-    /// @inheritdoc CommonOracleMiddleware
     function validationCost(bytes calldata, Types.ProtocolAction action)
         public
         pure
-        override
+        override(CommonOracleMiddleware, IBaseOracleMiddleware)
         returns (uint256 result_)
     {
         if (
