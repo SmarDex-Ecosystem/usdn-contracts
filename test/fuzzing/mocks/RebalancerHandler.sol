@@ -3,12 +3,12 @@ pragma solidity 0.8.26;
 
 import { Test, console } from "forge-std/Test.sol";
 
+import { Rebalancer } from "../../../src/Rebalancer/Rebalancer.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
-    "../../../../../src/UsdnProtocol//libraries/UsdnProtocolConstantsLibrary.sol";
-import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
-import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
+import { IUsdnProtocol } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title RebalancerHandler

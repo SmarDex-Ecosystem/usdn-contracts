@@ -8,25 +8,24 @@ import { UsdnHandler } from "../unit/USDN/utils/Handler.sol";
 import { DefaultConfig } from "../utils/DefaultConfig.sol";
 import { Sdex } from "../utils/Sdex.sol";
 import { WstETH } from "../utils/WstEth.sol";
-import { IUsdnProtocolHandler } from "./mocks/interfaces/IUsdnProtocolHandler.sol";
-
 import { LiquidationRewardsManagerHandler } from "./mocks/LiquidationRewardsManagerHandler.sol";
 import { MockPyth } from "./mocks/MockPyth.sol";
 import { RebalancerHandler } from "./mocks/RebalancerHandler.sol";
+import { IUsdnProtocolHandler } from "./mocks/interfaces/IUsdnProtocolHandler.sol";
 import { FunctionCalls } from "./util/FunctionCalls.sol";
-import { FuzzActors } from "./util/FuzzActors.sol";
 
-import { WstEthOracleMiddleware } from "../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
-import { Usdn } from "../../../src/Usdn/Usdn.sol";
-import { Wusdn } from "../../../src/Usdn/Wusdn.sol";
-import { UsdnProtocolFallback } from "../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
-import { UsdnProtocolConstantsLibrary as Constants } from
-    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
-import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
-import { FeeCollector } from "../../../src/utils/FeeCollector.sol";
+import { WstEthOracleMiddlewareWithPyth } from "../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
+import { MockWstEthOracleMiddlewareWithPyth } from
+    "../../src/OracleMiddleware/mock/MockWstEthOracleMiddlewareWithPyth.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
+import { Usdn } from "../../src/Usdn/Usdn.sol";
+import { Wusdn } from "../../src/Usdn/Wusdn.sol";
+import { UsdnProtocolFallback } from "../../src/UsdnProtocol/UsdnProtocolFallback.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { SignedMath } from "../../src/libraries/SignedMath.sol";
+import { FeeCollector } from "../../src/utils/FeeCollector.sol";
 import { UsdnProtocolHandler } from "./mocks/UsdnProtocolHandler.sol";
 
 /**
@@ -67,7 +66,7 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
     }
 
     function deployOracleMiddleware(address wstETHAddress) internal {
-        wstEthOracleMiddleware = new MockWstEthOracleMiddleware(
+        wstEthOracleMiddleware = new MockWstEthOracleMiddlewareWithPyth(
             address(pyth), PYTH_FEED_ID, address(chainlink), wstETHAddress, CHAINLINK_PRICE_VALIDITY
         );
 
@@ -86,7 +85,7 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
         UsdnProtocolHandler implementation = new UsdnProtocolHandler();
 
         _setPeripheralContracts(
-            WstEthOracleMiddleware(address(wstEthOracleMiddleware)),
+            WstEthOracleMiddlewareWithPyth(address(wstEthOracleMiddleware)),
             liquidationRewardsManager,
             usdn,
             wstETH,

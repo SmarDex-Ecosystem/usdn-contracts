@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { PreconditionsBase } from "./PreconditionsBase.sol";
 
 import { UsdnProtocolConstantsLibrary as Constants } from
-    "../../../../../src/UsdnProtocol//libraries/UsdnProtocolConstantsLibrary.sol";
+    "../../../../src/UsdnProtocol//libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 

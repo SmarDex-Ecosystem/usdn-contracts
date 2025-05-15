@@ -15,16 +15,13 @@ import { UsdnProtocolHandler } from "./handlers/UsdnProtocolHandler.sol";
 import { UsdnProtocolSafeHandler } from "./handlers/UsdnProtocolSafeHandler.sol";
 
 import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
-import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { WstEthOracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
-import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
-
-import { console } from "forge-std/console.sol";
 
 /// @dev This fixture does not deploy the protocol, only the dependencies
 contract UsdnProtocolInvariantBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents, DefaultConfig {
@@ -80,7 +77,7 @@ contract UsdnProtocolInvariantFixture is UsdnProtocolInvariantBaseFixture {
         vm.startPrank(DEPLOYER);
         UsdnProtocolHandler implementation = new UsdnProtocolHandler(wstETH, sdex);
         _setPeripheralContracts(
-            WstEthOracleMiddleware(address(oracleMiddleware)),
+            WstEthOracleMiddlewareWithPyth(address(oracleMiddleware)),
             liquidationRewardsManager,
             usdn,
             wstETH,
@@ -137,7 +134,7 @@ contract UsdnProtocolInvariantSafeFixture is UsdnProtocolInvariantBaseFixture {
         FeeCollector feeCollector = new FeeCollector(); //NOTE: added fuzzing contract into collector's constructor
 
         _setPeripheralContracts(
-            WstEthOracleMiddleware(address(oracleMiddleware)),
+            WstEthOracleMiddlewareWithPyth(address(oracleMiddleware)),
             liquidationRewardsManager,
             usdn,
             wstETH,
