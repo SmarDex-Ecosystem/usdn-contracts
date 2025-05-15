@@ -75,7 +75,6 @@ contract AutoSwapperWusdnSdex is
         if (msg.sender != address(SMARDEX_WUSDN_SDEX_PAIR)) {
             revert AutoSwapperInvalidCaller();
         }
-
         WUSDN.safeTransfer(msg.sender, uint256(amountWusdnIn));
     }
 

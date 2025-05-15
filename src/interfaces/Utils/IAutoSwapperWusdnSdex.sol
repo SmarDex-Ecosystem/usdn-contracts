@@ -3,14 +3,14 @@ pragma solidity >=0.8.0;
 
 /// @notice Interface for the AutoSwapperWusdnSdex contract that provides automated token swapping functionality.
 interface IAutoSwapperWusdnSdex {
-    /// @notice Emitted when a swap fails.
-    event FailedSwap();
-
     /**
      * @notice Emitted when the swap slippage percentage is updated.
      * @param newSwapSlippage The new swap slippage (in basis points).
      */
     event SwapSlippageUpdated(uint256 newSwapSlippage);
+
+    /// @notice Emitted when a swap fails.
+    event FailedSwap();
 
     /// @notice Thrown when a swap fails.
     error AutoSwapperSwapFailed();
