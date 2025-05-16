@@ -17,7 +17,7 @@ import { IFeeCollectorCallback } from "./../interfaces/UsdnProtocol/IFeeCollecto
 import { IAutoSwapperWstethSdex } from "./../interfaces/Utils/IAutoSwapperWstethSdex.sol";
 
 /**
- * @title SDEX buy-back and burn Autoswapper
+ * @title SDEX buy-back and burn AutoSwapper
  * @notice Automates protocol fee conversion from wstETH to SDEX via Uniswap V3 and Smardex.
  */
 contract AutoSwapperWstethSdex is
@@ -30,10 +30,6 @@ contract AutoSwapperWstethSdex is
 {
     using SafeERC20 for IERC20;
     using SafeERC20 for IWstETH;
-
-    /* -------------------------------------------------------------------------- */
-    /*                                  Constants                                 */
-    /* -------------------------------------------------------------------------- */
 
     /// @notice Decimal points for basis points (bps).
     uint16 internal constant BPS_DIVISOR = 10_000;
