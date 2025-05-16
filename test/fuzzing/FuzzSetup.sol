@@ -79,7 +79,7 @@ contract FuzzSetup is FunctionCalls, DefaultConfig {
 
     function deployProtocol() internal {
         feeCollector = new FeeCollector(); //NOTE: added fuzzing contract into collector's constructor
-        usdnProtocolFallback = new UsdnProtocolFallback();
+        usdnProtocolFallback = new UsdnProtocolFallback(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
         usdnProtocolHandler = new UsdnProtocolHandler();
 
         UsdnProtocolHandler implementation = new UsdnProtocolHandler();

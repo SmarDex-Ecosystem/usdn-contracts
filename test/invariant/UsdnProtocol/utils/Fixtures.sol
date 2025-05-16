@@ -14,7 +14,8 @@ import { UsdnHandler } from "./handlers/Usdn.sol";
 import { UsdnProtocolHandler } from "./handlers/UsdnProtocolHandler.sol";
 import { UsdnProtocolSafeHandler } from "./handlers/UsdnProtocolSafeHandler.sol";
 
-import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
+import { LiquidationRewardsManagerWstEth } from
+    "../../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
 import { WstEthOracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
@@ -33,7 +34,7 @@ contract UsdnProtocolInvariantBaseFixture is BaseFixture, IUsdnProtocolErrors, I
     Sdex public sdex;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
-    LiquidationRewardsManager public liquidationRewardsManager;
+    LiquidationRewardsManagerWstEth public liquidationRewardsManager;
     UsdnProtocolFallback protocolFallback;
     // Managers managers;
 
@@ -46,8 +47,8 @@ contract UsdnProtocolInvariantBaseFixture is BaseFixture, IUsdnProtocolErrors, I
         wstETH = new WstETH();
         sdex = new Sdex();
         oracleMiddleware = new MockOracleMiddleware(INITIAL_PRICE);
-        liquidationRewardsManager = new LiquidationRewardsManager(wstETH);
-        protocolFallback = new UsdnProtocolFallback();
+        liquidationRewardsManager = new LiquidationRewardsManagerWstEth(wstETH);
+        protocolFallback = new UsdnProtocolFallback(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
         vm.stopPrank();
 
         managers = Managers({
@@ -75,7 +76,8 @@ contract UsdnProtocolInvariantFixture is UsdnProtocolInvariantBaseFixture {
         super.setUp();
 
         vm.startPrank(DEPLOYER);
-        UsdnProtocolHandler implementation = new UsdnProtocolHandler(wstETH, sdex);
+        UsdnProtocolHandler implementation =
+            new UsdnProtocolHandler(wstETH, sdex, MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
         _setPeripheralContracts(
             WstEthOracleMiddlewareWithPyth(address(oracleMiddleware)),
             liquidationRewardsManager,
@@ -129,7 +131,8 @@ contract UsdnProtocolInvariantSafeFixture is UsdnProtocolInvariantBaseFixture {
     function setUp() public virtual override {
         super.setUp();
         vm.startPrank(DEPLOYER);
-        UsdnProtocolSafeHandler implementation = new UsdnProtocolSafeHandler(wstETH, sdex);
+        UsdnProtocolSafeHandler implementation =
+            new UsdnProtocolSafeHandler(wstETH, sdex, MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
 
         FeeCollector feeCollector = new FeeCollector(); //NOTE: added fuzzing contract into collector's constructor
 

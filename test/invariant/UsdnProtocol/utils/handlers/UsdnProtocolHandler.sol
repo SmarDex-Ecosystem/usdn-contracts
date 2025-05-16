@@ -32,7 +32,9 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
 
     // Storage _tempStorage;
 
-    constructor(WstETH mockAsset, Sdex mockSdex) {
+    constructor(WstETH mockAsset, Sdex mockSdex, uint256 maxSdexBurnRatio, uint256 maxMinLongPosition)
+        UsdnProtocolFallback(maxSdexBurnRatio, maxMinLongPosition)
+    {
         _mockAsset = mockAsset;
         _mockSdex = mockSdex;
     }
