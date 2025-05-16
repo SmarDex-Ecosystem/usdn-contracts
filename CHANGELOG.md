@@ -1,5 +1,39 @@
 # Changelog
 
+## [2.0.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v1.1.0...v2.0.0) (2025-05-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* this is breaking for consumers which expect a uint32, and it requires a storage update for the existing protocol instances
+
+### Features
+
+* autoSwapper for WUSDN to SDEX ([#921](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/921)) ([5087573](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/5087573a6d6eecd09e475a66f444b0f03d9647a5))
+* autoswapper wsteth sdex ([#916](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/916)) ([da82bf1](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/da82bf118cd4e4a7f01443c861282145792d1723))
+* **burn-ratio:** update the shortDN burn ratio to x75 ([#910](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/910)) ([e50671b](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/e50671be3a86b6f6b4459a0c43ab969cb67c3eb0))
+* **middleware:** wsteth oracle with data streams ([#898](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/898)) ([fc87703](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/fc87703652d8a17c7b25c548884d047ca87c5408))
+
+
+### Bug Fixes
+
+* **oracle-middleware:** revert when the Pyth confidence is higher than the price ([#918](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/918)) ([ec65255](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/ec6525543c914c310dcac97063da2746ab8534e3))
+
+
+### Code Refactoring
+
+* **parameters:** the fee threshold for shortdn is now 2000 WUSDN ([#909](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/909)) ([0b733fa](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/0b733fadb7590b23acbe84ba50675416c2f0b1f2))
+* re-organize the inheritance graph for `IUsdnProtocol` to include events and errors ([#917](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/917)) ([46965b0](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/46965b0be5a31a9b391f85e19a748621980de4a9))
+* relax abstract contracts version ([#908](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/908)) ([e431623](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/e431623c81cc2de17b89e3a661d71f4ed220817b))
+* remove the initializeV2 function ([#919](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/919)) ([7c95b0b](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/7c95b0be18f28e38043a7a03aa37ce0ec48dcf82))
+* sdex burn ratio to uint64 ([#895](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/895)) ([2d34a8d](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/2d34a8d3f6538f116f8d9ee068e11a9c33a3d1de))
+* wsteth middleware name ([#902](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/902)) ([db1779f](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/db1779f379342340de9197b78b0d86405715f534))
+
+
+### Build System
+
+* **npm:** add the 'typescript' dependency to fix the `exportAbi` command ([#896](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/896)) ([a01bc4f](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a01bc4f6b972b56fb34978b4ac9085493e1e3feb))
+
 ## [1.1.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v1.0.1...v1.1.0) (2025-03-27)
 
 
