@@ -15,7 +15,7 @@ import { IFeeCollectorCallback } from "./../interfaces/UsdnProtocol/IFeeCollecto
 import { IAutoSwapperWusdnSdex } from "./../interfaces/Utils/IAutoSwapperWusdnSdex.sol";
 
 /**
- * @title SDEX buy-back and burn Autoswapper
+ * @title SDEX buy-back and burn AutoSwapper
  * @notice Automates protocol fee conversion from WUSDN to SDEX via Smardex.
  */
 contract AutoSwapperWusdnSdex is
