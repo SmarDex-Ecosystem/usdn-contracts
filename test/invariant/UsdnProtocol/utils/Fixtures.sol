@@ -147,7 +147,7 @@ contract UsdnProtocolInvariantSafeFixture is UsdnProtocolInvariantBaseFixture {
         );
 
         address proxy = UnsafeUpgrades.deployUUPSProxy(
-            address(implementation), abi.encodeCall(UsdnProtocolHandler.initializeStorageHandler, (initStorage))
+            address(implementation), abi.encodeCall(UsdnProtocolHandler.initializeStorageHandler, initStorage)
         );
 
         protocol = UsdnProtocolSafeHandler(proxy);

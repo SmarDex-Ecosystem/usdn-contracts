@@ -39,7 +39,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         _mockSdex = mockSdex;
     }
 
-    function initializeStorageHandler(InitStorage calldata initStorage) external initializer {
+    function initializeStorageHandler(InitStorage calldata initStorage) external {
         initializeStorage(initStorage);
     }
 
