@@ -10,7 +10,7 @@ import { PriceInfo } from "../../../../src/interfaces/OracleMiddleware/IOracleMi
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
- * @custom:feature The `parseAndValidatePrice` function of `WusdnToEthOracleMiddleware`
+ * @custom:feature The `parseAndValidatePrice` function of `WusdnToEthOracleMiddlewareWithPyth`
  * @custom:background Given the price ETH is 2000 USD
  * @custom:and The confidence interval is 20 USD
  * @custom:and The USDN divisor is 9e17

@@ -15,7 +15,7 @@ import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { ILiquidationRewardsManager } from
     "../../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManager.sol";
-import { IOracleMiddleware } from "../../../src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IOracleMiddlewareWithPyth } from "../../../src/interfaces/OracleMiddleware/IOracleMiddlewareWithPyth.sol";
 import { IRebalancer } from "../../../src/interfaces/Rebalancer/IRebalancer.sol";
 import { IRebalancerEvents } from "../../../src/interfaces/Rebalancer/IRebalancerEvents.sol";
 
@@ -38,7 +38,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test_RevertWhen_nonAdminWalletCallAdminFunctions() public {
         vm.expectRevert(customError("SET_EXTERNAL_ROLE"));
-        protocol.setOracleMiddleware(IOracleMiddleware(address(1)));
+        protocol.setOracleMiddleware(IOracleMiddlewareWithPyth(address(1)));
 
         vm.expectRevert(customError("SET_PROTOCOL_PARAMS_ROLE"));
         protocol.setMinLeverage(0);
@@ -120,7 +120,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         // zero address disallowed
         vm.expectRevert(UsdnProtocolInvalidMiddlewareAddress.selector);
         // set middleware
-        protocol.setOracleMiddleware(IOracleMiddleware(address(0)));
+        protocol.setOracleMiddleware(IOracleMiddlewareWithPyth(address(0)));
     }
 
     /**
@@ -151,7 +151,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         uint16 invalidValue = uint16(protocol.getLowLatencyValidatorDeadline() - 1);
         mockInvalidOracleMiddleware.setLowLatencyDelay(invalidValue);
         vm.expectRevert(UsdnProtocolInvalidMiddlewareLowLatencyDelay.selector);
-        protocol.setOracleMiddleware(IOracleMiddleware(address(mockInvalidOracleMiddleware)));
+        protocol.setOracleMiddleware(IOracleMiddlewareWithPyth(address(mockInvalidOracleMiddleware)));
     }
 
     /**
@@ -484,7 +484,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then The call reverts
      */
     function test_RevertWhen_setSdexBurnOnDepositRatioWithMax() public adminPrank {
-        uint32 aboveMax = uint32(Constants.MAX_SDEX_BURN_RATIO + 1);
+        uint32 aboveMax = uint32(MAX_SDEX_BURN_RATIO + 1);
 
         vm.expectRevert(UsdnProtocolInvalidBurnSdexOnDepositRatio.selector);
         protocol.setSdexBurnOnDepositRatio(aboveMax);
@@ -955,7 +955,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      */
     function test_RevertWhen_invalidSetMinLongPosition() public adminPrank {
         vm.expectRevert(UsdnProtocolInvalidMinLongPosition.selector);
-        protocol.setMinLongPosition(10 ether + 1);
+        protocol.setMinLongPosition(MAX_MIN_LONG_POSITION + 1);
     }
 
     /**

@@ -17,9 +17,9 @@ jobs:
       - uses: actions/create-github-app-token@v1
         id: app-token
         with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          repositories: "${{ github.event.repository.name }},foundry-template"
+          app-id: ${{ secrets.FOUNDRY_TEMPLATE_APP_ID }}
+          private-key: ${{ secrets.FOUNDRY_TEMPLATE_APP_PRIVATE_KEY }}
+          owner: "Blockchain-RA2-Tech"
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,6 +31,7 @@ jobs:
         with:
           source_gh_token: ${{ steps.app-token.outputs.token }}
           source_repo_path: Blockchain-RA2-Tech/foundry-template
+          target_gh_token: ${{ secrets.GITHUB_TOKEN }}  
           upstream_branch: main
           # PR settings
           is_pr_cleanup: true # will remove previous update PR (if not merged) and create a new one

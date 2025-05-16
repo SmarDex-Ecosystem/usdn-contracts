@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IOracleMiddleware } from "./IOracleMiddleware.sol";
+import { IOracleMiddlewareWithPyth } from "./IOracleMiddlewareWithPyth.sol";
 
 /**
  * @title Oracle Middleware interface
  * @notice Same as the default oracle middleware, with added support for Redstone
  */
-interface IOracleMiddlewareWithRedstone is IOracleMiddleware {
+interface IOracleMiddlewareWithRedstone is IOracleMiddlewareWithPyth {
     /* -------------------------------------------------------------------------- */
     /*                              Generic features                              */
     /* -------------------------------------------------------------------------- */

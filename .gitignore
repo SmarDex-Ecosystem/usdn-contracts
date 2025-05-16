@@ -30,6 +30,7 @@ docs/
 
 # IDE
 .idea/
+.vscode/
 
 # Removed for now, might enable after v1.0
 .gas-snapshot

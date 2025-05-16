@@ -15,7 +15,8 @@ import {
 } from "../../utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "./utils/Fixtures.sol";
 
-import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
+import { MockWstEthOracleMiddlewareWithPyth } from
+    "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddlewareWithPyth.sol";
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "../../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManagerErrorsEventsTypes.sol";
 import { IBaseRebalancer } from "../../../src/interfaces/Rebalancer/IBaseRebalancer.sol";
@@ -32,7 +33,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
     IUsdnEvents,
     IRebalancerEvents
 {
-    MockWstEthOracleMiddleware mockOracle;
+    MockWstEthOracleMiddlewareWithPyth mockOracle;
     uint256 securityDepositValue;
     uint256[] snapshots;
 
@@ -87,7 +88,7 @@ contract TestForkUsdnProtocolLiquidationGasUsage is
         /* ------- replace the oracle to setup positions at the desired price ------- */
 
         // use the mock oracle to open positions to avoid hermes calls
-        mockOracle = new MockWstEthOracleMiddleware(
+        mockOracle = new MockWstEthOracleMiddlewareWithPyth(
             address(mockPyth), PYTH_ETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
         );
 

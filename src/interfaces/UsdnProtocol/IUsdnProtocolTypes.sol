@@ -593,7 +593,7 @@ interface IUsdnProtocolTypes {
      * @param _positionFeeBps The position fee in basis points.
      * @param _vaultFeeBps The fee for vault deposits and withdrawals, in basis points.
      * @param _sdexRewardsRatioBps The ratio of SDEX rewards to send to the user (in basis points).
-     * @param _sdexBurnOnDepositRatio The ratio of USDN to SDEX tokens to burn on deposit.
+     * @param __unused Old slot for `_sdexBurnOnDepositRatio`.
      * @param _feeCollector The fee collector's address.
      * @param _securityDepositValue The deposit required for a new position.
      * @param _targetUsdnPrice The nominal (target) price of USDN (with _priceFeedDecimals).
@@ -624,6 +624,7 @@ interface IUsdnProtocolTypes {
      * @param _tickBitmap The bitmap used to quickly find populated ticks.
      * @param _protocolFallbackAddr The address of the fallback contract.
      * @param _nonce The user EIP712 nonce.
+     * @param _sdexBurnOnDepositRatio The ratio of USDN to SDEX tokens to burn on deposit.
      * @param _positionLiquidated Flags when positions have been liquidated.
      * @param _liquidationPending Tracks if there are positions pending liquidation.
      * @param _positionWasLiquidatedInTheMeantime Flags when a position was liquidated while pending.
@@ -670,7 +671,7 @@ interface IUsdnProtocolTypes {
         uint16 _positionFeeBps;
         uint16 _vaultFeeBps;
         uint16 _sdexRewardsRatioBps;
-        uint32 _sdexBurnOnDepositRatio;
+        uint32 __unused;
         address _feeCollector;
         uint64 _securityDepositValue;
         uint128 _targetUsdnPrice;
@@ -702,6 +703,7 @@ interface IUsdnProtocolTypes {
         address _protocolFallbackAddr;
         // EIP712
         mapping(address => uint256) _nonce;
+        uint64 _sdexBurnOnDepositRatio;
         /*
          *
          * FUZZING SUITE STATE CHECK VARS
@@ -788,7 +790,7 @@ interface IUsdnProtocolTypes {
         uint16 positionFeeBps;
         uint16 vaultFeeBps;
         uint16 sdexRewardsRatioBps;
-        uint32 sdexBurnOnDepositRatio;
+        uint64 sdexBurnOnDepositRatio;
         address feeCollector;
         uint64 securityDepositValue;
         uint128 targetUsdnPrice;

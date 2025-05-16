@@ -39,7 +39,11 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
     using SafeCast for uint256;
     using SignedMath for int256;
 
-    function initializeStorageHandler(InitStorage calldata initStorage) external initializer {
+    constructor(uint256 maxSdexBurnRatio, uint256 maxMinLongPosition)
+        UsdnProtocolFallback(maxSdexBurnRatio, maxMinLongPosition)
+    { }
+
+    function initializeStorageHandler(InitStorage calldata initStorage) external {
         initializeStorage(initStorage);
     }
 
@@ -373,7 +377,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, UsdnProtocolFallback, Test {
         return Utils._getOraclePrice(action, timestamp, actionId, priceData);
     }
 
-    function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external pure returns (uint256) {
+    function i_calcSdexToBurn(uint256 usdnAmount, uint64 sdexBurnRatio) external pure returns (uint256) {
         return Utils._calcSdexToBurn(usdnAmount, sdexBurnRatio);
     }
 

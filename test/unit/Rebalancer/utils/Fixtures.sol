@@ -12,8 +12,9 @@ import { WstETH } from "../../../utils/WstEth.sol";
 import { MockOracleMiddleware } from "../../UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { RebalancerHandler } from "../utils/Handler.sol";
 
-import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
-import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { LiquidationRewardsManagerWstEth } from
+    "../../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
+import { WstEthOracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
@@ -39,7 +40,7 @@ contract RebalancerFixture is
     Sdex public sdex;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
-    LiquidationRewardsManager public liquidationRewardsManager;
+    LiquidationRewardsManagerWstEth public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
     IUsdnProtocol public usdnProtocol;
     Types.PreviousActionsData internal EMPTY_PREVIOUS_DATA =
@@ -51,13 +52,14 @@ contract RebalancerFixture is
         wstETH = new WstETH();
         sdex = new Sdex();
         oracleMiddleware = new MockOracleMiddleware();
-        liquidationRewardsManager = new LiquidationRewardsManager(wstETH);
+        liquidationRewardsManager = new LiquidationRewardsManagerWstEth(wstETH);
 
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        UsdnProtocolFallback protocolFallback =
+            new UsdnProtocolFallback(DefaultConfig.MAX_SDEX_BURN_RATIO, DefaultConfig.MAX_MIN_LONG_POSITION);
         UsdnProtocolImpl implementation = new UsdnProtocolImpl();
 
         _setPeripheralContracts(
-            WstEthOracleMiddleware(address(oracleMiddleware)),
+            WstEthOracleMiddlewareWithPyth(address(oracleMiddleware)),
             liquidationRewardsManager,
             usdn,
             wstETH,

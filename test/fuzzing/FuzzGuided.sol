@@ -10,7 +10,7 @@ import { FuzzRebalancer } from "./FuzzRebalancer.sol";
 import { FuzzUsdnProtocolActions } from "./FuzzUsdnProtocolActions.sol";
 import { FuzzUsdnProtocolVault } from "./FuzzUsdnProtocolVault.sol";
 
-import { IUsdnProtocolTypes as Types } from "../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "../../src/libraries/SignedMath.sol";
 import { TickMath } from "../../src/libraries/TickMath.sol";
 

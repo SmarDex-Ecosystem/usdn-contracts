@@ -34,6 +34,13 @@ checksum = "2c65c8850894b2e6420827cc1c03ab755d832230679be1bf0835c05aaefbc2bc"
 integrity = "91b013140e1099e6e5d92ef741bcffe7ba5642bc412e616b1dca9801cf3acd6e"
 
 [[dependencies]]
+name = "@smardex-dex-contracts"
+version = "1.0.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/@smardex-dex-contracts/1_0_1_24-04-2025_11:42:41_dex-smart-contracts.zip"
+checksum = "1a09d443f6c6c532382e9bb6a1576f9f72c5952808e02de5ba0ebf5c9ea74902"
+integrity = "77d464e5e39c1d2c5f34a8e4d7ae9c95a47c58307e60ccc5f989d06de808ea83"
+
+[[dependencies]]
 name = "@smardex-solidity-libraries"
 version = "1.0.1"
 url = "https://soldeer-revisions.s3.amazonaws.com/@smardex-solidity-libraries/1_0_1_08-01-2025_10:49:08_solidity-libraries.zip"
@@ -46,6 +53,13 @@ version = "1.0.0"
 url = "https://github.com/Uniswap/permit2/archive/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219.zip"
 checksum = "180e009e8abfc5ed43383418f2593ac790655b58ec18ae52a92a636d5f298ad4"
 integrity = "393047bfd13476671149d98263cf25e3ba7d301ef3f9e83f073c0183ea6b6586"
+
+[[dependencies]]
+name = "@uniswap-v3-core"
+version = "1.0.2-solc-0.8-simulate"
+url = "https://soldeer-revisions.s3.amazonaws.com/@uniswap-v3-core/1_0_2-solc-0_8-simulate_22-01-2024_13:19:54_v3-core.zip"
+checksum = "68949c67a4f22044e4c8dc716362b6d79b07e8990e720bec9b116f54b233ef57"
+integrity = "697a089ffe197580b6cfe07f0c4dd8a35da0836fd1d9e522f73efda4b7314e01"
 
 [[dependencies]]
 name = "forge-std"

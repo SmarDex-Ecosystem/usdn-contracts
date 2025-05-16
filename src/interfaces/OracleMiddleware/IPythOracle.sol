@@ -3,7 +3,9 @@ pragma solidity >=0.8.0;
 
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 
-interface IPythOracle {
+import { IOracleMiddlewareErrors } from "../../interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+
+interface IPythOracle is IOracleMiddlewareErrors {
     /**
      * @notice Gets the Pyth contract address.
      * @return pyth_ The Pyth contract address.
