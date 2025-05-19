@@ -43,7 +43,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
 
     Storage _tempStorage;
 
-    function initializeStorageHandler(InitStorage calldata initStorage) external initializer {
+    function initializeStorageHandler(InitStorage calldata initStorage) external {
         initializeStorage(initStorage);
     }
 
