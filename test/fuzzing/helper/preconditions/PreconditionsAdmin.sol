@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { PreconditionsBase } from "./PreconditionsBase.sol";
 
 import { UsdnProtocolConstantsLibrary as Constants } from
-    "../../../../../src/UsdnProtocol//libraries/UsdnProtocolConstantsLibrary.sol";
+    "../../../../src/UsdnProtocol//libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolUtilsLibrary as Utils } from "../../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
 import { IUsdnProtocolTypes as Types } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -142,7 +142,7 @@ abstract contract PreconditionsAdmin is PreconditionsBase {
 
     function setSdexBurnOnDepositRatioPreconditions(uint256 seed) internal returns (uint32 ratio) {
         uint256 minBound = 1e6;
-        ratio = uint32(bound(seed, minBound, Constants.MAX_SDEX_BURN_RATIO));
+        ratio = uint32(bound(seed, minBound, MAX_SDEX_BURN_RATIO));
     }
 
     function setSecurityDepositValuePreconditions(uint256 seed) internal returns (uint64 securityDeposit) {
@@ -291,7 +291,7 @@ abstract contract PreconditionsAdmin is PreconditionsBase {
 
     function setMinLongPositionPreconditions(uint256 seed) internal pure returns (uint256 minLongPosition) {
         uint256 minBound = 2 * 10 ** 18; // 2 tokens
-        minLongPosition = bound(seed, minBound, Constants.MAX_MIN_LONG_POSITION);
+        minLongPosition = bound(seed, minBound, MAX_MIN_LONG_POSITION);
     }
 
     function setSafetyMarginBpsPreconditions(uint256 seed) internal pure returns (uint256 safetyMarginBps) {

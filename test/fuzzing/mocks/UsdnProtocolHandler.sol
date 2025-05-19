@@ -7,13 +7,13 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import { UsdnProtocolConstantsLibrary as Constants } from
-    "../../../../../src/UsdnProtocol//libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolImpl } from "../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolActionsLongLibrary as ActionsLong } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolActionsLongLibrary.sol";
 import { UsdnProtocolActionsUtilsLibrary as ActionsUtils } from
     "../../../src/UsdnProtocol/libraries/UsdnProtocolActionsUtilsLibrary.sol";
+import { UsdnProtocolConstantsLibrary as Constants } from
+    "../../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { UsdnProtocolCoreLibrary as Core } from "../../../src/UsdnProtocol/libraries/UsdnProtocolCoreLibrary.sol";
 import { UsdnProtocolLongLibrary as Long } from "../../../src/UsdnProtocol/libraries/UsdnProtocolLongLibrary.sol";
 import { UsdnProtocolSettersLibrary as Setters } from
@@ -43,7 +43,7 @@ contract UsdnProtocolHandler is UsdnProtocolImpl, Test {
 
     Storage _tempStorage;
 
-    function initializeStorageHandler(InitStorage calldata initStorage) external initializer {
+    function initializeStorageHandler(InitStorage calldata initStorage) external {
         initializeStorage(initStorage);
     }
 

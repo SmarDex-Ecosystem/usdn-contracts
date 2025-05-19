@@ -1,5 +1,54 @@
 # Changelog
 
+## [1.1.0](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v1.0.1...v1.1.0) (2025-03-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* The UsdnProtocolFallback contract now requires 2 parameters to be deployed
+
+### Features
+
+* add a version of the USDN token with no rebase ([#878](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/878)) ([bb798f3](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/bb798f31f88e45d4ffdedc9c2bcd3031d36a859f))
+* deploy SetRebaseHandlerManager ([#869](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/869)) ([33fd954](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/33fd9546e9c6bdea452172bcce044ef90f9c4fcf))
+* deployment configuration file ([#876](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/876)) ([6060feb](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/6060feb476a51294dd6d25d452cceca41961cc64))
+* **middleware:** add shortDN middleware using Chainlink Data Streams ([#892](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/892)) ([7739a52](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/7739a525d0ad6a654f3943a3a1ae7fc2bbccfe29))
+* **middleware:** chainlink data streams middleware ([#879](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/879)) ([2dff4ca](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/2dff4ca8ded13214a380c056a5854bbfa03757dc))
+* **middleware:** short oracle middleware ([#875](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/875)) ([5550996](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/555099647ffc0efc75e1930ffa00e64d6c78ae89))
+* new liquidation rewards manager for short DN ([#882](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/882)) ([1bea0c3](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/1bea0c32d9a265a6341e9a78556eef864a729b6b))
+* **script:** set all current parameters to a new protocol ([#884](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/884)) ([eb382e0](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/eb382e09a9b6b35bdb07771a72585cbb94a86742))
+* set asset bound setters limits on deployment ([#889](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/889)) ([f30d98a](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/f30d98a47c853ee7a7c4325d2224a03aa5f5b9f2))
+* SetRebaseHandlerManager contract ([#862](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/862)) ([b96e510](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/b96e5100a1ab1a8a103e48b56536ef76f6ef85e9))
+
+
+### Bug Fixes
+
+* fork deployment ([#870](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/870)) ([0c69af9](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/0c69af964207b4bf8345807d6abd6ec656d4c8e2))
+* jsr exports path ([#865](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/865)) ([c34d8ce](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/c34d8cedc8fa0d276183de9dbbe4a122146062b1))
+* remove backend edits ([#873](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/873)) ([c7f5bd0](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/c7f5bd0e3c5aaf48151045d35d0523c7264f4dc8))
+
+
+### Miscellaneous Chores
+
+* adjust lintspec config ([#880](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/880)) ([2a151a5](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/2a151a5843be242d3bee2bef09fd069737ba4db6))
+* deployment script and config for the `WusdnToEth` USDN ([#881](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/881)) ([a659133](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a6591339d59477657aff372dc4a8cd67b63b7966))
+* force release version ([#894](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/894)) ([5346d14](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/5346d14f687b29e6d49abe410a5a913aeb0909e8))
+* fork deployment script ([#886](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/886)) ([f42abef](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/f42abefac310cded88366d827e12f2d7bef58102))
+* replace natspec-smells with lintspec ([#877](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/877)) ([eb7905a](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/eb7905a5d3db1f1afa3fc2f298fd13246321d505))
+* **template:** sync from template ([#871](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/871)) ([a45bbd1](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/a45bbd10dae6f0508c39c793ed853cf6798b065f))
+* update lintspec ([#887](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/887)) ([309f47c](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/309f47cdc0a19128a14e0e0e5e4577d14d650d4c))
+
+
+### Code Refactoring
+
+* **script:** split the prod/fork deployments ([#874](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/874)) ([9f0d931](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/9f0d9317c7d9c774418aa1e76c9819c66b466b9f))
+
+
+### Build System
+
+* **cargo:** update dependencies ([#885](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/885)) ([fa5a256](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/fa5a256b629ccf3dc93b3aff17cbe4acfc1bf12b))
+* **nix:** use stable foundry version ([#867](https://github.com/SmarDex-Ecosystem/usdn-contracts/issues/867)) ([4451dab](https://github.com/SmarDex-Ecosystem/usdn-contracts/commit/4451dab7cf4266cd5f1306740691715a4d577226))
+
 ## [1.0.1](https://github.com/SmarDex-Ecosystem/usdn-contracts/compare/v1.0.0...v1.0.1) (2025-02-07)
 
 

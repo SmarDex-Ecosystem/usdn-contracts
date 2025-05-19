@@ -1,10 +1,17 @@
+[lintspec]
 paths = ["src"]
 exclude = [
     "src/OracleMiddleware/mock",
     "src/Usdn/Usdn.sol",
     "src/UsdnProtocol/libraries",
 ]
-constructor = true
-struct_params = true
-enum_params = true
-enforce_all = true
+notice_or_dev = true
+
+[enum]
+param = "required"
+
+[struct]
+param = "required"
+
+[variable.public]
+return = "ignored"

@@ -46,14 +46,28 @@ struct RedstonePriceInfo {
 }
 
 /**
- * @notice The different confidence interval of a Pyth price.
- * @dev Applied to the neutral price and available as `price`.
- * @param Up Adjusted price at the upper bound of the confidence interval.
- * @param Down Adjusted price at the lower bound of the confidence interval.
- * @param None Neutral price without adjustment.
+ * @notice Represents the options for the low latency price adjustment.
+ * @dev Used to determine how the price is adjusted based on protocol action.
+ * @param Up Price adjusted to the upper bound.
+ * @param Down Price adjusted to the lower bound.
+ * @param None Neutral price without any adjustments.
  */
-enum ConfidenceInterval {
+enum PriceAdjustment {
     Up,
     Down,
     None
+}
+
+/**
+ * @notice Representation of data streams asset price with a uint256 price.
+ * @param timestamp The timestamp of the asset price.
+ * @param price The price of the asset with 18 decimals.
+ * @param bid The simulated price impact of a buy order.
+ * @param ask The simulated price impact of a sell order.
+ */
+struct FormattedDataStreamsPrice {
+    uint256 timestamp;
+    uint256 price;
+    uint256 ask;
+    uint256 bid;
 }

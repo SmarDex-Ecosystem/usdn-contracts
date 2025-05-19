@@ -5,8 +5,8 @@ import { Test } from "forge-std/Test.sol";
 
 import { FuzzBase } from "@perimetersec/fuzzlib/src/FuzzBase.sol";
 
-import { WstEthOracleMiddleware } from "../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { MockWstEthOracleMiddleware } from "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
+import { MockWstEthOracleMiddlewareWithPyth } from
+    "../../../src/OracleMiddleware/mock/MockWstEthOracleMiddlewareWithPyth.sol";
 import { Wusdn } from "../../../src/Usdn/Wusdn.sol";
 import { UsdnProtocolFallback } from "../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { IFeeCollectorCallback } from "../../../src/interfaces/UsdnProtocol/IFeeCollectorCallback.sol";
@@ -46,7 +46,7 @@ contract FuzzStorageVariables is FuzzConstants, FuzzBase, Test {
     UsdnProtocolFallback internal usdnProtocolFallback;
     UsdnProtocolHandler internal usdnProtocolHandler;
     LiquidationRewardsManagerHandler internal liquidationRewardsManager;
-    MockWstEthOracleMiddleware internal wstEthOracleMiddleware;
+    MockWstEthOracleMiddlewareWithPyth internal wstEthOracleMiddleware;
 
     Sdex internal sdex;
     WstETH internal wstETH;

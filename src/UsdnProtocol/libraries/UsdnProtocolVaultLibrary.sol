@@ -604,7 +604,7 @@ library UsdnProtocolVaultLibrary {
         if (usdnToMintEstimated == 0) {
             revert IUsdnProtocolErrors.UsdnProtocolDepositTooSmall();
         }
-        uint32 burnRatio = s._sdexBurnOnDepositRatio;
+        uint64 burnRatio = s._sdexBurnOnDepositRatio;
         data_.sdexToBurn = Utils._calcSdexToBurn(usdnToMintEstimated, burnRatio);
     }
 

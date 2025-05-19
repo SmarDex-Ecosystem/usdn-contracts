@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { LiquidationRewardsManager } from "../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
-import { WstEthOracleMiddleware } from "../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { WstEthOracleMiddlewareWithPyth } from "../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
@@ -12,6 +12,9 @@ import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract DefaultConfig {
+    uint256 constant MAX_SDEX_BURN_RATIO = Constants.SDEX_BURN_ON_DEPOSIT_DIVISOR / 10; // 10%
+    uint256 constant MAX_MIN_LONG_POSITION = 10 ether;
+
     Types.InitStorage internal initStorage;
 
     constructor() {
@@ -43,7 +46,7 @@ contract DefaultConfig {
     }
 
     function _setPeripheralContracts(
-        WstEthOracleMiddleware oracleMiddleware,
+        WstEthOracleMiddlewareWithPyth oracleMiddleware,
         LiquidationRewardsManager liquidationRewardsManager,
         Usdn usdn,
         IWstETH wstETH,
