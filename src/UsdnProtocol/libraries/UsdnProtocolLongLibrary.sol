@@ -937,6 +937,18 @@ library UsdnProtocolLongLibrary {
         // transfer remaining collateral to vault or pay bad debt
         data.tempLongBalance -= effects.remainingCollateral;
         data.tempVaultBalance += effects.remainingCollateral;
+        // the check below ensures that we always have positive long trading expo, which would otherwise not be
+        // guaranteed due to rounding errors on the `remainingCollateral`, especially when the total expo falls to
+        // zero as we liquidate the last tick
+        int256 maxLongBalance = Core._calcMaxLongBalance(s._totalExpo).toInt256();
+        if (data.tempLongBalance > maxLongBalance) {
+            int256 diff;
+            unchecked {
+                diff = data.tempLongBalance - maxLongBalance; // can't underflow because positive
+            }
+            data.tempLongBalance = maxLongBalance;
+            data.tempVaultBalance += diff;
+        }
     }
 
     /**

@@ -631,6 +631,68 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario Vault users can withdraw their funds even when the long side is empty
+     * @custom:given A liquidation price which would leave the long balance to be non-zero due to rounding errors
+     * @custom:when All ticks are liquidated
+     * @custom:then The balance is clamped to zero
+     * @custom:and The vault users can withdraw their funds
+     */
+    function test_RevertWhen_TradingExpoWrongAfterLiq() public {
+        uint128 currentPrice = 2000 ether;
+
+        // the attacker choose this to create a rounding error at the end of liq
+        int24 desiredLiqTick = protocol.getEffectiveTickForPrice(1002 ether);
+        uint128 desiredLiqPrice = protocol.getEffectivePriceForTick(desiredLiqTick);
+
+        emit log_named_uint("long balance", protocol.getBalanceLong());
+        emit log_named_uint("vault balance", protocol.getBalanceVault());
+
+        // Create a long position to liquidate
+        PositionId memory posId = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: currentPrice
+            })
+        );
+        emit log_named_uint("long balance", protocol.getBalanceLong());
+        emit log_named_uint("vault balance", protocol.getBalanceVault());
+
+        // Initiate and validate the deposit for the other user
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, currentPrice);
+
+        skip(31 minutes);
+
+        // price drops
+        currentPrice = 1002 ether;
+
+        // Calculate the collateral this position gives on liquidation
+        int256 tickValue = protocol.tickValue(posId.tick, currentPrice);
+
+        LiqTickInfo[] memory liquidatedTicks = protocol.mockLiquidate(abi.encode(currentPrice));
+        emit log_named_uint("ticks", liquidatedTicks.length);
+
+        assertEq(liquidatedTicks[1].remainingCollateral, tickValue);
+        assertEq(protocol.getTotalExpo(), 0, "total expo is zero");
+        assertEq(protocol.getBalanceLong(), 0, "long balance is zero");
+
+        skip(31 minutes);
+
+        // user 2 can withdraw their funds
+        protocol.initiateWithdrawal(
+            uint128(usdn.sharesOf(address(this))),
+            DISABLE_AMOUNT_OUT_MIN,
+            address(this),
+            payable(address(this)),
+            type(uint256).max,
+            abi.encode(currentPrice),
+            EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
      * @custom:scenario The user liquidates with a reentrancy attempt
      * @custom:given A user being a smart contract that calls liquidate with too much ether
      * @custom:and A receive() function that calls liquidate again
