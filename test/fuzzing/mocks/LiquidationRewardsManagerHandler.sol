@@ -3,14 +3,14 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import { IWstETH } from "../../../../src/interfaces/IWstETH.sol";
-import { LiquidationRewardsManager } from "../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
-import { UsdnProtocolUtilsLibrary as Utils } from "../../../src/UsdnProtocol/libraries/UsdnProtocolUtilsLibrary.sol";
+import { LiquidationRewardsManagerWstEth } from
+    "../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
+import { IWstETH } from "../../../src/interfaces/IWstETH.sol";
 
 /**
  * @title LiquidationRewardsManagerHandler
  * @dev Wrapper to aid in testing the LiquidationRewardsManager
  */
-contract LiquidationRewardsManagerHandler is LiquidationRewardsManager, Test {
-    constructor(IWstETH wstETH) LiquidationRewardsManager(wstETH) { }
+contract LiquidationRewardsManagerHandler is LiquidationRewardsManagerWstEth, Test {
+    constructor(IWstETH wstETH) LiquidationRewardsManagerWstEth(wstETH) { }
 }

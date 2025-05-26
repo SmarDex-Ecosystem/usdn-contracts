@@ -14,17 +14,15 @@ import { UsdnHandler } from "./handlers/Usdn.sol";
 import { UsdnProtocolHandler } from "./handlers/UsdnProtocolHandler.sol";
 import { UsdnProtocolSafeHandler } from "./handlers/UsdnProtocolSafeHandler.sol";
 
-import { LiquidationRewardsManager } from "../../../../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
-import { WstEthOracleMiddleware } from "../../../../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { LiquidationRewardsManagerWstEth } from
+    "../../../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
+import { WstEthOracleMiddlewareWithPyth } from "../../../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../../../../src/Rebalancer/Rebalancer.sol";
 import { UsdnProtocolFallback } from "../../../../src/UsdnProtocol/UsdnProtocolFallback.sol";
-import { UsdnProtocolImpl } from "../../../../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { IUsdnProtocol } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolErrors } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "../../../../src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { FeeCollector } from "../../../../src/utils/FeeCollector.sol";
-
-import { console } from "forge-std/console.sol";
 
 /// @dev This fixture does not deploy the protocol, only the dependencies
 contract UsdnProtocolInvariantBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents, DefaultConfig {
@@ -36,7 +34,7 @@ contract UsdnProtocolInvariantBaseFixture is BaseFixture, IUsdnProtocolErrors, I
     Sdex public sdex;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
-    LiquidationRewardsManager public liquidationRewardsManager;
+    LiquidationRewardsManagerWstEth public liquidationRewardsManager;
     UsdnProtocolFallback protocolFallback;
     // Managers managers;
 
@@ -49,8 +47,8 @@ contract UsdnProtocolInvariantBaseFixture is BaseFixture, IUsdnProtocolErrors, I
         wstETH = new WstETH();
         sdex = new Sdex();
         oracleMiddleware = new MockOracleMiddleware(INITIAL_PRICE);
-        liquidationRewardsManager = new LiquidationRewardsManager(wstETH);
-        protocolFallback = new UsdnProtocolFallback();
+        liquidationRewardsManager = new LiquidationRewardsManagerWstEth(wstETH);
+        protocolFallback = new UsdnProtocolFallback(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
         vm.stopPrank();
 
         managers = Managers({
@@ -78,9 +76,10 @@ contract UsdnProtocolInvariantFixture is UsdnProtocolInvariantBaseFixture {
         super.setUp();
 
         vm.startPrank(DEPLOYER);
-        UsdnProtocolHandler implementation = new UsdnProtocolHandler(wstETH, sdex);
+        UsdnProtocolHandler implementation =
+            new UsdnProtocolHandler(wstETH, sdex, MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
         _setPeripheralContracts(
-            WstEthOracleMiddleware(address(oracleMiddleware)),
+            WstEthOracleMiddlewareWithPyth(address(oracleMiddleware)),
             liquidationRewardsManager,
             usdn,
             wstETH,
@@ -132,12 +131,13 @@ contract UsdnProtocolInvariantSafeFixture is UsdnProtocolInvariantBaseFixture {
     function setUp() public virtual override {
         super.setUp();
         vm.startPrank(DEPLOYER);
-        UsdnProtocolSafeHandler implementation = new UsdnProtocolSafeHandler(wstETH, sdex);
+        UsdnProtocolSafeHandler implementation =
+            new UsdnProtocolSafeHandler(wstETH, sdex, MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
 
         FeeCollector feeCollector = new FeeCollector(); //NOTE: added fuzzing contract into collector's constructor
 
         _setPeripheralContracts(
-            WstEthOracleMiddleware(address(oracleMiddleware)),
+            WstEthOracleMiddlewareWithPyth(address(oracleMiddleware)),
             liquidationRewardsManager,
             usdn,
             wstETH,
@@ -147,7 +147,7 @@ contract UsdnProtocolInvariantSafeFixture is UsdnProtocolInvariantBaseFixture {
         );
 
         address proxy = UnsafeUpgrades.deployUUPSProxy(
-            address(implementation), abi.encodeCall(UsdnProtocolHandler.initializeStorageHandler, (initStorage))
+            address(implementation), abi.encodeCall(UsdnProtocolHandler.initializeStorageHandler, initStorage)
         );
 
         protocol = UsdnProtocolSafeHandler(proxy);

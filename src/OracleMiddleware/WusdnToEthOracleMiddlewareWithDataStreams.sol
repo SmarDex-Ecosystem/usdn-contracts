@@ -1,24 +1,27 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { PriceInfo } from "../interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { OracleMiddleware } from "./OracleMiddleware.sol";
+import { CommonOracleMiddleware, OracleMiddlewareWithDataStreams } from "./OracleMiddlewareWithDataStreams.sol";
 
 /**
  * @title Middleware Implementation For Short ETH Protocol
- * @notice This contract is used to get the "inverse" price in ETH/WUSDN denomination, so that it can be used for a
+ * @notice This contract is used to get the "inverse" price in number of ETH per WUSDN, so that it can be used for a
  * shorting version of the USDN protocol with WUSDN as the underlying asset.
+ * @dev This version uses Pyth or Chainlink Data Streams for liquidations, and only Chainlink Data Streams for
+ * validation actions.
  */
-contract WusdnToEthOracleMiddleware is OracleMiddleware {
+contract WusdnToEthOracleMiddlewareWithDataStreams is OracleMiddlewareWithDataStreams {
     /// @dev One dollar with the middleware decimals.
     uint256 internal constant ONE_DOLLAR = 10 ** MIDDLEWARE_DECIMALS;
 
     /// @dev Max divisor from the USDN token (as constant for gas optimisation).
     uint256 internal constant USDN_MAX_DIVISOR = 1e18;
 
-    /// @dev Numerator for the price calculation in {WusdnToEthOracleMiddleware.parseAndValidatePrice}.
+    /// @dev Numerator for the price calculation in {WusdnToEthOracleMiddlewareWithPyth.parseAndValidatePrice}.
     uint256 internal constant PRICE_NUMERATOR = 10 ** MIDDLEWARE_DECIMALS * ONE_DOLLAR * USDN_MAX_DIVISOR;
 
     /// @notice The USDN token address.
@@ -30,20 +33,33 @@ contract WusdnToEthOracleMiddleware is OracleMiddleware {
      * @param chainlinkPriceFeed The address of the ETH Chainlink price feed.
      * @param usdnToken The address of the USDN token.
      * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale.
+     * @param chainlinkProxyVerifierAddress The address of the Chainlink proxy verifier contract.
+     * @param chainlinkStreamId The Chainlink data stream ID for ETH/USD.
      */
     constructor(
         address pythContract,
         bytes32 pythPriceID,
         address chainlinkPriceFeed,
         address usdnToken,
-        uint256 chainlinkTimeElapsedLimit
-    ) OracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, chainlinkTimeElapsedLimit) {
+        uint256 chainlinkTimeElapsedLimit,
+        address chainlinkProxyVerifierAddress,
+        bytes32 chainlinkStreamId
+    )
+        OracleMiddlewareWithDataStreams(
+            pythContract,
+            pythPriceID,
+            chainlinkPriceFeed,
+            chainlinkTimeElapsedLimit,
+            chainlinkProxyVerifierAddress,
+            chainlinkStreamId
+        )
+    {
         USDN = IUsdn(usdnToken);
     }
 
     /**
-     * @inheritdoc OracleMiddleware
-     * @dev This function returns an approximation of the price ETH/WUSDN, so how much ETH each WUSDN token is worth.
+     * @inheritdoc IBaseOracleMiddleware
+     * @dev This function returns an approximation of the price, so how much ETH each WUSDN token is worth.
      * The exact formula would be to divide the $/WUSDN price by the $/ETH price, which would look like this (as a
      * decimal number):
      * p = pWUSDN / pETH = (pUSDN * MAX_DIVISOR / divisor) / pETH = (pUSDN * MAX_DIVISOR) / (pETH * divisor)
@@ -84,7 +100,7 @@ contract WusdnToEthOracleMiddleware is OracleMiddleware {
         uint128 targetTimestamp,
         Types.ProtocolAction action,
         bytes calldata data
-    ) public payable virtual override returns (PriceInfo memory) {
+    ) public payable virtual override(CommonOracleMiddleware, IBaseOracleMiddleware) returns (PriceInfo memory) {
         PriceInfo memory ethPrice = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
         uint256 divisor = USDN.divisor();
         int256 adjustmentDelta = int256(ethPrice.price) - int256(ethPrice.neutralPrice);

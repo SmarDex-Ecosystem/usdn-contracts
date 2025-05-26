@@ -7,11 +7,11 @@ import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { UsdnWstethConfig } from "./deploymentConfigs/UsdnWstethConfig.sol";
+import { UsdnWstethUsdConfig } from "./deploymentConfigs/UsdnWstethUsdConfig.sol";
 import { Utils } from "./utils/Utils.s.sol";
 
-import { LiquidationRewardsManager } from "../src/LiquidationRewardsManager/LiquidationRewardsManager.sol";
-import { WstEthOracleMiddleware } from "../src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { LiquidationRewardsManagerWstEth } from "../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
+import { WstEthOracleMiddlewareWithPyth } from "../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
 import { Wusdn } from "../src/Usdn/Wusdn.sol";
@@ -19,16 +19,13 @@ import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.s
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
-import { IWstETH } from "../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-contract DeployUsdnWsteth is UsdnWstethConfig, Script {
-    IWstETH immutable WSTETH;
+contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
     Utils utils;
 
     constructor() {
-        WSTETH = IWstETH(address(UNDERLYING_ASSET));
         utils = new Utils();
     }
 
@@ -44,8 +41,8 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
     function run()
         external
         returns (
-            WstEthOracleMiddleware wstEthOracleMiddleware_,
-            LiquidationRewardsManager liquidationRewardsManager_,
+            WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,
+            LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Rebalancer rebalancer_,
             Usdn usdn_,
             Wusdn wusdn_,
@@ -78,15 +75,15 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
     function _deployAndSetPeripheralContracts()
         internal
         returns (
-            WstEthOracleMiddleware wstEthOracleMiddleware_,
-            LiquidationRewardsManager liquidationRewardsManager_,
+            WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,
+            LiquidationRewardsManagerWstEth liquidationRewardsManager_,
             Usdn usdn_,
             Wusdn wusdn_
         )
     {
         vm.startBroadcast();
-        liquidationRewardsManager_ = new LiquidationRewardsManager(WSTETH);
-        wstEthOracleMiddleware_ = new WstEthOracleMiddleware(
+        liquidationRewardsManager_ = new LiquidationRewardsManagerWstEth(WSTETH);
+        wstEthOracleMiddleware_ = new WstEthOracleMiddlewareWithPyth(
             PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WSTETH), CHAINLINK_PRICE_VALIDITY
         );
         usdn_ = new Usdn(address(0), address(0));
@@ -108,11 +105,11 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
 
         vm.startBroadcast();
 
-        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback();
+        UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
         _setProtocolFallback(protocolFallback);
 
         address proxy = Upgrades.deployUUPSProxy(
-            "UsdnProtocolImpl.sol", abi.encodeCall(UsdnProtocolImpl.initializeStorage, (initStorage)), opts
+            "UsdnProtocolImpl.sol", abi.encodeCall(UsdnProtocolImpl.initializeStorage, initStorage), opts
         );
 
         vm.stopBroadcast();
@@ -123,6 +120,7 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
     /**
      * @notice Set the rebalancer and give the minting and rebasing roles to the USDN protocol.
      * @param usdnProtocol The USDN protocol.
+     * @param usdn The USDN token.
      * @return rebalancer_ The rebalancer.
      */
     function _setRebalancerAndHandleUsdnRoles(IUsdnProtocol usdnProtocol, Usdn usdn)
@@ -147,7 +145,9 @@ contract DeployUsdnWsteth is UsdnWstethConfig, Script {
      * @param usdnProtocol The USDN protocol.
      * @param wstEthOracleMiddleware The WstETH oracle middleware.
      */
-    function _initializeProtocol(IUsdnProtocol usdnProtocol, WstEthOracleMiddleware wstEthOracleMiddleware) internal {
+    function _initializeProtocol(IUsdnProtocol usdnProtocol, WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware)
+        internal
+    {
         uint24 liquidationPenalty = usdnProtocol.getLiquidationPenalty();
         int24 tickSpacing = usdnProtocol.getTickSpacing();
         uint256 price = wstEthOracleMiddleware.parseAndValidatePrice(

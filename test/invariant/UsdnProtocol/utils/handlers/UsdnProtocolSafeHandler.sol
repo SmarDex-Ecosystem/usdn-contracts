@@ -6,6 +6,7 @@ import { Vm, console } from "forge-std/Test.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import { ADMIN } from "../../../../utils/Constants.sol";
+import { UsdnProtocolHandler } from "./UsdnProtocolHandler.sol";
 
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../../../../src/UsdnProtocol//libraries/UsdnProtocolConstantsLibrary.sol";
@@ -16,7 +17,6 @@ import { UsdnProtocolUtilsLibrary as Utils } from
 import { PriceInfo } from "../../../../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { Sdex } from "../../../../utils/Sdex.sol";
 import { WstETH } from "../../../../utils/WstEth.sol";
-import { UsdnProtocolHandler } from "./UsdnProtocolHandler.sol";
 
 /**
  * @notice A handler for invariant testing of the USDN protocol which does not revert in normal operation
@@ -45,7 +45,9 @@ contract UsdnProtocolSafeHandler is UsdnProtocolHandler {
         PositionId[] newIds;
     }
 
-    constructor(WstETH mockAsset, Sdex mockSdex) UsdnProtocolHandler(mockAsset, mockSdex) { }
+    constructor(WstETH mockAsset, Sdex mockSdex, uint256 maxSdexBurnRatio, uint256 maxMinLongPosition)
+        UsdnProtocolHandler(mockAsset, mockSdex, maxSdexBurnRatio, maxMinLongPosition)
+    { }
 
     /* ------------------------ Protocol actions helpers ------------------------ */
 
