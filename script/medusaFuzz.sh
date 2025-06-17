@@ -15,6 +15,7 @@ find src/UsdnProtocol/libraries/ src/libraries/ -type f -name "*.sol" -exec sed 
 echo "Running Medusa fuzzing..."
 echo "Medusa binary: $(which medusa)"
 medusa --version
+# when fuzzing with the CI, we need to load the custom medusa config (check the docker script)
 if [ -f "medusa_env.json" ]; then
     medusa fuzz --config ./medusa_env.json
 else
