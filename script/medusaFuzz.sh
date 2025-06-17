@@ -15,7 +15,11 @@ find src/UsdnProtocol/libraries/ src/libraries/ -type f -name "*.sol" -exec sed 
 echo "Running Medusa fuzzing..."
 echo "Medusa binary: $(which medusa)"
 medusa --version
-medusa fuzz
+if [ -f "medusa_env.json" ]; then
+    medusa fuzz --config ./medusa_env.json
+else
+    medusa fuzz --config ./medusa.json
+fi
 
 # Restore from backup instead of trying to reverse with sed
 cp -r .temp_backup/UsdnProtocol_libraries/* src/UsdnProtocol/libraries/
