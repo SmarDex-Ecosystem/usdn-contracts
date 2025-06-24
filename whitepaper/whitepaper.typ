@@ -1,6 +1,6 @@
 #import "template.typ": template
 #import "glossary.typ": glossary
-#import "@preview/glossarium:0.5.1": make-glossary, register-glossary, print-glossary, gls, glspl
+#import "@preview/glossarium:0.5.6": make-glossary, register-glossary, print-glossary, gls, glspl
 
 #show: make-glossary
 #register-glossary(glossary)
@@ -298,7 +298,7 @@ $
 $ <eq:funding_rate>
 
 where $s$ is a scaling factor that can be tuned, $"sgn"(I)$ is the signum function#footnote[The signum function returns
-$-1$ if the sign of its operand is negative, $0$ if its value is zero, and $1$ if it's positive.] applied to the
+  $-1$ if the sign of its operand is negative, $0$ if its value is zero, and $1$ if it's positive.] applied to the
 imbalance $I_(t_1)$ @eq:imbalance at instant $t_1$ and $sigma$ is a skew factor (see @sec:skew).
 The denominator of the fraction refers to the number of seconds in a day, which means that $f_(t-86400,t)$ is the daily
 funding rate for the period ending at $t$.
@@ -472,7 +472,6 @@ synthetic dollar token.
 
 // reset template styles for the figures in the glossary
 #show figure: set text(9pt)
-#show figure.caption: pad.with(x: -10%)
 #print-glossary(glossary)
 
 = Acknowledgment
