@@ -42,6 +42,9 @@ interface IOracleMiddlewareErrors {
      */
     error OracleMiddlewarePythPositiveExponent(int32 expo);
 
+    /// @notice Indicates that the confidence value is higher than the price.
+    error OracleMiddlewareConfValueTooHigh();
+
     /// @notice Indicates that the confidence ratio is too high.
     error OracleMiddlewareConfRatioTooHigh();
 

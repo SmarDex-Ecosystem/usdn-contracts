@@ -47,8 +47,10 @@ contract UpgradeV2 is UsdnWstethUsdConfig, Script {
         newUsdnProtocolImpl_ = new UsdnProtocolImpl();
         USDN_PROTOCOL.upgradeToAndCall(
             address(newUsdnProtocolImpl_),
-            abi.encodeWithSelector(UsdnProtocolImpl.initializeStorageV2.selector, address(newUsdnProtocolFallback_))
+            // abi.encodeWithSelector(UsdnProtocolImpl.initializeStorageV2.selector, address(newUsdnProtocolFallback_))
+            abi.encodeWithSelector(UsdnProtocolImpl.initializeStorage.selector, address(newUsdnProtocolFallback_))
         );
+
         bytes32 newImpl = vm.load(address(USDN_PROTOCOL), IMPL_SLOT);
         require(oldImpl != newImpl, "Upgrade failed");
         require(address(uint160(uint256(newImpl))) == address(newUsdnProtocolImpl_), "Upgrade failed");

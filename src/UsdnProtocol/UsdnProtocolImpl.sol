@@ -1,15 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { UUPSUpgradeable } from "solady/src/utils/UUPSUpgradeable.sol";
 
-import { IBaseLiquidationRewardsManager } from
-    "../interfaces/LiquidationRewardsManager/IBaseLiquidationRewardsManager.sol";
-import { IBaseOracleMiddleware } from "../interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
-import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
-import { IUsdnProtocolErrors } from "../interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { IUsdnProtocolFallback } from "../interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolImpl } from "../interfaces/UsdnProtocol/IUsdnProtocolImpl.sol";
 import { UsdnProtocolActions } from "./UsdnProtocolActions.sol";
 import { UsdnProtocolCore } from "./UsdnProtocolCore.sol";
@@ -20,7 +13,6 @@ import { UsdnProtocolSettersLibrary as Setters } from "./libraries/UsdnProtocolS
 import { UsdnProtocolUtilsLibrary as Utils } from "./libraries/UsdnProtocolUtilsLibrary.sol";
 
 contract UsdnProtocolImpl is
-    IUsdnProtocolErrors,
     IUsdnProtocolImpl,
     UsdnProtocolActions,
     UsdnProtocolCore,
@@ -34,7 +26,7 @@ contract UsdnProtocolImpl is
     }
 
     /// @inheritdoc IUsdnProtocolImpl
-    function initializeStorage(InitStorage calldata initStorage) public initializer {
+    function initializeStorage(InitStorage calldata initStorage) public reinitializer(2) {
         __AccessControlDefaultAdminRules_init(0, msg.sender);
         __initializeReentrancyGuard_init();
         __Pausable_init();
@@ -50,17 +42,6 @@ contract UsdnProtocolImpl is
         _setRoleAdmin(Constants.UNPAUSER_ROLE, Constants.ADMIN_UNPAUSER_ROLE);
 
         Setters.setInitialStorage(initStorage);
-    }
-
-    /// @inheritdoc IUsdnProtocolImpl
-    function initializeStorageV2(address newFallback) public reinitializer(2) {
-        Storage storage s = Utils._getMainStorage();
-        // sanity check, only do the upgrade if necessary
-        if (s.__unused == 0 || s._sdexBurnOnDepositRatio > 0) {
-            return;
-        }
-        s._sdexBurnOnDepositRatio = s.__unused;
-        s._protocolFallbackAddr = newFallback;
     }
 
     /**
