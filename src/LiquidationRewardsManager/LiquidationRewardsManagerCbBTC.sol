@@ -9,6 +9,7 @@ import { IBaseLiquidationRewardsManager } from
 import { IWusdn } from "../interfaces/Usdn/IWusdn.sol";
 import { IUsdnProtocolTypes as Types } from "../interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { LiquidationRewardsManager } from "./LiquidationRewardsManager.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /**
  * @title Liquidation Rewards Manager for Wrapped USDN
@@ -20,9 +21,9 @@ contract LiquidationRewardsManagerCbBTC is LiquidationRewardsManager {
     /// @notice The precision used for the price.
     uint256 internal constant PRICE_PRECISION = 1e18;
 
-    /// @param wusdn The address of the wUSDN token.
-    constructor(IWusdn wusdn) Ownable(msg.sender) {
-        _rewardAsset = wusdn;
+    /// @param cbBtc The address of the cbBtc token.
+    constructor(IERC20Metadata cbBtc) Ownable(msg.sender) {
+        _rewardAsset = cbBtc;
         _rewardsParameters = RewardsParameters({
             gasUsedPerTick: 53_094,
             otherGasUsed: 469_537,
