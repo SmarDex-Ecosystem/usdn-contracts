@@ -31,8 +31,8 @@ contract LiquidationRewardsManagerCbBTC is LiquidationRewardsManager {
             baseFeeOffset: 2 gwei,
             gasMultiplierBps: 10_500, // 1.05
             positionBonusMultiplierBps: 200, // 0.02
-            fixedReward: 2 ether,
-            maxReward: 1000 ether
+            fixedReward: 0.00001 ether,
+            maxReward: 0.001 ether
         });
     }
 
