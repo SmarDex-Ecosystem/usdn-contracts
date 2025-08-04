@@ -28,8 +28,8 @@ contract LiquidationRewardsManagerWstEth is LiquidationRewardsManager {
             baseFeeOffset: 2 gwei,
             gasMultiplierBps: 10_500, // 1.05
             positionBonusMultiplierBps: 200, // 0.02
-            fixedReward: 0.001 ether,
-            maxReward: 0.5 ether
+            fixedReward: 0.00001 ether,
+            maxReward: 0.001 ether
         });
     }
 
@@ -42,7 +42,7 @@ contract LiquidationRewardsManagerWstEth is LiquidationRewardsManager {
         Types.ProtocolAction,
         bytes calldata,
         bytes calldata
-    ) external view override returns (uint256 wstETHRewards_) {
+    ) external view override returns (uint256 cbBtcRewards_) {
         if (liquidatedTicks.length == 0) {
             return 0;
         }
@@ -71,6 +71,6 @@ contract LiquidationRewardsManagerWstEth is LiquidationRewardsManager {
         }
 
         // convert to wstETH
-        wstETHRewards_ = IWstETH(address(_rewardAsset)).getWstETHByStETH(totalRewardETH);
+        cbBtcRewards_ = IWstETH(address(_rewardAsset)).getWstETHByStETH(totalRewardETH);
     }
 }
