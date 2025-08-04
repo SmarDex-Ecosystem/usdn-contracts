@@ -25,7 +25,7 @@ contract UsdnCbbtcUsdConfig is DeploymentConfig {
     uint256 constant MAX_MIN_LONG_POSITION = 10 ether;
 
     constructor() {
-        INITIAL_LONG_AMOUNT = 20 ether;
+        INITIAL_LONG_AMOUNT = 20e8;
         SDEX = Sdex(0xFd4330b0312fdEEC6d4225075b82E00493FF2e3f);
         UNDERLYING_ASSET = CBBTC;
 
@@ -56,7 +56,7 @@ contract UsdnCbbtcUsdConfig is DeploymentConfig {
         initStorage.tickSpacing = 100;
         initStorage.sdex = SDEX;
         initStorage.asset = UNDERLYING_ASSET;
-        initStorage.minLongPosition = 2 * 10 ** UNDERLYING_ASSET.decimals(); // 2 tokens
+        initStorage.minLongPosition = 2 * 10 ** (UNDERLYING_ASSET.decimals() - 3); // 2 tokens
     }
 
     /// @inheritdoc DeploymentConfig

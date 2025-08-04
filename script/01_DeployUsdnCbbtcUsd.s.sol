@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { Script } from "forge-std/Script.sol";
 
 import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
-import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import { UnsafeUpgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnCbbtcUsdConfig } from "./deploymentConfigs/UsdnCbbtcUsdConfig.sol";
@@ -98,16 +98,13 @@ contract DeployUsdnCbbtcUsd is UsdnCbbtcUsdConfig, Script {
      */
     function _deployProtocol(Types.InitStorage storage initStorage) internal returns (IUsdnProtocol usdnProtocol_) {
         // we need to allow external library linking and immutable variables in the openzeppelin module
-        Options memory opts;
-        opts.unsafeAllow = "external-library-linking,state-variable-immutable";
-
         vm.startBroadcast();
 
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
         _setProtocolFallback(protocolFallback);
-
-        address proxy = Upgrades.deployUUPSProxy(
-            "UsdnProtocolImpl.sol", abi.encodeCall(UsdnProtocolImpl.initializeStorage, initStorage), opts
+        UsdnProtocolImpl impl = new UsdnProtocolImpl();
+        address proxy = UnsafeUpgrades.deployUUPSProxy(
+            address(impl), abi.encodeCall(UsdnProtocolImpl.initializeStorage, initStorage)
         );
 
         vm.stopBroadcast();
