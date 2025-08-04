@@ -27,7 +27,7 @@ contract LiquidationRewardsManagerWstEth is LiquidationRewardsManager {
             rebalancerGasUsed: 279_349,
             baseFeeOffset: 2 gwei,
             gasMultiplierBps: 10_500, // 1.05
-            positionBonusMultiplierBps: 200, // 0.02
+            positionBonusMultiplierBps: 2, // 0.0002
             fixedReward: 0.001 ether,
             maxReward: 0.5 ether
         });
