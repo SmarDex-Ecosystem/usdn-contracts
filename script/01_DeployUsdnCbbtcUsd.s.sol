@@ -10,7 +10,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { UsdnCbbtcUsdConfig } from "./deploymentConfigs/UsdnCbbtcUsdConfig.sol";
 import { Utils } from "./utils/Utils.s.sol";
 
-import { LiquidationRewardsManagerWstEth } from "../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
+import { LiquidationRewardsManagerCbBTC } from "../src/LiquidationRewardsManager/LiquidationRewardsManagerCbBTC.sol";
 import { CbBtcOracleMiddlewareWithPyth } from "../src/OracleMiddleware/CbBtcOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../src/Usdn/Usdn.sol";
@@ -42,7 +42,7 @@ contract DeployUsdnCbbtcUsd is UsdnCbbtcUsdConfig, Script {
         external
         returns (
             CbBtcOracleMiddlewareWithPyth wstEthOracleMiddleware_,
-            LiquidationRewardsManagerWstEth liquidationRewardsManager_,
+            LiquidationRewardsManagerCbBTC liquidationRewardsManager_,
             Rebalancer rebalancer_,
             Usdn usdn_,
             Wusdn wusdn_,
@@ -74,13 +74,13 @@ contract DeployUsdnCbbtcUsd is UsdnCbbtcUsdConfig, Script {
         internal
         returns (
             CbBtcOracleMiddlewareWithPyth wstEthOracleMiddleware_,
-            LiquidationRewardsManagerWstEth liquidationRewardsManager_,
+            LiquidationRewardsManagerCbBTC liquidationRewardsManager_,
             Usdn usdn_,
             Wusdn wusdn_
         )
     {
         vm.startBroadcast();
-        // liquidationRewardsManager_ = new LiquidationRewardsManagerWstEth(CBBTC);
+        liquidationRewardsManager_ = new LiquidationRewardsManagerCbBTC(CBBTC);
         wstEthOracleMiddleware_ = new CbBtcOracleMiddlewareWithPyth(
             PYTH_ADDRESS, PYTH_BTC_FEED_ID, CHAINLINK_ETH_PRICE, CHAINLINK_PRICE_VALIDITY
         );
