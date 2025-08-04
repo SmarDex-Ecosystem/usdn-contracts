@@ -15,7 +15,7 @@ import { Sdex } from "../../test/utils/Sdex.sol";
 
 /// @notice Configuration contract for the USDN protocol backed with WSTETH deployment.
 contract UsdnCbbtcUsdConfig is DeploymentConfig {
-    address constant CHAINLINK_ETH_PRICE = 0x64c911996D3c6aC71f9b455B1E8E7266BcbD848F;
+    address constant CHAINLINK_CBBTC_PRICE = 0x64c911996D3c6aC71f9b455B1E8E7266BcbD848F;
     address constant PYTH_ADDRESS = 0x8250f4aF4B972684F7b336503E2D6dFeDeB1487a;
     IERC20Metadata constant CBBTC = IERC20Metadata(0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf);
     bytes32 constant PYTH_BTC_FEED_ID = 0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43;

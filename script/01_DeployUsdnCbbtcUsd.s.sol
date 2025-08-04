@@ -82,7 +82,7 @@ contract DeployUsdnCbbtcUsd is UsdnCbbtcUsdConfig, Script {
         vm.startBroadcast();
         liquidationRewardsManager_ = new LiquidationRewardsManagerCbBTC(CBBTC);
         wstEthOracleMiddleware_ = new CbBtcOracleMiddlewareWithPyth(
-            PYTH_ADDRESS, PYTH_BTC_FEED_ID, CHAINLINK_ETH_PRICE, CHAINLINK_PRICE_VALIDITY
+            PYTH_ADDRESS, PYTH_BTC_FEED_ID, CHAINLINK_CBBTC_PRICE, CHAINLINK_PRICE_VALIDITY
         );
         usdn_ = new Usdn(address(0), address(0));
         wusdn_ = new Wusdn(usdn_);
