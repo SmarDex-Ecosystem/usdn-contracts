@@ -4,7 +4,6 @@ exclude = [
     "src/OracleMiddleware/mock",
     "src/Usdn/Usdn.sol",
     "src/UsdnProtocol/libraries",
-    "src/utils/Wusdn4626.sol",
 ]
 notice_or_dev = true
 
