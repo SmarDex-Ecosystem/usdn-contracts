@@ -6,7 +6,6 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
-import { IWusdn } from "../interfaces/Usdn/IWusdn.sol";
 
 /// @title ERC-4626 Wrapper for USDN
 contract Wusdn4626 is ERC20, IERC4626 {
