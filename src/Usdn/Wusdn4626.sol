@@ -15,9 +15,6 @@ contract Wusdn4626 is ERC20, IERC4626 {
      */
     IUsdn internal immutable USDN = IUsdn(0xde17a000BA631c5d7c2Bd9FB692EFeA52D90DEE2);
 
-    /// @notice A sanity check in the {mint} function failed.
-    error Wusdn4626MintFailed();
-
     constructor() ERC20("Vault USDN", "vUSDN") { }
 
     /// @inheritdoc ERC20
