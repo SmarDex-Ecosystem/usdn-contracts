@@ -56,8 +56,8 @@ contract Wusdn4626 is ERC20, IERC4626 {
     }
 
     /// @inheritdoc IERC4626
-    function maxDeposit(address) external view returns (uint256 maxAssets_) {
-        return USDN.maxTokens();
+    function maxDeposit(address) external pure returns (uint256 maxAssets_) {
+        maxAssets_ = type(uint256).max;
     }
 
     /// @inheritdoc IERC4626
@@ -78,8 +78,8 @@ contract Wusdn4626 is ERC20, IERC4626 {
     }
 
     /// @inheritdoc IERC4626
-    function maxMint(address) external view returns (uint256 maxShares_) {
-        return type(uint256).max / SHARES_RATIO;
+    function maxMint(address) external pure returns (uint256 maxShares_) {
+        maxShares_ = type(uint256).max;
     }
 
     /// @inheritdoc IERC4626
@@ -104,8 +104,9 @@ contract Wusdn4626 is ERC20, IERC4626 {
     }
 
     /// @inheritdoc IERC4626
-    function maxWithdraw(address) external view returns (uint256 maxAssets_) {
-        return USDN.maxTokens();
+    function maxWithdraw(address owner) external view returns (uint256 maxAssets_) {
+        uint256 usdnShares = USDN.convertToShares(balanceOf(owner));
+        return usdnShares / SHARES_RATIO;
     }
 
     /// @inheritdoc IERC4626
@@ -147,8 +148,8 @@ contract Wusdn4626 is ERC20, IERC4626 {
     }
 
     /// @inheritdoc IERC4626
-    function maxRedeem(address) external view returns (uint256 maxShares_) {
-        return type(uint256).max / SHARES_RATIO;
+    function maxRedeem(address owner) external view returns (uint256 maxShares_) {
+        maxShares_ = balanceOf(owner);
     }
 
     /// @inheritdoc IERC4626
