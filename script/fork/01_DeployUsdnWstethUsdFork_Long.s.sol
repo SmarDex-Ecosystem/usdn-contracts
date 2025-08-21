@@ -44,6 +44,7 @@ contract DeployUsdnWstethFork is DeployUsdnWstethUsd {
             this.run();
         setRoles(usdnProtocol_);
         setPeripheralContracts(usdnProtocol_);
+        vm.clearMockedCalls();
     }
 
     function setRoles(IUsdnProtocol usdnProtocol) internal {

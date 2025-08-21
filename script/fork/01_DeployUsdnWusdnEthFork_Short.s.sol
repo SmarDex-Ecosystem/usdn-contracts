@@ -14,6 +14,7 @@ import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnNoRebase } from "../../src/Usdn/UsdnNoRebase.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
+import { PriceInfo } from "../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IWusdn } from "../../src/interfaces/Usdn/IWusdn.sol";
 import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
@@ -41,6 +42,7 @@ contract DeployUsdnWusdnFork is DeployUsdnWusdnEth {
             this.run();
         setRoles(usdnProtocol_);
         setPeripheralContracts(usdnProtocol_);
+        vm.clearMockedCalls();
     }
 
     function setRoles(IUsdnProtocol usdnProtocol) internal {
@@ -79,10 +81,11 @@ contract DeployUsdnWusdnFork is DeployUsdnWusdnEth {
                 PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WUSDN.USDN()), CHAINLINK_PRICE_VALIDITY
             )
         );
+        PriceInfo memory priceInfo = PriceInfo({ price: price, neutralPrice: price, timestamp: block.timestamp });
         vm.mockCall(
             computedMiddlewareAddress,
             abi.encodeWithSelector(WusdnToEthOracleMiddlewareWithPyth.parseAndValidatePrice.selector),
-            abi.encode(price)
+            abi.encode(priceInfo)
         );
     }
 
