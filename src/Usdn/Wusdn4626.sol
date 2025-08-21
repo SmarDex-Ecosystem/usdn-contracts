@@ -17,7 +17,7 @@ contract Wusdn4626 is ERC20, IERC4626 {
      * @notice The address of the USDN token.
      * @dev Retrieve with {asset}.
      */
-    IUsdn private immutable USDN = IUsdn(0xde17a000BA631c5d7c2Bd9FB692EFeA52D90DEE2);
+    IUsdn internal immutable USDN = IUsdn(0xde17a000BA631c5d7c2Bd9FB692EFeA52D90DEE2);
 
     /// @notice A sanity check in the {mint} function failed.
     error Wusdn4626MintFailed();
