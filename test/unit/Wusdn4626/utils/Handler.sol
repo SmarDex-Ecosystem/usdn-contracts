@@ -5,15 +5,14 @@ import { Test } from "forge-std/Test.sol";
 
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { Wusdn } from "../../../../src/Usdn/Wusdn.sol";
+import { Wusdn4626 } from "../../../../src/Usdn/Wusdn4626.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
-import { Wusdn4626 } from "../../../../src/utils/Wusdn4626.sol";
 
 contract Wusdn4626Handler is Wusdn4626, Test {
     address public constant USER_1 = address(1);
     address public constant USER_2 = address(2);
     address public constant USER_3 = address(3);
     address public constant USER_4 = address(4);
-    IUsdn public immutable usdn;
 
     // track theoretical tokens
     mapping(address => uint256) private _wusdn4626Shares;
@@ -26,8 +25,6 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         _actors[1] = USER_2;
         _actors[2] = USER_3;
         _actors[3] = USER_4;
-
-        usdn = WUSDN.USDN();
     }
 
     modifier useActor(uint256 actorIndexSeed) {
@@ -38,9 +35,9 @@ contract Wusdn4626Handler is Wusdn4626, Test {
     }
 
     function depositTest(uint256 assets, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
-        uint256 usdnBalanceUser = usdn.balanceOf(_currentActor);
-        uint256 wusdnBalanceProtocol = WUSDN.balanceOf(address(this));
+        uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
         uint256 vaultBalanceUser = balanceOf(_currentActor);
+        uint256 usdnSharesVault = USDN.sharesOf(address(this));
 
         vm.assume(usdnBalanceUser > 0);
         assets = bound(assets, 1, usdnBalanceUser);
@@ -50,9 +47,9 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         uint256 newPrice = convertToAssets(1 ether);
 
         assertGe(newPrice, _price, "deposit: price property");
-        assertEq(preview, shares, "deposit: preview property");
-        assertEq(usdn.balanceOf(_currentActor), usdnBalanceUser - assets, "deposit: usdn user balance property");
-        assertEq(WUSDN.balanceOf(address(this)), wusdnBalanceProtocol + shares, "deposit: wusdn vault balance property");
+        assertLe(preview, shares, "deposit: preview property");
+        assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser - assets, "deposit: usdn user balance property");
+        assertEq(USDN.sharesOf(address(this)), usdnSharesVault + shares, "deposit: usdn vault balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser + shares, "deposit: 4626 user balance property");
 
         _wusdn4626Shares[_currentActor] += shares;
@@ -60,10 +57,10 @@ contract Wusdn4626Handler is Wusdn4626, Test {
     }
 
     function mintTest(uint256 shares, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
-        uint256 usdnBalanceUser = usdn.balanceOf(_currentActor);
-        uint256 wusdnBalanceProtocol = WUSDN.balanceOf(address(this));
+        uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
         uint256 vaultBalanceUser = balanceOf(_currentActor);
-        uint256 sharesOf = usdn.sharesOf(_currentActor) / WUSDN.SHARES_RATIO();
+        uint256 sharesOf = USDN.sharesOf(_currentActor);
+        uint256 usdnSharesVault = USDN.sharesOf(address(this));
 
         vm.assume(sharesOf > 0);
         shares = bound(shares, 1, sharesOf);
@@ -73,9 +70,11 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         uint256 newPrice = convertToAssets(1 ether);
 
         assertGe(newPrice, _price, "deposit: price property");
-        assertEq(preview, assets, "deposit: preview property");
-        assertEq(usdn.balanceOf(_currentActor), usdnBalanceUser - assets, "mint: usdn user balance property");
-        assertEq(WUSDN.balanceOf(address(this)), wusdnBalanceProtocol + shares, "mint: wusdn vault balance property");
+        assertGe(preview, assets, "deposit: preview property");
+        assertApproxEqAbs(
+            USDN.balanceOf(_currentActor), usdnBalanceUser - assets, 1, "mint: usdn user balance property"
+        );
+        assertEq(USDN.sharesOf(address(this)), usdnSharesVault + shares, "mint: usdn vault balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser + shares, "mint: 4626 user balance property");
 
         _wusdn4626Shares[_currentActor] += shares;
@@ -83,11 +82,11 @@ contract Wusdn4626Handler is Wusdn4626, Test {
     }
 
     function withdrawTest(uint256 assets, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
-        uint256 usdnBalanceUser = usdn.balanceOf(_currentActor);
-        uint256 wusdnBalanceProtocol = WUSDN.balanceOf(address(this));
+        uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
         uint256 vaultBalanceUser = balanceOf(_currentActor);
+        uint256 usdnSharesVault = USDN.sharesOf(address(this));
 
-        assets = bound(assets, 0, balanceOf(_currentActor));
+        assets = bound(assets, 0, Wusdn4626(address(this)).maxWithdraw(_currentActor));
 
         uint256 preview = Wusdn4626(address(this)).previewWithdraw(assets);
         uint256 shares = Wusdn4626(address(this)).withdraw(assets, _currentActor, _currentActor);
@@ -95,10 +94,8 @@ contract Wusdn4626Handler is Wusdn4626, Test {
 
         assertGe(newPrice, _price, "withdraw: price property");
         assertEq(preview, shares, "withdraw: preview property");
-        assertEq(usdn.balanceOf(_currentActor), usdnBalanceUser + assets, "withdraw: usdn user balance property");
-        assertEq(
-            WUSDN.balanceOf(address(this)), wusdnBalanceProtocol - shares, "withdraw: wusdn vault balance property"
-        );
+        assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser + assets, "withdraw: usdn user balance property");
+        assertEq(USDN.sharesOf(address(this)), usdnSharesVault - shares, "withdraw: usdn vault balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "withdraw: 4626 user balance property");
 
         _wusdn4626Shares[_currentActor] -= shares;
@@ -106,9 +103,9 @@ contract Wusdn4626Handler is Wusdn4626, Test {
     }
 
     function redeemTest(uint256 shares, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
-        uint256 usdnBalanceUser = usdn.balanceOf(_currentActor);
-        uint256 wusdnBalanceProtocol = WUSDN.balanceOf(address(this));
+        uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
         uint256 vaultBalanceUser = balanceOf(_currentActor);
+        uint256 usdnSharesVault = USDN.sharesOf(address(this));
 
         shares = bound(shares, 0, balanceOf(_currentActor));
 
@@ -117,9 +114,11 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         uint256 newPrice = convertToAssets(1 ether);
 
         assertGe(newPrice, _price, "redeem: price property");
-        assertEq(preview, shares, "redeem: preview property");
-        assertEq(usdn.balanceOf(_currentActor), usdnBalanceUser + assets, "redeem: usdn user balance property");
-        assertEq(WUSDN.balanceOf(address(this)), wusdnBalanceProtocol - shares, "redeem: wusdn vault balance property");
+        assertLe(preview, shares, "redeem: preview property");
+        assertApproxEqAbs(
+            USDN.balanceOf(_currentActor), usdnBalanceUser + assets, 1, "redeem: usdn user balance property"
+        );
+        assertEq(USDN.sharesOf(address(this)), usdnSharesVault - shares, "redeem: usdn vault balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "redeem: 4626 user balance property");
 
         _wusdn4626Shares[_currentActor] -= shares;
