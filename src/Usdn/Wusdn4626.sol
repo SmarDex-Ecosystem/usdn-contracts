@@ -4,15 +4,12 @@ pragma solidity 0.8.26;
 import { IERC4626 } from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IWusdn } from "../interfaces/Usdn/IWusdn.sol";
 
 /// @title ERC-4626 Wrapper for USDN
 contract Wusdn4626 is ERC20, IERC4626 {
-    using Math for uint256;
-
     /**
      * @notice The address of the USDN token.
      * @dev Retrieve with {asset}.
