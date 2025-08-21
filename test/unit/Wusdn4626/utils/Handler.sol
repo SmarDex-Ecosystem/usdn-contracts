@@ -48,6 +48,7 @@ contract Wusdn4626Handler is Wusdn4626, Test {
 
         assertGe(newPrice, _price, "deposit: price property");
         assertLe(preview, shares, "deposit: preview property");
+        assertApproxEqAbs(preview, shares, 1, "deposit: preview property max 1 wei off");
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser - assets, "deposit: usdn user balance property");
         assertEq(USDN.sharesOf(address(this)), usdnSharesVault + shares, "deposit: usdn vault balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser + shares, "deposit: 4626 user balance property");
@@ -69,8 +70,9 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         uint256 assets = Wusdn4626(address(this)).mint(shares, _currentActor);
         uint256 newPrice = convertToAssets(1 ether);
 
-        assertGe(newPrice, _price, "deposit: price property");
-        assertGe(preview, assets, "deposit: preview property");
+        assertGe(newPrice, _price, "mint: price property");
+        assertGe(preview, assets, "mint: preview property");
+        assertApproxEqAbs(preview, assets, 1, "mint: preview property max 1 wei off");
         assertApproxEqAbs(
             USDN.balanceOf(_currentActor), usdnBalanceUser - assets, 1, "mint: usdn user balance property"
         );
@@ -94,6 +96,7 @@ contract Wusdn4626Handler is Wusdn4626, Test {
 
         assertGe(newPrice, _price, "withdraw: price property");
         assertEq(preview, shares, "withdraw: preview property");
+        assertApproxEqAbs(preview, shares, 1, "withdraw: preview property max 1 wei off");
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser + assets, "withdraw: usdn user balance property");
         assertEq(USDN.sharesOf(address(this)), usdnSharesVault - shares, "withdraw: usdn vault balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "withdraw: 4626 user balance property");
@@ -114,7 +117,8 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         uint256 newPrice = convertToAssets(1 ether);
 
         assertGe(newPrice, _price, "redeem: price property");
-        assertLe(preview, shares, "redeem: preview property");
+        assertLe(preview, assets, "redeem: preview property");
+        assertApproxEqAbs(preview, assets, 1, "redeem: preview property max 1 wei off");
         assertApproxEqAbs(
             USDN.balanceOf(_currentActor), usdnBalanceUser + assets, 1, "redeem: usdn user balance property"
         );
