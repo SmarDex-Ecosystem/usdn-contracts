@@ -12,7 +12,7 @@ contract Wusdn4626 is ERC20, IERC4626 {
     using Math for uint256;
 
     /// @notice The address of the wrapped USDN token.
-    IWusdn private constant WUSDN = IWusdn(0x99999999999999Cc837C997B882957daFdCb1Af9);
+    IWusdn internal constant WUSDN = IWusdn(0x99999999999999Cc837C997B882957daFdCb1Af9);
 
     /**
      * @notice The address of the USDN token.

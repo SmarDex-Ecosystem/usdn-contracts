@@ -101,7 +101,7 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
     function _deployProtocol(Types.InitStorage storage initStorage) internal returns (IUsdnProtocol usdnProtocol_) {
         // we need to allow external library linking and immutable variables in the openzeppelin module
         Options memory opts;
-        opts.unsafeAllow = "external-library-linking,state-variable-immutable";
+        opts.unsafeAllow = "external-library-linking,state-variable-immutable,missing-initializer";
 
         vm.startBroadcast();
 
