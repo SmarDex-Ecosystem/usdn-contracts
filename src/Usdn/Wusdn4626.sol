@@ -57,7 +57,7 @@ contract Wusdn4626 is ERC20, IERC4626 {
      * if the corresponding token amount is equal to the user's token balance.
      */
     function previewDeposit(uint256 assets) external view returns (uint256 shares_) {
-        uint256 senderShares = USDN.sharesOf(_msgSender());
+        uint256 senderShares = USDN.sharesOf(msg.sender);
         uint256 senderBalance = (senderShares > 0) ? USDN.convertToTokens(senderShares) : 0;
         shares_ = USDN.convertToShares(assets);
         if (senderBalance == assets && senderShares < shares_) {
@@ -71,17 +71,16 @@ contract Wusdn4626 is ERC20, IERC4626 {
      * have been minted yet), are gifted to the `receiver`.
      */
     function deposit(uint256 assets, address receiver) external returns (uint256 shares_) {
-        address caller = _msgSender();
         // using the supply instead of `USDN.sharesOf` to account for extra tokens
         uint256 usdnSharesBefore = totalSupply();
-        USDN.transferFrom(caller, address(this), assets);
+        USDN.transferFrom(msg.sender, address(this), assets);
         uint256 usdnSharesAfter = USDN.sharesOf(address(this));
         unchecked {
             // the USDN shares balance of this contract is greater than or equal to the total supply at all times
             shares_ = usdnSharesAfter - usdnSharesBefore;
         }
         _mint(receiver, shares_);
-        emit Deposit(caller, receiver, assets, shares_);
+        emit Deposit(msg.sender, receiver, assets, shares_);
     }
 
     /// @inheritdoc IERC4626
@@ -96,11 +95,10 @@ contract Wusdn4626 is ERC20, IERC4626 {
 
     /// @inheritdoc IERC4626
     function mint(uint256 shares, address receiver) external returns (uint256 assets_) {
-        address caller = _msgSender();
-        USDN.transferSharesFrom(caller, address(this), shares);
+        USDN.transferSharesFrom(msg.sender, address(this), shares);
         _mint(receiver, shares);
         assets_ = USDN.convertToTokens(shares);
-        emit Deposit(caller, receiver, assets_, shares);
+        emit Deposit(msg.sender, receiver, assets_, shares);
     }
 
     /**
@@ -119,14 +117,13 @@ contract Wusdn4626 is ERC20, IERC4626 {
 
     /// @inheritdoc IERC4626
     function withdraw(uint256 assets, address receiver, address owner) external returns (uint256 shares_) {
-        address caller = _msgSender();
         shares_ = USDN.convertToShares(assets);
-        if (caller != owner) {
-            _spendAllowance(owner, caller, shares_);
+        if (msg.sender != owner) {
+            _spendAllowance(owner, msg.sender, shares_);
         }
         _burn(owner, shares_);
         USDN.transferShares(receiver, shares_);
-        emit Withdraw(caller, receiver, owner, assets, shares_);
+        emit Withdraw(msg.sender, receiver, owner, assets, shares_);
     }
 
     /// @inheritdoc IERC4626
@@ -141,13 +138,12 @@ contract Wusdn4626 is ERC20, IERC4626 {
 
     /// @inheritdoc IERC4626
     function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets_) {
-        address caller = _msgSender();
-        if (caller != owner) {
-            _spendAllowance(owner, caller, shares);
+        if (msg.sender != owner) {
+            _spendAllowance(owner, msg.sender, shares);
         }
         _burn(owner, shares);
         USDN.transferShares(receiver, shares);
         assets_ = USDN.convertToTokens(shares);
-        emit Withdraw(caller, receiver, owner, assets_, shares);
+        emit Withdraw(msg.sender, receiver, owner, assets_, shares);
     }
 }
