@@ -136,7 +136,7 @@ contract Wusdn4626 is ERC20, IERC4626 {
 
     /// @inheritdoc IERC4626
     function previewRedeem(uint256 shares) external view returns (uint256 assets_) {
-        return convertToAssets(shares);
+        assets_ = convertToAssets(shares);
     }
 
     /// @inheritdoc IERC4626
