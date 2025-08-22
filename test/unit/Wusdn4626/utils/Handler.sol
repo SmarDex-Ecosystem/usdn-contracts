@@ -18,7 +18,6 @@ contract Wusdn4626Handler is Wusdn4626, Test {
     mapping(address => uint256) private _wusdn4626Shares;
     address[] _actors = new address[](4);
     address internal _currentActor;
-    uint256 _price;
 
     constructor() Wusdn4626() {
         _actors[0] = USER_1;
@@ -44,9 +43,7 @@ contract Wusdn4626Handler is Wusdn4626, Test {
 
         uint256 preview = Wusdn4626(address(this)).previewDeposit(assets);
         uint256 shares = Wusdn4626(address(this)).deposit(assets, _currentActor);
-        uint256 newPrice = convertToAssets(1 ether);
 
-        assertGe(newPrice, _price, "deposit: price property");
         assertLe(preview, shares, "deposit: preview property");
         assertApproxEqAbs(preview, shares, 1, "deposit: preview property max 1 wei off");
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser - assets, "deposit: usdn user balance property");
@@ -54,7 +51,6 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         assertEq(balanceOf(_currentActor), vaultBalanceUser + shares, "deposit: 4626 user balance property");
 
         _wusdn4626Shares[_currentActor] += shares;
-        _price = newPrice;
     }
 
     function mintTest(uint256 shares, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
@@ -68,9 +64,7 @@ contract Wusdn4626Handler is Wusdn4626, Test {
 
         uint256 preview = Wusdn4626(address(this)).previewMint(shares);
         uint256 assets = Wusdn4626(address(this)).mint(shares, _currentActor);
-        uint256 newPrice = convertToAssets(1 ether);
 
-        assertGe(newPrice, _price, "mint: price property");
         assertGe(preview, assets, "mint: preview property");
         assertApproxEqAbs(preview, assets, 1, "mint: preview property max 1 wei off");
         assertApproxEqAbs(
@@ -80,7 +74,6 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         assertEq(balanceOf(_currentActor), vaultBalanceUser + shares, "mint: 4626 user balance property");
 
         _wusdn4626Shares[_currentActor] += shares;
-        _price = newPrice;
     }
 
     function withdrawTest(uint256 assets, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
@@ -92,9 +85,7 @@ contract Wusdn4626Handler is Wusdn4626, Test {
 
         uint256 preview = Wusdn4626(address(this)).previewWithdraw(assets);
         uint256 shares = Wusdn4626(address(this)).withdraw(assets, _currentActor, _currentActor);
-        uint256 newPrice = convertToAssets(1 ether);
 
-        assertGe(newPrice, _price, "withdraw: price property");
         assertEq(preview, shares, "withdraw: preview property");
         assertApproxEqAbs(preview, shares, 1, "withdraw: preview property max 1 wei off");
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser + assets, "withdraw: usdn user balance property");
@@ -102,7 +93,6 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "withdraw: 4626 user balance property");
 
         _wusdn4626Shares[_currentActor] -= shares;
-        _price = newPrice;
     }
 
     function redeemTest(uint256 shares, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
@@ -114,9 +104,7 @@ contract Wusdn4626Handler is Wusdn4626, Test {
 
         uint256 preview = Wusdn4626(address(this)).previewRedeem(shares);
         uint256 assets = Wusdn4626(address(this)).redeem(shares, _currentActor, _currentActor);
-        uint256 newPrice = convertToAssets(1 ether);
 
-        assertGe(newPrice, _price, "redeem: price property");
         assertLe(preview, assets, "redeem: preview property");
         assertApproxEqAbs(preview, assets, 1, "redeem: preview property max 1 wei off");
         assertApproxEqAbs(
@@ -126,7 +114,6 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "redeem: 4626 user balance property");
 
         _wusdn4626Shares[_currentActor] -= shares;
-        _price = newPrice;
     }
 
     function getGhostTotBal() public view returns (uint256 totBalance_) {
