@@ -4,11 +4,14 @@ pragma solidity 0.8.26;
 import { IERC4626 } from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 
 /// @title ERC-4626 Wrapper for USDN
 contract Usdn4626 is ERC20, IERC4626 {
+    using FixedPointMathLib for uint256;
+
     /**
      * @notice The address of the USDN token.
      * @dev Retrieve with {asset}.
@@ -142,8 +145,10 @@ contract Usdn4626 is ERC20, IERC4626 {
             _spendAllowance(owner, msg.sender, shares);
         }
         _burn(owner, shares);
+        // check how much the receiver's balance increases after receiving USDN to honor invariant
+        uint256 balanceBefore = USDN.balanceOf(receiver);
         USDN.transferShares(receiver, shares);
-        assets_ = USDN.convertToTokens(shares);
+        assets_ = USDN.balanceOf(receiver).rawSub(balanceBefore); // balance can only increase during transfer
         emit Withdraw(msg.sender, receiver, owner, assets_, shares);
     }
 }
