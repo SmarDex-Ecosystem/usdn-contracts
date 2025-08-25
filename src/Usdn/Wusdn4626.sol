@@ -164,11 +164,11 @@ contract Wusdn4626 is ERC20, IERC4626 {
         // we need to account for extra unwrapped USDN due to 18 decimals precision of WUSDN and rebase
         // worst-case example:
         // divisor = 1e9
-        // assets = 1'000'000'001 USDN (1.000000001B)
+        // assets = 1_000_000_001 wei USDN
         // usdnShares = (1e9 + 1) * divisor = 1.000000001e18
         // wusdn = ceil(1.000000001e18 / SHARES_RATIO) = 2
-        // unwrap 2 wei WUSDN to USDN -> 2e18 shares of USDN -> 2B USDN
-        // there is 999M+ extra USDN that we send back to the owner
+        // unwrap 2 wei WUSDN to USDN -> 2e18 shares of USDN -> 2e9 wei USDN
+        // there is (2e9 - 1e9 - 1) extra wei of USDN that we send back to the owner
         uint256 usdnShares = USDN.convertToShares(assets); // should go to receiver
         shares_ = usdnShares.divUp(SHARES_RATIO); // round up to make sure we always unwrap enough
         if (msg.sender != owner) {
