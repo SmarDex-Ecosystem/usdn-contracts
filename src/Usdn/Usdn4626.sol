@@ -98,9 +98,11 @@ contract Usdn4626 is ERC20, IERC4626 {
 
     /// @inheritdoc IERC4626
     function mint(uint256 shares, address receiver) external returns (uint256 assets_) {
-        USDN.transferSharesFrom(msg.sender, address(this), shares);
         _mint(receiver, shares);
-        assets_ = USDN.convertToTokens(shares);
+        uint256 balanceBefore = USDN.balanceOf(msg.sender);
+        USDN.transferSharesFrom(msg.sender, address(this), shares);
+        // check how much the receiver's balance decreases to honor invariant
+        assets_ = balanceBefore.rawSub(USDN.balanceOf(msg.sender)); // balance can only decrease during transfer
         emit Deposit(msg.sender, receiver, assets_, shares);
     }
 
