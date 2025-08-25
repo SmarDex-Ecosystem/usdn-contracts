@@ -13,12 +13,14 @@ contract TestWusdn4626Invariants is Wusdn4626Fixture {
 
         targetContract(address(wusdn4626));
 
-        bytes4[] memory wusdn4626Selectors = new bytes4[](5);
+        bytes4[] memory wusdn4626Selectors = new bytes4[](7);
         wusdn4626Selectors[0] = wusdn4626.depositTest.selector;
         wusdn4626Selectors[1] = wusdn4626.mintTest.selector;
         wusdn4626Selectors[2] = wusdn4626.withdrawTest.selector;
         wusdn4626Selectors[3] = wusdn4626.redeemTest.selector;
         wusdn4626Selectors[4] = wusdn4626.rebaseTest.selector;
+        wusdn4626Selectors[5] = wusdn4626.giftUsdn.selector;
+        wusdn4626Selectors[6] = wusdn4626.giftWusdn.selector;
         targetSelector(FuzzSelector({ addr: address(wusdn4626), selectors: wusdn4626Selectors }));
 
         targetSender(user1);

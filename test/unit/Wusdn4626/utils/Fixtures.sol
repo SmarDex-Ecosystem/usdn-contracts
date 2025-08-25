@@ -22,5 +22,6 @@ contract Wusdn4626Fixture is Test {
         );
         wusdn4626 = new Wusdn4626Handler();
         usdn.grantRole(usdn.REBASER_ROLE(), address(wusdn4626));
+        usdn.grantRole(usdn.MINTER_ROLE(), address(wusdn4626));
     }
 }

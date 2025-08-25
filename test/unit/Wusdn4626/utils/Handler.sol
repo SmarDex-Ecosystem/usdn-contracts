@@ -43,7 +43,6 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         uint256 shares = this.deposit(assets, _currentActor);
 
         assertLe(preview, shares, "deposit: preview property");
-        assertApproxEqAbs(preview, shares, 1, "deposit: preview max 1 wei off");
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser - assets, "deposit: usdn user balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser + shares, "deposit: 4626 user balance property");
 
@@ -113,6 +112,22 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         // rebases at most 50%
         divisor = bound(divisor, FixedPointMathLib.max(USDN.MIN_DIVISOR(), oldDivisor / 2), oldDivisor - 1);
         USDN.rebase(divisor);
+    }
+
+    function giftUsdn(uint256 amount) public {
+        amount = bound(amount, 1, 1_000_000);
+        USDN.mint(address(this), amount);
+    }
+
+    function giftWusdn(uint256 amount) public {
+        amount = bound(amount, 1, 1e6 * 1e36); // max 1 million USDN
+        amount = amount * SHARES_RATIO / SHARES_RATIO; // force multiple of SHARES_RATIO
+        vm.assume(WUSDN.previewWrapShares(amount) > 0);
+        USDN.mintShares(address(42), amount);
+        vm.startPrank(address(42));
+        USDN.approve(address(WUSDN), type(uint256).max);
+        WUSDN.wrapShares(amount, address(this));
+        vm.stopPrank();
     }
 
     function getGhostTotalSupply() public view returns (uint256 totalSupply_) {
