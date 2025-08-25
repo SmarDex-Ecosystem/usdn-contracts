@@ -9,7 +9,6 @@ import { MockChainlinkOnChain } from "../../test/unit/Middlewares/utils/MockChai
 import { WstEthOracleMiddlewareWithPyth } from "../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { MockWstEthOracleMiddlewareWithPyth } from
     "../../src/OracleMiddleware/mock/MockWstEthOracleMiddlewareWithPyth.sol";
-import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
     "../../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { PriceInfo } from "../../src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -41,7 +40,7 @@ abstract contract UsdnForkBase is Script {
         CHAINLINK_PRICE_VALIDITY_BASE = chainlinkPriceValidity;
     }
 
-    function postRun(IUsdnProtocol usdnProtocol_) external {
+    function postRun(IUsdnProtocol usdnProtocol_) internal {
         setRoles(usdnProtocol_);
         setPeripheralContracts(usdnProtocol_);
         vm.clearMockedCalls();
@@ -66,19 +65,10 @@ abstract contract UsdnForkBase is Script {
         usdnProtocol.grantRole(Constants.PAUSER_ROLE, msg.sender);
         usdnProtocol.grantRole(Constants.UNPAUSER_ROLE, msg.sender);
         vm.stopBroadcast();
-        Usdn usdn = Usdn(address(usdnProtocol.getUsdn()));
-        vm.startBroadcast();
-        vm.startPrank(address(usdnProtocol));
-        usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
-        usdn.grantRole(usdn.MINTER_ROLE(), msg.sender);
-        usdn.grantRole(usdn.REBASER_ROLE(), msg.sender);
-        vm.stopPrank();
-        vm.stopBroadcast();
     }
 
     // Mock oracle price
-    function preRun() external {
+    function preRun() internal {
         address computedMiddlewareAddress = address(
             new WstEthOracleMiddlewareWithPyth(
                 PYTH_ADDRESS_BASE,

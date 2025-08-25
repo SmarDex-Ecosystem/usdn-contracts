@@ -39,7 +39,8 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
      * @return usdnProtocol_ The USDN protocol
      */
     function run()
-        external
+        public
+        virtual
         returns (
             WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,
             LiquidationRewardsManagerWstEth liquidationRewardsManager_,
