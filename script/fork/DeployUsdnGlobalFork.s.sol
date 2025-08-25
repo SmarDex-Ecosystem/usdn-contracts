@@ -38,26 +38,21 @@ contract DeployUsdnAndShortdn is Script {
      * @notice Deploy the USDN ecosystem with the WstETH as underlying and the SHORTDN ecosystem with the WUSDN as
      * underlying
      */
-    function run() external returns (DeployedUsdnAndShortdn memory deployedUsdnAndShortdn) {
+    function run() external {
         DeployUsdnWstethFork deployUsdnWstethFork = new DeployUsdnWstethFork();
-        (
-            deployedUsdnAndShortdn.wstEthOracleMiddleware_,
-            deployedUsdnAndShortdn.liquidationRewardsManagerWstEth_,
-            deployedUsdnAndShortdn.rebalancerUsdn_,
-            deployedUsdnAndShortdn.usdn_,
-            deployedUsdnAndShortdn.wusdn_,
-            deployedUsdnAndShortdn.usdnProtocolUsdn_
-        ) = deployUsdnWstethFork.preRunAndRun();
+        // deployUsdnWstethFork.preRun();
+        (,,,,, IUsdnProtocol usdnProtocol_) = deployUsdnWstethFork.run();
+        // deployUsdnWstethFork.postRun(usdnProtocol_);
 
-        vm.setEnv("UNDERLYING_ADDRESS_USDN", vm.toString(address(deployedUsdnAndShortdn.wusdn_)));
+        // vm.setEnv("UNDERLYING_ADDRESS_WUSDN", vm.toString(address(deployedUsdnAndShortdn.wusdn_)));
 
-        DeployUsdnWusdnFork deployUsdnWusdnFork = new DeployUsdnWusdnFork();
-        (
-            deployedUsdnAndShortdn.wusdnToEthOracleMiddleware_,
-            deployedUsdnAndShortdn.liquidationRewardsManagerWusdn_,
-            deployedUsdnAndShortdn.rebalancerShortdn_,
-            deployedUsdnAndShortdn.usdnNoRebaseShortdn_,
-            deployedUsdnAndShortdn.usdnProtocolShortdn_
-        ) = deployUsdnWusdnFork.preRunAndRun();
+        // DeployUsdnWusdnFork deployUsdnWusdnFork = new DeployUsdnWusdnFork();
+        // (
+        //     deployedUsdnAndShortdn.wusdnToEthOracleMiddleware_,
+        //     deployedUsdnAndShortdn.liquidationRewardsManagerWusdn_,
+        //     deployedUsdnAndShortdn.rebalancerShortdn_,
+        //     deployedUsdnAndShortdn.usdnNoRebaseShortdn_,
+        //     deployedUsdnAndShortdn.usdnProtocolShortdn_
+        // ) = deployUsdnWusdnFork.preRunAndRun();
     }
 }
