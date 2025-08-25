@@ -68,8 +68,47 @@ contract Wusdn4626 is ERC20, IERC4626 {
     }
 
     /// @inheritdoc IERC4626
+    function maxMint(address) external pure returns (uint256 maxShares_) {
+        maxShares_ = type(uint256).max;
+    }
+
+    /// @inheritdoc IERC4626
+    function maxWithdraw(address owner) external view returns (uint256 maxAssets_) {
+        uint256 usdnShares = USDN.convertToShares(balanceOf(owner));
+        maxAssets_ = usdnShares.rawDiv(SHARES_RATIO); // SHARES_RATIO is never zero
+    }
+
+    /// @inheritdoc IERC4626
+    function maxRedeem(address owner) external view returns (uint256 maxShares_) {
+        maxShares_ = balanceOf(owner);
+    }
+
+    /// @inheritdoc IERC4626
     function previewDeposit(uint256 assets) external view returns (uint256 shares_) {
         shares_ = convertToShares(assets);
+    }
+
+    /**
+     * @inheritdoc IERC4626
+     * @dev Since this function MUST round up, we use the conversion function `convertToTokensRoundUp`.
+     */
+    function previewMint(uint256 shares) external view returns (uint256 assets_) {
+        uint256 usdnShares = shares * SHARES_RATIO;
+        assets_ = USDN.convertToTokensRoundUp(usdnShares);
+    }
+
+    /**
+     * @inheritdoc IERC4626
+     * @dev Since this function MUST round up, we use ceiling division.
+     */
+    function previewWithdraw(uint256 assets) external view returns (uint256 shares_) {
+        uint256 usdnShares = USDN.convertToShares(assets);
+        shares_ = usdnShares.divUp(SHARES_RATIO);
+    }
+
+    /// @inheritdoc IERC4626
+    function previewRedeem(uint256 shares) external view returns (uint256 assets_) {
+        assets_ = convertToAssets(shares);
     }
 
     /// @inheritdoc IERC4626
@@ -84,43 +123,16 @@ contract Wusdn4626 is ERC20, IERC4626 {
     }
 
     /// @inheritdoc IERC4626
-    function maxMint(address) external pure returns (uint256 maxShares_) {
-        maxShares_ = type(uint256).max;
-    }
-
-    /**
-     * @inheritdoc IERC4626
-     * @dev Since this function MUST round up, we use the conversion function `convertToTokensRoundUp`.
-     */
-    function previewMint(uint256 shares) external view returns (uint256 assets_) {
-        uint256 usdnShares = shares * SHARES_RATIO;
-        assets_ = USDN.convertToTokensRoundUp(usdnShares);
-    }
-
-    /// @inheritdoc IERC4626
     function mint(uint256 shares, address receiver) external returns (uint256 assets_) {
         uint256 usdnShares = shares * SHARES_RATIO;
+        uint256 balanceBefore = USDN.balanceOf(msg.sender);
         USDN.transferSharesFrom(msg.sender, address(this), usdnShares);
+        // check how much the receiver's balance decreases to honor invariant
+        assets_ = balanceBefore.rawSub(USDN.balanceOf(msg.sender)); // balance can only decrease during transfer
         uint256 wrappedAmount = WUSDN.wrapShares(usdnShares, address(this));
         require(wrappedAmount == shares); // sanity check, should never fail
         _mint(receiver, wrappedAmount);
-        assets_ = USDN.convertToTokens(usdnShares);
         emit Deposit(msg.sender, receiver, assets_, wrappedAmount);
-    }
-
-    /// @inheritdoc IERC4626
-    function maxWithdraw(address owner) external view returns (uint256 maxAssets_) {
-        uint256 usdnShares = USDN.convertToShares(balanceOf(owner));
-        maxAssets_ = usdnShares.rawDiv(SHARES_RATIO); // SHARES_RATIO is never zero
-    }
-
-    /**
-     * @inheritdoc IERC4626
-     * @dev Since this function MUST round up, we use ceiling division.
-     */
-    function previewWithdraw(uint256 assets) external view returns (uint256 shares_) {
-        uint256 usdnShares = USDN.convertToShares(assets);
-        shares_ = usdnShares.divUp(SHARES_RATIO);
     }
 
     /// @inheritdoc IERC4626
@@ -150,16 +162,6 @@ contract Wusdn4626 is ERC20, IERC4626 {
         }
         USDN.transferShares(receiver, usdnShares);
         emit Withdraw(msg.sender, receiver, owner, assets, shares_);
-    }
-
-    /// @inheritdoc IERC4626
-    function maxRedeem(address owner) external view returns (uint256 maxShares_) {
-        maxShares_ = balanceOf(owner);
-    }
-
-    /// @inheritdoc IERC4626
-    function previewRedeem(uint256 shares) external view returns (uint256 assets_) {
-        assets_ = convertToAssets(shares);
     }
 
     /// @inheritdoc IERC4626
