@@ -111,7 +111,12 @@ contract Wusdn4626 is ERC20, IERC4626 {
         assets_ = convertToAssets(shares);
     }
 
-    /// @inheritdoc IERC4626
+    /**
+     * @inheritdoc IERC4626
+     * @notice Any extra USDN or WUSDN which would have been sent to the contract by mistake (without interacting with
+     * this contract's external functions) is gifted to the receiver.
+     * This is to avoid that funds remain stuck in the contract forever.
+     */
     function deposit(uint256 assets, address receiver) external returns (uint256 shares_) {
         // gifting any extra WUSDN sent to the contract directly to the depositor
         // the WUSDN balance of this contract is greater than or equal to the total supply at all times
