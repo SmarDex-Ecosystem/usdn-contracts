@@ -41,10 +41,10 @@ contract TestWusdn4626Invariants is Wusdn4626Fixture {
     }
 
     function invariant_totalAssetsSum() public view {
-        assertEq(wusdn4626.totalSupply(), wusdn4626.getGhostTotBal(), "total assets sum");
+        assertEq(wusdn4626.totalSupply(), wusdn4626.getGhostTotalSupply(), "total supply = sum of balances");
     }
 
     function invariant_totalSupply() public view {
-        assertGe(wusdn.balanceOf(address(wusdn4626)), wusdn4626.totalSupply(), "total supply invariant");
+        assertGe(wusdn.balanceOf(address(wusdn4626)), wusdn4626.totalSupply(), "balance of WUSDN >= total supply");
     }
 }

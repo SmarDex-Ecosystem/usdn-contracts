@@ -97,9 +97,9 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         _wusdn4626Shares[_currentActor] -= shares;
     }
 
-    function getGhostTotBal() public view returns (uint256 totBalance_) {
+    function getGhostTotalSupply() public view returns (uint256 totalSupply_) {
         for (uint256 i; i < _actors.length; i++) {
-            totBalance_ += _wusdn4626Shares[_actors[i]];
+            totalSupply_ += _wusdn4626Shares[_actors[i]];
         }
     }
 }
