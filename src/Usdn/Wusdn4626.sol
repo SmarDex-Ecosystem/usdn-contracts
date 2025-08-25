@@ -135,7 +135,8 @@ contract Wusdn4626 is ERC20, IERC4626 {
         // since the transfer above can sometimes retrieve dust which can't be wrapped (less than 1 wei of tokens),
         // we wrap the totality of the USDN balance here so that USDN dust gets removed from the contract (gifted to the
         // depositor) once it reaches more than 1 wei of WUSDN
-        shares_ += WUSDN.wrapShares(USDN.sharesOf(address(this)), address(this));
+        // total supply of WUSDN cannot exceed (uint256.max / SHARES_RATIO) so overflow check is not needed
+        shares_ = shares_.rawAdd(WUSDN.wrapShares(USDN.sharesOf(address(this)), address(this)));
         _mint(receiver, shares_);
         emit Deposit(msg.sender, receiver, assets, shares_);
     }
