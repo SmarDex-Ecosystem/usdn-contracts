@@ -71,12 +71,10 @@ contract TestWusdn4626Invariants is Wusdn4626Fixture {
         if (divisor < usdn.MAX_DIVISOR()) {
             usdn.rebase(divisor);
         }
-        uint256 assets = wusdn4626.convertToShares(shares);
+        uint256 assets = wusdn4626.convertToAssets(shares);
         assertLe(assets, wusdn.previewUnwrap(shares), "WUSDN.previewUnwrap");
-        assertApproxEqAbs(
-            assets, wusdn.previewUnwrap(shares), wusdn.SHARES_RATIO(), "WUSDN.previewUnwrap SHARES_RATIO off max"
-        );
-        assertLe(assets, wusdn4626.previewWithdraw(shares), "previewWithdraw");
-        assertApproxEqAbs(assets, wusdn4626.previewWithdraw(shares), 1, "previewWithdraw 1 wei off max");
+        assertApproxEqAbs(assets, wusdn.previewUnwrap(shares), 1, "WUSDN.previewUnwrap 1 wei off max");
+        assertLe(assets, wusdn4626.previewRedeem(shares), "previewRedeem");
+        assertApproxEqAbs(assets, wusdn4626.previewRedeem(shares), 1, "previewRedeem 1 wei off max");
     }
 }
