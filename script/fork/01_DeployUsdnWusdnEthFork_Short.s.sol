@@ -7,7 +7,7 @@ import { IWusdn } from "../../src/interfaces/Usdn/IWusdn.sol";
 
 import { UsdnForkBase } from "./UsdnForkBase.s.sol";
 
-contract DeployUsdnWstethFork is UsdnForkBase, DeployUsdnWusdnEth {
+contract DeployUsdnWusdnFork is UsdnForkBase, DeployUsdnWusdnEth {
     constructor()
         UsdnForkBase(UNDERLYING_ASSET, PYTH_ADDRESS, CHAINLINK_ETH_PRICE, PYTH_ETH_FEED_ID, CHAINLINK_PRICE_VALIDITY)
         DeployUsdnWusdnEth()
