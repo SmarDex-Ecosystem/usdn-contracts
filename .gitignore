@@ -13,6 +13,7 @@ broadcast/*.sol/**/*.json
 
 # Cache
 cache/
+.corpus/
 
 # Dependencies
 node_modules/

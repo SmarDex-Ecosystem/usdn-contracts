@@ -83,9 +83,19 @@ contract Wusdn4626 is ERC20, IERC4626 {
         maxShares_ = balanceOf(owner);
     }
 
-    /// @inheritdoc IERC4626
+    /**
+     * @inheritdoc IERC4626
+     * @dev When performing a USDN transfer, the amount of USDN shares transferred might be capped at the user's balance
+     * if the corresponding token amount is equal to the user's token balance.
+     */
     function previewDeposit(uint256 assets) external view returns (uint256 shares_) {
-        shares_ = convertToShares(assets);
+        uint256 senderShares = USDN.sharesOf(msg.sender);
+        uint256 senderBalance = (senderShares > 0) ? USDN.convertToTokens(senderShares) : 0;
+        uint256 usdnShares = USDN.convertToShares(assets);
+        if (senderBalance == assets && senderShares < usdnShares) {
+            usdnShares = senderShares;
+        }
+        shares_ = usdnShares.rawDiv(SHARES_RATIO); // SHARES_RATIO is never zero
     }
 
     /**

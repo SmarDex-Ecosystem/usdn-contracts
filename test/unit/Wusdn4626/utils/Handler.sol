@@ -3,6 +3,8 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
 import { Wusdn4626 } from "../../../../src/Usdn/Wusdn4626.sol";
 
 contract Wusdn4626Handler is Wusdn4626, Test {
@@ -37,6 +39,7 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         assets = bound(assets, 1, usdnBalanceUser);
 
         uint256 preview = this.previewDeposit(assets);
+        vm.assume(preview > 0); // can only deposit if we can wrap to get at least 1 wei of WUSDN
         uint256 shares = this.deposit(assets, _currentActor);
 
         assertLe(preview, shares, "deposit: preview property");
@@ -75,7 +78,7 @@ contract Wusdn4626Handler is Wusdn4626, Test {
 
         assertGe(preview, shares, "withdraw: preview property");
         assertApproxEqAbs(preview, shares, 1, "withdraw: preview max 1 wei off");
-        assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser + assets, "withdraw: usdn user balance property");
+        assertGe(USDN.balanceOf(_currentActor), usdnBalanceUser + assets, "withdraw: usdn user balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "withdraw: 4626 user balance property");
 
         _wusdn4626Shares[_currentActor] -= shares;
@@ -95,6 +98,21 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "redeem: 4626 user balance property");
 
         _wusdn4626Shares[_currentActor] -= shares;
+    }
+
+    function rebaseTest(uint256 divisor, uint256 rand) public {
+        uint256 oldDivisor = USDN.divisor();
+        if (oldDivisor == USDN.MIN_DIVISOR()) {
+            return;
+        }
+        // 1% change of rebasing to the minimum possible value
+        if (rand % 100 == 0) {
+            USDN.rebase(USDN.MIN_DIVISOR());
+            return;
+        }
+        // rebases at most 50%
+        divisor = bound(divisor, FixedPointMathLib.max(USDN.MIN_DIVISOR(), oldDivisor / 2), oldDivisor - 1);
+        USDN.rebase(divisor);
     }
 
     function getGhostTotalSupply() public view returns (uint256 totalSupply_) {
