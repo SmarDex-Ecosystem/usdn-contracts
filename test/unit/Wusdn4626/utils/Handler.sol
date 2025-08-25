@@ -40,9 +40,13 @@ contract Wusdn4626Handler is Wusdn4626, Test {
 
         uint256 preview = this.previewDeposit(assets);
         vm.assume(preview > 0); // can only deposit if we can wrap to get at least 1 wei of WUSDN
+        // since we gift extra tokens to the depositor, we can calculate the expected amount
+        uint256 expectedShares = WUSDN.previewWrapShares(USDN.convertToShares(assets) + USDN.sharesOf(address(this)))
+            + (WUSDN.balanceOf(address(this)) - totalSupply());
         uint256 shares = this.deposit(assets, _currentActor);
 
         assertLe(preview, shares, "deposit: preview property");
+        assertApproxEqAbs(shares, expectedShares, 1, "deposit: expected shares");
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser - assets, "deposit: usdn user balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser + shares, "deposit: 4626 user balance property");
 
@@ -101,9 +105,7 @@ contract Wusdn4626Handler is Wusdn4626, Test {
 
     function rebaseTest(uint256 divisor, uint256 rand) public {
         uint256 oldDivisor = USDN.divisor();
-        if (oldDivisor == USDN.MIN_DIVISOR()) {
-            return;
-        }
+        vm.assume(oldDivisor != USDN.MIN_DIVISOR());
         // 1% change of rebasing to the minimum possible value
         if (rand % 100 == 0) {
             USDN.rebase(USDN.MIN_DIVISOR());
@@ -115,13 +117,12 @@ contract Wusdn4626Handler is Wusdn4626, Test {
     }
 
     function giftUsdn(uint256 amount) public {
-        amount = bound(amount, 1, 1_000_000);
+        amount = bound(amount, 1, 1e6 ether);
         USDN.mint(address(this), amount);
     }
 
     function giftWusdn(uint256 amount) public {
         amount = bound(amount, 1, 1e6 * 1e36); // max 1 million USDN
-        amount = amount * SHARES_RATIO / SHARES_RATIO; // force multiple of SHARES_RATIO
         vm.assume(WUSDN.previewWrapShares(amount) > 0);
         USDN.mintShares(address(42), amount);
         vm.startPrank(address(42));
