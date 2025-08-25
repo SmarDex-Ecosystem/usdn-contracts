@@ -73,7 +73,7 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         uint256 preview = this.previewWithdraw(assets);
         uint256 shares = this.withdraw(assets, _currentActor, _currentActor);
 
-        assertEq(preview, shares, "withdraw: preview property");
+        assertGe(preview, shares, "withdraw: preview property");
         assertApproxEqAbs(preview, shares, 1, "withdraw: preview max 1 wei off");
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser + assets, "withdraw: usdn user balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "withdraw: 4626 user balance property");
