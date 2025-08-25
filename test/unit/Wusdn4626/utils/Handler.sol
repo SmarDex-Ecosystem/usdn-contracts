@@ -66,16 +66,15 @@ contract Wusdn4626Handler is Wusdn4626, Test {
     }
 
     function withdrawTest(uint256 assets, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
-        uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
         uint256 vaultBalanceUser = balanceOf(_currentActor);
-
+        uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
         assets = bound(assets, 0, this.maxWithdraw(_currentActor));
 
         uint256 preview = this.previewWithdraw(assets);
         uint256 shares = this.withdraw(assets, _currentActor, _currentActor);
 
         assertEq(preview, shares, "withdraw: preview property");
-        assertApproxEqAbs(preview, shares, 1, "withdraw: preview property max 1 wei off");
+        assertApproxEqAbs(preview, shares, 1, "withdraw: preview max 1 wei off");
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser + assets, "withdraw: usdn user balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "withdraw: 4626 user balance property");
 
@@ -83,16 +82,15 @@ contract Wusdn4626Handler is Wusdn4626, Test {
     }
 
     function redeemTest(uint256 shares, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
-        uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
         uint256 vaultBalanceUser = balanceOf(_currentActor);
-
+        uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
         shares = bound(shares, 0, this.maxRedeem(_currentActor));
 
         uint256 preview = this.previewRedeem(shares);
         uint256 assets = this.redeem(shares, _currentActor, _currentActor);
 
         assertLe(preview, assets, "redeem: preview property");
-        assertApproxEqAbs(preview, assets, 1, "redeem: preview property max 1 wei off");
+        assertApproxEqAbs(preview, assets, 1, "redeem: preview max 1 wei off");
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser + assets, "redeem: usdn user balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "redeem: 4626 user balance property");
 
