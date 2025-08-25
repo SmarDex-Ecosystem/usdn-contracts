@@ -36,7 +36,7 @@ contract Usdn4626 is ERC20, IERC4626 {
     }
 
     /// @inheritdoc IERC4626
-    function convertToShares(uint256 assets) external view returns (uint256 shares_) {
+    function convertToShares(uint256 assets) public view returns (uint256 shares_) {
         shares_ = USDN.convertToShares(assets);
     }
 
@@ -46,12 +46,31 @@ contract Usdn4626 is ERC20, IERC4626 {
      * would round to nearest.
      */
     function convertToAssets(uint256 shares) public view returns (uint256 assets_) {
-        assets_ = shares / USDN.divisor();
+        assets_ = shares.rawDiv(USDN.divisor()); // USDN divisor cannot be zero
     }
 
     /// @inheritdoc IERC4626
     function maxDeposit(address) external pure returns (uint256 maxAssets_) {
         maxAssets_ = type(uint256).max;
+    }
+
+    /// @inheritdoc IERC4626
+    function maxMint(address) external pure returns (uint256 maxShares_) {
+        maxShares_ = type(uint256).max;
+    }
+
+    /**
+     * @inheritdoc IERC4626
+     * @dev Since this function MUST round down, we use the divisor directly instead of calling the asset, which
+     * would round to nearest.
+     */
+    function maxWithdraw(address owner) external view returns (uint256 maxAssets_) {
+        maxAssets_ = balanceOf(owner).rawDiv(USDN.divisor()); // USDN divisor cannot be zero
+    }
+
+    /// @inheritdoc IERC4626
+    function maxRedeem(address owner) external view returns (uint256 maxShares_) {
+        maxShares_ = balanceOf(owner);
     }
 
     /**
@@ -68,6 +87,21 @@ contract Usdn4626 is ERC20, IERC4626 {
         }
     }
 
+    /// @inheritdoc IERC4626
+    function previewMint(uint256 shares) external view returns (uint256 assets_) {
+        assets_ = USDN.convertToTokensRoundUp(shares);
+    }
+
+    /// @inheritdoc IERC4626
+    function previewWithdraw(uint256 assets) external view returns (uint256 shares_) {
+        shares_ = convertToShares(assets);
+    }
+
+    /// @inheritdoc IERC4626
+    function previewRedeem(uint256 shares) external view returns (uint256 assets_) {
+        assets_ = convertToAssets(shares);
+    }
+
     /**
      * @inheritdoc IERC4626
      * @dev If the contract has excess USDN shares before calling this function, the extra shares (for which no vUSDN
@@ -78,22 +112,10 @@ contract Usdn4626 is ERC20, IERC4626 {
         uint256 usdnSharesBefore = totalSupply();
         USDN.transferFrom(msg.sender, address(this), assets);
         uint256 usdnSharesAfter = USDN.sharesOf(address(this));
-        unchecked {
-            // the USDN shares balance of this contract is greater than or equal to the total supply at all times
-            shares_ = usdnSharesAfter - usdnSharesBefore;
-        }
+        // the USDN shares balance of this contract is greater than or equal to the total supply at all times
+        shares_ = usdnSharesAfter.rawSub(usdnSharesBefore);
         _mint(receiver, shares_);
         emit Deposit(msg.sender, receiver, assets, shares_);
-    }
-
-    /// @inheritdoc IERC4626
-    function maxMint(address) external pure returns (uint256 maxShares_) {
-        maxShares_ = type(uint256).max;
-    }
-
-    /// @inheritdoc IERC4626
-    function previewMint(uint256 shares) external view returns (uint256 assets_) {
-        assets_ = USDN.convertToTokensRoundUp(shares);
     }
 
     /// @inheritdoc IERC4626
@@ -106,20 +128,6 @@ contract Usdn4626 is ERC20, IERC4626 {
         emit Deposit(msg.sender, receiver, assets_, shares);
     }
 
-    /**
-     * @inheritdoc IERC4626
-     * @dev Since this function MUST round down, we use the divisor directly instead of calling the asset, which
-     * would round to nearest.
-     */
-    function maxWithdraw(address owner) external view returns (uint256 maxAssets_) {
-        maxAssets_ = balanceOf(owner) / USDN.divisor();
-    }
-
-    /// @inheritdoc IERC4626
-    function previewWithdraw(uint256 assets) external view returns (uint256 shares_) {
-        shares_ = USDN.convertToShares(assets);
-    }
-
     /// @inheritdoc IERC4626
     function withdraw(uint256 assets, address receiver, address owner) external returns (uint256 shares_) {
         shares_ = USDN.convertToShares(assets);
@@ -129,16 +137,6 @@ contract Usdn4626 is ERC20, IERC4626 {
         _burn(owner, shares_);
         USDN.transferShares(receiver, shares_);
         emit Withdraw(msg.sender, receiver, owner, assets, shares_);
-    }
-
-    /// @inheritdoc IERC4626
-    function maxRedeem(address owner) external view returns (uint256 maxShares_) {
-        maxShares_ = balanceOf(owner);
-    }
-
-    /// @inheritdoc IERC4626
-    function previewRedeem(uint256 shares) external view returns (uint256 assets_) {
-        assets_ = convertToAssets(shares);
     }
 
     /// @inheritdoc IERC4626
