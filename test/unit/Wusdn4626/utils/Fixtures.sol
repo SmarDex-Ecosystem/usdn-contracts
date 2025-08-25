@@ -10,12 +10,17 @@ import { Wusdn } from "../../../../src/Usdn/Wusdn.sol";
 
 contract Wusdn4626Fixture is Test {
     Usdn usdn = Usdn(0xde17a000BA631c5d7c2Bd9FB692EFeA52D90DEE2);
+    Wusdn wusdn = Wusdn(0x99999999999999Cc837C997B882957daFdCb1Af9);
     Wusdn4626Handler wusdn4626;
 
     function setUp() public virtual {
         deployCodeTo("Usdn.sol", abi.encode(address(this), address(this)), 0xde17a000BA631c5d7c2Bd9FB692EFeA52D90DEE2);
+        deployCodeTo(
+            "Wusdn.sol",
+            abi.encode(address(0xde17a000BA631c5d7c2Bd9FB692EFeA52D90DEE2)),
+            0x99999999999999Cc837C997B882957daFdCb1Af9
+        );
         wusdn4626 = new Wusdn4626Handler();
-
         usdn.grantRole(usdn.REBASER_ROLE(), address(wusdn4626));
     }
 }

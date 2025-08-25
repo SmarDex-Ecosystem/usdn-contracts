@@ -3,10 +3,7 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import { Usdn } from "../../../../src/Usdn/Usdn.sol";
-import { Wusdn } from "../../../../src/Usdn/Wusdn.sol";
 import { Wusdn4626 } from "../../../../src/Usdn/Wusdn4626.sol";
-import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 
 contract Wusdn4626Handler is Wusdn4626, Test {
     address public constant USER_1 = address(1);
@@ -35,10 +32,9 @@ contract Wusdn4626Handler is Wusdn4626, Test {
 
     function depositTest(uint256 assets, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
         uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
-        uint256 vaultBalanceUser = balanceOf(_currentActor);
-        uint256 usdnSharesVault = USDN.sharesOf(address(this));
-
         vm.assume(usdnBalanceUser > 0);
+        uint256 vaultBalanceUser = balanceOf(_currentActor);
+
         assets = bound(assets, 1, usdnBalanceUser);
 
         uint256 preview = Wusdn4626(address(this)).previewDeposit(assets);
@@ -47,7 +43,6 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         assertLe(preview, shares, "deposit: preview property");
         assertApproxEqAbs(preview, shares, 1, "deposit: preview property max 1 wei off");
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser - assets, "deposit: usdn user balance property");
-        assertEq(USDN.sharesOf(address(this)), usdnSharesVault + shares, "deposit: usdn vault balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser + shares, "deposit: 4626 user balance property");
 
         _wusdn4626Shares[_currentActor] += shares;
@@ -56,11 +51,10 @@ contract Wusdn4626Handler is Wusdn4626, Test {
     function mintTest(uint256 shares, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
         uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
         uint256 vaultBalanceUser = balanceOf(_currentActor);
-        uint256 sharesOf = USDN.sharesOf(_currentActor);
-        uint256 usdnSharesVault = USDN.sharesOf(address(this));
 
-        vm.assume(sharesOf > 0);
-        shares = bound(shares, 1, sharesOf);
+        uint256 maxShares = this.previewDeposit(usdnBalanceUser);
+        vm.assume(maxShares > 0);
+        shares = bound(shares, 1, maxShares);
 
         uint256 preview = Wusdn4626(address(this)).previewMint(shares);
         uint256 assets = Wusdn4626(address(this)).mint(shares, _currentActor);
@@ -70,7 +64,6 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         assertApproxEqAbs(
             USDN.balanceOf(_currentActor), usdnBalanceUser - assets, 1, "mint: usdn user balance property"
         );
-        assertEq(USDN.sharesOf(address(this)), usdnSharesVault + shares, "mint: usdn vault balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser + shares, "mint: 4626 user balance property");
 
         _wusdn4626Shares[_currentActor] += shares;
@@ -79,9 +72,8 @@ contract Wusdn4626Handler is Wusdn4626, Test {
     function withdrawTest(uint256 assets, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
         uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
         uint256 vaultBalanceUser = balanceOf(_currentActor);
-        uint256 usdnSharesVault = USDN.sharesOf(address(this));
 
-        assets = bound(assets, 0, Wusdn4626(address(this)).maxWithdraw(_currentActor));
+        assets = bound(assets, 0, this.maxWithdraw(_currentActor));
 
         uint256 preview = Wusdn4626(address(this)).previewWithdraw(assets);
         uint256 shares = Wusdn4626(address(this)).withdraw(assets, _currentActor, _currentActor);
@@ -89,7 +81,6 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         assertEq(preview, shares, "withdraw: preview property");
         assertApproxEqAbs(preview, shares, 1, "withdraw: preview property max 1 wei off");
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser + assets, "withdraw: usdn user balance property");
-        assertEq(USDN.sharesOf(address(this)), usdnSharesVault - shares, "withdraw: usdn vault balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "withdraw: 4626 user balance property");
 
         _wusdn4626Shares[_currentActor] -= shares;
@@ -98,9 +89,8 @@ contract Wusdn4626Handler is Wusdn4626, Test {
     function redeemTest(uint256 shares, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
         uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
         uint256 vaultBalanceUser = balanceOf(_currentActor);
-        uint256 usdnSharesVault = USDN.sharesOf(address(this));
 
-        shares = bound(shares, 0, balanceOf(_currentActor));
+        shares = bound(shares, 0, this.maxRedeem(_currentActor));
 
         uint256 preview = Wusdn4626(address(this)).previewRedeem(shares);
         uint256 assets = Wusdn4626(address(this)).redeem(shares, _currentActor, _currentActor);
@@ -110,7 +100,6 @@ contract Wusdn4626Handler is Wusdn4626, Test {
         assertApproxEqAbs(
             USDN.balanceOf(_currentActor), usdnBalanceUser + assets, 1, "redeem: usdn user balance property"
         );
-        assertEq(USDN.sharesOf(address(this)), usdnSharesVault - shares, "redeem: usdn vault balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "redeem: 4626 user balance property");
 
         _wusdn4626Shares[_currentActor] -= shares;

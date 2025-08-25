@@ -44,15 +44,7 @@ contract TestWusdn4626Invariants is Wusdn4626Fixture {
         assertEq(wusdn4626.totalSupply(), wusdn4626.getGhostTotBal(), "total assets sum");
     }
 
-    function invariant_totalSharesVsTotalSupply() public view {
-        assertGe(usdn.sharesOf(address(wusdn4626)), wusdn4626.totalSupply(), "total shares invariant");
-    }
-
-    function invariant_redeemAll() public view {
-        uint256 usdnBalance = usdn.balanceOf(address(wusdn4626));
-        uint256 totalSupply = wusdn4626.totalSupply();
-
-        assertLe(wusdn4626.previewRedeem(totalSupply), usdnBalance, "preview redeem full <= usdn balance");
-        assertApproxEqAbs(wusdn4626.previewRedeem(totalSupply), usdnBalance, 1, "preview redeem full max 1 wei off");
+    function invariant_totalSupply() public view {
+        assertGe(wusdn.balanceOf(address(wusdn4626)), wusdn4626.totalSupply(), "total supply invariant");
     }
 }
