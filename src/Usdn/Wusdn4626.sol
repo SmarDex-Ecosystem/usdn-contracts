@@ -49,7 +49,7 @@ contract Wusdn4626 is ERC20, IERC4626 {
     /// @inheritdoc IERC4626
     function convertToShares(uint256 assets) public view returns (uint256 shares_) {
         // we directly call USDN.convertToShares instead of WUSDN.previewWrap for efficiency
-        shares_ = USDN.convertToShares(assets).rawDiv(SHARES_RATIO); // SHARES_RATIO is never
+        shares_ = USDN.convertToShares(assets).rawDiv(SHARES_RATIO); // SHARES_RATIO is never zero
     }
 
     /**
