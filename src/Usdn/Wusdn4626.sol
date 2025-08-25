@@ -113,11 +113,14 @@ contract Wusdn4626 is ERC20, IERC4626 {
 
     /// @inheritdoc IERC4626
     function deposit(uint256 assets, address receiver) external returns (uint256 shares_) {
+        // gifting any extra WUSDN sent to the contract directly to the depositor
+        // the WUSDN balance of this contract is greater than or equal to the total supply at all times
+        shares_ = WUSDN.balanceOf(address(this)).rawSub(totalSupply());
         USDN.transferFrom(msg.sender, address(this), assets);
         // since the transfer above can sometimes retrieve dust which can't be wrapped (less than 1 wei of tokens),
-        // we wrap the totality of the balance here so that USDN dust gets removed from the contract (gifted to the
+        // we wrap the totality of the USDN balance here so that USDN dust gets removed from the contract (gifted to the
         // depositor) once it reaches more than 1 wei of WUSDN
-        shares_ = WUSDN.wrapShares(USDN.sharesOf(address(this)), address(this));
+        shares_ += WUSDN.wrapShares(USDN.sharesOf(address(this)), address(this));
         _mint(receiver, shares_);
         emit Deposit(msg.sender, receiver, assets, shares_);
     }
