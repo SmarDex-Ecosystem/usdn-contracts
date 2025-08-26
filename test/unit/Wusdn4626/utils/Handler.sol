@@ -81,6 +81,8 @@ contract Wusdn4626Handler is Wusdn4626, Test {
 
         assertGe(preview, shares, "withdraw: preview property");
         assertApproxEqAbs(preview, shares, 1, "withdraw: preview max 1 wei off");
+        // this invariant is not respected (hence de assertGe instead of assertEq). The receiver can receive more than
+        // `assets` due to pre-existing shares of USDN in the contract or because of the divUp in the WUSDN amount calc
         assertGe(USDN.balanceOf(_currentActor), usdnBalanceUser + assets, "withdraw: usdn user balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "withdraw: 4626 user balance property");
 
