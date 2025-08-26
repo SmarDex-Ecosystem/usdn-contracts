@@ -9,6 +9,7 @@ broadcast/*.sol/**/*.json
 !broadcast/*.sol/98*/run-1*.json
 # Local Fork deployments
 broadcast/*Fork*.s.sol
+broadcast/global.s.sol
 
 # Private files
 .env

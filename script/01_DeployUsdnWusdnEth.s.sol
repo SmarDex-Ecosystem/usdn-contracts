@@ -7,9 +7,6 @@ import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { UsdnWusdnEthConfig } from "./deploymentConfigs/UsdnWusdnEthConfig.sol";
-import { Utils } from "./utils/Utils.s.sol";
-
 import { LiquidationRewardsManagerWusdn } from "../src/LiquidationRewardsManager/LiquidationRewardsManagerWusdn.sol";
 import { WusdnToEthOracleMiddlewareWithPyth } from "../src/OracleMiddleware/WusdnToEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
@@ -21,6 +18,8 @@ import { UsdnProtocolConstantsLibrary as Constants } from
 import { IWusdn } from "../src/interfaces/Usdn/IWusdn.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnWusdnEthConfig } from "./deploymentConfigs/UsdnWusdnEthConfig.sol";
+import { Utils } from "./utils/Utils.s.sol";
 
 contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     IWusdn immutable WUSDN;
@@ -29,6 +28,8 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     constructor() {
         WUSDN = IWusdn(address(UNDERLYING_ASSET));
         utils = new Utils();
+        vm.broadcast();
+        (, SENDER,) = vm.readCallers();
     }
 
     /**
@@ -40,7 +41,8 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
      * @return usdnProtocol_ The USDN protocol contract.
      */
     function run()
-        external
+        public
+        virtual
         returns (
             WusdnToEthOracleMiddlewareWithPyth wusdnToEthOracleMiddleware_,
             LiquidationRewardsManagerWusdn liquidationRewardsManagerWusdn_,
@@ -51,7 +53,7 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     {
         utils.validateProtocol("UsdnProtocolImpl", "UsdnProtocolFallback");
 
-        _setFeeCollector(msg.sender);
+        _setFeeCollector(SENDER);
 
         (wusdnToEthOracleMiddleware_, liquidationRewardsManagerWusdn_, usdnNoRebase_) =
             _deployAndSetPeripheralContracts();
@@ -64,7 +66,7 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
         _initializeProtocol(usdnProtocol_, wusdnToEthOracleMiddleware_);
         _revokeRoles(usdnProtocol_);
 
-        utils.validateProtocolConfig(usdnProtocol_, msg.sender);
+        utils.validateProtocolConfig(usdnProtocol_, SENDER);
     }
 
     /**
@@ -160,7 +162,6 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
             FixedPointMathLib.fullMulDiv(INITIAL_LONG_AMOUNT, price, price - liqPriceWithoutPenalty);
         // get the amount to deposit to reach a balanced state
         uint256 depositAmount = positionTotalExpo - INITIAL_LONG_AMOUNT;
-
         vm.startBroadcast();
         WUSDN.approve(address(usdnProtocol), depositAmount + INITIAL_LONG_AMOUNT);
         usdnProtocol.initialize(uint128(depositAmount), uint128(INITIAL_LONG_AMOUNT), desiredLiqPrice, "");
@@ -175,8 +176,8 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     function _grantRequiredRoles(IUsdnProtocol usdnProtocol, UsdnNoRebase usdnNoRebase) internal {
         vm.startBroadcast();
 
-        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, msg.sender);
-        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, SENDER);
+        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, SENDER);
 
         usdnNoRebase.transferOwnership(address(usdnProtocol));
 
@@ -190,8 +191,8 @@ contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     function _revokeRoles(IUsdnProtocol usdnProtocol) internal {
         vm.startBroadcast();
 
-        usdnProtocol.revokeRole(Constants.SET_EXTERNAL_ROLE, msg.sender);
-        usdnProtocol.revokeRole(Constants.ADMIN_SET_EXTERNAL_ROLE, msg.sender);
+        usdnProtocol.revokeRole(Constants.SET_EXTERNAL_ROLE, SENDER);
+        usdnProtocol.revokeRole(Constants.ADMIN_SET_EXTERNAL_ROLE, SENDER);
 
         vm.stopBroadcast();
     }
