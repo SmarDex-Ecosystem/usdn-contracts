@@ -159,6 +159,8 @@ contract Wusdn4626 is ERC20, IERC4626 {
      * @notice Because of the internal usage of the WUSDN token, this function will sometimes refund excess USDN
      * to the owner to avoid sending more than `assets` to the receiver. This is because WUSDN always unwraps
      * integer multiples of SHARES_RATIO shares which can yield more than `assets` tokens.
+     * This goes against the requirement of the ERC-4626 spec if receiver = owner, because the receiver would then
+     * receive more than `assets` in the end.
      */
     function withdraw(uint256 assets, address receiver, address owner) external returns (uint256 shares_) {
         // we need to account for extra unwrapped USDN due to 18 decimals precision of WUSDN and rebase
