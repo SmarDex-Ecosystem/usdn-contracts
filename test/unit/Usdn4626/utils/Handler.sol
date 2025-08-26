@@ -32,68 +32,84 @@ contract Usdn4626Handler is Usdn4626, Test {
         vm.stopPrank();
     }
 
-    function depositTest(uint256 assets, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
-        uint256 vaultBalanceUser = balanceOf(_currentActor);
+    function depositTest(uint256 assets, uint256 actorIndexSeed, uint256 receiverIndexSeed)
+        public
+        useActor(actorIndexSeed)
+    {
+        address receiver = _actors[bound(receiverIndexSeed, 0, _actors.length - 1)];
+        uint256 vaultBalanceReceiver = balanceOf(receiver);
         uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
         vm.assume(usdnBalanceUser > 0);
         assets = bound(assets, 1, usdnBalanceUser);
 
         uint256 preview = this.previewDeposit(assets);
         vm.assume(preview > 0); // can only deposit if we can wrap to get at least 1 wei of WUSDN
-        uint256 shares = this.deposit(assets, _currentActor);
+        uint256 shares = this.deposit(assets, receiver);
 
         assertLe(preview, shares, "deposit: preview property");
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser - assets, "deposit: usdn user balance property");
-        assertEq(balanceOf(_currentActor), vaultBalanceUser + shares, "deposit: 4626 user balance property");
+        assertEq(balanceOf(receiver), vaultBalanceReceiver + shares, "deposit: 4626 receiver balance property");
 
-        _shares[_currentActor] += shares;
+        _shares[receiver] += shares;
     }
 
-    function mintTest(uint256 shares, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
-        uint256 vaultBalanceUser = balanceOf(_currentActor);
+    function mintTest(uint256 shares, uint256 actorIndexSeed, uint256 receiverIndexSeed)
+        public
+        useActor(actorIndexSeed)
+    {
+        address receiver = _actors[bound(receiverIndexSeed, 0, _actors.length - 1)];
+        uint256 vaultBalanceReceiver = balanceOf(receiver);
         uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
         uint256 maxShares = this.previewDeposit(usdnBalanceUser);
         vm.assume(maxShares > 0);
         shares = bound(shares, 1, maxShares);
 
         uint256 preview = this.previewMint(shares);
-        uint256 assets = this.mint(shares, _currentActor);
+        uint256 assets = this.mint(shares, receiver);
 
         assertGe(preview, assets, "mint: preview property");
         assertApproxEqAbs(preview, assets, 1, "mint: preview max 1 wei off");
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser - assets, "mint: usdn user balance property");
-        assertEq(balanceOf(_currentActor), vaultBalanceUser + shares, "mint: 4626 user balance property");
+        assertEq(balanceOf(receiver), vaultBalanceReceiver + shares, "mint: 4626 receiver balance property");
 
-        _shares[_currentActor] += shares;
+        _shares[receiver] += shares;
     }
 
-    function withdrawTest(uint256 assets, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
+    function withdrawTest(uint256 assets, uint256 actorIndexSeed, uint256 receiverIndexSeed)
+        public
+        useActor(actorIndexSeed)
+    {
+        address receiver = _actors[bound(receiverIndexSeed, 0, _actors.length - 1)];
         uint256 vaultBalanceUser = balanceOf(_currentActor);
-        uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
+        uint256 usdnBalanceReceiver = USDN.balanceOf(receiver);
         assets = bound(assets, 0, this.maxWithdraw(_currentActor));
 
         uint256 preview = this.previewWithdraw(assets);
-        uint256 shares = this.withdraw(assets, _currentActor, _currentActor);
+        uint256 shares = this.withdraw(assets, receiver, _currentActor);
 
         assertGe(preview, shares, "withdraw: preview property");
         assertApproxEqAbs(preview, shares, 1, "withdraw: preview max 1 wei off");
-        assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser + assets, "withdraw: usdn user balance property");
+        assertEq(USDN.balanceOf(receiver), usdnBalanceReceiver + assets, "withdraw: usdn receiver balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "withdraw: 4626 user balance property");
 
         _shares[_currentActor] -= shares;
     }
 
-    function redeemTest(uint256 shares, uint256 actorIndexSeed) public useActor(actorIndexSeed) {
+    function redeemTest(uint256 shares, uint256 actorIndexSeed, uint256 receiverIndexSeed)
+        public
+        useActor(actorIndexSeed)
+    {
+        address receiver = _actors[bound(receiverIndexSeed, 0, _actors.length - 1)];
         uint256 vaultBalanceUser = balanceOf(_currentActor);
-        uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
+        uint256 usdnBalanceReceiver = USDN.balanceOf(receiver);
         shares = bound(shares, 0, this.maxRedeem(_currentActor));
 
         uint256 preview = this.previewRedeem(shares);
-        uint256 assets = this.redeem(shares, _currentActor, _currentActor);
+        uint256 assets = this.redeem(shares, receiver, _currentActor);
 
         assertLe(preview, assets, "redeem: preview property");
         assertApproxEqAbs(preview, assets, 1, "redeem: preview max 1 wei off");
-        assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser + assets, "redeem: usdn user balance property");
+        assertEq(USDN.balanceOf(receiver), usdnBalanceReceiver + assets, "redeem: usdn receiver balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "redeem: 4626 user balance property");
 
         _shares[_currentActor] -= shares;
