@@ -44,9 +44,12 @@ contract Usdn4626Handler is Usdn4626, Test {
 
         uint256 preview = this.previewDeposit(assets);
         vm.assume(preview > 0); // can only deposit if we can wrap to get at least 1 wei of WUSDN
+        // since we gift extra tokens to the depositor, we can calculate the expected amount
+        uint256 expectedShares = preview + (USDN.sharesOf(address(this)) - totalSupply());
         uint256 shares = this.deposit(assets, receiver);
 
         assertLe(preview, shares, "deposit: preview property");
+        assertEq(shares, expectedShares, "deposit: expected shares");
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser - assets, "deposit: usdn user balance property");
         assertEq(balanceOf(receiver), vaultBalanceReceiver + shares, "deposit: 4626 receiver balance property");
 
