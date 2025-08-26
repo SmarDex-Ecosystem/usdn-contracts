@@ -3,7 +3,7 @@ pragma solidity 0.8.26;
 
 import { Usdn4626Fixture } from "./utils/Fixtures.sol";
 
-contract TestUsdn4626Invariants is Usdn4626Fixture {
+contract TestUsdn4626Fuzzing is Usdn4626Fixture {
     function setUp() public override {
         super.setUp();
     }
