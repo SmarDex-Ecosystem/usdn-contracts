@@ -18,7 +18,7 @@ contract Usdn4626 is ERC20, IERC4626 {
      */
     IUsdn internal immutable USDN = IUsdn(0xde17a000BA631c5d7c2Bd9FB692EFeA52D90DEE2);
 
-    constructor() ERC20("Vault USDN", "vUSDN") { }
+    constructor() ERC20("Wrapped Staked USDN", "wstUSDN") { }
 
     /// @inheritdoc ERC20
     function decimals() public pure override(ERC20, IERC20Metadata) returns (uint8 decimals_) {
