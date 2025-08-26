@@ -79,6 +79,13 @@ contract TestUsdn4626Invariants is Usdn4626Fixture {
         assertGe(usdn.sharesOf(address(usdn4626)), usdn4626.totalSupply(), "balance of USDN >= total supply");
     }
 
+    function afterInvariant() public {
+        usdn4626.redeemAll();
+        assertEq(usdn4626.totalSupply(), 0, "total supply after redeemAll");
+        usdn4626.emptyVault();
+        assertEq(usdn.balanceOf(address(usdn4626)), 0, "usdn balance of contract");
+    }
+
     function testFuzz_convertToShares(uint256 assets, uint256 divisor) public {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
         assets = bound(assets, 0, usdn.maxTokens());

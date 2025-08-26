@@ -141,4 +141,23 @@ contract Usdn4626Handler is Usdn4626, Test {
             totalSupply_ += _shares[_actors[i]];
         }
     }
+
+    function redeemAll() public {
+        for (uint256 i; i < _actors.length; i++) {
+            uint256 balance = balanceOf(_actors[i]);
+            if (balance > 0) {
+                vm.startPrank(_actors[i]);
+                this.redeem(balance, _actors[i], _actors[i]);
+                vm.stopPrank();
+            }
+        }
+    }
+
+    function emptyVault() public {
+        USDN.mint(USER_1, 1e18);
+        vm.startPrank(USER_1);
+        this.deposit(1e18, USER_1);
+        this.redeem(balanceOf(USER_1), address(0xdead), USER_1);
+        vm.stopPrank();
+    }
 }

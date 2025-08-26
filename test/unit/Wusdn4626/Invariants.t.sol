@@ -83,6 +83,14 @@ contract TestWusdn4626Invariants is Wusdn4626Fixture {
         );
     }
 
+    function afterInvariant() public {
+        wusdn4626.redeemAll();
+        assertEq(wusdn4626.totalSupply(), 0, "total supply after redeemAll");
+        wusdn4626.emptyVault();
+        assertEq(wusdn.balanceOf(address(wusdn4626)), 0, "wusdn balance of contract");
+        assertLt(usdn.sharesOf(address(wusdn4626)), 1e18, "usdn balance of contract");
+    }
+
     function testFuzz_convertToShares(uint256 assets, uint256 divisor) public {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
         assets = bound(assets, 0, usdn.maxTokens());
