@@ -104,8 +104,8 @@ contract Usdn4626 is ERC20, IERC4626 {
 
     /**
      * @inheritdoc IERC4626
-     * @dev If the contract has excess USDN shares before calling this function, the extra shares (for which no vUSDN
-     * have been minted yet), are gifted to the `receiver`.
+     * @dev If the contract has excess USDN shares before calling this function, the extra shares (for which no wrapper
+     *  shares have been minted yet), are gifted to the `receiver`.
      */
     function deposit(uint256 assets, address receiver) external returns (uint256 shares_) {
         // using the supply instead of `USDN.sharesOf` to account for extra tokens
