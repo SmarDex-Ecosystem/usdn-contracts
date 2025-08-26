@@ -16,7 +16,7 @@ contract Usdn4626 is ERC20, IERC4626 {
      * @notice The address of the USDN token.
      * @dev Retrieve with {asset}.
      */
-    IUsdn internal immutable USDN = IUsdn(0xde17a000BA631c5d7c2Bd9FB692EFeA52D90DEE2);
+    IUsdn internal constant USDN = IUsdn(0xde17a000BA631c5d7c2Bd9FB692EFeA52D90DEE2);
 
     constructor() ERC20("Wrapped Staked USDN", "wstUSDN") { }
 
@@ -26,7 +26,7 @@ contract Usdn4626 is ERC20, IERC4626 {
     }
 
     /// @inheritdoc IERC4626
-    function asset() external view returns (address assetTokenAddress_) {
+    function asset() external pure returns (address assetTokenAddress_) {
         assetTokenAddress_ = address(USDN);
     }
 
