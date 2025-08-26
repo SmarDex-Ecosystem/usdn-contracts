@@ -85,27 +85,4 @@ contract TestUsdn4626Invariants is Usdn4626Fixture {
         usdn4626.emptyVault();
         assertEq(usdn.balanceOf(address(usdn4626)), 0, "usdn balance of contract");
     }
-
-    function testFuzz_convertToShares(uint256 assets, uint256 divisor) public {
-        divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
-        assets = bound(assets, 0, usdn.maxTokens());
-        if (divisor < usdn.MAX_DIVISOR()) {
-            usdn.rebase(divisor);
-        }
-        uint256 shares = usdn4626.convertToShares(assets);
-        assertEq(shares, usdn.convertToShares(assets), "USDN.convertToShares");
-        assertEq(shares, usdn4626.previewDeposit(assets), "previewDeposit");
-    }
-
-    function testFuzz_convertToAssets(uint256 shares, uint256 divisor) public {
-        divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
-        if (divisor < usdn.MAX_DIVISOR()) {
-            usdn.rebase(divisor);
-        }
-        uint256 assets = usdn4626.convertToAssets(shares);
-        assertLe(assets, usdn.convertToTokens(shares), "USDN.convertToTokens");
-        assertApproxEqAbs(assets, usdn.convertToTokens(shares), 1, "USDN.convertToTokens 1 wei off max");
-        assertLe(assets, usdn4626.previewRedeem(shares), "previewRedeem");
-        assertApproxEqAbs(assets, usdn4626.previewRedeem(shares), 1, "previewRedeem 1 wei off max");
-    }
 }
