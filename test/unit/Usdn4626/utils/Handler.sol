@@ -18,7 +18,7 @@ contract Usdn4626Handler is Usdn4626, Test {
     address[] _actors = new address[](4);
     address internal _currentActor;
 
-    constructor() Usdn4626() {
+    constructor() {
         _actors[0] = USER_1;
         _actors[1] = USER_2;
         _actors[2] = USER_3;
@@ -43,9 +43,12 @@ contract Usdn4626Handler is Usdn4626, Test {
         assets = bound(assets, 1, usdnBalanceUser);
 
         uint256 preview = this.previewDeposit(assets);
-        vm.assume(preview > 0); // can only deposit if we can wrap to get at least 1 wei of WUSDN
+        vm.assume(preview > 0); // can only deposit if we can mint at least 1 wei of wrapper
         // since we gift extra tokens to the depositor, we can calculate the expected amount
-        uint256 expectedShares = preview + (USDN.sharesOf(address(this)) - totalSupply());
+        uint256 expectedShares = (
+            FixedPointMathLib.min(USDN.sharesOf(_currentActor), USDN.convertToShares(assets))
+                + (USDN.sharesOf(address(this)) - totalSupply() * SHARES_RATIO)
+        ) / SHARES_RATIO;
         uint256 shares = this.deposit(assets, receiver);
 
         assertLe(preview, shares, "deposit: preview property");

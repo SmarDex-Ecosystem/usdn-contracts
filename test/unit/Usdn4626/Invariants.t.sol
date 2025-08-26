@@ -76,13 +76,13 @@ contract TestUsdn4626Invariants is Usdn4626Fixture {
 
     function assertInvariants() internal view {
         assertEq(usdn4626.totalSupply(), usdn4626.getGhostTotalSupply(), "total supply = sum of balances");
-        assertGe(usdn.sharesOf(address(usdn4626)), usdn4626.totalSupply(), "balance of USDN >= total supply");
+        assertGe(usdn.sharesOf(address(usdn4626)) / 1e18, usdn4626.totalSupply(), "balance of USDN >= total supply");
     }
 
     function afterInvariant() public {
         usdn4626.redeemAll();
         assertEq(usdn4626.totalSupply(), 0, "total supply after redeemAll");
         usdn4626.emptyVault();
-        assertEq(usdn.sharesOf(address(usdn4626)), 0, "usdn balance of contract");
+        assertLt(usdn.sharesOf(address(usdn4626)), 1e18, "usdn balance of contract");
     }
 }

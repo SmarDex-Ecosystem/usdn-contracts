@@ -18,11 +18,17 @@ contract Usdn4626 is ERC20, IERC4626 {
      */
     IUsdn internal constant USDN = IUsdn(0xde17a000BA631c5d7c2Bd9FB692EFeA52D90DEE2);
 
+    /// @notice The ratio used to convert USDN shares to wstUSDN amounts.
+    uint256 internal constant SHARES_RATIO = 1e18;
+
+    /// @notice Thrown when a deposit would mint 0 shares due to insufficient deposited amount.
+    error Usdn4626ZeroShares();
+
     constructor() ERC20("Wrapped Staked USDN", "wstUSDN") { }
 
     /// @inheritdoc ERC20
     function decimals() public pure override(ERC20, IERC20Metadata) returns (uint8 decimals_) {
-        decimals_ = 36;
+        decimals_ = 18;
     }
 
     /// @inheritdoc IERC4626
@@ -32,12 +38,13 @@ contract Usdn4626 is ERC20, IERC4626 {
 
     /// @inheritdoc IERC4626
     function totalAssets() external view returns (uint256 assets_) {
-        assets_ = USDN.convertToTokens(totalSupply());
+        // total supply is at most uint256.max / SHARES_RATIO so multiplication can't overflow
+        assets_ = USDN.convertToTokens(totalSupply().rawMul(SHARES_RATIO));
     }
 
     /// @inheritdoc IERC4626
     function convertToShares(uint256 assets) public view returns (uint256 shares_) {
-        shares_ = USDN.convertToShares(assets);
+        shares_ = USDN.convertToShares(assets).rawDiv(SHARES_RATIO);
     }
 
     /**
@@ -46,7 +53,7 @@ contract Usdn4626 is ERC20, IERC4626 {
      * would round to nearest.
      */
     function convertToAssets(uint256 shares) public view returns (uint256 assets_) {
-        assets_ = shares.rawDiv(USDN.divisor()); // USDN divisor cannot be zero
+        assets_ = shares.rawMul(SHARES_RATIO).rawDiv(USDN.divisor()); // USDN divisor cannot be zero
     }
 
     /// @inheritdoc IERC4626
@@ -65,7 +72,7 @@ contract Usdn4626 is ERC20, IERC4626 {
      * would round to nearest.
      */
     function maxWithdraw(address owner) external view returns (uint256 maxAssets_) {
-        maxAssets_ = balanceOf(owner).rawDiv(USDN.divisor()); // USDN divisor cannot be zero
+        maxAssets_ = balanceOf(owner).rawMul(SHARES_RATIO).rawDiv(USDN.divisor()); // USDN divisor cannot be zero
     }
 
     /// @inheritdoc IERC4626
@@ -85,16 +92,17 @@ contract Usdn4626 is ERC20, IERC4626 {
         if (senderBalance == assets && senderShares < shares_) {
             shares_ = senderShares;
         }
+        shares_ = shares_.rawDiv(SHARES_RATIO);
     }
 
     /// @inheritdoc IERC4626
     function previewMint(uint256 shares) external view returns (uint256 assets_) {
-        assets_ = USDN.convertToTokensRoundUp(shares);
+        assets_ = USDN.convertToTokensRoundUp(shares.rawMul(SHARES_RATIO));
     }
 
     /// @inheritdoc IERC4626
     function previewWithdraw(uint256 assets) external view returns (uint256 shares_) {
-        shares_ = convertToShares(assets);
+        shares_ = USDN.convertToShares(assets).divUp(SHARES_RATIO);
     }
 
     /// @inheritdoc IERC4626
@@ -108,12 +116,26 @@ contract Usdn4626 is ERC20, IERC4626 {
      * shares have been minted yet), are gifted to the `receiver`.
      */
     function deposit(uint256 assets, address receiver) external returns (uint256 shares_) {
+        uint256 balanceOf = USDN.balanceOf(msg.sender);
+        uint256 usdnShares = USDN.convertToShares(assets);
+        // due to rounding in the USDN contract, there may be a small difference between the amount
+        // of shares converted from the USDN amount and the shares held by the user.
+        if (balanceOf == assets) {
+            uint256 sharesOf = USDN.sharesOf(msg.sender);
+            if (usdnShares > sharesOf) {
+                usdnShares = sharesOf;
+            }
+        }
         // using the supply instead of `USDN.sharesOf` to account for extra tokens
-        uint256 usdnSharesBefore = totalSupply();
-        USDN.transferFrom(msg.sender, address(this), assets);
+        uint256 usdnSharesBefore = totalSupply().rawMul(SHARES_RATIO);
+        USDN.transferSharesFrom(msg.sender, address(this), usdnShares); // we ensure the balance delta will be `assets`
         uint256 usdnSharesAfter = USDN.sharesOf(address(this));
-        // the USDN shares balance of this contract is greater than or equal to the total supply at all times
-        shares_ = usdnSharesAfter.rawSub(usdnSharesBefore);
+        // the USDN shares balance of this contract is greater than or equal to the total supply * SHARES_RATIO at all
+        // times
+        shares_ = usdnSharesAfter.rawSub(usdnSharesBefore).rawDiv(SHARES_RATIO);
+        if (shares_ == 0) {
+            revert Usdn4626ZeroShares();
+        }
         _mint(receiver, shares_);
         emit Deposit(msg.sender, receiver, assets, shares_);
     }
@@ -122,7 +144,7 @@ contract Usdn4626 is ERC20, IERC4626 {
     function mint(uint256 shares, address receiver) external returns (uint256 assets_) {
         _mint(receiver, shares);
         uint256 balanceBefore = USDN.balanceOf(msg.sender);
-        USDN.transferSharesFrom(msg.sender, address(this), shares);
+        USDN.transferSharesFrom(msg.sender, address(this), shares.rawMul(SHARES_RATIO));
         // check how much the receiver's balance decreases to honor invariant
         assets_ = balanceBefore.rawSub(USDN.balanceOf(msg.sender)); // balance can only decrease during transfer
         emit Deposit(msg.sender, receiver, assets_, shares);
@@ -130,12 +152,17 @@ contract Usdn4626 is ERC20, IERC4626 {
 
     /// @inheritdoc IERC4626
     function withdraw(uint256 assets, address receiver, address owner) external returns (uint256 shares_) {
-        shares_ = USDN.convertToShares(assets);
+        uint256 usdnShares = USDN.convertToShares(assets);
+        // round up burned amount to make sure we have enough shares available to be transferred to the receiver
+        shares_ = usdnShares.divUp(SHARES_RATIO);
         if (msg.sender != owner) {
             _spendAllowance(owner, msg.sender, shares_);
         }
         _burn(owner, shares_);
-        USDN.transferShares(receiver, shares_);
+        // the excess USDN share dust (shares_ * SHARES_RATIO - usdnShares) remains in the contract to be gifted to the
+        // next depositor
+        // this is at most 1 gwei of USDN, often less
+        USDN.transferShares(receiver, usdnShares);
         emit Withdraw(msg.sender, receiver, owner, assets, shares_);
     }
 
@@ -147,7 +174,7 @@ contract Usdn4626 is ERC20, IERC4626 {
         _burn(owner, shares);
         // check how much the receiver's balance increases after receiving USDN to honor invariant
         uint256 balanceBefore = USDN.balanceOf(receiver);
-        USDN.transferShares(receiver, shares);
+        USDN.transferShares(receiver, shares.rawMul(SHARES_RATIO));
         assets_ = USDN.balanceOf(receiver).rawSub(balanceBefore); // balance can only increase during transfer
         emit Withdraw(msg.sender, receiver, owner, assets_, shares);
     }
