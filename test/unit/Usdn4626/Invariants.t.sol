@@ -83,6 +83,6 @@ contract TestUsdn4626Invariants is Usdn4626Fixture {
         usdn4626.redeemAll();
         assertEq(usdn4626.totalSupply(), 0, "total supply after redeemAll");
         usdn4626.emptyVault();
-        assertEq(usdn.balanceOf(address(usdn4626)), 0, "usdn balance of contract");
+        assertEq(usdn.sharesOf(address(usdn4626)), 0, "usdn balance of contract");
     }
 }
