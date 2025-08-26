@@ -77,7 +77,7 @@ contract Usdn4626Handler is Usdn4626, Test {
 
         assertGe(preview, shares, "withdraw: preview property");
         assertApproxEqAbs(preview, shares, 1, "withdraw: preview max 1 wei off");
-        assertGe(USDN.balanceOf(_currentActor), usdnBalanceUser + assets, "withdraw: usdn user balance property");
+        assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser + assets, "withdraw: usdn user balance property");
         assertEq(balanceOf(_currentActor), vaultBalanceUser - shares, "withdraw: 4626 user balance property");
 
         _shares[_currentActor] -= shares;
