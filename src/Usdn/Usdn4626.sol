@@ -16,15 +16,19 @@ contract Usdn4626 is ERC20, IERC4626 {
      * @notice The address of the USDN token.
      * @dev Retrieve with {asset}.
      */
-    IUsdn internal constant USDN = IUsdn(0xde17a000BA631c5d7c2Bd9FB692EFeA52D90DEE2);
+    IUsdn internal immutable USDN;
 
     /// @notice The ratio used to convert USDN shares to wstUSDN amounts.
-    uint256 internal constant SHARES_RATIO = 1e18;
+    uint256 internal immutable SHARES_RATIO;
 
     /// @notice Thrown when a deposit would mint 0 shares due to insufficient deposited amount.
     error Usdn4626ZeroShares();
 
-    constructor() ERC20("Wrapped Staked USDN", "wstUSDN") { }
+    /// @param usdn The address of the USDN contract.
+    constructor(IUsdn usdn) ERC20("Wrapped Staked USDN", "wstUSDN") {
+        USDN = usdn;
+        SHARES_RATIO = usdn.MAX_DIVISOR();
+    }
 
     /// @inheritdoc ERC20
     function decimals() public pure override(ERC20, IERC20Metadata) returns (uint8 decimals_) {
@@ -32,7 +36,7 @@ contract Usdn4626 is ERC20, IERC4626 {
     }
 
     /// @inheritdoc IERC4626
-    function asset() external pure returns (address assetTokenAddress_) {
+    function asset() external view returns (address assetTokenAddress_) {
         assetTokenAddress_ = address(USDN);
     }
 

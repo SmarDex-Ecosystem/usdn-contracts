@@ -6,6 +6,7 @@ import { Test } from "forge-std/Test.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { Usdn4626 } from "../../../../src/Usdn/Usdn4626.sol";
+import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 
 contract Usdn4626Handler is Usdn4626, Test {
     address public constant USER_1 = address(1);
@@ -18,7 +19,7 @@ contract Usdn4626Handler is Usdn4626, Test {
     address[] _actors = new address[](4);
     address internal _currentActor;
 
-    constructor() {
+    constructor(IUsdn usdn) Usdn4626(usdn) {
         _actors[0] = USER_1;
         _actors[1] = USER_2;
         _actors[2] = USER_3;
