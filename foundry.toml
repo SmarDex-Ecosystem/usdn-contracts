@@ -2,19 +2,17 @@
 #                                Default profile                               #
 # ---------------------------------------------------------------------------- #
 
-# --------------------------------- Compiler --------------------------------- #
-
 [profile.default]
 solc_version = "0.8.26"
 evm_version = "cancun"
 optimizer = true
 optimizer_runs = 20_000
 libs = ["node_modules", "dependencies"]
-invariant = { fail_on_revert = true }
 gas_reports = ["*"]
 ffi = true
 ast = true
 build_info = true
+show_progress = true
 extra_output = ["storageLayout"]
 ignored_error_codes = [
     "code-size",
@@ -50,34 +48,31 @@ wrap_comments = true
 number_underscore = "thousands"
 sort_imports = true
 
+# ---------------------------------- Fuzzing --------------------------------- #
+
+[profile.default.fuzz]
+fail_on_revert = true # applies to invariant too
+
+[profile.default.invariant]
+corpus_dir = ".corpus"
+shrink_run_limit = 50_000
+fail_on_revert = true
+
 # ---------------------------------------------------------------------------- #
 #                                 Local profile                                #
 # ---------------------------------------------------------------------------- #
 
-[profile.local]
-ffi = true
-show_progress = true
-
 # ---------------------------------- Fuzzing --------------------------------- #
 
 [profile.local.fuzz]
-runs = 10_000
+runs = 10_000 # applies to invariant too
 
 [profile.local.invariant]
-runs = 10_000
 depth = 15
-# call_override = true # makes invariant tests hang
-dictionary_weight = 80
-corpus_dir = ".corpus"
-shrink_run_limit = 50_000
 
 # ---------------------------------------------------------------------------- #
 #                             Heavy fuzzing profile                            #
 # ---------------------------------------------------------------------------- #
-
-[profile.heavy_fuzzing]
-ffi = true
-show_progress = true
 
 # ---------------------------------- Fuzzing --------------------------------- #
 
@@ -85,12 +80,8 @@ show_progress = true
 runs = 1_000_000
 
 [profile.heavy_fuzzing.invariant]
-runs = 1_000_000
-depth = 30
-# call_override = true
-dictionary_weight = 80
-corpus_dir = ".corpus"
-shrink_run_limit = 50_000
+runs = 100_000
+depth = 100
 
 # ---------------------------------------------------------------------------- #
 #                                  CI profile                                  #
@@ -98,17 +89,16 @@ shrink_run_limit = 50_000
 
 [profile.ci]
 verbosity = 3
+ffi = false
+show_progress = false
 
 # ---------------------------------- Fuzzing --------------------------------- #
 
 [profile.ci.fuzz]
-runs = 256
+runs = 256 # applies to invariant too
 
 [profile.ci.invariant]
-runs = 256
 depth = 5
-# call_override = false
-dictionary_weight = 40
 
 # ---------------------------------------------------------------------------- #
 #                              Complete CI profile                             #
@@ -116,17 +106,16 @@ dictionary_weight = 40
 
 [profile.heavy_ci]
 verbosity = 3
-ffi = true
+ffi = false
+show_progress = false
 
 # ---------------------------------- Fuzzing --------------------------------- #
 
 [profile.heavy_ci.fuzz]
-runs = 1024
+runs = 1024 # applies to invariant too
 
 [profile.heavy_ci.invariant]
-runs = 1024
-depth = 10
-dictionary_weight = 60
+depth = 50
 
 # ---------------------------------------------------------------------------- #
 #                                  Deployments                                 #
