@@ -43,7 +43,8 @@ contract Usdn4626 is ERC20, IERC4626 {
 
     /// @inheritdoc IERC4626
     function convertToShares(uint256 assets) public view returns (uint256 shares_) {
-        shares_ = USDN.convertToShares(assets).rawDiv(SHARES_RATIO); // SAFETY: SHARES_RATIO is never zero
+        // SAFETY: SHARES_RATIO is never zero
+        shares_ = USDN.convertToShares(assets).rawDiv(SHARES_RATIO);
     }
 
     /**
@@ -83,7 +84,8 @@ contract Usdn4626 is ERC20, IERC4626 {
 
     /// @inheritdoc IERC4626
     function previewDeposit(uint256 assets) external view returns (uint256 shares_) {
-        shares_ = _getDepositUsdnShares(assets).rawDiv(SHARES_RATIO); // SAFETY: SHARES_RATIO is never zero
+        // SAFETY: SHARES_RATIO is never zero
+        shares_ = _getDepositUsdnShares(assets).rawDiv(SHARES_RATIO);
     }
 
     /// @inheritdoc IERC4626
@@ -130,7 +132,8 @@ contract Usdn4626 is ERC20, IERC4626 {
         uint256 balanceBefore = USDN.balanceOf(msg.sender);
         USDN.transferSharesFrom(msg.sender, address(this), shares * SHARES_RATIO);
         // check how much the receiver's balance decreases to honor invariant
-        assets_ = balanceBefore.rawSub(USDN.balanceOf(msg.sender)); // SAFETY: balance can only decrease during transfer
+        // SAFETY: balance can only decrease during transfer
+        assets_ = balanceBefore.rawSub(USDN.balanceOf(msg.sender));
         emit Deposit(msg.sender, receiver, assets_, shares);
     }
 
@@ -160,7 +163,8 @@ contract Usdn4626 is ERC20, IERC4626 {
         uint256 balanceBefore = USDN.balanceOf(receiver);
         // SAFETY: a user cannot have more shares than uint256.max / SHARES_RATIO
         USDN.transferShares(receiver, shares.rawMul(SHARES_RATIO));
-        assets_ = USDN.balanceOf(receiver).rawSub(balanceBefore); // SAFETY: balance can only increase during transfer
+        // SAFETY: balance can only increase during transfer
+        assets_ = USDN.balanceOf(receiver).rawSub(balanceBefore);
         emit Withdraw(msg.sender, receiver, owner, assets_, shares);
     }
 
