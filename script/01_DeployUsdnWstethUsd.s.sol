@@ -83,7 +83,7 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
             Wusdn wusdn_
         )
     {
-        vm.startBroadcast(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
+        vm.startBroadcast();
         liquidationRewardsManager_ = new LiquidationRewardsManagerWstEth(WSTETH);
         wstEthOracleMiddleware_ = new WstEthOracleMiddlewareWithPyth(
             PYTH_ADDRESS, PYTH_ETH_FEED_ID, CHAINLINK_ETH_PRICE, address(WSTETH), CHAINLINK_PRICE_VALIDITY
@@ -105,7 +105,7 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
         Options memory opts;
         opts.unsafeAllow = "external-library-linking,state-variable-immutable,missing-initializer";
 
-        vm.startBroadcast(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
+        vm.startBroadcast();
 
         UsdnProtocolFallback protocolFallback = new UsdnProtocolFallback(MAX_SDEX_BURN_RATIO, MAX_MIN_LONG_POSITION);
         _setProtocolFallback(protocolFallback);
@@ -170,7 +170,7 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
 
         uint256 ethAmount = (depositAmount + INITIAL_LONG_AMOUNT + 10_000) * WSTETH.stEthPerToken() / 1 ether;
 
-        vm.startBroadcast(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
+        vm.startBroadcast();
         (bool result,) = address(WSTETH).call{ value: ethAmount }(hex"");
         require(result, "Failed to mint wstETH");
 
