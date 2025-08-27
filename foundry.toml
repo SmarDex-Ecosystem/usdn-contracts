@@ -65,9 +65,10 @@ fail_on_revert = true
 # ---------------------------------- Fuzzing --------------------------------- #
 
 [profile.local.fuzz]
-runs = 10_000 # applies to invariant too
+runs = 10_000
 
 [profile.local.invariant]
+runs = 10_000
 depth = 15
 
 # ---------------------------------------------------------------------------- #
@@ -95,9 +96,10 @@ show_progress = false
 # ---------------------------------- Fuzzing --------------------------------- #
 
 [profile.ci.fuzz]
-runs = 256 # applies to invariant too
+runs = 256
 
 [profile.ci.invariant]
+runs = 256
 depth = 5
 
 # ---------------------------------------------------------------------------- #
@@ -112,9 +114,10 @@ show_progress = false
 # ---------------------------------- Fuzzing --------------------------------- #
 
 [profile.heavy_ci.fuzz]
-runs = 1024 # applies to invariant too
+runs = 1024
 
 [profile.heavy_ci.invariant]
+runs = 1024
 depth = 50
 
 # ---------------------------------------------------------------------------- #
