@@ -19,28 +19,30 @@ forge script --non-interactive --private-key $deployerPrivateKey -f "$rpcUrl" ./
 chainId=$(cast chain-id -r "$rpcUrl")
 
 # Extract deployment log from forge.
-DEPLOYMENT_LOG=$(cat "./broadcast/01_DeployUsdnWstethUsdFork_Long.s.sol/$chainId/run-latest.json")
+DEPLOYMENT_LOG=$(cat "./broadcast/DeployUsdnAndShortdnFork.s.sol/$chainId/run-latest.json")
 
-# Extract data from deployment log.
-USDN_TX_HASH=$(echo "$DEPLOYMENT_LOG" | jq '.transactions[] | select(.contractName == "Usdn" and .transactionType == "CREATE") | .hash')
-USDN_RECEIPT=$(echo "$DEPLOYMENT_LOG" | jq ".receipts[] | select(.transactionHash == $USDN_TX_HASH)")
-USDN_PROTOCOL_TX_HASH=$(echo "$DEPLOYMENT_LOG" | jq '.transactions[] | select(.contractName == "ERC1967Proxy" and .transactionType == "CREATE") | .hash')
-USDN_PROTOCOL_RECEIPT=$(echo "$DEPLOYMENT_LOG" | jq ".receipts[] | select(.transactionHash == $USDN_PROTOCOL_TX_HASH)")
-USDN_PROTOCOL_ADDRESS=$(echo "$DEPLOYMENT_LOG" | jq '.returns.usdnProtocol_.value' | xargs printf "%s\n")
+# Extract struct values from deployment log
+STRUCT_VALUES=$(echo "$DEPLOYMENT_LOG" | jq -r '.returns.deployedUsdnAndShortdn.value' | tr -d '()' | tr ',' '\n')
+STRUCT_ARRAY=($(echo "$STRUCT_VALUES"))
+
+# Extract data for birth block/time (get first Usdn token CREATE transaction)
+USDN_TX_HASH=$(echo "$DEPLOYMENT_LOG" | jq -r '.transactions[] | select(.contractName == "Usdn" and .transactionType == "CREATE") | .hash' | head -1)
+USDN_RECEIPT=$(echo "$DEPLOYMENT_LOG" | jq ".receipts[] | select(.transactionHash == \"$USDN_TX_HASH\")")
 
 # Extract and save important data from deployment log.
 FORK_ENV_DUMP=$(
     cat <<EOF
-SDEX_TOKEN_ADDRESS=$(echo "$DEPLOYMENT_LOG" | jq '.returns.sdex_.value' | xargs printf "%s\n")
-USDN_TOKEN_ADDRESS=$(echo "$DEPLOYMENT_LOG" | jq '.returns.usdn_.value' | xargs printf "%s\n")
-WUSDN_TOKEN_ADDRESS=$(echo "$DEPLOYMENT_LOG" | jq '.returns.wusdn_.value' | xargs printf "%s\n")
-WSTETH_TOKEN_ADDRESS=$(echo "$DEPLOYMENT_LOG" | jq '.returns.underlying_.value' | xargs printf "%s\n")
-REBALANCER_ADDRESS=$(echo "$DEPLOYMENT_LOG" | jq '.returns.rebalancer_.value' | xargs printf "%s\n")
-WSTETH_ORACLE_MIDDLEWARE_ADDRESS=$(echo "$DEPLOYMENT_LOG" | jq '.returns.wstEthOracleMiddleware_.value' | xargs printf "%s\n")
-LIQUIDATION_REWARDS_MANAGER_ADDRESS=$(echo "$DEPLOYMENT_LOG" | jq '.returns.liquidationRewardsManager_.value' | xargs printf "%s\n")
-USDN_PROTOCOL_ADDRESS=$(echo "$USDN_PROTOCOL_ADDRESS")
-USDN_PROTOCOL_BIRTH_BLOCK=$(echo "$USDN_PROTOCOL_RECEIPT" | jq '.blockNumber' | xargs printf "%d\n")
-USDN_PROTOCOL_BIRTH_TIME=$(echo "$USDN_PROTOCOL_RECEIPT" | jq '.logs[0].blockTimestamp' | xargs printf "%d\n")
+WSTETH_ORACLE_MIDDLEWARE_ADDRESS=${STRUCT_ARRAY[0]}
+LIQUIDATION_REWARDS_MANAGER_WSTETH_ADDRESS=${STRUCT_ARRAY[1]}
+REBALANCER_USDN_ADDRESS=${STRUCT_ARRAY[2]}
+USDN_TOKEN_ADDRESS=${STRUCT_ARRAY[3]}
+WUSDN_TOKEN_ADDRESS=${STRUCT_ARRAY[4]}
+USDN_PROTOCOL_USDN_ADDRESS=${STRUCT_ARRAY[5]}
+WUSDN_TO_ETH_ORACLE_MIDDLEWARE_ADDRESS=${STRUCT_ARRAY[6]}
+LIQUIDATION_REWARDS_MANAGER_WUSDN_ADDRESS=${STRUCT_ARRAY[7]}
+REBALANCER_SHORTDN_ADDRESS=${STRUCT_ARRAY[8]}
+USDN_NO_REBASE_SHORTDN_ADDRESS=${STRUCT_ARRAY[9]}
+USDN_PROTOCOL_SHORTDN_ADDRESS=${STRUCT_ARRAY[10]}
 USDN_TOKEN_BIRTH_BLOCK=$(echo "$USDN_RECEIPT" | jq '.blockNumber' | xargs printf "%d\n")
 USDN_TOKEN_BIRTH_TIME=$(echo "$USDN_RECEIPT" | jq '.logs[0].blockTimestamp' | xargs printf "%d\n")
 EOF
