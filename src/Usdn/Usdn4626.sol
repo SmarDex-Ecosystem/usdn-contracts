@@ -30,11 +30,6 @@ contract Usdn4626 is ERC20, IERC4626 {
         SHARES_RATIO = usdn.MAX_DIVISOR();
     }
 
-    /// @inheritdoc IERC20Metadata
-    function decimals() public pure override(ERC20, IERC20Metadata) returns (uint8 decimals_) {
-        decimals_ = 18;
-    }
-
     /// @inheritdoc IERC4626
     function asset() external view returns (address assetTokenAddress_) {
         assetTokenAddress_ = address(USDN);
