@@ -56,7 +56,6 @@ fail_on_revert = true # applies to invariant too
 [profile.default.invariant]
 corpus_dir = ".corpus"
 shrink_run_limit = 50_000
-fail_on_revert = true
 
 # ---------------------------------------------------------------------------- #
 #                                 Local profile                                #

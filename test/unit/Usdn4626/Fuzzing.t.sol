@@ -15,7 +15,7 @@ contract TestUsdn4626Fuzzing is Usdn4626Fixture {
             usdn.rebase(divisor);
         }
         uint256 shares = usdn4626.convertToShares(assets);
-        assertEq(shares, usdn.convertToShares(assets), "USDN.convertToShares");
+        assertEq(shares, usdn.convertToShares(assets) / 1e18, "USDN.convertToShares");
         assertEq(shares, usdn4626.previewDeposit(assets), "previewDeposit");
     }
 
@@ -24,9 +24,10 @@ contract TestUsdn4626Fuzzing is Usdn4626Fixture {
         if (divisor < usdn.MAX_DIVISOR()) {
             usdn.rebase(divisor);
         }
+        shares = bound(shares, 0, type(uint256).max / 1e18);
         uint256 assets = usdn4626.convertToAssets(shares);
-        assertLe(assets, usdn.convertToTokens(shares), "USDN.convertToTokens");
-        assertApproxEqAbs(assets, usdn.convertToTokens(shares), 1, "USDN.convertToTokens 1 wei off max");
+        assertLe(assets, usdn.convertToTokens(shares * 1e18), "USDN.convertToTokens");
+        assertApproxEqAbs(assets, usdn.convertToTokens(shares * 1e18), 1, "USDN.convertToTokens 1 wei off max");
         assertLe(assets, usdn4626.previewRedeem(shares), "previewRedeem");
         assertApproxEqAbs(assets, usdn4626.previewRedeem(shares), 1, "previewRedeem 1 wei off max");
     }
