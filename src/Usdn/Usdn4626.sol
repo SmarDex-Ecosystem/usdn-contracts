@@ -47,7 +47,11 @@ contract Usdn4626 is ERC20, IERC4626 {
         shares_ = USDN.convertToShares(assets).rawDiv(SHARES_RATIO); // SAFETY: SHARES_RATIO is never zero
     }
 
-    /// @inheritdoc IERC4626
+    /**
+     * @inheritdoc IERC4626
+     * @dev Since this function MUST round down, we use the divisor directly instead of calling the asset, which
+     * would round to nearest.
+     */
     function convertToAssets(uint256 shares) public view returns (uint256 assets_) {
         assets_ = shares.fullMulDiv(SHARES_RATIO, USDN.divisor());
     }
