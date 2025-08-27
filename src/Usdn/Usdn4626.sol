@@ -82,11 +82,7 @@ contract Usdn4626 is ERC20, IERC4626 {
         maxShares_ = balanceOf(owner);
     }
 
-    /**
-     * @inheritdoc IERC4626
-     * @dev When performing a USDN transfer, the amount of USDN shares transferred might be capped at the user's balance
-     * if the corresponding token amount is equal to the user's token balance.
-     */
+    /// @inheritdoc IERC4626
     function previewDeposit(uint256 assets) external view returns (uint256 shares_) {
         shares_ = _getDepositUsdnShares(assets).rawDiv(SHARES_RATIO); // SAFETY: SHARES_RATIO is never zero
     }
@@ -172,6 +168,8 @@ contract Usdn4626 is ERC20, IERC4626 {
     /**
      * @notice Converts an assets amount into a corresponding number of USDN shares, taking into account the sender's
      * shares balance.
+     * @dev When performing a USDN transfer, the amount of USDN shares transferred might be capped at the user's balance
+     * if the corresponding token amount is equal to the user's token balance.
      * @param assets The amount of USDN tokens.
      * @return shares_ The number of shares that would be transferred from `msg.sender`.
      */
