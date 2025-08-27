@@ -174,11 +174,10 @@ contract Usdn4626 is ERC20, IERC4626 {
      * @return shares_ The number of shares that would be transferred from `msg.sender`.
      */
     function _getDepositUsdnShares(uint256 assets) internal view returns (uint256 shares_) {
-        uint256 senderBalance = USDN.balanceOf(msg.sender);
         shares_ = USDN.convertToShares(assets);
         // due to rounding in the USDN contract, there may be a small difference between the amount
         // of shares converted from the USDN amount and the shares held by the user.
-        if (senderBalance == assets) {
+        if (USDN.balanceOf(msg.sender) == assets) {
             shares_ = shares_.min(USDN.sharesOf(msg.sender));
         }
     }
