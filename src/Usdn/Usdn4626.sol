@@ -88,13 +88,7 @@ contract Usdn4626 is ERC20, IERC4626 {
      * if the corresponding token amount is equal to the user's token balance.
      */
     function previewDeposit(uint256 assets) external view returns (uint256 shares_) {
-        uint256 senderShares = USDN.sharesOf(msg.sender);
-        uint256 senderBalance = (senderShares > 0) ? USDN.convertToTokens(senderShares) : 0;
-        shares_ = USDN.convertToShares(assets);
-        if (senderBalance == assets && senderShares < shares_) {
-            shares_ = senderShares;
-        }
-        shares_ = shares_.rawDiv(SHARES_RATIO); // SAFETY: SHARES_RATIO is never zero
+        shares_ = _getDepositUsdnShares(assets).rawDiv(SHARES_RATIO); // SAFETY: SHARES_RATIO is never zero
     }
 
     /// @inheritdoc IERC4626
@@ -118,16 +112,7 @@ contract Usdn4626 is ERC20, IERC4626 {
      * shares have been minted yet), are gifted to the `receiver`.
      */
     function deposit(uint256 assets, address receiver) external returns (uint256 shares_) {
-        uint256 balanceOf = USDN.balanceOf(msg.sender);
-        uint256 usdnShares = USDN.convertToShares(assets);
-        // due to rounding in the USDN contract, there may be a small difference between the amount
-        // of shares converted from the USDN amount and the shares held by the user.
-        if (balanceOf == assets) {
-            uint256 sharesOf = USDN.sharesOf(msg.sender);
-            if (usdnShares > sharesOf) {
-                usdnShares = sharesOf;
-            }
-        }
+        uint256 usdnShares = _getDepositUsdnShares(assets);
         // using the supply instead of `USDN.sharesOf` to account for extra tokens
         // SAFETY: total supply cannot exceed uint256.max / SHARES_RATIO
         uint256 usdnSharesBefore = totalSupply().rawMul(SHARES_RATIO);
@@ -182,5 +167,21 @@ contract Usdn4626 is ERC20, IERC4626 {
         USDN.transferShares(receiver, shares.rawMul(SHARES_RATIO));
         assets_ = USDN.balanceOf(receiver).rawSub(balanceBefore); // SAFETY: balance can only increase during transfer
         emit Withdraw(msg.sender, receiver, owner, assets_, shares);
+    }
+
+    /**
+     * @notice Converts an assets amount into a corresponding number of USDN shares, taking into account the sender's
+     * shares balance.
+     * @param assets The amount of USDN tokens.
+     * @return shares_ The number of shares that would be transferred from `msg.sender`.
+     */
+    function _getDepositUsdnShares(uint256 assets) internal view returns (uint256 shares_) {
+        uint256 senderBalance = USDN.balanceOf(msg.sender);
+        shares_ = USDN.convertToShares(assets);
+        // due to rounding in the USDN contract, there may be a small difference between the amount
+        // of shares converted from the USDN amount and the shares held by the user.
+        if (senderBalance == assets) {
+            shares_ = shares_.min(USDN.sharesOf(msg.sender));
+        }
     }
 }
