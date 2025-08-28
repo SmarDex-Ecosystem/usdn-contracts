@@ -41,23 +41,22 @@ contract Usdn4626Handler is Usdn4626, Test {
         uint256 vaultBalanceReceiver = balanceOf(receiver);
         uint256 usdnBalanceUser = USDN.balanceOf(_currentActor);
         uint256 usdnShares = USDN.sharesOf(address(this));
-        vm.assume(usdnBalanceUser > 0);
-        assets = bound(assets, 1, usdnBalanceUser);
+        assets = bound(assets, 0, usdnBalanceUser);
 
         uint256 preview = this.previewDeposit(assets);
-        vm.assume(preview > 0); // can only deposit if we can mint at least 1 wei of wrapper
+        uint256 extraShares = USDN.sharesOf(address(this)) - totalSupply() * SHARES_RATIO;
+        // can only deposit if we can mint at least 1 wei of wrapper
+        vm.assume(preview > 0 || extraShares >= SHARES_RATIO);
         // since we gift extra tokens to the depositor, we can calculate the expected amount
-        uint256 expectedShares = (
-            FixedPointMathLib.min(USDN.sharesOf(_currentActor), USDN.convertToShares(assets))
-                + (USDN.sharesOf(address(this)) - totalSupply() * SHARES_RATIO)
-        ) / SHARES_RATIO;
+        uint256 expectedUsdnShares = FixedPointMathLib.min(USDN.sharesOf(_currentActor), USDN.convertToShares(assets));
+        uint256 expectedShares = (expectedUsdnShares + extraShares) / SHARES_RATIO;
         uint256 shares = this.deposit(assets, receiver);
 
         assertLe(preview, shares, "deposit: preview property");
         assertEq(shares, expectedShares, "deposit: expected shares");
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser - assets, "deposit: usdn user balance property");
         assertEq(balanceOf(receiver), vaultBalanceReceiver + shares, "deposit: 4626 receiver balance property");
-        assertEq(USDN.sharesOf(address(this)), usdnShares + USDN.convertToShares(assets), "deposit: 4626 usdn shares");
+        assertEq(USDN.sharesOf(address(this)), usdnShares + expectedUsdnShares, "deposit: 4626 usdn shares");
         assertLt(
             USDN.sharesOf(address(this)) - totalSupply() * SHARES_RATIO, SHARES_RATIO, "deposit: final extra shares"
         );
