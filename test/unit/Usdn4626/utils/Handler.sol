@@ -58,6 +58,9 @@ contract Usdn4626Handler is Usdn4626, Test {
         assertEq(USDN.balanceOf(_currentActor), usdnBalanceUser - assets, "deposit: usdn user balance property");
         assertEq(balanceOf(receiver), vaultBalanceReceiver + shares, "deposit: 4626 receiver balance property");
         assertEq(USDN.sharesOf(address(this)), usdnShares + USDN.convertToShares(assets), "deposit: 4626 usdn shares");
+        assertLt(
+            USDN.sharesOf(address(this)) - totalSupply() * SHARES_RATIO, SHARES_RATIO, "deposit: final extra shares"
+        );
 
         _shares[receiver] += shares;
     }
