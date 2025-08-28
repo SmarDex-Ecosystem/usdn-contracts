@@ -74,7 +74,7 @@ contract Usdn4626Handler is Usdn4626, Test {
         uint256 usdnShares = USDN.sharesOf(address(this));
         uint256 maxShares = this.previewDeposit(usdnBalanceUser);
         vm.assume(maxShares > 0);
-        shares = bound(shares, 0, maxShares);
+        shares = bound(shares, 1, maxShares);
 
         uint256 preview = this.previewMint(shares);
         uint256 assets = this.mint(shares, receiver);

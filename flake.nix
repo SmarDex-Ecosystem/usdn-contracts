@@ -3,7 +3,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     foundry = {
-      url = "github:shazow/foundry.nix/d4445852933ab5bc61ca532cb6c5d3276d89c478"; # pinned to v1.2.3
+      url = "github:shazow/foundry.nix/stable";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     rust = {
@@ -55,7 +55,7 @@
           '';
 
           RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
-          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.gnum4 pkgs.openssl ];
+          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.gnum4 pkgs.openssl];
           TYPST_FONT_PATHS = "${pkgs.gyre-fonts}/share/fonts";
         };
       });
