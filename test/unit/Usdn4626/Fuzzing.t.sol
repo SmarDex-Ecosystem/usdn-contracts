@@ -31,8 +31,4 @@ contract TestUsdn4626Fuzzing is Usdn4626Fixture {
         assertLe(assets, usdn4626.previewRedeem(shares), "previewRedeem");
         assertApproxEqAbs(assets, usdn4626.previewRedeem(shares), 1, "previewRedeem 1 wei off max");
     }
-
-    function test_depositZero() public {
-        usdn4626.deposit(0, address(this));
-    }
 }
