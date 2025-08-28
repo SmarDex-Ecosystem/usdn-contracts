@@ -13,6 +13,9 @@ broadcast/global.s.sol
 
 # Private files
 .env
+.env.fork
+.env.local
+.env.usdn
 
 # Cache
 cache/

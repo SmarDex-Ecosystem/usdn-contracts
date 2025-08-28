@@ -11,14 +11,19 @@ import { WusdnToEthOracleMiddlewareWithPyth } from "../../src/OracleMiddleware/W
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
 import { UsdnNoRebase } from "../../src/Usdn/UsdnNoRebase.sol";
+import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IWusdn } from "../../src/interfaces/Usdn/IWusdn.sol";
 import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-
 import { DeployShortdnFork } from "./DeployShortdnFork.s.sol";
 import { DeployUsdnFork } from "./DeployUsdnFork.s.sol";
 
+import { Sdex } from "../../test/utils/Sdex.sol";
+
 struct DeployedUsdnAndShortdn {
+    // SDEX
+    Sdex sdex;
     // USDN START
+    IWstETH wsteth;
     WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_;
     LiquidationRewardsManagerWstEth liquidationRewardsManagerWstEth_;
     Rebalancer rebalancerUsdn_;
@@ -41,14 +46,30 @@ contract DeployUsdnAndShortdnFork is Script {
     function run() external returns (DeployedUsdnAndShortdn memory deployedUsdnAndShortdn) {
         // DEPLOY USDN (LONG ETH)
         DeployUsdnFork deployUsdnFork = new DeployUsdnFork();
-        (
-            deployedUsdnAndShortdn.wstEthOracleMiddleware_,
-            deployedUsdnAndShortdn.liquidationRewardsManagerWstEth_,
-            deployedUsdnAndShortdn.rebalancerUsdn_,
-            deployedUsdnAndShortdn.usdn_,
-            deployedUsdnAndShortdn.wusdn_,
-            deployedUsdnAndShortdn.usdnProtocolUsdn_
-        ) = deployUsdnFork.run();
+
+        // Get values from runAndReturnValues and assign them step by step to avoid stack too deep
+        {
+            (
+                Sdex sdex_,
+                IWstETH wsteth_,
+                WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,
+                LiquidationRewardsManagerWstEth liquidationRewardsManager_,
+                Rebalancer rebalancer_,
+                Usdn usdn_,
+                IWusdn wusdn_,
+                IUsdnProtocol usdnProtocol_
+            ) = deployUsdnFork.runAndReturnValues();
+
+            // Assign to struct
+            deployedUsdnAndShortdn.sdex = sdex_;
+            deployedUsdnAndShortdn.wsteth = wsteth_;
+            deployedUsdnAndShortdn.wstEthOracleMiddleware_ = wstEthOracleMiddleware_;
+            deployedUsdnAndShortdn.liquidationRewardsManagerWstEth_ = liquidationRewardsManager_;
+            deployedUsdnAndShortdn.rebalancerUsdn_ = rebalancer_;
+            deployedUsdnAndShortdn.usdn_ = usdn_;
+            deployedUsdnAndShortdn.wusdn_ = wusdn_;
+            deployedUsdnAndShortdn.usdnProtocolUsdn_ = usdnProtocol_;
+        }
 
         // DEFINE FUTURE SHORTDN COLLATERAL AKA WUSDN OF ALREADY DEPLOYED USDN PROTOCOL
         vm.setEnv("UNDERLYING_ADDRESS_WUSDN", vm.toString(address(deployedUsdnAndShortdn.wusdn_)));

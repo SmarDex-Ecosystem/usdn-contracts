@@ -10,6 +10,8 @@ import { Wusdn } from "../../src/Usdn/Wusdn.sol";
 
 import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { Sdex } from "../../test/utils/Sdex.sol";
+
 import { DeployUsdnWstethUsd } from "../01_DeployUsdnWstethUsd.s.sol";
 
 import { ForkCore } from "./ForkCore.s.sol";
@@ -39,5 +41,24 @@ contract DeployUsdnFork is ForkCore, DeployUsdnWstethUsd {
         super.preRun();
         (wstEthOracleMiddleware_, liquidationRewardsManager_, rebalancer_, usdn_, wusdn_, usdnProtocol_) = super.run();
         super.postRun(usdnProtocol_);
+    }
+
+    function runAndReturnValues()
+        public
+        virtual
+        returns (
+            Sdex sdex_,
+            IWstETH wsteth_,
+            WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,
+            LiquidationRewardsManagerWstEth liquidationRewardsManager_,
+            Rebalancer rebalancer_,
+            Usdn usdn_,
+            Wusdn wusdn_,
+            IUsdnProtocol usdnProtocol_
+        )
+    {
+        sdex_ = SDEX;
+        wsteth_ = IWstETH(address(UNDERLYING_ASSET));
+        (wstEthOracleMiddleware_, liquidationRewardsManager_, rebalancer_, usdn_, wusdn_, usdnProtocol_) = run();
     }
 }

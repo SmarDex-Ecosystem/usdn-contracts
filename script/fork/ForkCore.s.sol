@@ -41,8 +41,9 @@ abstract contract ForkCore is Script {
         CHAINLINK_ETH_PRICE_FORK = chainlinkPrice;
         PYTH_ETH_FEED_ID_FORK = pythFeedId;
         CHAINLINK_PRICE_VALIDITY_FORK = chainlinkPriceValidity;
-        vm.broadcast();
+        vm.startBroadcast();
         (, SENDER_BASE,) = vm.readCallers();
+        vm.stopBroadcast();
     }
 
     function postRun(IUsdnProtocol usdnProtocol_) internal {
@@ -57,14 +58,14 @@ abstract contract ForkCore is Script {
         usdnProtocol.grantRole(Constants.ADMIN_SET_OPTIONS_ROLE, SENDER_BASE);
         usdnProtocol.grantRole(Constants.ADMIN_SET_PROTOCOL_PARAMS_ROLE, SENDER_BASE);
         usdnProtocol.grantRole(Constants.ADMIN_SET_USDN_PARAMS_ROLE, SENDER_BASE);
-        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, SENDER_BASE);
-        usdnProtocol.grantRole(Constants.SET_OPTIONS_ROLE, SENDER_BASE);
-        usdnProtocol.grantRole(Constants.SET_PROTOCOL_PARAMS_ROLE, SENDER_BASE);
-        usdnProtocol.grantRole(Constants.SET_USDN_PARAMS_ROLE, SENDER_BASE);
         usdnProtocol.grantRole(Constants.ADMIN_CRITICAL_FUNCTIONS_ROLE, SENDER_BASE);
         usdnProtocol.grantRole(Constants.ADMIN_PROXY_UPGRADE_ROLE, SENDER_BASE);
         usdnProtocol.grantRole(Constants.ADMIN_PAUSER_ROLE, SENDER_BASE);
         usdnProtocol.grantRole(Constants.ADMIN_UNPAUSER_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.SET_OPTIONS_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.SET_PROTOCOL_PARAMS_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.SET_USDN_PARAMS_ROLE, SENDER_BASE);
         usdnProtocol.grantRole(Constants.CRITICAL_FUNCTIONS_ROLE, SENDER_BASE);
         usdnProtocol.grantRole(Constants.PROXY_UPGRADE_ROLE, SENDER_BASE);
         usdnProtocol.grantRole(Constants.PAUSER_ROLE, SENDER_BASE);
