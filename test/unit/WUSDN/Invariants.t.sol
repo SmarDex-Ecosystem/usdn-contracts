@@ -44,7 +44,7 @@ contract TestWusdnInvariants is WusdnTokenFixture {
     /**
      * @custom:scenario Check that the contract has the expected number of total assets
      */
-    function invariant_totalAssetsSum() public view {
+    function invariant_wusdn_totalAssetsSum() public view {
         assertEq(usdn.balanceOf(address(wusdn)), wusdn.previewUnwrap(wusdn.totalSupply()), "total assets previewUnwrap");
         assertEq(usdn.sharesOf(address(wusdn)), wusdn.totalSupply() * wusdn.SHARES_RATIO(), "total shares");
     }
@@ -52,7 +52,7 @@ contract TestWusdnInvariants is WusdnTokenFixture {
     /**
      * @custom:scenario Check that the contract has no USDN shares after unwrapping all WUSDN
      */
-    function invariant_noSharesAfterUnwrap() public {
+    function invariant_wusdn_noSharesAfterUnwrap() public {
         wusdn.unwrapAll();
         assertEq(usdn.sharesOf(address(wusdn)), 0, "total shares after unwrap");
         assertEq(wusdn.totalSupply(), 0, "total supply after unwrap");
@@ -61,7 +61,7 @@ contract TestWusdnInvariants is WusdnTokenFixture {
     /**
      * @custom:scenario Check that the contract returns the expected number of tokens for each user
      */
-    function invariant_tokens() public view {
+    function invariant_wusdn_tokens() public view {
         assertEq(wusdn.balanceOf(USER_1), wusdn.getTokensOfAddress(USER_1), "balance of user 1");
         assertEq(wusdn.balanceOf(USER_2), wusdn.getTokensOfAddress(USER_2), "balance of user 2");
         assertEq(wusdn.balanceOf(USER_3), wusdn.getTokensOfAddress(USER_3), "balance of user 3");
@@ -71,7 +71,7 @@ contract TestWusdnInvariants is WusdnTokenFixture {
     /**
      * @custom:scenario Check that the sum of the user tokens is equal to the total tokens
      */
-    function invariant_sumOfTokensBalances() public view {
+    function invariant_wusdn_sumOfTokensBalances() public view {
         uint256 sum;
         for (uint256 i = 0; i < wusdn.getLengthOfTokens(); i++) {
             (, uint256 value) = wusdn.getElementOfIndex(i);
@@ -85,7 +85,7 @@ contract TestWusdnInvariants is WusdnTokenFixture {
      * @dev The sum of all user balances is not exactly equal to the total supply because of the rounding errors that
      * can stack up.
      */
-    function invariant_totalSupply() public view {
+    function invariant_wusdn_totalSupply() public view {
         uint256 sum;
         for (uint256 i = 0; i < wusdn.getLengthOfTokens(); i++) {
             (address user,) = wusdn.getElementOfIndex(i);
