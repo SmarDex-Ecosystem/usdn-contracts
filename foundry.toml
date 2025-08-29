@@ -108,7 +108,7 @@ depth = 5
 
 [profile.heavy_ci]
 verbosity = 3
-ffi = false
+ffi = true
 show_progress = false
 
 # ---------------------------------- Fuzzing --------------------------------- #
