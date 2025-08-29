@@ -16,6 +16,7 @@ abstract contract DeploymentConfig {
     IERC20Metadata immutable UNDERLYING_ASSET;
     Sdex immutable SDEX;
     uint256 immutable INITIAL_LONG_AMOUNT;
+    address immutable SENDER;
 
     Types.InitStorage initStorage;
 

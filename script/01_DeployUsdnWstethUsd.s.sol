@@ -7,9 +7,6 @@ import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { UsdnWstethUsdConfig } from "./deploymentConfigs/UsdnWstethUsdConfig.sol";
-import { Utils } from "./utils/Utils.s.sol";
-
 import { LiquidationRewardsManagerWstEth } from "../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
 import { WstEthOracleMiddlewareWithPyth } from "../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
@@ -21,12 +18,16 @@ import { UsdnProtocolConstantsLibrary as Constants } from
     "../src/UsdnProtocol/libraries/UsdnProtocolConstantsLibrary.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnWstethUsdConfig } from "./deploymentConfigs/UsdnWstethUsdConfig.sol";
+import { Utils } from "./utils/Utils.s.sol";
 
 contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
     Utils utils;
 
     constructor() {
         utils = new Utils();
+        vm.broadcast();
+        (, SENDER,) = vm.readCallers();
     }
 
     /**
@@ -39,7 +40,8 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
      * @return usdnProtocol_ The USDN protocol
      */
     function run()
-        external
+        public
+        virtual
         returns (
             WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,
             LiquidationRewardsManagerWstEth liquidationRewardsManager_,
@@ -51,7 +53,7 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
     {
         utils.validateProtocol("UsdnProtocolImpl", "UsdnProtocolFallback");
 
-        _setFeeCollector(msg.sender);
+        _setFeeCollector(SENDER);
 
         (wstEthOracleMiddleware_, liquidationRewardsManager_, usdn_, wusdn_) = _deployAndSetPeripheralContracts();
 
@@ -61,7 +63,7 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
 
         _initializeProtocol(usdnProtocol_, wstEthOracleMiddleware_);
 
-        utils.validateProtocolConfig(usdnProtocol_, msg.sender);
+        utils.validateProtocolConfig(usdnProtocol_, SENDER);
     }
 
     /**
@@ -130,8 +132,8 @@ contract DeployUsdnWstethUsd is UsdnWstethUsdConfig, Script {
         vm.startBroadcast();
 
         rebalancer_ = new Rebalancer(usdnProtocol);
-        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, msg.sender);
-        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, msg.sender);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, SENDER);
+        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, SENDER);
         usdnProtocol.setRebalancer(rebalancer_);
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
