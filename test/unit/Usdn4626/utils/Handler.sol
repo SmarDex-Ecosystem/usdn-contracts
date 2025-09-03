@@ -224,18 +224,14 @@ contract Usdn4626Handler is Usdn4626, Test {
     }
 
     function emptyVault() public {
-        address actor = _actors[0];
-        if (USDN.balanceOf(actor) < 1e18) {
-            actor = _actors[1];
+        address actor;
+        for (uint256 i; i < _actors.length; i++) {
+            actor = _actors[0];
+            if (USDN.balanceOf(actor) >= 1e18) {
+                break;
+            }
         }
         if (USDN.balanceOf(actor) < 1e18) {
-            actor = _actors[2];
-        }
-        if (USDN.balanceOf(actor) < 1e18) {
-            actor = _actors[3];
-        }
-        if (USDN.balanceOf(actor) < 1e18) {
-            actor = USER_1;
             USDN.mint(actor, 1e18);
         }
         vm.startPrank(actor);
