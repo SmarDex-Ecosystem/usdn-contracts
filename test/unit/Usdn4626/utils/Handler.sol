@@ -9,6 +9,8 @@ import { Usdn4626 } from "../../../../src/Usdn/Usdn4626.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 
 contract Usdn4626Handler is Usdn4626, Test {
+    using FixedPointMathLib for uint256;
+
     address public constant USER_1 = address(1);
     address public constant USER_2 = address(2);
     address public constant USER_3 = address(3);
@@ -48,7 +50,7 @@ contract Usdn4626Handler is Usdn4626, Test {
         // can only deposit if we can mint at least 1 wei of wrapper
         vm.assume(preview > 0 || extraShares >= SHARES_RATIO);
         // since we gift extra tokens to the depositor, we can calculate the expected amount
-        uint256 expectedUsdnShares = FixedPointMathLib.min(USDN.sharesOf(_currentActor), USDN.convertToShares(assets));
+        uint256 expectedUsdnShares = USDN.sharesOf(_currentActor).min(USDN.convertToShares(assets));
         uint256 expectedShares = (expectedUsdnShares + extraShares) / SHARES_RATIO;
         uint256 shares = this.deposit(assets, receiver);
 
@@ -132,6 +134,54 @@ contract Usdn4626Handler is Usdn4626, Test {
         _shares[_currentActor] -= shares;
     }
 
+    function transferTest(uint256 amount, uint256 actorIndexSeed, uint256 receiverIndexSeed)
+        public
+        useActor(actorIndexSeed)
+    {
+        address receiver = _actors[bound(receiverIndexSeed, 0, _actors.length - 1)];
+        vm.assume(receiver != _currentActor);
+        uint256 vaultBalanceUser = balanceOf(_currentActor);
+        uint256 vaultBalanceReceiver = balanceOf(receiver);
+        amount = bound(amount, 0, vaultBalanceUser);
+
+        this.transfer(receiver, amount);
+
+        assertEq(balanceOf(_currentActor), vaultBalanceUser - amount, "transfer: user balance property");
+        assertEq(balanceOf(receiver), vaultBalanceReceiver + amount, "transfer: receiver balance property");
+
+        _shares[_currentActor] -= amount;
+        _shares[receiver] += amount;
+    }
+
+    function transferFromTest(uint256 amount, uint256 actorIndexSeed, uint256 ownerIndexSeed)
+        public
+        useActor(actorIndexSeed)
+    {
+        address owner = _actors[bound(ownerIndexSeed, 0, _actors.length - 1)];
+        vm.assume(owner != _currentActor);
+        uint256 vaultBalanceUser = balanceOf(_currentActor);
+        uint256 vaultBalanceOwner = balanceOf(owner);
+        amount = bound(amount, 0, allowance(owner, _currentActor).min(vaultBalanceOwner));
+
+        this.transferFrom(owner, _currentActor, amount);
+
+        assertEq(balanceOf(_currentActor), vaultBalanceUser + amount, "transfer: user balance property");
+        assertEq(balanceOf(owner), vaultBalanceOwner - amount, "transfer: owner balance property");
+
+        _shares[_currentActor] += amount;
+        _shares[owner] -= amount;
+    }
+
+    function approveTest(uint256 amount, uint256 actorIndexSeed, uint256 spenderIndexSeed)
+        public
+        useActor(actorIndexSeed)
+    {
+        address spender = _actors[bound(spenderIndexSeed, 0, _actors.length - 1)];
+        vm.assume(spender != _currentActor);
+
+        this.approve(spender, amount);
+    }
+
     function rebaseTest(uint256 divisor, uint256 rand) public {
         uint256 oldDivisor = USDN.divisor();
         vm.assume(oldDivisor != USDN.MIN_DIVISOR());
@@ -141,7 +191,7 @@ contract Usdn4626Handler is Usdn4626, Test {
             return;
         }
         // rebases at most 50%
-        divisor = bound(divisor, FixedPointMathLib.max(USDN.MIN_DIVISOR(), oldDivisor / 2), oldDivisor - 1);
+        divisor = bound(divisor, USDN.MIN_DIVISOR().max(oldDivisor / 2), oldDivisor - 1);
         USDN.rebase(divisor);
     }
 
