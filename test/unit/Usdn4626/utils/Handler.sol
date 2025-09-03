@@ -182,6 +182,12 @@ contract Usdn4626Handler is Usdn4626, Test {
         this.approve(spender, amount);
     }
 
+    function mintUsdn(uint256 usdnShares, uint256 actorIndexSeed) public {
+        address actor = _actors[bound(actorIndexSeed, 0, _actors.length - 1)];
+        usdnShares = bound(usdnShares, 0, type(uint256).max - USDN.totalShares());
+        USDN.mintShares(actor, usdnShares);
+    }
+
     function rebaseTest(uint256 divisor, uint256 rand) public {
         uint256 oldDivisor = USDN.divisor();
         vm.assume(oldDivisor != USDN.MIN_DIVISOR());
@@ -195,9 +201,9 @@ contract Usdn4626Handler is Usdn4626, Test {
         USDN.rebase(divisor);
     }
 
-    function giftUsdn(uint256 amount) public {
-        amount = bound(amount, 1, 1e6 ether);
-        USDN.mint(address(this), amount);
+    function giftUsdn(uint256 usdnShares) public {
+        usdnShares = bound(usdnShares, 0, type(uint256).max - USDN.totalShares());
+        USDN.mintShares(address(this), usdnShares);
     }
 
     function getGhostTotalSupply() public view returns (uint256 totalSupply_) {
@@ -218,10 +224,23 @@ contract Usdn4626Handler is Usdn4626, Test {
     }
 
     function emptyVault() public {
-        USDN.mint(USER_1, 1e18);
-        vm.startPrank(USER_1);
-        this.deposit(1e18, USER_1);
-        this.redeem(balanceOf(USER_1), address(0xdead), USER_1);
+        address actor = _actors[0];
+        if (USDN.balanceOf(actor) < 1e18) {
+            actor = _actors[1];
+        }
+        if (USDN.balanceOf(actor) < 1e18) {
+            actor = _actors[2];
+        }
+        if (USDN.balanceOf(actor) < 1e18) {
+            actor = _actors[3];
+        }
+        if (USDN.balanceOf(actor) < 1e18) {
+            actor = USER_1;
+            USDN.mint(actor, 1e18);
+        }
+        vm.startPrank(actor);
+        this.deposit(1e18, actor);
+        this.redeem(balanceOf(actor), address(0xdead), actor);
         vm.stopPrank();
     }
 }

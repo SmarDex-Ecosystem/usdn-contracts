@@ -13,7 +13,7 @@ contract TestUsdn4626Invariants is Usdn4626Fixture {
 
         targetContract(address(usdn4626));
 
-        bytes4[] memory wusdn4626Selectors = new bytes4[](9);
+        bytes4[] memory wusdn4626Selectors = new bytes4[](10);
         wusdn4626Selectors[0] = usdn4626.depositTest.selector;
         wusdn4626Selectors[1] = usdn4626.mintTest.selector;
         wusdn4626Selectors[2] = usdn4626.withdrawTest.selector;
@@ -21,8 +21,9 @@ contract TestUsdn4626Invariants is Usdn4626Fixture {
         wusdn4626Selectors[4] = usdn4626.transferTest.selector;
         wusdn4626Selectors[5] = usdn4626.transferFromTest.selector;
         wusdn4626Selectors[6] = usdn4626.approveTest.selector;
-        wusdn4626Selectors[7] = usdn4626.rebaseTest.selector;
-        wusdn4626Selectors[8] = usdn4626.giftUsdn.selector;
+        wusdn4626Selectors[7] = usdn4626.mintUsdn.selector;
+        wusdn4626Selectors[8] = usdn4626.rebaseTest.selector;
+        wusdn4626Selectors[9] = usdn4626.giftUsdn.selector;
         targetSelector(FuzzSelector({ addr: address(usdn4626), selectors: wusdn4626Selectors }));
 
         targetSender(user1);
@@ -30,10 +31,10 @@ contract TestUsdn4626Invariants is Usdn4626Fixture {
         targetSender(user3);
         targetSender(user4);
 
-        usdn.mint(user1, 1_000_000 ether);
-        usdn.mint(user2, 1_000_000 ether);
-        usdn.mint(user3, 1_000_000 ether);
-        usdn.mint(user4, 1_000_000 ether);
+        usdn.mint(user1, 100_000_000 ether);
+        usdn.mint(user2, 100_000_000 ether);
+        usdn.mint(user3, 100_000_000 ether);
+        usdn.mint(user4, 100_000_000 ether);
 
         vm.prank(user1);
         usdn.approve(address(usdn4626), type(uint256).max);
@@ -80,6 +81,7 @@ contract TestUsdn4626Invariants is Usdn4626Fixture {
     function assertInvariants() internal view {
         assertEq(usdn4626.totalSupply(), usdn4626.getGhostTotalSupply(), "total supply = sum of balances");
         assertGe(usdn.sharesOf(address(usdn4626)) / 1e18, usdn4626.totalSupply(), "balance of USDN >= total supply");
+        assertLe(usdn4626.totalSupply(), type(uint256).max / 1e18, "total supply <= uint256.max / SHARES_RATIO");
     }
 
     function afterInvariant() public {
