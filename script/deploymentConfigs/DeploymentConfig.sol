@@ -3,13 +3,14 @@ pragma solidity ^0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import { Sdex } from "../../test/utils/Sdex.sol";
+
 import { ILiquidationRewardsManager } from
     "../../src/interfaces/LiquidationRewardsManager/ILiquidationRewardsManager.sol";
 import { IOracleMiddlewareWithPyth } from "../../src/interfaces/OracleMiddleware/IOracleMiddlewareWithPyth.sol";
 import { IUsdn } from "../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolFallback } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolFallback.sol";
 import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Sdex } from "../../test/utils/Sdex.sol";
 
 /// @notice Base configuration contract for protocol deployment.
 abstract contract DeploymentConfig {

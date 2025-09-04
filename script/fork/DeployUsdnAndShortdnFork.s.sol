@@ -3,9 +3,15 @@ pragma solidity 0.8.26;
 
 import { Script } from "forge-std/Script.sol";
 
+import { Sdex } from "../../test/utils/Sdex.sol";
+
+import { DeployShortdnFork } from "./DeployShortdnFork.s.sol";
+import { DeployUsdnFork } from "./DeployUsdnFork.s.sol";
+
 import { LiquidationRewardsManagerWstEth } from
     "../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
 import { LiquidationRewardsManagerWusdn } from "../../src/LiquidationRewardsManager/LiquidationRewardsManagerWusdn.sol";
+
 import { WstEthOracleMiddlewareWithPyth } from "../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { WusdnToEthOracleMiddlewareWithPyth } from "../../src/OracleMiddleware/WusdnToEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
@@ -14,10 +20,6 @@ import { UsdnNoRebase } from "../../src/Usdn/UsdnNoRebase.sol";
 import { IWstETH } from "../../src/interfaces/IWstETH.sol";
 import { IWusdn } from "../../src/interfaces/Usdn/IWusdn.sol";
 import { IUsdnProtocol } from "../../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { DeployShortdnFork } from "./DeployShortdnFork.s.sol";
-import { DeployUsdnFork } from "./DeployUsdnFork.s.sol";
-
-import { Sdex } from "../../test/utils/Sdex.sol";
 
 struct DeployedUsdnAndShortdn {
     // SDEX

@@ -7,10 +7,15 @@ import { HugeUint } from "@smardex-solidity-libraries-1/HugeUint.sol";
 import { Options, Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
+import { UsdnWusdnEthConfig } from "./deploymentConfigs/UsdnWusdnEthConfig.sol";
+import { Utils } from "./utils/Utils.s.sol";
+
 import { LiquidationRewardsManagerWusdn } from "../src/LiquidationRewardsManager/LiquidationRewardsManagerWusdn.sol";
+
 import { WusdnToEthOracleMiddlewareWithPyth } from "../src/OracleMiddleware/WusdnToEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../src/Rebalancer/Rebalancer.sol";
 import { UsdnNoRebase } from "../src/Usdn/UsdnNoRebase.sol";
+
 import { UsdnProtocolFallback } from "../src/UsdnProtocol/UsdnProtocolFallback.sol";
 import { UsdnProtocolImpl } from "../src/UsdnProtocol/UsdnProtocolImpl.sol";
 import { UsdnProtocolConstantsLibrary as Constants } from
@@ -18,8 +23,6 @@ import { UsdnProtocolConstantsLibrary as Constants } from
 import { IWusdn } from "../src/interfaces/Usdn/IWusdn.sol";
 import { IUsdnProtocol } from "../src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolTypes as Types } from "../src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnWusdnEthConfig } from "./deploymentConfigs/UsdnWusdnEthConfig.sol";
-import { Utils } from "./utils/Utils.s.sol";
 
 contract DeployUsdnWusdnEth is UsdnWusdnEthConfig, Script {
     IWusdn immutable WUSDN;
