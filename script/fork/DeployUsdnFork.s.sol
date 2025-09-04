@@ -8,7 +8,6 @@ import { ForkCore } from "./ForkCore.s.sol";
 
 import { LiquidationRewardsManagerWstEth } from
     "../../src/LiquidationRewardsManager/LiquidationRewardsManagerWstEth.sol";
-
 import { WstEthOracleMiddlewareWithPyth } from "../../src/OracleMiddleware/WstEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "../../src/Usdn/Usdn.sol";
@@ -27,7 +26,6 @@ contract DeployUsdnFork is ForkCore, DeployUsdnWstethUsd {
 
     function run()
         public
-        virtual
         override
         returns (
             WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,

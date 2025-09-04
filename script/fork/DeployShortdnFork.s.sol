@@ -5,7 +5,6 @@ import { DeployUsdnWusdnEth } from "../01_DeployUsdnWusdnEth.s.sol";
 import { ForkCore } from "./ForkCore.s.sol";
 
 import { LiquidationRewardsManagerWusdn } from "../../src/LiquidationRewardsManager/LiquidationRewardsManagerWusdn.sol";
-
 import { WusdnToEthOracleMiddlewareWithPyth } from "../../src/OracleMiddleware/WusdnToEthOracleMiddlewareWithPyth.sol";
 import { Rebalancer } from "../../src/Rebalancer/Rebalancer.sol";
 import { UsdnNoRebase } from "../../src/Usdn/UsdnNoRebase.sol";
@@ -26,7 +25,6 @@ contract DeployShortdnFork is ForkCore, DeployUsdnWusdnEth {
 
     function run()
         public
-        virtual
         override
         returns (
             WusdnToEthOracleMiddlewareWithPyth wusdnToEthOracleMiddleware_,
