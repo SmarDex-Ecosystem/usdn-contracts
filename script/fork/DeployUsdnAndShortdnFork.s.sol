@@ -46,7 +46,7 @@ contract DeployUsdnAndShortdnFork is Script {
      * underlying
      */
     function run() external returns (DeployedUsdnAndShortdn memory deployedUsdnAndShortdn) {
-        // DEPLOY USDN (LONG ETH)
+        // Deploy USDN (LONG ETH)
         DeployUsdnFork deployUsdnFork = new DeployUsdnFork();
 
         // Get values from runAndReturnValues and assign them step by step to avoid stack too deep
@@ -73,17 +73,17 @@ contract DeployUsdnAndShortdnFork is Script {
             deployedUsdnAndShortdn.usdnProtocolUsdn_ = usdnProtocol_;
         }
 
-        // DEFINE FUTURE SHORTDN COLLATERAL AKA WUSDN OF ALREADY DEPLOYED USDN PROTOCOL
+        // Define future SHORTDN collateral aka WUSDN of already deployed USDN protocol
         vm.setEnv("UNDERLYING_ADDRESS_WUSDN", vm.toString(address(deployedUsdnAndShortdn.wusdn_)));
 
-        // WRAP USDN INTO WUSDN AND APPROVE IT TO THE SHORTDN PROTOCOL
+        // Wrap USDN into WUSDN and approve it to the SHORTDN protocol
         vm.startBroadcast(msg.sender);
         deployedUsdnAndShortdn.usdn_.approve(address(deployedUsdnAndShortdn.wusdn_), type(uint256).max);
         deployedUsdnAndShortdn.wusdn_.wrap(deployedUsdnAndShortdn.usdn_.balanceOf(msg.sender));
         deployedUsdnAndShortdn.wusdn_.approve(address(deployedUsdnAndShortdn.usdnProtocolUsdn_), type(uint256).max);
         vm.stopBroadcast();
 
-        // DEPLOY SHORTDN (LONG WUSDN)
+        // Deploy SHORTDN (LONG WUSDN)
         DeployShortdnFork deployShortdnFork = new DeployShortdnFork();
         (
             deployedUsdnAndShortdn.wusdnToEthOracleMiddleware_,
