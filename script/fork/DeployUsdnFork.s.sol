@@ -22,6 +22,15 @@ contract DeployUsdnFork is ForkCore, DeployUsdnWstethUsd {
         price = vm.envOr("START_PRICE_USDN", price);
     }
 
+    /**
+     * @notice Deploy the USDN ecosystem with WstETH as underlying asset
+     * @return wstEthOracleMiddleware_ The WstETH oracle middleware
+     * @return liquidationRewardsManager_ The liquidation rewards manager for WstETH
+     * @return rebalancer_ The rebalancer contract
+     * @return usdn_ The USDN contract
+     * @return wusdn_ The WUSDN contract
+     * @return usdnProtocol_ The USDN protocol contract
+     */
     function run()
         public
         override

@@ -23,6 +23,14 @@ contract DeployShortdnFork is ForkCore, DeployUsdnWusdnEth {
         initStorage.sdexBurnOnDepositRatio = uint64(MAX_SDEX_BURN_RATIO);
     }
 
+    /**
+     * @notice Deploy the SHORTDN ecosystem with WUSDN as underlying asset
+     * @return wusdnToEthOracleMiddleware_ The WUSDN to ETH oracle middleware
+     * @return liquidationRewardsManagerWusdn_ The liquidation rewards manager for WUSDN
+     * @return rebalancer_ The rebalancer contract
+     * @return usdnNoRebase_ The USDN no rebase contract
+     * @return usdnProtocol_ The USDN protocol contract
+     */
     function run()
         public
         override

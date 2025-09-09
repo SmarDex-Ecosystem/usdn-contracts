@@ -41,53 +41,47 @@ struct DeployedUsdnAndShortdn {
 
 contract DeployUsdnAndShortdnFork is Script {
     /**
-     * @notice Deploy the USDN ecosystem with the WstETH as underlying and the SHORTDN ecosystem with the WUSDN as
-     * underlying
+     * @notice Deploy the USDN ecosystem with WstETH as underlying and the SHORTDN ecosystem with WUSDN as underlying
+     * @return deployedUsdnAndShortdn_ The deployed USDN and SHORTDN contracts structure
      */
-    function run() external returns (DeployedUsdnAndShortdn memory deployedUsdnAndShortdn) {
+    function run() external returns (DeployedUsdnAndShortdn memory deployedUsdnAndShortdn_) {
         // Deploy USDN (LONG ETH)
         DeployUsdnFork deployUsdnFork = new DeployUsdnFork();
 
         // Get values from runAndReturnValues and assign them step by step to avoid stack too deep
         {
             (
-                WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware,
-                LiquidationRewardsManagerWstEth liquidationRewardsManager,
-                Rebalancer rebalancer,
-                Usdn usdn,
-                IWusdn wusdn,
-                IUsdnProtocol usdnProtocol
+                deployedUsdnAndShortdn_.wstEthOracleMiddleware,
+                deployedUsdnAndShortdn_.liquidationRewardsManagerWstEth,
+                deployedUsdnAndShortdn_.rebalancerusdn,
+                deployedUsdnAndShortdn_.usdn,
+                deployedUsdnAndShortdn_.wusdn,
+                deployedUsdnAndShortdn_.usdnProtocolusdn
             ) = deployUsdnFork.run();
 
             // Assign to struct
-            deployedUsdnAndShortdn.sdex = Sdex(address(usdnProtocol.getSdex()));
-            deployedUsdnAndShortdn.wsteth = IWstETH(address(usdnProtocol.getAsset()));
-            deployedUsdnAndShortdn.wstEthOracleMiddleware = wstEthOracleMiddleware;
-            deployedUsdnAndShortdn.liquidationRewardsManagerWstEth = liquidationRewardsManager;
-            deployedUsdnAndShortdn.rebalancerusdn = rebalancer;
-            deployedUsdnAndShortdn.usdn = usdn;
-            deployedUsdnAndShortdn.wusdn = wusdn;
-            deployedUsdnAndShortdn.usdnProtocolusdn = usdnProtocol;
+            deployedUsdnAndShortdn_.sdex = Sdex(address(deployedUsdnAndShortdn_.usdnProtocolusdn.getSdex()));
+            deployedUsdnAndShortdn_.wsteth = IWstETH(address(deployedUsdnAndShortdn_.usdnProtocolusdn.getAsset()));
         }
 
         // Define future SHORTDN collateral aka WUSDN of already deployed USDN protocol
-        vm.setEnv("UNDERLYING_ADDRESS_WUSDN", vm.toString(address(deployedUsdnAndShortdn.wusdn)));
+        vm.setEnv("UNDERLYING_ADDRESS_WUSDN", vm.toString(address(deployedUsdnAndShortdn_.wusdn)));
 
         // Wrap USDN into WUSDN and approve it to the SHORTDN protocol
         vm.startBroadcast(msg.sender);
-        deployedUsdnAndShortdn.usdn.approve(address(deployedUsdnAndShortdn.wusdn), type(uint256).max);
-        deployedUsdnAndShortdn.wusdn.wrap(deployedUsdnAndShortdn.usdn.balanceOf(msg.sender));
-        deployedUsdnAndShortdn.wusdn.approve(address(deployedUsdnAndShortdn.usdnProtocolusdn), type(uint256).max);
+        deployedUsdnAndShortdn_.usdn.approve(address(deployedUsdnAndShortdn_.wusdn), type(uint256).max);
+        deployedUsdnAndShortdn_.wusdn.wrap(deployedUsdnAndShortdn_.usdn.balanceOf(msg.sender));
+        deployedUsdnAndShortdn_.wusdn.approve(address(deployedUsdnAndShortdn_.usdnProtocolusdn), type(uint256).max);
         vm.stopBroadcast();
 
         // Deploy SHORTDN (LONG WUSDN)
         DeployShortdnFork deployShortdnFork = new DeployShortdnFork();
         (
-            deployedUsdnAndShortdn.wusdnToEthOracleMiddleware,
-            deployedUsdnAndShortdn.liquidationRewardsManagerWusdn,
-            deployedUsdnAndShortdn.rebalancerShortdn,
-            deployedUsdnAndShortdn.usdnNoRebaseShortdn,
-            deployedUsdnAndShortdn.usdnProtocolShortdn
+            deployedUsdnAndShortdn_.wusdnToEthOracleMiddleware,
+            deployedUsdnAndShortdn_.liquidationRewardsManagerWusdn,
+            deployedUsdnAndShortdn_.rebalancerShortdn,
+            deployedUsdnAndShortdn_.usdnNoRebaseShortdn,
+            deployedUsdnAndShortdn_.usdnProtocolShortdn
         ) = deployShortdnFork.run();
     }
 }
