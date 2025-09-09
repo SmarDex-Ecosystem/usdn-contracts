@@ -179,10 +179,15 @@ cast send $USDN_PROTOCOL_USDN_ADDRESS "mint(uint256)" 1000000000000000000 \
 
 ### Environment Reset
 
+First, set `rpcUrl` env var:
+```bash
+rpcUrl=yourMainnetRpc
+```
+
 ```bash
 # Restart Anvil
 pkill anvil
-anvil --rpc-url "https://eth-mainnet.g.alchemy.com/v2/ZMTGh2wcbFIUDheXaKBN7cFHBfccH-RT"
+anvil --rpc-url $rpcUrl
 
 # Remove cache files
 rm -rf broadcast/ cache/

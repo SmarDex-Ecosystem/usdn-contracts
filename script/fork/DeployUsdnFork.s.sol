@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { Sdex } from "../../test/utils/Sdex.sol";
-
 import { DeployUsdnWstethUsd } from "../01_DeployUsdnWstethUsd.s.sol";
 import { ForkCore } from "./ForkCore.s.sol";
 
@@ -39,24 +37,5 @@ contract DeployUsdnFork is ForkCore, DeployUsdnWstethUsd {
         super.preRun();
         (wstEthOracleMiddleware_, liquidationRewardsManager_, rebalancer_, usdn_, wusdn_, usdnProtocol_) = super.run();
         super.postRun(usdnProtocol_);
-    }
-
-    function runAndReturnValues()
-        public
-        virtual
-        returns (
-            Sdex sdex_,
-            IWstETH wsteth_,
-            WstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_,
-            LiquidationRewardsManagerWstEth liquidationRewardsManager_,
-            Rebalancer rebalancer_,
-            Usdn usdn_,
-            Wusdn wusdn_,
-            IUsdnProtocol usdnProtocol_
-        )
-    {
-        sdex_ = SDEX;
-        wsteth_ = IWstETH(address(UNDERLYING_ASSET));
-        (wstEthOracleMiddleware_, liquidationRewardsManager_, rebalancer_, usdn_, wusdn_, usdnProtocol_) = run();
     }
 }

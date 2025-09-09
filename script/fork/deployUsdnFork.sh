@@ -9,27 +9,40 @@ pushd $SCRIPT_DIR/../.. >/dev/null
 # Anvil RPC URL.
 rpcUrl=http://localhost:8545
 
+# Sourcify verifier URL.
+sourcifyVerifierUrl=http://localhost:5555
+
 # Anvil first test private key.
 deployerPrivateKey=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
+# Check for verify flag
+VERIFY_FLAGS=""
+if [[ "$1" == "--verify" ]]; then
+    VERIFY_FLAGS="--verify --verifier sourcify --verifier-url $sourcifyVerifierUrl"
+fi
+
 # Deploying USDN protocol with wStEth as collateral token using runAndReturnValues.
-forge script --non-interactive --private-key $deployerPrivateKey -f "$rpcUrl" ./script/fork/DeployUsdnFork.s.sol:DeployUsdnFork --sig "runAndReturnValues()" --broadcast --force
+forge script --non-interactive --private-key $deployerPrivateKey -f "$rpcUrl" ./script/fork/DeployUsdnFork.s.sol:DeployUsdnFork --broadcast --force $VERIFY_FLAGS
 
 # Extract chain id from anvil.
 chainId=$(cast chain-id -r "$rpcUrl")
 
 # Extract deployment log from forge.
-DEPLOYMENT_LOG=$(cat "./broadcast/DeployUsdnFork.s.sol/$chainId/runAndReturnValues-latest.json")
+DEPLOYMENT_LOG=$(cat "./broadcast/DeployUsdnFork.s.sol/$chainId/run-latest.json")
 
 # Extract individual return values from deployment log (runAndReturnValues returns 8 values)
-SDEX_ADDRESS=$(echo "$DEPLOYMENT_LOG" | jq -r '.returns.sdex_.value')
-WSTETH_ADDRESS=$(echo "$DEPLOYMENT_LOG" | jq -r '.returns.wsteth_.value')
 WSTETH_ORACLE_MIDDLEWARE=$(echo "$DEPLOYMENT_LOG" | jq -r '.returns.wstEthOracleMiddleware_.value')
 LIQUIDATION_REWARDS_MANAGER=$(echo "$DEPLOYMENT_LOG" | jq -r '.returns.liquidationRewardsManager_.value')
 REBALANCER=$(echo "$DEPLOYMENT_LOG" | jq -r '.returns.rebalancer_.value')
 USDN_TOKEN=$(echo "$DEPLOYMENT_LOG" | jq -r '.returns.usdn_.value')
 WUSDN_TOKEN=$(echo "$DEPLOYMENT_LOG" | jq -r '.returns.wusdn_.value')
 USDN_PROTOCOL=$(echo "$DEPLOYMENT_LOG" | jq -r '.returns.usdnProtocol_.value')
+
+# Get SDEX address from USDN protocol contract using cast
+SDEX_ADDRESS=$(cast call "$USDN_PROTOCOL" "getSdex()" -r "$rpcUrl" | sed 's/0x000000000000000000000000/0x/')
+
+# Get WSTETH address from USDN protocol contract using cast
+WSTETH_ADDRESS=$(cast call "$USDN_PROTOCOL" "getAsset()" -r "$rpcUrl" | sed 's/0x000000000000000000000000/0x/')
 
 # Extract data for birth block/time (get first Usdn token CREATE transaction)
 USDN_TX_HASH=$(echo "$DEPLOYMENT_LOG" | jq -r '.transactions[] | select(.contractName == "Usdn" and .transactionType == "CREATE") | .hash' | head -1)
