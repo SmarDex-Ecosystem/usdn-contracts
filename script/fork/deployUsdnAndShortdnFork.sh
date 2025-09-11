@@ -31,33 +31,24 @@ chainId=$(cast chain-id -r "$rpcUrl")
 DEPLOYMENT_LOG=$(cat "./broadcast/DeployUsdnAndShortdnFork.s.sol/$chainId/run-latest.json")
 
 # Extract struct values from deployment log
-STRUCT_VALUES=$(echo "$DEPLOYMENT_LOG" | jq -r '.returns.deployedUsdnAndShortdn.value' | tr -d '()' | tr ',' '\n')
+STRUCT_VALUES=$(echo "$DEPLOYMENT_LOG" | jq -r '.returns.deployedUsdnAndShortdn_.value' | tr -d '()' | sed 's/, /,/g' | tr ',' '\n')
 STRUCT_ARRAY=($(echo "$STRUCT_VALUES"))
 
 # Extract data for birth block/time (get first Usdn token CREATE transaction)
 USDN_TX_HASH=$(echo "$DEPLOYMENT_LOG" | jq -r '.transactions[] | select(.contractName == "Usdn" and .transactionType == "CREATE") | .hash' | head -1)
 USDN_RECEIPT=$(echo "$DEPLOYMENT_LOG" | jq ".receipts[] | select(.transactionHash == \"$USDN_TX_HASH\")")
 
-# Get USDN protocol address from struct
-USDN_PROTOCOL=${STRUCT_ARRAY[7]}
-
-# Get SDEX address from USDN protocol contract using cast
-SDEX_ADDRESS=$(cast call "$USDN_PROTOCOL" "getSdex()" -r "$rpcUrl" | sed 's/0x000000000000000000000000/0x/')
-
-# Get WSTETH address from USDN protocol contract using cast
-WSTETH_ADDRESS=$(cast call "$USDN_PROTOCOL" "getAsset()" -r "$rpcUrl" | sed 's/0x000000000000000000000000/0x/')
-
 # Extract and save important data from deployment log.
 FORK_ENV_DUMP=$(
     cat <<EOF
-SDEX_TOKEN_ADDRESS=$SDEX_ADDRESS
-WSTETH_TOKEN_ADDRESS=$WSTETH_ADDRESS
+SDEX_TOKEN_ADDRESS=${STRUCT_ARRAY[0]}
+WSTETH_TOKEN_ADDRESS=${STRUCT_ARRAY[1]}
 WSTETH_ORACLE_MIDDLEWARE_ADDRESS=${STRUCT_ARRAY[2]}
 LIQUIDATION_REWARDS_MANAGER_WSTETH_ADDRESS=${STRUCT_ARRAY[3]}
 REBALANCER_USDN_ADDRESS=${STRUCT_ARRAY[4]}
 USDN_TOKEN_ADDRESS=${STRUCT_ARRAY[5]}
 WUSDN_TOKEN_ADDRESS=${STRUCT_ARRAY[6]}
-USDN_PROTOCOL_USDN_ADDRESS=$USDN_PROTOCOL
+USDN_PROTOCOL_USDN_ADDRESS=${STRUCT_ARRAY[7]}
 WUSDN_TO_ETH_ORACLE_MIDDLEWARE_ADDRESS=${STRUCT_ARRAY[8]}
 LIQUIDATION_REWARDS_MANAGER_WUSDN_ADDRESS=${STRUCT_ARRAY[9]}
 REBALANCER_SHORTDN_ADDRESS=${STRUCT_ARRAY[10]}
