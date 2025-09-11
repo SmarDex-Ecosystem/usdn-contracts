@@ -48,7 +48,7 @@ contract DeployUsdnAndShortdnFork is Script {
         // Deploy USDN (LONG ETH)
         DeployUsdnFork deployUsdnFork = new DeployUsdnFork();
 
-        // Get values from runAndReturnValues and assign them step by step to avoid stack too deep
+        // Get values from run into a struct to avoid stack too deep
         {
             (
                 deployedUsdnAndShortdn_.wstEthOracleMiddleware,

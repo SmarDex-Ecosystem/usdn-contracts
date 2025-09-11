@@ -28,6 +28,14 @@ abstract contract ForkCore is Script {
     bytes32 PYTH_ETH_FEED_ID_FORK;
     uint256 CHAINLINK_PRICE_VALIDITY_FORK;
 
+    /*
+     * @notice Constructor to initialize the ForkCore with necessary parameters
+     * @param _collat The address of the underlying collateral asset
+     * @param _pyth The address of the Pyth oracle
+     * @param _chainlinkPrice The address of the Chainlink ETH price feed
+     * @param _pythFeedId The Pyth feed ID for ETH
+     * @param _chainlinkPriceValidity The validity duration for Chainlink price data
+    */
     constructor(
         address _collat,
         address _pyth,
@@ -107,16 +115,16 @@ abstract contract ForkCore is Script {
     function setPeripheralContracts(IUsdnProtocol _usdnProtocol) internal {
         vm.startBroadcast();
 
-        MockWstEthOracleMiddlewareWithPyth wstEthOracleMiddleware_ = new MockWstEthOracleMiddlewareWithPyth(
+        MockWstEthOracleMiddlewareWithPyth wstEthOracleMiddleware = new MockWstEthOracleMiddlewareWithPyth(
             PYTH_ADDRESS_FORK,
             PYTH_ETH_FEED_ID_FORK,
             CHAINLINK_ETH_PRICE_MOCKED,
             address(UNDERLYING_ASSET_FORK),
             CHAINLINK_PRICE_VALIDITY_FORK
         );
-        wstEthOracleMiddleware_.setVerifySignature(false);
-        wstEthOracleMiddleware_.setWstethMockedPrice(price);
-        _usdnProtocol.setOracleMiddleware(wstEthOracleMiddleware_);
+        wstEthOracleMiddleware.setVerifySignature(false);
+        wstEthOracleMiddleware.setWstethMockedPrice(price);
+        _usdnProtocol.setOracleMiddleware(wstEthOracleMiddleware);
 
         vm.stopBroadcast();
     }
