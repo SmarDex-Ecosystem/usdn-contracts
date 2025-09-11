@@ -47,8 +47,6 @@ contract DeployUsdnAndShortdnFork is Script {
     function run() external returns (DeployedUsdnAndShortdn memory deployedUsdnAndShortdn_) {
         // Deploy USDN (LONG ETH)
         DeployUsdnFork deployUsdnFork = new DeployUsdnFork();
-
-        // Get values from run into a struct to avoid stack too deep
         {
             (
                 deployedUsdnAndShortdn_.wstEthOracleMiddleware,
@@ -59,7 +57,6 @@ contract DeployUsdnAndShortdnFork is Script {
                 deployedUsdnAndShortdn_.usdnProtocolusdn
             ) = deployUsdnFork.run();
 
-            // Assign to struct
             deployedUsdnAndShortdn_.sdex = Sdex(address(deployedUsdnAndShortdn_.usdnProtocolusdn.getSdex()));
             deployedUsdnAndShortdn_.wsteth = IWstETH(address(deployedUsdnAndShortdn_.usdnProtocolusdn.getAsset()));
         }
