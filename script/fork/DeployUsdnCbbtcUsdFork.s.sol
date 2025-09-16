@@ -26,7 +26,7 @@ import { IUsdnProtocolTypes as Types } from "../../src/interfaces/UsdnProtocol/I
 
 contract DeployUsdnGenericFork is UsdnCbbtcUsdConfig, Script {
     address immutable CHAINLINK_PRICE_MOCKED = address(new MockChainlinkOnChain());
-    uint256 price = 3000 ether;
+    uint256 price = 100_000 ether;
     Utils utils;
 
     constructor() {
