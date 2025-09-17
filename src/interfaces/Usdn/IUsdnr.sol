@@ -10,6 +10,9 @@ import { IUsdn } from "./IUsdn.sol";
  * @notice The USDNr token is a wrapper around the USDN token, allowing users to wrap and unwrap USDN at a 1:1 ratio.
  */
 interface IUsdnr is IERC20Metadata {
+    /// @notice The amount provided is zero.
+    error USDNrZeroAmount();
+
     /**
      * @notice Wraps USDN into USDNr at a 1:1 ratio.
      * @param usdnAmount The amount of USDN to wrap.
@@ -27,4 +30,10 @@ interface IUsdnr is IERC20Metadata {
      * @return usdn_ The address of the USDN token contract.
      */
     function USDN() external view returns (IUsdn usdn_);
+
+    /**
+     * @notice Returns the total amount of USDN that has been wrapped into USDNr.
+     * @return totalWrapped_ The total amount of USDN wrapped into USDNr.
+     */
+    function getTotalWrapped() external view returns (uint256 totalWrapped_);
 }
