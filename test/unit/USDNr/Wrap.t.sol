@@ -23,7 +23,6 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
      */
     function test_usdnrWrap() public {
         uint256 amount = 10 ether;
-        uint256 initialTotalWrapped = usdnr.getTotalWrapped();
         uint256 initialUsdnrBalance = usdnr.balanceOf(address(this));
         uint256 initialUsdnrTotalSupply = usdnr.totalSupply();
         uint256 usdnContractBalance = usdn.balanceOf(address(usdnr));
@@ -32,7 +31,6 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
 
         assertEq(usdnr.balanceOf(address(this)), initialUsdnrBalance + amount, "user USDNr balance");
         assertEq(usdnr.totalSupply(), initialUsdnrTotalSupply + amount, "total USDNr supply");
-        assertEq(usdnr.getTotalWrapped(), initialTotalWrapped + amount, "total wrapped USDN");
         assertEq(usdn.balanceOf(address(usdnr)), usdnContractBalance + amount, "USDN balance in USDNr");
     }
 

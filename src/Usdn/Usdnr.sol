@@ -16,9 +16,6 @@ contract Usdnr is ERC20, IUsdnr {
     /// @inheritdoc IUsdnr
     IUsdn public immutable USDN;
 
-    /// @dev Tracks the total amount of USDN wrapped into USDNr.
-    uint256 internal totalWrapped;
-
     /// @param usdn The address of the USDN token contract.
     constructor(IUsdn usdn) ERC20("USDN Reserve", "USDNr") {
         USDN = usdn;
@@ -31,7 +28,6 @@ contract Usdnr is ERC20, IUsdnr {
         }
 
         USDN.transferFrom(msg.sender, address(this), usdnAmount);
-        totalWrapped += usdnAmount;
 
         _mint(msg.sender, usdnAmount);
     }
@@ -43,13 +39,7 @@ contract Usdnr is ERC20, IUsdnr {
         }
 
         _burn(msg.sender, usdnrAmount);
-        totalWrapped -= usdnrAmount;
 
         USDN.transfer(msg.sender, usdnrAmount);
-    }
-
-    /// @inheritdoc IUsdnr
-    function getTotalWrapped() external view returns (uint256 totalWrapped_) {
-        totalWrapped_ = totalWrapped;
     }
 }

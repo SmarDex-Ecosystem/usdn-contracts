@@ -30,10 +30,4 @@ interface IUsdnr is IERC20Metadata {
      * @return usdn_ The address of the USDN token contract.
      */
     function USDN() external view returns (IUsdn usdn_);
-
-    /**
-     * @notice Returns the total amount of USDN that has been wrapped into USDNr.
-     * @return totalWrapped_ The total amount of USDN wrapped into USDNr.
-     */
-    function getTotalWrapped() external view returns (uint256 totalWrapped_);
 }
