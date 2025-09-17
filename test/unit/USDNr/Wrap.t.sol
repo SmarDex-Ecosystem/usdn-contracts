@@ -37,7 +37,7 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
     }
 
     /**
-     * @custom:scenario Call wrap with zero amount
+     * @custom:scenario Revert when the wrap function is called with zero amount
      * @custom:when The wrap function is called with zero amount
      * @custom:then The transaction should revert with the error {USDNrZeroAmount}
      */

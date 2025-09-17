@@ -6,10 +6,7 @@ import { BaseFixture } from "../../../utils/Fixtures.sol";
 import { Usdn } from "../../../../src/Usdn/Usdn.sol";
 import { Usdnr } from "../../../../src/Usdn/Usdnr.sol";
 
-/**
- * @title UsdnrTokenFixture
- * @dev Utils for testing USDNr token
- */
+/// @dev Utils for testing USDNr token
 contract UsdnrTokenFixture is BaseFixture {
     Usdnr public usdnr;
     Usdn public usdn;
