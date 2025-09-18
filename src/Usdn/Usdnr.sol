@@ -31,9 +31,9 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
             revert USDNrZeroAmount();
         }
 
-        USDN.transferFrom(msg.sender, address(this), usdnAmount);
-
         _mint(msg.sender, usdnAmount);
+
+        USDN.transferFrom(msg.sender, address(this), usdnAmount);
     }
 
     /// @inheritdoc IUsdnr
