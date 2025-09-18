@@ -21,17 +21,39 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
      * @custom:then The total supply of USDNr increases by the same amount
      * @custom:then The total wrapped USDN increases by the same amount
      */
-    function test_usdnrWrap() public {
+    function test_wrap() public {
         uint256 amount = 10 ether;
         uint256 initialUsdnrBalance = usdnr.balanceOf(address(this));
+        uint256 initialUsdnBalance = usdn.balanceOf(address(this));
         uint256 initialUsdnrTotalSupply = usdnr.totalSupply();
         uint256 usdnContractBalance = usdn.balanceOf(address(usdnr));
 
-        usdnr.wrap(amount);
+        usdnr.wrap(amount, address(this));
 
         assertEq(usdnr.balanceOf(address(this)), initialUsdnrBalance + amount, "user USDNr balance");
         assertEq(usdnr.totalSupply(), initialUsdnrTotalSupply + amount, "total USDNr supply");
+
         assertEq(usdn.balanceOf(address(usdnr)), usdnContractBalance + amount, "USDN balance in USDNr");
+        assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - amount, "user USDN balance");
+    }
+
+    function test_wrapToAnotherAddress() public {
+        uint256 amount = 10 ether;
+        address recipient = address(1);
+        uint256 initialUsdnrBalance = usdnr.balanceOf(address(this));
+        uint256 initialUsdnBalance = usdn.balanceOf(address(this));
+        uint256 initialRecipientBalance = usdnr.balanceOf(recipient);
+        uint256 initialUsdnrTotalSupply = usdnr.totalSupply();
+        uint256 usdnContractBalance = usdn.balanceOf(address(usdnr));
+
+        usdnr.wrap(amount, recipient);
+
+        assertEq(usdnr.balanceOf(address(this)), initialUsdnrBalance, "user USDNr balance");
+        assertEq(usdnr.balanceOf(recipient), initialRecipientBalance + amount, "recipient USDNr balance");
+        assertEq(usdnr.totalSupply(), initialUsdnrTotalSupply + amount, "total USDNr supply");
+
+        assertEq(usdn.balanceOf(address(usdnr)), usdnContractBalance + amount, "USDN balance in USDNr");
+        assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - amount, "user USDN balance");
     }
 
     /**
@@ -39,8 +61,18 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
      * @custom:when The wrap function is called with zero amount
      * @custom:then The transaction should revert with the error {USDNrZeroAmount}
      */
-    function test_revertWhen_usdnrWrapZeroAmount() public {
+    function test_revertWhen_wrapZeroAmount() public {
         vm.expectRevert(IUsdnr.USDNrZeroAmount.selector);
-        usdnr.wrap(0);
+        usdnr.wrap(0, address(this));
+    }
+
+    /**
+     * @custom:scenario Revert when the wrap function is called with zero address as recipient
+     * @custom:when The wrap function is called with zero address as recipient
+     * @custom:then The transaction should revert with the error {USDNrZeroRecipient}
+     */
+    function test_revertWhen_wrapRecipientIsZeroAddress() public {
+        vm.expectRevert(IUsdnr.USDNrZeroRecipient.selector);
+        usdnr.wrap(10 ether, address(0));
     }
 }

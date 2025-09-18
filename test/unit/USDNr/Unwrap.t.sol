@@ -12,7 +12,7 @@ contract TestUsdnrUnwrap is UsdnrTokenFixture {
 
         usdn.mint(address(this), 100 ether);
         usdn.approve(address(usdnr), type(uint256).max);
-        usdnr.wrap(100 ether);
+        usdnr.wrap(100 ether, address(this));
     }
 
     /**
