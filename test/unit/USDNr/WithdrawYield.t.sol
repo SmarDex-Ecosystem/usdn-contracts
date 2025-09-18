@@ -5,8 +5,8 @@ import { UsdnrTokenFixture } from "./utils/Fixtures.sol";
 
 import { IUsdnr } from "../../../src/interfaces/Usdn/IUsdnr.sol";
 
-/// @custom:feature The `wrap` function of the `USDNr` contract
-contract TestUsdnrWrap is UsdnrTokenFixture {
+/// @custom:feature The `withdrawYield` function of the `USDNr` contract
+contract TestUsdnrWithdrawYield is UsdnrTokenFixture {
     function setUp() public override {
         super.setUp();
 

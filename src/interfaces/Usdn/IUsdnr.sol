@@ -13,6 +13,12 @@ interface IUsdnr is IERC20Metadata {
     /// @notice The amount provided is zero.
     error USDNrZeroAmount();
 
+    /// @notice The recipient address is the zero address.
+    error USDNrZeroRecipient();
+
+    /// @notice There is no yield available to withdraw.
+    error USDNrNoYield();
+
     /**
      * @notice Wraps USDN into USDNr at a 1:1 ratio.
      *  @dev When approving USDN, use the `convertToTokensRoundUp` of the user shares, as we always round up when

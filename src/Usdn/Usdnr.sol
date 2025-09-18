@@ -49,6 +49,10 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
 
     /// @inheritdoc IUsdnr
     function withdrawYield(address recipient) external onlyOwner {
+        if (recipient == address(0)) {
+            revert USDNrZeroRecipient();
+        }
+
         // we divide the USDN shares by the USDN divisor to round down, ensuring the leftover shares covers all USDNr
         // tokens
         uint256 usdnBalanceRoundDown = USDN.sharesOf(address(this)) / USDN.divisor();
@@ -56,9 +60,11 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
         // backed by USDN
         uint256 usdnYield = usdnBalanceRoundDown - totalSupply();
 
-        if (usdnYield > 0) {
-            // todo: use transfer shares?
-            USDN.transfer(recipient, usdnYield);
+        if (usdnYield == 0) {
+            revert USDNrNoYield();
         }
+
+        // todo: use transfer shares?
+        USDN.transfer(recipient, usdnYield);
     }
 }
