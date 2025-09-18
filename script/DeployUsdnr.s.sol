@@ -7,6 +7,11 @@ import { Usdnr } from "../src/Usdn/Usdnr.sol";
 import { IUsdn } from "../src/interfaces/Usdn/IUsdn.sol";
 
 contract DeployUsdnr is Script {
+    /**
+     * @notice Deploy the USDNr contract
+     * @param usdn The address of the USDN contract
+     * @return usdnr_ The address of the deployed USDNr contract
+     */
     function run(IUsdn usdn) external returns (address usdnr_) {
         vm.broadcast();
         usdnr_ = address(new Usdnr(usdn));
