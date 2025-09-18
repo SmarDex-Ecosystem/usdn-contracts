@@ -73,6 +73,7 @@ contract TestUsdnrWithdrawYield is UsdnrTokenFixture {
      */
     function test_revertWhen_withdrawYieldNoYield() public {
         assertEq(usdn.balanceOf(address(usdnr)), usdnr.totalSupply());
+
         vm.expectRevert(IUsdnr.USDNrNoYield.selector);
         usdnr.withdrawYield(address(this));
     }
