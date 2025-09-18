@@ -40,19 +40,21 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
     function test_wrapToAnotherAddress() public {
         uint256 amount = 10 ether;
         address recipient = address(1);
+
         uint256 initialUsdnrBalance = usdnr.balanceOf(address(this));
-        uint256 initialUsdnBalance = usdn.balanceOf(address(this));
-        uint256 initialRecipientBalance = usdnr.balanceOf(recipient);
+        uint256 initialUsdnrRecipientBalance = usdnr.balanceOf(recipient);
         uint256 initialUsdnrTotalSupply = usdnr.totalSupply();
-        uint256 usdnContractBalance = usdn.balanceOf(address(usdnr));
+
+        uint256 initialUsdnBalance = usdn.balanceOf(address(this));
+        uint256 initialUsdnContractBalance = usdn.balanceOf(address(usdnr));
 
         usdnr.wrap(amount, recipient);
 
         assertEq(usdnr.balanceOf(address(this)), initialUsdnrBalance, "user USDNr balance");
-        assertEq(usdnr.balanceOf(recipient), initialRecipientBalance + amount, "recipient USDNr balance");
+        assertEq(usdnr.balanceOf(recipient), initialUsdnrRecipientBalance + amount, "recipient USDNr balance");
         assertEq(usdnr.totalSupply(), initialUsdnrTotalSupply + amount, "total USDNr supply");
 
-        assertEq(usdn.balanceOf(address(usdnr)), usdnContractBalance + amount, "USDN balance in USDNr");
+        assertEq(usdn.balanceOf(address(usdnr)), initialUsdnContractBalance + amount, "USDN balance in USDNr");
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - amount, "user USDN balance");
     }
 
