@@ -30,25 +30,25 @@ abstract contract ForkCore is Script {
 
     /*
      * @notice Constructor to initialize the ForkCore with necessary parameters
-     * @param _collat The address of the underlying collateral asset
-     * @param _pyth The address of the Pyth oracle
-     * @param _chainlinkPrice The address of the Chainlink ETH price feed
-     * @param _pythFeedId The Pyth feed ID for ETH
-     * @param _chainlinkPriceValidity The validity duration for Chainlink price data
+     * @param collat The address of the underlying collateral asset
+     * @param pyth The address of the Pyth oracle
+     * @param chainlinkPrice The address of the Chainlink ETH price feed
+     * @param pythFeedId The Pyth feed ID for ETH
+     * @param chainlinkPriceValidity The validity duration for Chainlink price data
     */
     constructor(
-        address _collat,
-        address _pyth,
-        address _chainlinkPrice,
-        bytes32 _pythFeedId,
-        uint256 _chainlinkPriceValidity
+        address collat,
+        address pyth,
+        address chainlinkPrice,
+        bytes32 pythFeedId,
+        uint256 chainlinkPriceValidity
     ) {
-        UNDERLYING_ASSET_FORK = IWusdn(vm.envOr("UNDERLYING_ADDRESS_WUSDN", _collat));
+        UNDERLYING_ASSET_FORK = IWusdn(vm.envOr("UNDERLYING_ADDRESS_WUSDN", collat));
         price = vm.envOr("START_PRICE_USDN", price);
-        PYTH_ADDRESS_FORK = _pyth;
-        CHAINLINK_ETH_PRICE_FORK = _chainlinkPrice;
-        PYTH_ETH_FEED_ID_FORK = _pythFeedId;
-        CHAINLINK_PRICE_VALIDITY_FORK = _chainlinkPriceValidity;
+        PYTH_ADDRESS_FORK = pyth;
+        CHAINLINK_ETH_PRICE_FORK = chainlinkPrice;
+        PYTH_ETH_FEED_ID_FORK = pythFeedId;
+        CHAINLINK_PRICE_VALIDITY_FORK = chainlinkPriceValidity;
         vm.startBroadcast();
         (, SENDER_BASE,) = vm.readCallers();
         vm.stopBroadcast();
@@ -56,36 +56,36 @@ abstract contract ForkCore is Script {
 
     /**
      * @notice Executes post-deployment configuration including role setup and peripheral contracts
-     * @param _usdnProtocol The USDN protocol contract to configure
+     * @param usdnProtocol The USDN protocol contract to configure
      */
-    function postRun(IUsdnProtocol _usdnProtocol) internal {
-        setRoles(_usdnProtocol);
-        setPeripheralContracts(_usdnProtocol);
+    function postRun(IUsdnProtocol usdnProtocol) internal {
+        setRoles(usdnProtocol);
+        setPeripheralContracts(usdnProtocol);
         vm.clearMockedCalls();
     }
 
     /**
      * @notice Sets up all necessary roles for the USDN protocol
-     * @param _usdnProtocol The USDN protocol contract to grant roles to SENDER_BASE
+     * @param usdnProtocol The USDN protocol contract to grant roles to SENDER_BASE
      */
-    function setRoles(IUsdnProtocol _usdnProtocol) internal {
+    function setRoles(IUsdnProtocol usdnProtocol) internal {
         vm.startBroadcast();
-        _usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, SENDER_BASE);
-        _usdnProtocol.grantRole(Constants.ADMIN_SET_OPTIONS_ROLE, SENDER_BASE);
-        _usdnProtocol.grantRole(Constants.ADMIN_SET_PROTOCOL_PARAMS_ROLE, SENDER_BASE);
-        _usdnProtocol.grantRole(Constants.ADMIN_SET_USDN_PARAMS_ROLE, SENDER_BASE);
-        _usdnProtocol.grantRole(Constants.ADMIN_CRITICAL_FUNCTIONS_ROLE, SENDER_BASE);
-        _usdnProtocol.grantRole(Constants.ADMIN_PROXY_UPGRADE_ROLE, SENDER_BASE);
-        _usdnProtocol.grantRole(Constants.ADMIN_PAUSER_ROLE, SENDER_BASE);
-        _usdnProtocol.grantRole(Constants.ADMIN_UNPAUSER_ROLE, SENDER_BASE);
-        _usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, SENDER_BASE);
-        _usdnProtocol.grantRole(Constants.SET_OPTIONS_ROLE, SENDER_BASE);
-        _usdnProtocol.grantRole(Constants.SET_PROTOCOL_PARAMS_ROLE, SENDER_BASE);
-        _usdnProtocol.grantRole(Constants.SET_USDN_PARAMS_ROLE, SENDER_BASE);
-        _usdnProtocol.grantRole(Constants.CRITICAL_FUNCTIONS_ROLE, SENDER_BASE);
-        _usdnProtocol.grantRole(Constants.PROXY_UPGRADE_ROLE, SENDER_BASE);
-        _usdnProtocol.grantRole(Constants.PAUSER_ROLE, SENDER_BASE);
-        _usdnProtocol.grantRole(Constants.UNPAUSER_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_EXTERNAL_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_OPTIONS_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_PROTOCOL_PARAMS_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.ADMIN_SET_USDN_PARAMS_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.ADMIN_CRITICAL_FUNCTIONS_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.ADMIN_PROXY_UPGRADE_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.ADMIN_PAUSER_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.ADMIN_UNPAUSER_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.SET_EXTERNAL_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.SET_OPTIONS_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.SET_PROTOCOL_PARAMS_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.SET_USDN_PARAMS_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.CRITICAL_FUNCTIONS_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.PROXY_UPGRADE_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.PAUSER_ROLE, SENDER_BASE);
+        usdnProtocol.grantRole(Constants.UNPAUSER_ROLE, SENDER_BASE);
         vm.stopBroadcast();
     }
 
@@ -110,9 +110,9 @@ abstract contract ForkCore is Script {
 
     /**
      * @notice Sets up peripheral contracts for the USDN protocol including mock oracle middleware
-     * @param _usdnProtocol The USDN protocol contract to configure
+     * @param usdnProtocol The USDN protocol contract to configure
      */
-    function setPeripheralContracts(IUsdnProtocol _usdnProtocol) internal {
+    function setPeripheralContracts(IUsdnProtocol usdnProtocol) internal {
         vm.startBroadcast();
 
         MockWstEthOracleMiddlewareWithPyth wstEthOracleMiddleware = new MockWstEthOracleMiddlewareWithPyth(
@@ -124,7 +124,7 @@ abstract contract ForkCore is Script {
         );
         wstEthOracleMiddleware.setVerifySignature(false);
         wstEthOracleMiddleware.setWstethMockedPrice(price);
-        _usdnProtocol.setOracleMiddleware(wstEthOracleMiddleware);
+        usdnProtocol.setOracleMiddleware(wstEthOracleMiddleware);
 
         vm.stopBroadcast();
     }
