@@ -53,18 +53,17 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
             revert USDNrZeroRecipient();
         }
 
-        // we divide the USDN shares by the USDN divisor to round down, ensuring the leftover shares covers all USDNr
-        // tokens
-        uint256 usdnBalanceRoundDown = USDN.sharesOf(address(this)) / USDN.divisor();
-        // the yield is the difference between the USDN balance and the total supply of USDNr, ensuring every USDNr is
-        // backed by USDN
+        uint256 usdnDivisor = USDN.divisor();
+        // we round down the USDN balance to ensure every USDNr is always fully backed by USDN
+        uint256 usdnBalanceRoundDown = USDN.sharesOf(address(this)) / usdnDivisor;
+        // the yield is the difference between the USDN balance and the total supply of USDNr
         uint256 usdnYield = usdnBalanceRoundDown - totalSupply();
 
         if (usdnYield == 0) {
             revert USDNrNoYield();
         }
 
-        // todo: use transfer shares?
-        USDN.transfer(recipient, usdnYield);
+        // we use transferShares to save on gas
+        USDN.transferShares(recipient, usdnYield * usdnDivisor);
     }
 }
