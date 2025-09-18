@@ -15,6 +15,8 @@ interface IUsdnr is IERC20Metadata {
 
     /**
      * @notice Wraps USDN into USDNr at a 1:1 ratio.
+     *  @dev When approving USDN, use the `convertToTokensRoundUp` of the user shares, as we always round up when
+     * deducting from a token transfer allowance.
      * @param usdnAmount The amount of USDN to wrap.
      */
     function wrap(uint256 usdnAmount) external;
