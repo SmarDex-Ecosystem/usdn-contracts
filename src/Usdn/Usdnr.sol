@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
@@ -12,12 +13,15 @@ import { IUsdnr } from "../interfaces/Usdn/IUsdnr.sol";
  * @dev The generated yield from the underlying USDN tokens is retained within the contract, and withdrawable by the
  * owner.
  */
-contract Usdnr is ERC20, IUsdnr {
+contract Usdnr is ERC20, IUsdnr, Ownable2Step {
     /// @inheritdoc IUsdnr
     IUsdn public immutable USDN;
 
-    /// @param usdn The address of the USDN token contract.
-    constructor(IUsdn usdn) ERC20("USDN Reserve", "USDNr") {
+    /**
+     * @param usdn The address of the USDN token contract.
+     * @param owner The owner of the USDNr contract.
+     */
+    constructor(IUsdn usdn, address owner) ERC20("USDN Reserve", "USDNr") Ownable(owner) {
         USDN = usdn;
     }
 
