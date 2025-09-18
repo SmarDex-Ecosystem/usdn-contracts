@@ -49,9 +49,8 @@ abstract contract ForkCore is Script {
         CHAINLINK_ETH_PRICE_FORK = _chainlinkPrice;
         PYTH_ETH_FEED_ID_FORK = _pythFeedId;
         CHAINLINK_PRICE_VALIDITY_FORK = _chainlinkPriceValidity;
-        vm.startBroadcast();
+        vm.broadcast();
         (, SENDER_BASE,) = vm.readCallers();
-        vm.stopBroadcast();
     }
 
     /**
