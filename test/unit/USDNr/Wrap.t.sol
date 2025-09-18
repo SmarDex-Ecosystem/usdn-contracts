@@ -73,6 +73,6 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
      */
     function test_revertWhen_wrapRecipientIsZeroAddress() public {
         vm.expectRevert(IUsdnr.USDNrZeroRecipient.selector);
-        usdnr.wrap(10 ether, address(0));
+        usdnr.wrap(1, address(0));
     }
 }

@@ -28,8 +28,9 @@ interface IUsdnr is IERC20Metadata {
     /**
      * @notice Unwraps USDNr into USDN at a 1:1 ratio.
      * @param usdnrAmount The amount of USDNr to unwrap.
+     * @param recipient The address to receive the USDN tokens.
      */
-    function unwrap(uint256 usdnrAmount) external;
+    function unwrap(uint256 usdnrAmount, address recipient) external;
 
     /**
      * @notice Returns the address of the USDN token contract.

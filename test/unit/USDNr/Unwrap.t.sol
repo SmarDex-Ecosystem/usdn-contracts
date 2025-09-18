@@ -28,7 +28,7 @@ contract TestUsdnrUnwrap is UsdnrTokenFixture {
         uint256 initialUsdnrTotalSupply = usdnr.totalSupply();
         uint256 usdnContractBalance = usdn.balanceOf(address(usdnr));
 
-        usdnr.unwrap(amount);
+        usdnr.unwrap(amount, address(this));
 
         assertEq(usdnr.balanceOf(address(this)), initialUsdnrBalance - amount, "user USDNr balance");
         assertEq(usdnr.totalSupply(), initialUsdnrTotalSupply - amount, "total USDNr supply");
@@ -42,6 +42,16 @@ contract TestUsdnrUnwrap is UsdnrTokenFixture {
      */
     function test_revertWhen_usdnrUnwrapZeroAmount() public {
         vm.expectRevert(IUsdnr.USDNrZeroAmount.selector);
-        usdnr.unwrap(0);
+        usdnr.unwrap(0, address(this));
+    }
+
+    /**
+     * @custom:scenario Revert when the unwrap function is called with zero recipient
+     * @custom:when The unwrap function is called with zero recipient
+     * @custom:then The transaction should revert with the error {USDNrZeroRecipient}
+     */
+    function test_revertWhen_usdnrUnwrapZeroRecipient() public {
+        vm.expectRevert(IUsdnr.USDNrZeroRecipient.selector);
+        usdnr.unwrap(1, address(0));
     }
 }
