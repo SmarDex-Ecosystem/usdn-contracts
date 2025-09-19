@@ -38,6 +38,10 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
 
     /// @inheritdoc IUsdnr
     function wrapShares(uint256 usdnSharesAmount, address recipient) external {
+        if (recipient == address(0)) {
+            revert USDNrZeroRecipient();
+        }
+
         uint256 balanceBefore = USDN.balanceOf(address(this));
 
         USDN.transferSharesFrom(msg.sender, address(this), usdnSharesAmount);

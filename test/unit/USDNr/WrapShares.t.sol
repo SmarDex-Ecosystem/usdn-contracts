@@ -76,4 +76,29 @@ contract TestUsdnrWrapShares is UsdnrTokenFixture {
         vm.expectRevert(IUsdnr.USDNrZeroAmount.selector);
         usdnr.wrapShares(0, address(this));
     }
+
+    /**
+     * @custom:scenario Revert when the wrapShares function is called with shares that convert to zero USDN
+     * @custom:when The wrapShares function is called with non-zero shares that convert to zero USDN
+     * @custom:then The transaction should revert with the error {USDNrZeroAmount}
+     */
+    function test_revertWhen_usdnrWrapSharesConvertingToZeroUsdn() public {
+        // Get the number of shares that convert to 0 wei of USDN
+        uint256 sharesAmount = (usdn.convertToShares(1) - 1) / 2;
+        assertEq(usdn.convertToTokens(sharesAmount), 0, "shares convert to 0 USDN");
+        assertGt(sharesAmount, 0, "shares amount must be greater than 0");
+
+        vm.expectRevert(IUsdnr.USDNrZeroAmount.selector);
+        usdnr.wrapShares(sharesAmount, address(this));
+    }
+
+    /**
+     * @custom:scenario Revert when the wrapShares function is called with zero address as recipient
+     * @custom:when The wrapShares function is called with zero address as recipient
+     * @custom:then The transaction should revert with the error {USDNrZeroRecipient}
+     */
+    function test_revertWhen_usdnrWrapSharesToZeroAddress() public {
+        vm.expectRevert(IUsdnr.USDNrZeroRecipient.selector);
+        usdnr.wrapShares(1, address(0));
+    }
 }
