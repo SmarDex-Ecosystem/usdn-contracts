@@ -22,6 +22,14 @@ interface IUsdnr is IERC20Metadata {
     function wrap(uint256 usdnAmount) external;
 
     /**
+     * @notice Wraps USDN shares into USDNr.
+     * @dev The shares must represent at least 1 wei of USDN token. The conversion ratio is 1:1 with the USDN amount.
+     * @param usdnSharesAmount The amount of USDN shares to wrap.
+     * @param recipient The address to receive the USDNr tokens.
+     */
+    function wrapShares(uint256 usdnSharesAmount, address recipient) external;
+
+    /**
      * @notice Unwraps USDNr into USDN at a 1:1 ratio.
      * @param usdnrAmount The amount of USDNr to unwrap.
      */
