@@ -7,7 +7,7 @@ SCRIPT_DIR=$(dirname -- "$(readlink -f -- "$BASH_SOURCE")")
 pushd $SCRIPT_DIR/../.. >/dev/null
 
 # Anvil RPC URL.
-rpcUrl=http://127.0.0.1:8545
+rpcUrl=http://localhost:8545
 
 # Sourcify verifier URL.
 sourcifyVerifierUrl=http://localhost:5555
