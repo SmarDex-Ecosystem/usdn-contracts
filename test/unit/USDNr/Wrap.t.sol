@@ -37,6 +37,14 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - amount, "user USDN balance");
     }
 
+    /**
+     * @custom:scenario Wrap USDN to another address
+     * @custom:when The wrap function is called with a recipient address
+     * @custom:then The recipient balance of USDNr increases by the amount
+     * @custom:and The total supply of USDNr increases by the amount
+     * @custom:and The user balance of USDN decreases by the amount
+     * @custom:and The total wrapped USDN increases by the amount
+     */
     function test_wrapToAnotherAddress() public {
         uint256 amount = 10 ether;
         address recipient = address(1);

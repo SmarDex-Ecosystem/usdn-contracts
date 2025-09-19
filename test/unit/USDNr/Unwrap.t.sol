@@ -39,9 +39,9 @@ contract TestUsdnrUnwrap is UsdnrTokenFixture {
      * @custom:scenario Unwrap USDNr to another address
      * @custom:when The unwrap function is called with a recipient address
      * @custom:then The user balance of USDNr decreases by the amount
-     * @custom:then The total supply of USDNr decreases by the amount
-     * @custom:then The recipient balance of USDN increases by the amount
-     * @custom:then The total wrapped USDN decreases by the amount
+     * @custom:and The total supply of USDNr decreases by the amount
+     * @custom:and The recipient balance of USDN increases by the amount
+     * @custom:and The total wrapped USDN decreases by the amount
      */
     function test_unwrapToAnotherAddress() public {
         uint256 amount = 10 ether;
