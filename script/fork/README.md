@@ -90,7 +90,7 @@ This script:
 ./script/fork/deployUsdnAndShortdnFork.sh
 ```
 
-This script deploys both protocols and generates `.env.usdn_shortdn`.
+This script deploys both protocols and generates `.env.fork`.
 
 ### Manual Deployment with Forge
 
