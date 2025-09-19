@@ -31,9 +31,9 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
             revert USDNrZeroAmount();
         }
 
-        USDN.transferFrom(msg.sender, address(this), usdnAmount);
-
         _mint(msg.sender, usdnAmount);
+
+        USDN.transferFrom(msg.sender, address(this), usdnAmount);
     }
 
     /// @inheritdoc IUsdnr
@@ -45,5 +45,25 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
         _burn(msg.sender, usdnrAmount);
 
         USDN.transfer(msg.sender, usdnrAmount);
+    }
+
+    /// @inheritdoc IUsdnr
+    function withdrawYield(address recipient) external onlyOwner {
+        if (recipient == address(0)) {
+            revert USDNrZeroRecipient();
+        }
+
+        uint256 usdnDivisor = USDN.divisor();
+        // we round down the USDN balance to ensure every USDNr is always fully backed by USDN
+        uint256 usdnBalanceRoundDown = USDN.sharesOf(address(this)) / usdnDivisor;
+        // the yield is the difference between the USDN balance and the total supply of USDNr
+        uint256 usdnYield = usdnBalanceRoundDown - totalSupply();
+
+        if (usdnYield == 0) {
+            revert USDNrNoYield();
+        }
+
+        // we use transferShares to save on gas
+        USDN.transferShares(recipient, usdnYield * usdnDivisor);
     }
 }
