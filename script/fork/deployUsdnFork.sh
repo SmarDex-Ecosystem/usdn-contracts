@@ -6,11 +6,8 @@ SCRIPT_DIR=$(dirname -- "$(readlink -f -- "$BASH_SOURCE")")
 # Execute in the context of the project's root.
 pushd $SCRIPT_DIR/../.. >/dev/null
 
-# Anvil RPC URL.
-rpcUrl=http://localhost:8545
-
-# Sourcify verifier URL.
-sourcifyVerifierUrl=http://localhost:5555
+rpcUrl=http://localhost:8545 # Anvil RPC URL.
+sourcifyVerifierUrl=http://localhost:5555 # Sourcify server URL.
 
 # Anvil first test private key.
 deployerPrivateKey=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
