@@ -309,8 +309,6 @@ interface IUsdnProtocolTypes {
      * @param userMaxLeverage The maximum leverage for the newly created position.
      * @param deadline The deadline of the open position to be initiated.
      * @param securityDepositValue The value of the security deposit for the newly created pending action.
-     * @param currentPriceData The current price data (used to calculate the temporary leverage and entry price,
-     * pending validation).
      */
     struct InitiateOpenPositionParams {
         address user;
