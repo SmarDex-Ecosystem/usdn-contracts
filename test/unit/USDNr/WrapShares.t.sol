@@ -28,9 +28,9 @@ contract TestUsdnrWrapShares is UsdnrTokenFixture {
         uint256 initialUsdnrTotalSupply = usdnr.totalSupply();
         uint256 usdnContractBalance = usdn.sharesOf(address(usdnr));
 
-        uint256 usdnAmount = usdnr.wrapShares(sharesAmount, address(this));
+        uint256 wrappedAmount = usdnr.wrapShares(sharesAmount, address(this));
 
-        assertEq(usdnAmount, amount, "wrapped USDN amount");
+        assertEq(wrappedAmount, amount, "wrapped USDN amount");
 
         assertEq(usdnr.balanceOf(address(this)), initialUsdnrBalance + amount, "user USDNr balance");
         assertEq(usdnr.totalSupply(), initialUsdnrTotalSupply + amount, "total USDNr supply");
@@ -57,9 +57,9 @@ contract TestUsdnrWrapShares is UsdnrTokenFixture {
         uint256 initialUsdnBalance = usdn.sharesOf(address(this));
         uint256 initialUsdnContractBalance = usdn.sharesOf(address(usdnr));
 
-        uint256 usdnAmount = usdnr.wrapShares(sharesAmount, recipient);
+        uint256 wrappedAmount = usdnr.wrapShares(sharesAmount, recipient);
 
-        assertEq(usdnAmount, amount, "wrapped USDN amount");
+        assertEq(wrappedAmount, amount, "wrapped USDN amount");
 
         assertEq(usdnr.balanceOf(address(this)), initialUsdnrBalance, "user USDNr balance");
         assertEq(usdnr.balanceOf(recipient), initialUsdnrRecipientBalance + amount, "recipient USDNr balance");
