@@ -20,6 +20,13 @@ interface IUsdnr is IERC20Metadata {
     error USDNrNoYield();
 
     /**
+     * @notice Previews the amount of USDNr that would be received for wrapping a given amount of USDN shares.
+     * @param usdnSharesAmount The amount of USDN shares to wrap.
+     * @return wrappedAmount_ The amount of USDNr that would be received.
+     */
+    function previewWrapShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_);
+
+    /**
      * @notice Wraps USDN into USDNr at a 1:1 ratio.
      *  @dev When approving USDN, use the `convertToTokensRoundUp` of the user shares, as we always round up when
      * deducting from a token transfer allowance.
