@@ -16,7 +16,7 @@ contract TestUsdnrWithdrawYield is UsdnrTokenFixture {
 
         usdn.mint(address(this), initialDeposit);
         usdn.approve(address(usdnr), type(uint256).max);
-        usdnr.wrap(initialDeposit);
+        usdnr.wrap(initialDeposit, address(this));
     }
 
     /**
