@@ -12,8 +12,8 @@ contract DeployUsdnr is Script {
      * @param usdn The address of the USDN contract
      * @return usdnr_ The address of the deployed USDNr contract
      */
-    function run(IUsdn usdn) external returns (Usdnr usdnr_) {
+    function run(IUsdn usdn, address owner) external returns (Usdnr usdnr_) {
         vm.broadcast();
-        usdnr_ = new Usdnr(usdn);
+        usdnr_ = new Usdnr(usdn, owner);
     }
 }
