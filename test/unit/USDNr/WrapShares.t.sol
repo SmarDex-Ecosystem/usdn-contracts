@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 import { UsdnrTokenFixture } from "./utils/Fixtures.sol";
 
 import { IUsdnr } from "../../../src/interfaces/Usdn/IUsdnr.sol";
@@ -28,6 +30,8 @@ contract TestUsdnrWrapShares is UsdnrTokenFixture {
         uint256 initialUsdnrTotalSupply = usdnr.totalSupply();
         uint256 usdnContractBalance = usdn.sharesOf(address(usdnr));
 
+        vm.expectEmit();
+        emit IERC20.Transfer(address(0), address(this), amount);
         uint256 wrappedAmount = usdnr.wrapShares(sharesAmount, address(this));
 
         assertEq(wrappedAmount, amount, "wrapped USDN amount");
@@ -57,6 +61,8 @@ contract TestUsdnrWrapShares is UsdnrTokenFixture {
         uint256 initialUsdnBalance = usdn.sharesOf(address(this));
         uint256 initialUsdnContractBalance = usdn.sharesOf(address(usdnr));
 
+        vm.expectEmit();
+        emit IERC20.Transfer(address(0), address(this), amount);
         uint256 wrappedAmount = usdnr.wrapShares(sharesAmount, recipient);
 
         assertEq(wrappedAmount, amount, "wrapped USDN amount");
