@@ -19,8 +19,8 @@ contract TestUsdnrUnwrap is UsdnrTokenFixture {
      * @custom:scenario Unwrap USDNr to USDN
      * @custom:when The unwrap function is called with an amount of USDNr
      * @custom:then The user balance of USDNr decreases by the same amount
-     * @custom:then The total supply of USDNr decreases by the same amount
-     * @custom:then The total wrapped USDN decreases by the same amount
+     * @custom:and The total supply of USDNr decreases by the same amount
+     * @custom:and The total wrapped USDN decreases by the same amount
      */
     function test_unwrap() public {
         uint256 amount = 10 ether;

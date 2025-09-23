@@ -18,8 +18,8 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
      * @custom:scenario Wrap USDN to USDNr
      * @custom:when The wrap function is called with an amount of USDN
      * @custom:then The user balance of USDNr increases by the same amount
-     * @custom:then The total supply of USDNr increases by the same amount
-     * @custom:then The total wrapped USDN increases by the same amount
+     * @custom:and The total supply of USDNr increases by the same amount
+     * @custom:and The total wrapped USDN increases by the same amount
      */
     function test_wrap() public {
         uint256 amount = 10 ether;
