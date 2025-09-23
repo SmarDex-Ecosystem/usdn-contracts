@@ -29,7 +29,7 @@ contract StakingDecayRateHandler is Usdnr, Test {
         vm.assume(userUsdnBalanceBefore > 0);
         usdnAmount = bound(usdnAmount, 1, userUsdnBalanceBefore);
 
-        this.wrap(usdnAmount);
+        this.wrap(usdnAmount, _currentActor);
 
         assertEq(this.balanceOf(_currentActor), userUsdnrBalanceBefore + usdnAmount, "user USDNr balance");
         assertEq(this.totalSupply(), totalSupplyBefore + usdnAmount, "total USDNr supply");
@@ -76,7 +76,7 @@ contract StakingDecayRateHandler is Usdnr, Test {
 
         usdnrAmount = bound(usdnrAmount, 1, userUsdnrBalanceBefore);
 
-        this.unwrap(usdnrAmount);
+        this.unwrap(usdnrAmount, _currentActor);
 
         assertEq(this.balanceOf(_currentActor), userUsdnrBalanceBefore - usdnrAmount, "user USDNr balance");
         assertEq(this.totalSupply(), totalSupplyBefore - usdnrAmount, "total USDNr supply");
