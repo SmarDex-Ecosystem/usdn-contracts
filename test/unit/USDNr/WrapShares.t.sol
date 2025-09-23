@@ -62,7 +62,7 @@ contract TestUsdnrWrapShares is UsdnrTokenFixture {
         uint256 initialUsdnContractBalance = usdn.sharesOf(address(usdnr));
 
         vm.expectEmit();
-        emit IERC20.Transfer(address(0), address(this), amount);
+        emit IERC20.Transfer(address(0), recipient, amount);
         uint256 wrappedAmount = usdnr.wrapShares(sharesAmount, recipient);
 
         assertEq(wrappedAmount, amount, "wrapped USDN amount");
