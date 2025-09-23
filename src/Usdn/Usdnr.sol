@@ -40,6 +40,22 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
     }
 
     /// @inheritdoc IUsdnr
+    function wrapShares(uint256 usdnSharesAmount, address recipient) external returns (uint256 wrappedAmount_) {
+        if (recipient == address(0)) {
+            revert USDNrZeroRecipient();
+        }
+
+        wrappedAmount_ = usdnSharesAmount / USDN.divisor();
+        if (wrappedAmount_ == 0) {
+            revert USDNrZeroAmount();
+        }
+
+        USDN.transferSharesFrom(msg.sender, address(this), usdnSharesAmount);
+
+        _mint(recipient, wrappedAmount_);
+    }
+
+    /// @inheritdoc IUsdnr
     function unwrap(uint256 usdnrAmount, address recipient) external {
         if (usdnrAmount == 0) {
             revert USDNrZeroAmount();
@@ -51,5 +67,25 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
         _burn(msg.sender, usdnrAmount);
 
         USDN.transfer(recipient, usdnrAmount);
+    }
+
+    /// @inheritdoc IUsdnr
+    function withdrawYield(address recipient) external onlyOwner {
+        if (recipient == address(0)) {
+            revert USDNrZeroRecipient();
+        }
+
+        uint256 usdnDivisor = USDN.divisor();
+        // we round down the USDN balance to ensure every USDNr is always fully backed by USDN
+        uint256 usdnBalanceRoundDown = USDN.sharesOf(address(this)) / usdnDivisor;
+        // the yield is the difference between the USDN balance and the total supply of USDNr
+        uint256 usdnYield = usdnBalanceRoundDown - totalSupply();
+
+        if (usdnYield == 0) {
+            revert USDNrNoYield();
+        }
+
+        // we use transferShares to save on gas
+        USDN.transferShares(recipient, usdnYield * usdnDivisor);
     }
 }
