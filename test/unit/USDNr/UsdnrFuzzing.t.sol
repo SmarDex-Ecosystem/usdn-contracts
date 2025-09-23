@@ -7,10 +7,9 @@ import { UsdnrTokenFixture } from "./utils/Fixtures.sol";
 contract TestUsdnrFuzzing is UsdnrTokenFixture {
     /**
      * @custom:scenario A user wraps their usdn balance to usdnr, a rebase appends, and then unwraps their usdnr
-     * @custom:given A deployed usdn
-     * @custom:and A deployed usdnr
-     * @custom:and The user has a usdn balance
-     * @custom:when The scenario appends
+     * @custom:given The user wrap their usdn balance to usdnr
+     * @custom:and A usdn rebase append
+     * @custom:when The user unwrap their usdnr to usdn
      * @custom:then The user's usdn balance must be equal to the initial usdn balance
      * @custom:and The user's usdnr balance must be zero
      * @param initialUsdnBalance The initial usdn balance to mint to the user
