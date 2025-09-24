@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { Usdn } from "../../../src/Usdn/Usdn.sol";
-
 import { Test } from "forge-std/Test.sol";
 
 import "../../utils/Constants.sol";
 import { UsdnrHandler } from "./utils/Handler.sol";
 
+import { Usdn } from "../../../src/Usdn/Usdn.sol";
+
+/// @dev Invariant tests for the `USDnr` contract
 contract TestUsdnrInvariants is Test {
     Usdn internal _usdn;
     UsdnrHandler internal _usdnr;

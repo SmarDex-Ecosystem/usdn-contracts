@@ -9,6 +9,7 @@ import { Usdnr } from "../../../../src/Usdn/Usdnr.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnr } from "../../../../src/interfaces/Usdn/IUsdnr.sol";
 
+/// @dev Handler for USDNr contract to be used in invariant testing
 contract UsdnrHandler is Usdnr, Test {
     using FixedPointMathLib for uint256;
 
@@ -29,6 +30,7 @@ contract UsdnrHandler is Usdnr, Test {
     function wrapTest(uint256 usdnAmount, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
         uint256 userUsdnBalanceBefore = USDN.balanceOf(_currentActor);
         uint256 contractUsdnBalanceBefore = USDN.balanceOf(address(this));
+
         uint256 userUsdnrBalanceBefore = balanceOf(_currentActor);
         uint256 totalSupplyBefore = totalSupply();
 
@@ -90,6 +92,7 @@ contract UsdnrHandler is Usdnr, Test {
     function unwrapTest(uint256 usdnrAmount, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
         uint256 userUsdnBalanceBefore = USDN.balanceOf(_currentActor);
         uint256 contractUsdnBalanceBefore = USDN.balanceOf(address(this));
+
         uint256 userUsdnrBalanceBefore = balanceOf(_currentActor);
         uint256 totalSupplyBefore = totalSupply();
 
@@ -109,6 +112,7 @@ contract UsdnrHandler is Usdnr, Test {
         uint256 ownerUsdnBalanceBefore = USDN.balanceOf(owner());
         uint256 contractUsdnBalanceBefore = USDN.balanceOf(address(this));
         uint256 balanceRoundedDown = USDN.sharesOf(address(this)) / USDN.divisor();
+
         uint256 totalSupply = totalSupply();
 
         if (totalSupply >= balanceRoundedDown) {
