@@ -19,8 +19,8 @@ contract TestUsdnrWithdrawYield is UsdnrTokenFixture {
 
     /**
      * @custom:scenario Withdraw yield from the USDNr contract
-     * @custom:when The `withdrawYield` function is called
-     * @custom:then The yield is successfully withdrawn
+     * @custom:when The `withdrawYield` function is called by any address
+     * @custom:then The yield is successfully withdrawn to the yield recipient
      */
     function test_withdrawYield() public {
         usdn.rebase(usdn.divisor() * 90 / 100);
@@ -30,6 +30,7 @@ contract TestUsdnrWithdrawYield is UsdnrTokenFixture {
         vm.prank(address(1));
         usdnr.withdrawYield();
 
+        assertEq(usdn.balanceOf(address(1)), 0);
         assertEq(usdn.balanceOf(address(this)), yield);
         assertEq(usdn.balanceOf(address(usdnr)), initialDeposit);
     }
