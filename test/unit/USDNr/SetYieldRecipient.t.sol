@@ -15,12 +15,13 @@ contract TestUsdnrSetYieldRecipient is UsdnrTokenFixture {
      * @custom:then The yield recipient is successfully updated
      */
     function test_setNewYieldRecipient() public {
+        address newRecipient = address(2);
         assertEq(usdnr.getYieldRecipient(), address(this), "yield recipient before");
 
         vm.expectEmit();
-        emit IUsdnr.YieldRecipientUpdated(address(2));
-        usdnr.setYieldRecipient(address(2));
-        assertEq(usdnr.getYieldRecipient(), address(2), "yield recipient after");
+        emit IUsdnr.YieldRecipientUpdated(newRecipient);
+        usdnr.setYieldRecipient(newRecipient);
+        assertEq(usdnr.getYieldRecipient(), newRecipient, "yield recipient after");
     }
 
     /**
