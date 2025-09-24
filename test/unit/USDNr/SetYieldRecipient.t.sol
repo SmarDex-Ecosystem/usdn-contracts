@@ -3,9 +3,9 @@ pragma solidity 0.8.26;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { IUsdnr } from "../../../src/interfaces/Usdn/IUsdnr.sol";
-
 import { UsdnrTokenFixture } from "./utils/Fixtures.sol";
+
+import { IUsdnr } from "../../../src/interfaces/Usdn/IUsdnr.sol";
 
 /// @custom:feature The `setYieldRecipient` function of the `USDNr` contract
 contract TestUsdnrSetYieldRecipient is UsdnrTokenFixture {
