@@ -17,17 +17,31 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
     /// @inheritdoc IUsdnr
     IUsdn public immutable USDN;
 
+    /// @notice The address that will receive the yield when {withdrawYield} is called.
+    address internal _yieldRecipient;
+
     /**
      * @param usdn The address of the USDN token contract.
      * @param owner The owner of the USDnr contract.
+     * @param yieldRecipient The address that will receive the yield when {withdrawYield} is called.
      */
-    constructor(IUsdn usdn, address owner) ERC20("USDN Reserve", "USDnr") Ownable(owner) {
+    constructor(IUsdn usdn, address owner, address yieldRecipient) ERC20("USDN Reserve", "USDnr") Ownable(owner) {
         USDN = usdn;
+        _yieldRecipient = yieldRecipient;
     }
 
     /// @inheritdoc IUsdnr
-    function previewWrapShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_) {
-        wrappedAmount_ = usdnSharesAmount / USDN.divisor();
+    function getYieldRecipient() external view returns (address yieldRecipient_) {
+        yieldRecipient_ = _yieldRecipient;
+    }
+
+    /// @inheritdoc IUsdnr
+    function setYieldRecipient(address newYieldRecipient) external onlyOwner {
+        if (newYieldRecipient == address(0)) {
+            revert USDnrZeroRecipient();
+        }
+        _yieldRecipient = newYieldRecipient;
+        emit USDnrYieldRecipientUpdated(newYieldRecipient);
     }
 
     /// @inheritdoc IUsdnr
@@ -42,6 +56,11 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
         USDN.transferFrom(msg.sender, address(this), usdnAmount);
 
         _mint(recipient, usdnAmount);
+    }
+
+    /// @inheritdoc IUsdnr
+    function previewWrapShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_) {
+        wrappedAmount_ = usdnSharesAmount / USDN.divisor();
     }
 
     /// @inheritdoc IUsdnr
@@ -75,11 +94,7 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
     }
 
     /// @inheritdoc IUsdnr
-    function withdrawYield(address recipient) external onlyOwner {
-        if (recipient == address(0)) {
-            revert USDnrZeroRecipient();
-        }
-
+    function withdrawYield() external {
         uint256 usdnDivisor = USDN.divisor();
         // we round down the USDN balance to ensure every USDnr is always fully backed by USDN
         uint256 usdnBalanceRoundDown = USDN.sharesOf(address(this)) / usdnDivisor;
@@ -89,8 +104,9 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
         if (usdnYield == 0) {
             revert USDnrNoYield();
         }
+        address recipient = _yieldRecipient;
 
-        emit YieldWithdrawn(recipient, usdnYield);
+        emit USDnrYieldWithdrawn(recipient, usdnYield);
 
         // we use transferShares to save on gas
         USDN.transferShares(recipient, usdnYield * usdnDivisor);
