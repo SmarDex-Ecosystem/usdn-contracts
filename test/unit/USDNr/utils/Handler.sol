@@ -3,11 +3,15 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
 import { Usdnr } from "../../../../src/Usdn/Usdnr.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnr } from "../../../../src/interfaces/Usdn/IUsdnr.sol";
 
 contract UsdnrHandler is Usdnr, Test {
+    using FixedPointMathLib for uint256;
+
     address[] internal _actors;
     address internal _currentActor;
 
@@ -121,5 +125,29 @@ contract UsdnrHandler is Usdnr, Test {
 
         assertEq(USDN.balanceOf(address(this)), contractUsdnBalanceBefore - yield, "USDN balance in USDNr");
         assertEq(USDN.balanceOf(owner()), ownerUsdnBalanceBefore + yield, "owner USDN balance");
+    }
+
+    function mintUsdn(uint256 usdnShares, uint256 actorIndexSeed) public {
+        address actor = _actors[bound(actorIndexSeed, 0, _actors.length - 1)];
+        usdnShares = bound(usdnShares, 0, type(uint256).max - USDN.totalShares());
+        USDN.mintShares(actor, usdnShares);
+    }
+
+    function rebaseTest(uint256 divisor, uint256 rand) public {
+        uint256 oldDivisor = USDN.divisor();
+        vm.assume(oldDivisor != USDN.MIN_DIVISOR());
+        // 1% change of rebasing to the minimum possible value
+        if (rand % 100 == 0) {
+            USDN.rebase(USDN.MIN_DIVISOR());
+            return;
+        }
+        // rebases at most 50%
+        divisor = bound(divisor, USDN.MIN_DIVISOR().max(oldDivisor / 2), oldDivisor - 1);
+        USDN.rebase(divisor);
+    }
+
+    function giftUsdn(uint256 usdnShares) public {
+        usdnShares = bound(usdnShares, 0, type(uint256).max - USDN.totalShares());
+        USDN.mintShares(address(this), usdnShares);
     }
 }

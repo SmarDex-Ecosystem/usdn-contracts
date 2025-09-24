@@ -16,6 +16,8 @@ contract TestUsdnrInvariants is Test {
     function setUp() public {
         _usdn = new Usdn(address(this), address(this));
         _usdnr = new UsdnrHandler(_usdn, address(this), _actors);
+        _usdn.grantRole(_usdn.REBASER_ROLE(), address(_usdnr));
+        _usdn.grantRole(_usdn.MINTER_ROLE(), address(_usdnr));
 
         for (uint256 i = 0; i < _actors.length; i++) {
             _usdn.mint(_actors[i], 1_000_000 ether);
@@ -27,11 +29,14 @@ contract TestUsdnrInvariants is Test {
 
         targetContract(address(_usdnr));
 
-        bytes4[] memory usdnrSelectors = new bytes4[](4);
+        bytes4[] memory usdnrSelectors = new bytes4[](7);
         usdnrSelectors[0] = _usdnr.wrapTest.selector;
         usdnrSelectors[1] = _usdnr.wrapSharesTest.selector;
         usdnrSelectors[2] = _usdnr.unwrapTest.selector;
         usdnrSelectors[3] = _usdnr.withdrawYieldTest.selector;
+        usdnrSelectors[4] = _usdnr.mintUsdn.selector;
+        usdnrSelectors[5] = _usdnr.rebaseTest.selector;
+        usdnrSelectors[6] = _usdnr.giftUsdn.selector;
         targetSelector(FuzzSelector({ addr: address(_usdnr), selectors: usdnrSelectors }));
     }
 
