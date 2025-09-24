@@ -31,13 +31,13 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
     }
 
     /// @inheritdoc IUsdnr
-    function getYieldRecipient() external view returns (address yieldRecipient_) {
-        yieldRecipient_ = _yieldRecipient;
+    function previewWrapShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_) {
+        wrappedAmount_ = usdnSharesAmount / USDN.divisor();
     }
 
     /// @inheritdoc IUsdnr
-    function previewWrapShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_) {
-        wrappedAmount_ = usdnSharesAmount / USDN.divisor();
+    function getYieldRecipient() external view returns (address yieldRecipient_) {
+        yieldRecipient_ = _yieldRecipient;
     }
 
     /// @inheritdoc IUsdnr

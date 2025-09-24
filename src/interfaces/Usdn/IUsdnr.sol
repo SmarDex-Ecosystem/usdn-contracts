@@ -33,17 +33,17 @@ interface IUsdnr is IERC20Metadata {
     error USDnrNoYield();
 
     /**
-     * @notice Returns the address that will receive the yield when {withdrawYield} is called.
-     * @return yieldRecipient_ The address of the yield recipient.
-     */
-    function getYieldRecipient() external view returns (address yieldRecipient_);
-
-    /**
      * @notice Previews the amount of USDnr that would be received for wrapping a given amount of USDN shares.
      * @param usdnSharesAmount The amount of USDN shares to wrap.
      * @return wrappedAmount_ The amount of USDnr that would be received.
      */
     function previewWrapShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_);
+
+    /**
+     * @notice Returns the address that will receive the yield when {withdrawYield} is called.
+     * @return yieldRecipient_ The address of the yield recipient.
+     */
+    function getYieldRecipient() external view returns (address yieldRecipient_);
 
     /**
      * @notice Sets a new address to receive the yield when {withdrawYield} is called.
