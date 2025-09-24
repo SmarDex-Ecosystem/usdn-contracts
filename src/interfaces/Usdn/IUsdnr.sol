@@ -20,11 +20,30 @@ interface IUsdnr is IERC20Metadata {
     error USDNrNoYield();
 
     /**
+     * @notice Emitted when the yield recipient is updated.
+     * @param newYieldRecipient The new address of the yield recipient.
+     */
+    event YieldRecipientUpdated(address newYieldRecipient);
+
+    /**
+     * @notice Returns the address that will receive the yield when `withdrawYield` is called.
+     * @return yieldRecipient_ The address of the yield recipient.
+     */
+    function getYieldRecipient() external view returns (address yieldRecipient_);
+
+    /**
      * @notice Previews the amount of USDNr that would be received for wrapping a given amount of USDN shares.
      * @param usdnSharesAmount The amount of USDN shares to wrap.
      * @return wrappedAmount_ The amount of USDNr that would be received.
      */
     function previewWrapShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_);
+
+    /**
+     * @notice Sets a new address to receive the yield when `withdrawYield` is called.
+     * @dev Can only be called by the owner.
+     * @param newYieldRecipient The address of the new yield recipient.
+     */
+    function setYieldRecipient(address newYieldRecipient) external;
 
     /**
      * @notice Wraps USDN into USDNr at a 1:1 ratio.
@@ -62,7 +81,6 @@ interface IUsdnr is IERC20Metadata {
      * @dev The yield is the difference between the USDN balance of the contract and the total supply of USDNr. To
      * calculate the balance we use `USDN.sharesOf(address(this)) / USDN.divisor()` to round down, ensuring that all
      * USDNr tokens are always fully backed by USDN.
-     * @param recipient The address to receive the withdrawn yield.
      */
-    function withdrawYield(address recipient) external;
+    function withdrawYield() external;
 }

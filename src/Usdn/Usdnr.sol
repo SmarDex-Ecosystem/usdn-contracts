@@ -17,17 +17,36 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
     /// @inheritdoc IUsdnr
     IUsdn public immutable USDN;
 
+    /// @notice Address that will receive the yield when `withdrawYield` is called.
+    address internal _yieldRecipient;
+
     /**
      * @param usdn The address of the USDN token contract.
      * @param owner The owner of the USDNr contract.
+     * @param yieldRecipient The address that will receive the yield when `withdrawYield` is called.
      */
-    constructor(IUsdn usdn, address owner) ERC20("USDN Reserve", "USDNr") Ownable(owner) {
+    constructor(IUsdn usdn, address owner, address yieldRecipient) ERC20("USDN Reserve", "USDNr") Ownable(owner) {
         USDN = usdn;
+        _yieldRecipient = yieldRecipient;
+    }
+
+    /// @inheritdoc IUsdnr
+    function getYieldRecipient() external view returns (address yieldRecipient_) {
+        yieldRecipient_ = _yieldRecipient;
     }
 
     /// @inheritdoc IUsdnr
     function previewWrapShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_) {
         wrappedAmount_ = usdnSharesAmount / USDN.divisor();
+    }
+
+    /// @inheritdoc IUsdnr
+    function setYieldRecipient(address newYieldRecipient) external onlyOwner {
+        if (newYieldRecipient == address(0)) {
+            revert USDNrZeroRecipient();
+        }
+        _yieldRecipient = newYieldRecipient;
+        emit YieldRecipientUpdated(newYieldRecipient);
     }
 
     /// @inheritdoc IUsdnr
@@ -75,11 +94,7 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
     }
 
     /// @inheritdoc IUsdnr
-    function withdrawYield(address recipient) external onlyOwner {
-        if (recipient == address(0)) {
-            revert USDNrZeroRecipient();
-        }
-
+    function withdrawYield() external {
         uint256 usdnDivisor = USDN.divisor();
         // we round down the USDN balance to ensure every USDNr is always fully backed by USDN
         uint256 usdnBalanceRoundDown = USDN.sharesOf(address(this)) / usdnDivisor;
@@ -91,6 +106,6 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
         }
 
         // we use transferShares to save on gas
-        USDN.transferShares(recipient, usdnYield * usdnDivisor);
+        USDN.transferShares(_yieldRecipient, usdnYield * usdnDivisor);
     }
 }
