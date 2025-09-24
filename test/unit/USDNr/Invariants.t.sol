@@ -21,6 +21,7 @@ contract TestUsdnrInvariants is Test {
 
         for (uint256 i = 0; i < _actors.length; i++) {
             _usdn.mint(_actors[i], 1_000_000 ether);
+
             vm.startPrank(_actors[i]);
             _usdn.approve(address(_usdnr), type(uint256).max);
             _usdnr.approve(address(_usdnr), type(uint256).max);
@@ -81,7 +82,7 @@ contract TestUsdnrInvariants is Test {
             }
         }
 
-        assertEq(_usdnr.totalSupply(), 0, "total supply after unwind");
+        assertEq(_usdnr.totalSupply(), 0, "total supply after full unwrap should be 0");
         assertApproxEqAbs(_usdn.balanceOf(address(_usdnr)), 0, 1, "total USDN in USDNr after should be 0");
     }
 }
