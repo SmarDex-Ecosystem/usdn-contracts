@@ -4,10 +4,10 @@
 
 ### Production mode
 
-For a mainnet deployment, you can use the `01_DeployUsdnWstethUsd.s.sol` script with:
+For a mainnet deployment, you can use the `DeployUsdnWstethUsd.s.sol` script with:
 
 ```bash
-forge clean && forge script -f RPC_URL script/01_DeployUsdnWstethUsd.s.sol:DeployUsdnWstethUsd --broadcast -i 1 --batch-size 5
+forge clean && forge script -f RPC_URL script/DeployUsdnWstethUsd.s.sol:DeployUsdnWstethUsd --broadcast -i 1 --batch-size 5
 ```
 
 You can use `-t` or `-l` options instead of `-i 1` for trezor or ledger hardware wallet. The `forge clean` command is necessary to use the OpenZeppelin verification tool.
@@ -22,6 +22,14 @@ The deployment script for the fork mode does not require any input:
 
 You can define `UNDERLYING_ADDRESS` and/or `START_PRICE` env variables.  
 If you do so, the `wStEth` asset will be replaced by `UNDERLYING_ADDRESS` and the underlying price will then be defined to `START_PRICE`.
+
+## Deploy peripheral
+
+To deploy the `USDnr` token, run the command:
+
+```bash
+forge script script/DeployUsdnr.s.sol --sig "run(address,address)" $USDN_ADDRESS $OWNER_ADDRESS -f $RPC_UR -i 1 --broadcast
+```
 
 ## Upgrade protocol
 
