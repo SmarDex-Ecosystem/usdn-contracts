@@ -23,7 +23,7 @@ interface IUsdnr is IERC20Metadata {
      * @notice Emitted when the yield recipient is updated.
      * @param newYieldRecipient The new address of the yield recipient.
      */
-    event YieldRecipientUpdated(address newYieldRecipient);
+    event USDnrYieldRecipientUpdated(address newYieldRecipient);
 
     /**
      * @notice Returns the address that will receive the yield when `withdrawYield` is called.

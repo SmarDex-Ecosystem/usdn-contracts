@@ -46,7 +46,7 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
             revert USDNrZeroRecipient();
         }
         _yieldRecipient = newYieldRecipient;
-        emit YieldRecipientUpdated(newYieldRecipient);
+        emit USDnrYieldRecipientUpdated(newYieldRecipient);
     }
 
     /// @inheritdoc IUsdnr
