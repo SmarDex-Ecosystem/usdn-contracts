@@ -18,7 +18,7 @@ interface IUsdnr is IERC20Metadata {
     event USDnrYieldWithdrawn(address recipient, uint256 amount);
 
     /**
-     * @notice The yield recipient is updated.
+     * @notice The yield recipient has been updated.
      * @param newYieldRecipient The new address of the yield recipient.
      */
     event USDnrYieldRecipientUpdated(address newYieldRecipient);
@@ -33,7 +33,7 @@ interface IUsdnr is IERC20Metadata {
     error USDnrNoYield();
 
     /**
-     * @notice Returns the address that will receive the yield when `withdrawYield` is called.
+     * @notice Returns the address that will receive the yield when {withdrawYield} is called.
      * @return yieldRecipient_ The address of the yield recipient.
      */
     function getYieldRecipient() external view returns (address yieldRecipient_);
@@ -46,7 +46,7 @@ interface IUsdnr is IERC20Metadata {
     function previewWrapShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_);
 
     /**
-     * @notice Sets a new address to receive the yield when `withdrawYield` is called.
+     * @notice Sets a new address to receive the yield when {withdrawYield} is called.
      * @dev Can only be called by the owner.
      * @param newYieldRecipient The address of the new yield recipient.
      */

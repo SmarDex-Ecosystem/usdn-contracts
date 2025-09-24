@@ -17,13 +17,13 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
     /// @inheritdoc IUsdnr
     IUsdn public immutable USDN;
 
-    /// @notice Address that will receive the yield when `withdrawYield` is called.
+    /// @notice The address that will receive the yield when {withdrawYield} is called.
     address internal _yieldRecipient;
 
     /**
      * @param usdn The address of the USDN token contract.
      * @param owner The owner of the USDnr contract.
-     * @param yieldRecipient The address that will receive the yield when `withdrawYield` is called.
+     * @param yieldRecipient The address that will receive the yield when {withdrawYield} is called.
      */
     constructor(IUsdn usdn, address owner, address yieldRecipient) ERC20("USDN Reserve", "USDnr") Ownable(owner) {
         USDN = usdn;
