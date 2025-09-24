@@ -7,7 +7,7 @@ import { Usdnr } from "../../../../src/Usdn/Usdnr.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnr } from "../../../../src/interfaces/Usdn/IUsdnr.sol";
 
-contract StakingDecayRateHandler is Usdnr, Test {
+contract UsdnrHandler is Usdnr, Test {
     address[] internal _actors;
     address internal _currentActor;
 
@@ -18,32 +18,45 @@ contract StakingDecayRateHandler is Usdnr, Test {
         vm.stopPrank();
     }
 
-    constructor(IUsdn usdn, address owner) Usdnr(usdn, owner) { }
+    constructor(IUsdn usdn, address owner, address[] memory actors) Usdnr(usdn, owner) {
+        _actors = actors;
+    }
 
     function wrapTest(uint256 usdnAmount, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
         uint256 userUsdnBalanceBefore = USDN.balanceOf(_currentActor);
         uint256 contractUsdnBalanceBefore = USDN.balanceOf(address(this));
-        uint256 userUsdnrBalanceBefore = this.balanceOf(_currentActor);
-        uint256 totalSupplyBefore = this.totalSupply();
+        uint256 userUsdnrBalanceBefore = balanceOf(_currentActor);
+        uint256 totalSupplyBefore = totalSupply();
 
         vm.assume(userUsdnBalanceBefore > 0);
         usdnAmount = bound(usdnAmount, 1, userUsdnBalanceBefore);
 
         this.wrap(usdnAmount, _currentActor);
 
-        assertEq(this.balanceOf(_currentActor), userUsdnrBalanceBefore + usdnAmount, "user USDNr balance");
-        assertEq(this.totalSupply(), totalSupplyBefore + usdnAmount, "total USDNr supply");
+        assertEq(balanceOf(_currentActor), userUsdnrBalanceBefore + usdnAmount, "user USDNr balance");
+        assertEq(totalSupply(), totalSupplyBefore + usdnAmount, "total USDNr supply");
 
-        assertEq(USDN.balanceOf(address(this)), contractUsdnBalanceBefore + usdnAmount, "USDN balance in USDNr");
         assertEq(USDN.balanceOf(_currentActor), userUsdnBalanceBefore - usdnAmount, "user USDN balance");
+
+        uint256 contractUsdnBalanceAfter = USDN.balanceOf(address(this));
+        if (contractUsdnBalanceAfter < contractUsdnBalanceBefore + usdnAmount) {
+            // account for rounding to the nearest of USDN shares
+            assertApproxEqAbs(
+                contractUsdnBalanceAfter, contractUsdnBalanceBefore + usdnAmount, 1, "USDN balance in USDNr"
+            );
+        } else {
+            assertEq(contractUsdnBalanceAfter, contractUsdnBalanceBefore + usdnAmount, "USDN balance in USDNr");
+        }
     }
 
     function wrapSharesTest(uint256 usdnSharesAmount, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
         uint256 userUsdnBalanceBefore = USDN.balanceOf(_currentActor);
         uint256 userUsdnSharesBefore = USDN.sharesOf(_currentActor);
+        uint256 contractUsdnSharesBefore = USDN.sharesOf(address(this));
         uint256 contractUsdnBalanceBefore = USDN.balanceOf(address(this));
-        uint256 userUsdnrBalanceBefore = this.balanceOf(_currentActor);
-        uint256 totalSupplyBefore = this.totalSupply();
+
+        uint256 userUsdnrBalanceBefore = balanceOf(_currentActor);
+        uint256 totalSupplyBefore = totalSupply();
 
         vm.assume(userUsdnSharesBefore > 0);
         usdnSharesAmount = bound(usdnSharesAmount, 1, userUsdnSharesBefore);
@@ -61,34 +74,47 @@ contract StakingDecayRateHandler is Usdnr, Test {
             assertEq(returnedAmount, previewedAmount, "previewed wrap amount");
         }
 
-        assertEq(this.balanceOf(_currentActor), userUsdnrBalanceBefore + wrappedAmount, "user USDNr balance");
-        assertEq(this.totalSupply(), totalSupplyBefore + wrappedAmount, "total USDNr supply");
+        assertEq(balanceOf(_currentActor), userUsdnrBalanceBefore + wrappedAmount, "user USDNr balance");
+        assertEq(totalSupply(), totalSupplyBefore + wrappedAmount, "total USDNr supply");
 
-        assertEq(USDN.balanceOf(address(this)), contractUsdnBalanceBefore + wrappedAmount, "USDN balance in USDNr");
-        assertEq(USDN.balanceOf(_currentActor), userUsdnBalanceBefore - wrappedAmount, "user USDN balance");
+        assertEq(USDN.sharesOf(_currentActor), userUsdnSharesBefore - usdnSharesAmount, "user USDN shares");
+        assertEq(USDN.sharesOf(address(this)), contractUsdnSharesBefore + usdnSharesAmount, "USDN shares in USDNr");
+        assertGe(USDN.balanceOf(address(this)), contractUsdnBalanceBefore + wrappedAmount, "USDN balance in USDNr");
+        assertLe(USDN.balanceOf(_currentActor), userUsdnBalanceBefore - wrappedAmount, "user USDN balance");
     }
 
     function unwrapTest(uint256 usdnrAmount, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
         uint256 userUsdnBalanceBefore = USDN.balanceOf(_currentActor);
         uint256 contractUsdnBalanceBefore = USDN.balanceOf(address(this));
-        uint256 userUsdnrBalanceBefore = this.balanceOf(_currentActor);
-        uint256 totalSupplyBefore = this.totalSupply();
+        uint256 userUsdnrBalanceBefore = balanceOf(_currentActor);
+        uint256 totalSupplyBefore = totalSupply();
 
+        vm.assume(userUsdnrBalanceBefore > 0);
         usdnrAmount = bound(usdnrAmount, 1, userUsdnrBalanceBefore);
 
         this.unwrap(usdnrAmount, _currentActor);
 
-        assertEq(this.balanceOf(_currentActor), userUsdnrBalanceBefore - usdnrAmount, "user USDNr balance");
-        assertEq(this.totalSupply(), totalSupplyBefore - usdnrAmount, "total USDNr supply");
+        assertEq(balanceOf(_currentActor), userUsdnrBalanceBefore - usdnrAmount, "user USDNr balance");
+        assertEq(totalSupply(), totalSupplyBefore - usdnrAmount, "total USDNr supply");
 
-        assertEq(USDN.balanceOf(address(this)), contractUsdnBalanceBefore + usdnrAmount, "USDN balance in USDNr");
-        assertEq(USDN.balanceOf(_currentActor), userUsdnBalanceBefore - usdnrAmount, "user USDN balance");
+        assertEq(USDN.balanceOf(address(this)), contractUsdnBalanceBefore - usdnrAmount, "USDN balance in USDNr");
+        assertEq(USDN.balanceOf(_currentActor), userUsdnBalanceBefore + usdnrAmount, "user USDN balance");
     }
 
     function withdrawYieldTest() external {
         uint256 ownerUsdnBalanceBefore = USDN.balanceOf(owner());
         uint256 contractUsdnBalanceBefore = USDN.balanceOf(address(this));
-        uint256 yield = USDN.sharesOf(address(this)) / USDN.divisor() - totalSupply();
+        uint256 balanceRoundedDown = USDN.sharesOf(address(this)) / USDN.divisor();
+        uint256 totalSupply = totalSupply();
+
+        if (totalSupply >= balanceRoundedDown) {
+            assertApproxEqAbs(
+                balanceRoundedDown, totalSupply, 1, "no yield to withdraw, USDN balance should equal total supply"
+            );
+            return;
+        }
+
+        uint256 yield = balanceRoundedDown - totalSupply;
 
         vm.prank(owner());
         this.withdrawYield(owner());
