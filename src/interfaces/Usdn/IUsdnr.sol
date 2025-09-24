@@ -46,13 +46,6 @@ interface IUsdnr is IERC20Metadata {
     function setYieldRecipient(address newYieldRecipient) external;
 
     /**
-     * @notice Previews the amount of USDnr that would be received for wrapping a given amount of USDN shares.
-     * @param usdnSharesAmount The amount of USDN shares to wrap.
-     * @return wrappedAmount_ The amount of USDnr that would be received.
-     */
-    function previewWrapShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_);
-
-    /**
      * @notice Wraps USDN into USDnr at a 1:1 ratio.
      *  @dev When approving USDN, use the `convertToTokensRoundUp` of the user shares, as we always round up when
      * deducting from a token transfer allowance.
@@ -60,6 +53,13 @@ interface IUsdnr is IERC20Metadata {
      * @param recipient The address to receive the USDnr tokens.
      */
     function wrap(uint256 usdnAmount, address recipient) external;
+
+    /**
+     * @notice Previews the amount of USDnr that would be received for wrapping a given amount of USDN shares.
+     * @param usdnSharesAmount The amount of USDN shares to wrap.
+     * @return wrappedAmount_ The amount of USDnr that would be received.
+     */
+    function previewWrapShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_);
 
     /**
      * @notice Wraps USDN shares into USDnr.

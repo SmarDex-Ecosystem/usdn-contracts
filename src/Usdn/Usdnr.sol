@@ -45,11 +45,6 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
     }
 
     /// @inheritdoc IUsdnr
-    function previewWrapShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_) {
-        wrappedAmount_ = usdnSharesAmount / USDN.divisor();
-    }
-
-    /// @inheritdoc IUsdnr
     function wrap(uint256 usdnAmount, address recipient) external {
         if (usdnAmount == 0) {
             revert USDnrZeroAmount();
@@ -61,6 +56,11 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
         USDN.transferFrom(msg.sender, address(this), usdnAmount);
 
         _mint(recipient, usdnAmount);
+    }
+
+    /// @inheritdoc IUsdnr
+    function previewWrapShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_) {
+        wrappedAmount_ = usdnSharesAmount / USDN.divisor();
     }
 
     /// @inheritdoc IUsdnr
