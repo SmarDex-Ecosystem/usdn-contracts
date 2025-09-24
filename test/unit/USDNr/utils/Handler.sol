@@ -23,7 +23,7 @@ contract UsdnrHandler is Usdnr, Test {
         vm.stopPrank();
     }
 
-    constructor(IUsdn usdn, address owner, address[] memory actors) Usdnr(usdn, owner) {
+    constructor(IUsdn usdn, address owner, address[] memory actors) Usdnr(usdn, owner, owner) {
         _actors = actors;
     }
 
@@ -124,8 +124,7 @@ contract UsdnrHandler is Usdnr, Test {
 
         uint256 yield = balanceRoundedDown - totalSupply;
 
-        vm.prank(owner());
-        this.withdrawYield(owner());
+        this.withdrawYield();
 
         assertEq(USDN.balanceOf(address(this)), contractUsdnBalanceBefore - yield, "USDN balance in USDnr");
         assertEq(USDN.balanceOf(owner()), ownerUsdnBalanceBefore + yield, "owner USDN balance");
