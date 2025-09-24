@@ -5,7 +5,7 @@ import { UsdnrTokenFixture } from "./utils/Fixtures.sol";
 
 import { Usdnr } from "../../../src/Usdn/Usdnr.sol";
 
-/// @custom:feature The constructor features of `USDNr` contract
+/// @custom:feature The constructor features of `USDnr` contract
 contract TestUsdnrConstructor is UsdnrTokenFixture {
     /**
      * @custom:scenario The constructor sets the correct values
@@ -13,14 +13,16 @@ contract TestUsdnrConstructor is UsdnrTokenFixture {
      * @custom:then The name and symbol are set correctly
      * @custom:then The USDN address is set correctly
      * @custom:then The owner is set correctly
+     * @custom:then The yield recipient is set correctly
      */
     function test_usdnrConstructor() public {
-        usdnr = new Usdnr(usdn, address(this));
+        usdnr = new Usdnr(usdn, address(this), address(1));
 
         assertEq(usdnr.name(), "USDN Reserve", "name");
-        assertEq(usdnr.symbol(), "USDNr", "symbol");
+        assertEq(usdnr.symbol(), "USDnr", "symbol");
         assertEq(address(usdnr.USDN()), address(usdn), "USDN address");
         assertEq(usdnr.owner(), address(this), "owner");
+        assertEq(usdnr.getYieldRecipient(), address(1), "yield recipient");
     }
 
     /**
@@ -30,7 +32,7 @@ contract TestUsdnrConstructor is UsdnrTokenFixture {
      * @custom:then The new owner can accept ownership
      */
     function test_ownable2Step() public {
-        usdnr = new Usdnr(usdn, address(this));
+        usdnr = new Usdnr(usdn, address(this), address(this));
 
         assertEq(usdnr.owner(), address(this), "owner");
         usdnr.transferOwnership(address(1));
