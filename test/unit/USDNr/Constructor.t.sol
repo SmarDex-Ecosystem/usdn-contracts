@@ -5,7 +5,7 @@ import { UsdnrTokenFixture } from "./utils/Fixtures.sol";
 
 import { Usdnr } from "../../../src/Usdn/Usdnr.sol";
 
-/// @custom:feature The constructor features of `USDNr` contract
+/// @custom:feature The constructor features of `USDnr` contract
 contract TestUsdnrConstructor is UsdnrTokenFixture {
     /**
      * @custom:scenario The constructor sets the correct values
@@ -19,7 +19,7 @@ contract TestUsdnrConstructor is UsdnrTokenFixture {
         usdnr = new Usdnr(usdn, address(this), address(1));
 
         assertEq(usdnr.name(), "USDN Reserve", "name");
-        assertEq(usdnr.symbol(), "USDNr", "symbol");
+        assertEq(usdnr.symbol(), "USDnr", "symbol");
         assertEq(address(usdnr.USDN()), address(usdn), "USDN address");
         assertEq(usdnr.owner(), address(this), "owner");
         assertEq(usdnr.getYieldRecipient(), address(1), "yield recipient");
