@@ -62,11 +62,11 @@ contract TestUsdnrInvariants is Test {
         uint256 totalSupply = _usdnr.totalSupply();
         uint256 totalUsdnInContract = _usdn.balanceOf(address(_usdnr));
 
-        // total shares of USDN held by USDNr should always be greater than or equal to total supply of USDNr
+        // total shares of USDN held by USDnr should always be greater than or equal to total supply of USDnr
         if (totalUsdnInContract < totalSupply) {
             // account for rounding to the nearest of USDN shares
             assertApproxEqAbs(
-                totalUsdnInContract, totalSupply, 1, "USDN balance in USDNr >= total supply with rounding"
+                totalUsdnInContract, totalSupply, 1, "USDN balance in USDnr >= total supply with rounding"
             );
         }
     }
@@ -84,6 +84,6 @@ contract TestUsdnrInvariants is Test {
         }
 
         assertEq(_usdnr.totalSupply(), 0, "total supply after full unwrap should be 0");
-        assertApproxEqAbs(_usdn.balanceOf(address(_usdnr)), 0, 1, "total USDN in USDNr after should be 0");
+        assertApproxEqAbs(_usdn.balanceOf(address(_usdnr)), 0, 1, "total USDN in USDnr after should be 0");
     }
 }

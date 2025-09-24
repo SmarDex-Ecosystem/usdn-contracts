@@ -9,7 +9,7 @@ import { Usdnr } from "../../../../src/Usdn/Usdnr.sol";
 import { IUsdn } from "../../../../src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnr } from "../../../../src/interfaces/Usdn/IUsdnr.sol";
 
-/// @dev Handler for USDNr contract to be used in invariant testing
+/// @dev Handler for USDnr contract to be used in invariant testing
 contract UsdnrHandler is Usdnr, Test {
     using FixedPointMathLib for uint256;
 
@@ -39,8 +39,8 @@ contract UsdnrHandler is Usdnr, Test {
 
         this.wrap(usdnAmount, _currentActor);
 
-        assertEq(balanceOf(_currentActor), userUsdnrBalanceBefore + usdnAmount, "user USDNr balance");
-        assertEq(totalSupply(), totalSupplyBefore + usdnAmount, "total USDNr supply");
+        assertEq(balanceOf(_currentActor), userUsdnrBalanceBefore + usdnAmount, "user USDnr balance");
+        assertEq(totalSupply(), totalSupplyBefore + usdnAmount, "total USDnr supply");
 
         assertEq(USDN.balanceOf(_currentActor), userUsdnBalanceBefore - usdnAmount, "user USDN balance");
 
@@ -48,10 +48,10 @@ contract UsdnrHandler is Usdnr, Test {
         if (contractUsdnBalanceAfter < contractUsdnBalanceBefore + usdnAmount) {
             // account for rounding to the nearest of USDN shares
             assertApproxEqAbs(
-                contractUsdnBalanceAfter, contractUsdnBalanceBefore + usdnAmount, 1, "USDN balance in USDNr"
+                contractUsdnBalanceAfter, contractUsdnBalanceBefore + usdnAmount, 1, "USDN balance in USDnr"
             );
         } else {
-            assertEq(contractUsdnBalanceAfter, contractUsdnBalanceBefore + usdnAmount, "USDN balance in USDNr");
+            assertEq(contractUsdnBalanceAfter, contractUsdnBalanceBefore + usdnAmount, "USDN balance in USDnr");
         }
     }
 
@@ -71,7 +71,7 @@ contract UsdnrHandler is Usdnr, Test {
         uint256 previewedAmount = this.previewWrapShares(usdnSharesAmount);
 
         if (wrappedAmount == 0) {
-            vm.expectRevert(IUsdnr.USDNrZeroAmount.selector);
+            vm.expectRevert(IUsdnr.USDnrZeroAmount.selector);
             this.wrapShares(usdnSharesAmount, _currentActor);
             assertEq(previewedAmount, 0, "previewed wrap amount");
             return;
@@ -80,12 +80,12 @@ contract UsdnrHandler is Usdnr, Test {
             assertEq(returnedAmount, previewedAmount, "previewed wrap amount");
         }
 
-        assertEq(balanceOf(_currentActor), userUsdnrBalanceBefore + wrappedAmount, "user USDNr balance");
-        assertEq(totalSupply(), totalSupplyBefore + wrappedAmount, "total USDNr supply");
+        assertEq(balanceOf(_currentActor), userUsdnrBalanceBefore + wrappedAmount, "user USDnr balance");
+        assertEq(totalSupply(), totalSupplyBefore + wrappedAmount, "total USDnr supply");
 
         assertEq(USDN.sharesOf(_currentActor), userUsdnSharesBefore - usdnSharesAmount, "user USDN shares");
-        assertEq(USDN.sharesOf(address(this)), contractUsdnSharesBefore + usdnSharesAmount, "USDN shares in USDNr");
-        assertGe(USDN.balanceOf(address(this)), contractUsdnBalanceBefore + wrappedAmount, "USDN balance in USDNr");
+        assertEq(USDN.sharesOf(address(this)), contractUsdnSharesBefore + usdnSharesAmount, "USDN shares in USDnr");
+        assertGe(USDN.balanceOf(address(this)), contractUsdnBalanceBefore + wrappedAmount, "USDN balance in USDnr");
         assertLe(USDN.balanceOf(_currentActor), userUsdnBalanceBefore - wrappedAmount, "user USDN balance");
     }
 
@@ -101,10 +101,10 @@ contract UsdnrHandler is Usdnr, Test {
 
         this.unwrap(usdnrAmount, _currentActor);
 
-        assertEq(balanceOf(_currentActor), userUsdnrBalanceBefore - usdnrAmount, "user USDNr balance");
-        assertEq(totalSupply(), totalSupplyBefore - usdnrAmount, "total USDNr supply");
+        assertEq(balanceOf(_currentActor), userUsdnrBalanceBefore - usdnrAmount, "user USDnr balance");
+        assertEq(totalSupply(), totalSupplyBefore - usdnrAmount, "total USDnr supply");
 
-        assertEq(USDN.balanceOf(address(this)), contractUsdnBalanceBefore - usdnrAmount, "USDN balance in USDNr");
+        assertEq(USDN.balanceOf(address(this)), contractUsdnBalanceBefore - usdnrAmount, "USDN balance in USDnr");
         assertEq(USDN.balanceOf(_currentActor), userUsdnBalanceBefore + usdnrAmount, "user USDN balance");
     }
 
@@ -127,7 +127,7 @@ contract UsdnrHandler is Usdnr, Test {
         vm.prank(owner());
         this.withdrawYield(owner());
 
-        assertEq(USDN.balanceOf(address(this)), contractUsdnBalanceBefore - yield, "USDN balance in USDNr");
+        assertEq(USDN.balanceOf(address(this)), contractUsdnBalanceBefore - yield, "USDN balance in USDnr");
         assertEq(USDN.balanceOf(owner()), ownerUsdnBalanceBefore + yield, "owner USDN balance");
     }
 
