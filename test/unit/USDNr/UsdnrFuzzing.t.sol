@@ -13,9 +13,12 @@ contract TestUsdnrFuzzing is UsdnrTokenFixture {
      * @custom:then The user's usdn balance must be equal to the initial usdn balance
      * @custom:and The user's usdnr balance must be zero
      * @param initialUsdnBalance The initial usdn balance to mint to the user
-     * @param newDivisor The new usdn divisor to set
+     * @param seed0 The usdn divisor seed to bound the first rebase
+     * @param seed1 The usdn divisor seed to bound the second rebase
      */
-    function testFuzz_wrapRebaseUnwrap(uint256 initialUsdnBalance, uint256 newDivisor) public {
+    function testFuzz_wrapRebaseUnwrap(uint256 initialUsdnBalance, uint256 seed0, uint256 seed1) public {
+        uint256 newDivisor = _bound(seed0, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
+        usdn.rebase(newDivisor);
         initialUsdnBalance = _bound(initialUsdnBalance, 1, usdn.maxTokens());
         usdn.mint(address(this), initialUsdnBalance);
 
@@ -40,6 +43,7 @@ contract TestUsdnrFuzzing is UsdnrTokenFixture {
         /*                                   REBASE                                   */
         /* -------------------------------------------------------------------------- */
 
+        newDivisor = _bound(seed1, usdn.MIN_DIVISOR(), usdn.divisor());
         usdn.rebase(newDivisor);
 
         /* -------------------------------------------------------------------------- */
