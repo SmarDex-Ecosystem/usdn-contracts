@@ -90,6 +90,8 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
             revert USDNrNoYield();
         }
 
+        emit YieldWithdrawn(recipient, usdnYield);
+
         // we use transferShares to save on gas
         USDN.transferShares(recipient, usdnYield * usdnDivisor);
     }
