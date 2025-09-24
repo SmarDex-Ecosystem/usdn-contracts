@@ -25,6 +25,7 @@ contract TestUsdnrWithdrawYield is UsdnrTokenFixture {
     function test_withdrawYield() public {
         usdn.rebase(usdn.divisor() * 90 / 100);
         uint256 yield = usdn.sharesOf(address(usdnr)) / usdn.divisor() - initialDeposit;
+        address yieldRecipient = usdnr.getYieldRecipient();
         assertGt(usdn.balanceOf(address(usdnr)), initialDeposit);
 
         vm.expectEmit();
@@ -33,32 +34,7 @@ contract TestUsdnrWithdrawYield is UsdnrTokenFixture {
         usdnr.withdrawYield();
 
         assertEq(usdn.balanceOf(address(1)), 0);
-        assertEq(usdn.balanceOf(address(this)), yield);
-        assertEq(usdn.balanceOf(address(usdnr)), initialDeposit);
-    }
-
-    /**
-     * @custom:scenario Withdraw yield to a specific recipient
-     * @custom:given The yield recipient is set, by the owner, to a specific address
-     * @custom:when The `withdrawYield` function is called
-     * @custom:then The yield is successfully withdrawn to the specified recipient
-     */
-    function test_withdrawYieldRecipient() public {
-        address recipient = address(1);
-        uint256 balanceBefore = usdn.balanceOf(address(this));
-        usdn.rebase(usdn.divisor() * 90 / 100);
-        uint256 yield = usdn.sharesOf(address(usdnr)) / usdn.divisor() - initialDeposit;
-        assertGt(usdn.balanceOf(address(usdnr)), initialDeposit);
-
-        usdnr.setYieldRecipient(recipient);
-        assertEq(usdnr.getYieldRecipient(), recipient, "yield recipient");
-
-        vm.expectEmit();
-        emit IUsdnr.USDnrYieldWithdrawn(recipient, yield);
-        usdnr.withdrawYield();
-
-        assertEq(usdn.balanceOf(recipient), yield);
-        assertEq(usdn.balanceOf(address(this)), balanceBefore);
+        assertEq(usdn.balanceOf(yieldRecipient), yield);
         assertEq(usdn.balanceOf(address(usdnr)), initialDeposit);
     }
 

@@ -17,6 +17,12 @@ interface IUsdnr is IERC20Metadata {
      */
     event USDnrYieldWithdrawn(address recipient, uint256 amount);
 
+    /**
+     * @notice The yield recipient is updated.
+     * @param newYieldRecipient The new address of the yield recipient.
+     */
+    event USDnrYieldRecipientUpdated(address newYieldRecipient);
+
     /// @notice The amount provided is zero.
     error USDnrZeroAmount();
 
@@ -25,12 +31,6 @@ interface IUsdnr is IERC20Metadata {
 
     /// @notice There is no yield available to withdraw.
     error USDnrNoYield();
-
-    /**
-     * @notice Emitted when the yield recipient is updated.
-     * @param newYieldRecipient The new address of the yield recipient.
-     */
-    event USDnrYieldRecipientUpdated(address newYieldRecipient);
 
     /**
      * @notice Returns the address that will receive the yield when `withdrawYield` is called.
