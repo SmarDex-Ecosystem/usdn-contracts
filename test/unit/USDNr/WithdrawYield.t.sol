@@ -7,7 +7,7 @@ import { UsdnrTokenFixture } from "./utils/Fixtures.sol";
 
 import { IUsdnr } from "../../../src/interfaces/Usdn/IUsdnr.sol";
 
-/// @custom:feature The `withdrawYield` function of the `USDNr` contract
+/// @custom:feature The `withdrawYield` function of the `USDnr` contract
 contract TestUsdnrWithdrawYield is UsdnrTokenFixture {
     uint256 initialDeposit = 100 ether;
 
@@ -20,7 +20,7 @@ contract TestUsdnrWithdrawYield is UsdnrTokenFixture {
     }
 
     /**
-     * @custom:scenario Withdraw yield from the USDNr contract
+     * @custom:scenario Withdraw yield from the USDnr contract
      * @custom:when The `withdrawYield` function is called by the owner
      * @custom:then The yield is successfully withdrawn
      */
@@ -74,22 +74,22 @@ contract TestUsdnrWithdrawYield is UsdnrTokenFixture {
     /**
      * @custom:scenario Revert when trying to withdraw yield with no yield available
      * @custom:when The `withdrawYield` function is called by the owner when there is no yield available
-     * @custom:then The transaction reverts with a "USDNrNoYield" error
+     * @custom:then The transaction reverts with a "USDnrNoYield" error
      */
     function test_revertWhen_withdrawYieldNoYield() public {
         assertEq(usdn.balanceOf(address(usdnr)), usdnr.totalSupply());
 
-        vm.expectRevert(IUsdnr.USDNrNoYield.selector);
+        vm.expectRevert(IUsdnr.USDnrNoYield.selector);
         usdnr.withdrawYield(address(this));
     }
 
     /**
      * @custom:scenario Revert when trying to withdraw yield to the zero address
      * @custom:when The `withdrawYield` function is called by the owner with the zero address as the recipient
-     * @custom:then The transaction reverts with a "USDNrZeroRecipient" error
+     * @custom:then The transaction reverts with a "USDnrZeroRecipient" error
      */
     function test_revertWhen_withdrawYieldZeroRecipient() public {
-        vm.expectRevert(IUsdnr.USDNrZeroRecipient.selector);
+        vm.expectRevert(IUsdnr.USDnrZeroRecipient.selector);
         usdnr.withdrawYield(address(0));
     }
 }
