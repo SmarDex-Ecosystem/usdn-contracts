@@ -7,7 +7,7 @@ import { UsdnrTokenFixture } from "./utils/Fixtures.sol";
 
 import { IUsdnr } from "../../../src/interfaces/Usdn/IUsdnr.sol";
 
-/// @custom:feature The `setYieldRecipient` function of the `USDNr` contract
+/// @custom:feature The `setYieldRecipient` function of the `USDnr` contract
 contract TestUsdnrSetYieldRecipient is UsdnrTokenFixture {
     /**
      * @custom:scenario Set a new yield recipient
