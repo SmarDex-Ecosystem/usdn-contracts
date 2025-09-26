@@ -62,7 +62,7 @@ contract TestUsdnrInvariants is Test {
         uint256 totalSupply = _usdnr.totalSupply();
         uint256 totalUsdnInContract = _usdn.balanceOf(address(_usdnr));
 
-        // total shares of USDN held by USDnr should always be greater than or equal to total supply of USDnr
+        // total balance of USDN held by USDnr should always be greater than or equal to total supply of USDnr
         if (totalUsdnInContract < totalSupply) {
             // account for rounding to the nearest of USDN shares
             assertApproxEqAbs(

@@ -139,7 +139,7 @@ contract UsdnrHandler is Usdnr, Test {
     function rebaseTest(uint256 divisor, uint256 rand) public {
         uint256 oldDivisor = USDN.divisor();
         vm.assume(oldDivisor != USDN.MIN_DIVISOR());
-        // 0.1% change of rebasing to the minimum possible value
+        // 0.1% chance of rebasing to the minimum possible value
         if (rand % 1000 == 0) {
             USDN.rebase(USDN.MIN_DIVISOR());
             return;
