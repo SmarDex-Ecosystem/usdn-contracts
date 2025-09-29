@@ -15,6 +15,9 @@ import { IUsdnr } from "../interfaces/Usdn/IUsdnr.sol";
  */
 contract Usdnr is ERC20, IUsdnr, Ownable2Step {
     /// @inheritdoc IUsdnr
+    uint256 public constant RESERVE = 1 gwei;
+
+    /// @inheritdoc IUsdnr
     IUsdn public immutable USDN;
 
     /// @notice The address that will receive the yield when {withdrawYield} is called.
