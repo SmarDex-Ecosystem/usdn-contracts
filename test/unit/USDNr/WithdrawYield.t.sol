@@ -54,4 +54,17 @@ contract TestUsdnrWithdrawYield is UsdnrTokenFixture {
         vm.expectRevert(IUsdnr.USDnrNoYield.selector);
         usdnr.withdrawYield();
     }
+
+    /**
+     * @custom:scenario Revert when trying to withdraw yield before the reserve is reached
+     * @custom:when The `withdrawYield` function is called when the reserve is not yet reached
+     * @custom:then The transaction reverts with a "USDnrNoYield" error
+     */
+    function test_revertWhen_withdrawYieldBeforeReserve() public {
+        usdn.mint(address(usdnr), usdnr.RESERVE());
+        assertEq(usdn.balanceOf(address(usdnr)), usdnr.totalSupply() + usdnr.RESERVE());
+
+        vm.expectRevert(IUsdnr.USDnrNoYield.selector);
+        usdnr.withdrawYield();
+    }
 }
