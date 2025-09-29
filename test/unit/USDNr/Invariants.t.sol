@@ -84,6 +84,6 @@ contract TestUsdnrInvariants is Test {
         }
 
         assertEq(_usdnr.totalSupply(), 0, "total supply after full unwrap should be 0");
-        assertApproxEqAbs(_usdn.balanceOf(address(_usdnr)), 0, 1, "total USDN in USDnr after should be 0");
+        assertLt(_usdn.sharesOf(address(_usdnr)), _usdn.divisor());
     }
 }
