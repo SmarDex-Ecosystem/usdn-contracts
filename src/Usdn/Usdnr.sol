@@ -105,7 +105,7 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
         // we round down the USDN balance to ensure every USDnr is always fully backed by USDN
         uint256 usdnBalanceRoundDown = USDN.sharesOf(address(this)) / usdnDivisor;
         // the yield is the difference between the USDN balance and the total supply of USDnr, minus the reserve
-        uint256 usdnYield = (usdnBalanceRoundDown - totalSupply()).saturatingSub(RESERVE);
+        uint256 usdnYield = usdnBalanceRoundDown.saturatingSub(totalSupply()).saturatingSub(RESERVE);
 
         if (usdnYield == 0) {
             revert USDnrNoYield();
