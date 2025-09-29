@@ -62,6 +62,14 @@ contract TestUsdnrUnwrap is UsdnrTokenFixture {
         assertEq(usdn.balanceOf(address(usdnr)), initialUsdnContractBalance - amount, "USDN balance in USDnr");
     }
 
+    function test_lastUserUnwrap() public {
+        usdn.rebase(923_908_459_023_859_891);
+        usdnr.wrap(1 ether, address(this));
+        usdnr.withdrawYield();
+        usdnr.unwrap(usdnr.balanceOf(address(this)), address(this));
+        emit log_named_uint("balance", usdn.balanceOf(address(usdnr)));
+    }
+
     /**
      * @custom:scenario Revert when the unwrap function is called with zero amount
      * @custom:when The unwrap function is called with zero amount
