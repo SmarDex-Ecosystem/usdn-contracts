@@ -1,17 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import { UsdnrTokenFixture } from "./utils/Fixtures.sol";
 
 /// @custom:feature Fuzzing tests of `USDNr` contract
 contract TestUsdnrFuzzing is UsdnrTokenFixture {
     /**
-     * @custom:scenario A user wraps their usdn balance to usdnr, a rebase appends, and then unwraps their usdnr
-     * @custom:given The user wrap their usdn balance to usdnr
+     * @custom:scenario A user wraps an amount of usdn to usdnr, a rebase appends, and then unwraps their usdnr
+     * @custom:given The divisor is not the initial divisor
+     * @custom:and The user wrap an usdn amount to usdnr
      * @custom:and A usdn rebase append
      * @custom:when The user unwrap their usdnr to usdn
-     * @custom:then The user's usdn balance must be equal to the initial usdn balance
-     * @custom:and The user's usdnr balance must be zero
+     * @custom:then The user's usdnr balance must be zero
+     * @custom:and The usdn amount transferred must be equal to the initial usdn amount
      */
     function testFuzz_wrapRebaseUnwrap(uint256 seed0, uint256 seed1, uint256 seed2, uint256 seed3, uint256 seed4)
         public
@@ -60,26 +63,23 @@ contract TestUsdnrFuzzing is UsdnrTokenFixture {
 
         uint256 contractUsdnBalanceBeforeUnwrap = usdn.balanceOf(address(usdnr));
         uint256 userUsdnBalanceBeforeUnwrap = usdn.balanceOf(address(this));
+        vm.expectEmit();
+        emit IERC20.Transfer(address(usdnr), address(this), usdnAmountToWrap);
         usdnr.unwrap(usdnAmountToWrap, address(this));
         uint256 contractUsdnAmountSent = contractUsdnBalanceBeforeUnwrap - usdn.balanceOf(address(usdnr));
-        uint256 userUsdnAmountReceivedSent = usdn.balanceOf(address(this)) - userUsdnBalanceBeforeUnwrap;
+        uint256 userUsdnAmountReceived = usdn.balanceOf(address(this)) - userUsdnBalanceBeforeUnwrap;
 
         assertEq(usdnr.balanceOf(address(this)), 0, "The usdnr balance of the user after unwrap must be zero");
-        if (contractUsdnAmountSent <= usdnAmountToWrap && userUsdnAmountReceivedSent <= usdnAmountToWrap) {
-            assertApproxEqAbs(
-                contractUsdnAmountSent,
-                usdnAmountToWrap,
-                1,
-                "The usdn amount sent by the usdnr contract must be equal or 1 wei less than the initial usdn amount"
-            );
-            assertApproxEqAbs(
-                userUsdnAmountReceivedSent,
-                usdnAmountToWrap,
-                1,
-                "The usdn amount received by the user must be equal or 1 wei less than the initial usdn amount"
-            );
-        } else {
-            revert("The usdn amounts must be lower or equal than the initial amounts");
-        }
+        assertEq(usdnr.totalSupply(), 0, "The usdnr supply after unwrap must be zero");
+        assertLe(
+            contractUsdnAmountSent,
+            usdnAmountToWrap,
+            "The usdn amount sent by the usdnr contract must be equal or less than the initial usdn amount"
+        );
+        assertLe(
+            userUsdnAmountReceived,
+            usdnAmountToWrap,
+            "The usdn amount received by the user must be equal or less than the initial usdn amount"
+        );
     }
 }
