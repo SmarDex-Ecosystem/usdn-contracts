@@ -8,10 +8,10 @@ import { IUsdn } from "../src/interfaces/Usdn/IUsdn.sol";
 
 contract DeployUsdnr is Script {
     /**
-     * @notice Deploy the USDNr contract
+     * @notice Deploy the USDnr contract
      * @param usdn The address of the USDN contract
-     * @param owner The address of the owner of the USDNr contract and the yield recipient
-     * @return usdnr_ The address of the deployed USDNr contract
+     * @param owner The address of the owner of the USDnr contract and the yield recipient
+     * @return usdnr_ The address of the deployed USDnr contract
      */
     function run(IUsdn usdn, address owner) external returns (Usdnr usdnr_) {
         vm.broadcast();
