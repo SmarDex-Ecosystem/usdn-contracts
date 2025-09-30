@@ -37,7 +37,7 @@ contract UsdnrHandler is Usdnr, Test {
         vm.assume(userUsdnBalanceBefore > 0);
         usdnAmount = bound(usdnAmount, 1, userUsdnBalanceBefore);
 
-        this.wrap(usdnAmount, _currentActor);
+        this.withdraw(usdnAmount, _currentActor);
 
         assertEq(balanceOf(_currentActor), userUsdnrBalanceBefore + usdnAmount, "user USDnr balance");
         assertEq(totalSupply(), totalSupplyBefore + usdnAmount, "total USDnr supply");
@@ -68,15 +68,15 @@ contract UsdnrHandler is Usdnr, Test {
         usdnSharesAmount = bound(usdnSharesAmount, 1, userUsdnSharesBefore);
 
         uint256 wrappedAmount = usdnSharesAmount / USDN.divisor();
-        uint256 previewedAmount = this.previewWrapShares(usdnSharesAmount);
+        uint256 previewedAmount = this.previewDepositShares(usdnSharesAmount);
 
         if (wrappedAmount == 0) {
             vm.expectRevert(IUsdnr.USDnrZeroAmount.selector);
-            this.wrapShares(usdnSharesAmount, _currentActor);
+            this.depositShares(usdnSharesAmount, _currentActor);
             assertEq(previewedAmount, 0, "previewed wrap amount");
             return;
         } else {
-            uint256 returnedAmount = this.wrapShares(usdnSharesAmount, _currentActor);
+            uint256 returnedAmount = this.depositShares(usdnSharesAmount, _currentActor);
             assertEq(returnedAmount, previewedAmount, "previewed wrap amount");
         }
 
@@ -89,7 +89,7 @@ contract UsdnrHandler is Usdnr, Test {
         assertLe(USDN.balanceOf(_currentActor), userUsdnBalanceBefore - wrappedAmount, "user USDN balance");
     }
 
-    function unwrapTest(uint256 usdnrAmount, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
+    function withdrawTest(uint256 usdnrAmount, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
         uint256 userUsdnBalanceBefore = USDN.balanceOf(_currentActor);
         uint256 contractUsdnBalanceBefore = USDN.balanceOf(address(this));
 
@@ -99,7 +99,7 @@ contract UsdnrHandler is Usdnr, Test {
         vm.assume(userUsdnrBalanceBefore > 0);
         usdnrAmount = bound(usdnrAmount, 1, userUsdnrBalanceBefore);
 
-        this.unwrap(usdnrAmount, _currentActor);
+        this.withdraw(usdnrAmount, _currentActor);
 
         assertEq(balanceOf(_currentActor), userUsdnrBalanceBefore - usdnrAmount, "user USDnr balance");
         assertEq(totalSupply(), totalSupplyBefore - usdnrAmount, "total USDnr supply");

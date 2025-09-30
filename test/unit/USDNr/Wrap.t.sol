@@ -21,14 +21,14 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
      * @custom:and The total supply of USDnr increases by the same amount
      * @custom:and The total wrapped USDN increases by the same amount
      */
-    function test_wrap() public {
+    function deposit() public {
         uint256 amount = 10 ether;
         uint256 initialUsdnrBalance = usdnr.balanceOf(address(this));
         uint256 initialUsdnBalance = usdn.balanceOf(address(this));
         uint256 initialUsdnrTotalSupply = usdnr.totalSupply();
         uint256 usdnContractBalance = usdn.balanceOf(address(usdnr));
 
-        usdnr.wrap(amount, address(this));
+        usdnr.deposit(amount, address(this));
 
         assertEq(usdnr.balanceOf(address(this)), initialUsdnrBalance + amount, "user USDnr balance");
         assertEq(usdnr.totalSupply(), initialUsdnrTotalSupply + amount, "total USDnr supply");
@@ -56,7 +56,7 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
         uint256 initialUsdnBalance = usdn.balanceOf(address(this));
         uint256 initialUsdnContractBalance = usdn.balanceOf(address(usdnr));
 
-        usdnr.wrap(amount, recipient);
+        usdnr.deposit(amount, recipient);
 
         assertEq(usdnr.balanceOf(address(this)), initialUsdnrBalance, "user USDnr balance");
         assertEq(usdnr.balanceOf(recipient), initialUsdnrRecipientBalance + amount, "recipient USDnr balance");
@@ -73,7 +73,7 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
      */
     function test_revertWhen_wrapZeroAmount() public {
         vm.expectRevert(IUsdnr.USDnrZeroAmount.selector);
-        usdnr.wrap(0, address(this));
+        usdnr.deposit(0, address(this));
     }
 
     /**
@@ -83,6 +83,6 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
      */
     function test_revertWhen_wrapRecipientIsZeroAddress() public {
         vm.expectRevert(IUsdnr.USDnrZeroRecipient.selector);
-        usdnr.wrap(1, address(0));
+        usdnr.deposit(1, address(0));
     }
 }

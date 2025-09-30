@@ -34,7 +34,7 @@ contract TestUsdnrInvariants is Test {
         bytes4[] memory usdnrSelectors = new bytes4[](7);
         usdnrSelectors[0] = _usdnr.wrapTest.selector;
         usdnrSelectors[1] = _usdnr.wrapSharesTest.selector;
-        usdnrSelectors[2] = _usdnr.unwrapTest.selector;
+        usdnrSelectors[2] = _usdnr.withdrawTest.selector;
         usdnrSelectors[3] = _usdnr.withdrawYieldTest.selector;
         usdnrSelectors[4] = _usdnr.mintUsdn.selector;
         usdnrSelectors[5] = _usdnr.rebaseTest.selector;
@@ -79,7 +79,7 @@ contract TestUsdnrInvariants is Test {
 
             if (balanceOf != 0) {
                 vm.prank(_actors[i]);
-                _usdnr.unwrap(balanceOf, _actors[i]);
+                _usdnr.withdraw(balanceOf, _actors[i]);
             }
         }
 

@@ -52,14 +52,14 @@ interface IUsdnr is IERC20Metadata {
      * @param usdnAmount The amount of USDN to wrap.
      * @param recipient The address to receive the USDnr tokens.
      */
-    function wrap(uint256 usdnAmount, address recipient) external;
+    function deposit(uint256 usdnAmount, address recipient) external;
 
     /**
      * @notice Previews the amount of USDnr that would be received for wrapping a given amount of USDN shares.
      * @param usdnSharesAmount The amount of USDN shares to wrap.
      * @return wrappedAmount_ The amount of USDnr that would be received.
      */
-    function previewWrapShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_);
+    function previewDepositShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_);
 
     /**
      * @notice Wraps USDN shares into USDnr.
@@ -68,14 +68,14 @@ interface IUsdnr is IERC20Metadata {
      * @param recipient The address to receive the USDnr tokens.
      * @return wrappedAmount_ The amount of USDN tokens that were wrapped, and the amount of USDnr tokens minted.
      */
-    function wrapShares(uint256 usdnSharesAmount, address recipient) external returns (uint256 wrappedAmount_);
+    function depositShares(uint256 usdnSharesAmount, address recipient) external returns (uint256 wrappedAmount_);
 
     /**
      * @notice Unwraps USDnr into USDN at a 1:1 ratio.
      * @param usdnrAmount The amount of USDnr to unwrap.
      * @param recipient The address to receive the USDN tokens.
      */
-    function unwrap(uint256 usdnrAmount, address recipient) external;
+    function withdraw(uint256 usdnrAmount, address recipient) external;
 
     /**
      * @notice Returns the address of the USDN token contract.
