@@ -9,7 +9,7 @@ import { IUsdnr } from "../interfaces/Usdn/IUsdnr.sol";
 
 /**
  * @title USDnr Token
- * @notice The USDnr token is a wrapper around the USDN token, allowing users to wrap and unwrap USDN at a 1:1 ratio.
+ * @notice The USDnr token is a vault containing USDN token, allowing users to deposit and withdraw USDN at a 1:1 ratio.
  * @dev The generated yield from the underlying USDN tokens is retained within the contract, and withdrawable by the
  * owner.
  */

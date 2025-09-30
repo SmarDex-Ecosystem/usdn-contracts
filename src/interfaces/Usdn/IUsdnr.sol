@@ -7,7 +7,7 @@ import { IUsdn } from "./IUsdn.sol";
 
 /**
  * @title USDnr Token Interface
- * @notice The USDnr token is a wrapper around the USDN token, allowing users to wrap and unwrap USDN at a 1:1 ratio.
+ * @notice The USDnr token is a vault containing USDN token, allowing users to wrap and unwrap USDN at a 1:1 ratio.
  */
 interface IUsdnr is IERC20Metadata {
     /**
@@ -46,33 +46,33 @@ interface IUsdnr is IERC20Metadata {
     function setYieldRecipient(address newYieldRecipient) external;
 
     /**
-     * @notice Wraps USDN into USDnr at a 1:1 ratio.
+     * @notice Deposits USDN to mint USDnr at a 1:1 ratio.
      *  @dev When approving USDN, use the `convertToTokensRoundUp` of the user shares, as we always round up when
      * deducting from a token transfer allowance.
-     * @param usdnAmount The amount of USDN to wrap.
+     * @param usdnAmount The amount of USDN to deposit.
      * @param recipient The address to receive the USDnr tokens.
      */
     function deposit(uint256 usdnAmount, address recipient) external;
 
     /**
-     * @notice Previews the amount of USDnr that would be received for wrapping a given amount of USDN shares.
-     * @param usdnSharesAmount The amount of USDN shares to wrap.
-     * @return wrappedAmount_ The amount of USDnr that would be received.
+     * @notice Previews the amount of USDnr that would be minted for depositing a given amount of USDN shares.
+     * @param usdnSharesAmount The amount of USDN shares to deposit.
+     * @return mintedAmount_ The amount of USDnr that would be minted.
      */
-    function previewDepositShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_);
+    function previewDepositShares(uint256 usdnSharesAmount) external view returns (uint256 mintedAmount_);
 
     /**
-     * @notice Wraps USDN shares into USDnr.
+     * @notice Deposits USDN shares to mint USDnr.
      * @dev The shares must represent at least 1 wei of USDN token. The conversion ratio is 1:1 with the USDN amount.
-     * @param usdnSharesAmount The amount of USDN shares to wrap.
+     * @param usdnSharesAmount The amount of USDN shares to deposit.
      * @param recipient The address to receive the USDnr tokens.
-     * @return wrappedAmount_ The amount of USDN tokens that were wrapped, and the amount of USDnr tokens minted.
+     * @return mintedAmount_ The amount of USDN tokens that were deposited, and the amount of USDnr tokens minted.
      */
-    function depositShares(uint256 usdnSharesAmount, address recipient) external returns (uint256 wrappedAmount_);
+    function depositShares(uint256 usdnSharesAmount, address recipient) external returns (uint256 mintedAmount_);
 
     /**
-     * @notice Unwraps USDnr into USDN at a 1:1 ratio.
-     * @param usdnrAmount The amount of USDnr to unwrap.
+     * @notice Withdraws USDN by giving USDnr at a 1:1 ratio.
+     * @param usdnrAmount The amount of USDnr to deposit.
      * @param recipient The address to receive the USDN tokens.
      */
     function withdraw(uint256 usdnrAmount, address recipient) external;
