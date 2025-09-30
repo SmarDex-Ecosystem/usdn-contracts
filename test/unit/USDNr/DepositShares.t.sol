@@ -34,10 +34,10 @@ contract TestUsdnrDepositShares is UsdnrTokenFixture {
 
         vm.expectEmit();
         emit IERC20.Transfer(address(0), address(this), amount);
-        uint256 wrappedAmount = usdnr.depositShares(sharesAmount, address(this));
+        uint256 mintedAmount = usdnr.depositShares(sharesAmount, address(this));
 
-        assertEq(wrappedAmount, amount, "wrapped USDN amount");
-        assertEq(wrappedAmount, previewedAmount, "previewed wrapped USDN amount");
+        assertEq(mintedAmount, amount, "minted USDN amount");
+        assertEq(mintedAmount, previewedAmount, "previewed minted USDN amount");
 
         assertEq(usdnr.balanceOf(address(this)), initialUsdnrBalance + amount, "user USDnr balance");
         assertEq(usdnr.totalSupply(), initialUsdnrTotalSupply + amount, "total USDnr supply");

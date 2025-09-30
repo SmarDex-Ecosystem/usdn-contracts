@@ -20,7 +20,7 @@ contract TestUsdnrWithdraw is UsdnrTokenFixture {
      * @custom:when The withdraw function is called with an amount of USDnr
      * @custom:then The user balance of USDnr decreases by the same amount
      * @custom:and The total supply of USDnr decreases by the same amount
-     * @custom:and The total wrapped USDN decreases by the same amount
+     * @custom:and The total deposited USDN decreases by the same amount
      */
     function test_withdraw() public {
         uint256 amount = 10 ether;
@@ -41,7 +41,7 @@ contract TestUsdnrWithdraw is UsdnrTokenFixture {
      * @custom:then The user balance of USDnr decreases by the amount
      * @custom:and The total supply of USDnr decreases by the amount
      * @custom:and The recipient balance of USDN increases by the amount
-     * @custom:and The total wrapped USDN decreases by the amount
+     * @custom:and The total deposited USDN decreases by the amount
      */
     function test_withdrawToAnotherAddress() public {
         uint256 amount = 10 ether;

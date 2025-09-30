@@ -7,7 +7,7 @@ import { IUsdn } from "./IUsdn.sol";
 
 /**
  * @title USDnr Token Interface
- * @notice The USDnr token is a vault containing USDN token, allowing users to wrap and unwrap USDN at a 1:1 ratio.
+ * @notice The USDnr token is a vault containing USDN token, allowing users to deposit and withdraw USDN at a 1:1 ratio.
  */
 interface IUsdnr is IERC20Metadata {
     /**

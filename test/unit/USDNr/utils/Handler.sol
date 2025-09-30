@@ -73,11 +73,11 @@ contract UsdnrHandler is Usdnr, Test {
         if (mintedAmount == 0) {
             vm.expectRevert(IUsdnr.USDnrZeroAmount.selector);
             this.depositShares(usdnSharesAmount, _currentActor);
-            assertEq(previewedAmount, 0, "previewed wrap amount");
+            assertEq(previewedAmount, 0, "previewed mint amount");
             return;
         } else {
             uint256 returnedAmount = this.depositShares(usdnSharesAmount, _currentActor);
-            assertEq(returnedAmount, previewedAmount, "previewed wrap amount");
+            assertEq(returnedAmount, previewedAmount, "previewed mint amount");
         }
 
         assertEq(balanceOf(_currentActor), userUsdnrBalanceBefore + mintedAmount, "user USDnr balance");
