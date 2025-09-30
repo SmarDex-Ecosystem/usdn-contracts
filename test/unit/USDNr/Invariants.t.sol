@@ -32,8 +32,8 @@ contract TestUsdnrInvariants is Test {
         targetContract(address(_usdnr));
 
         bytes4[] memory usdnrSelectors = new bytes4[](7);
-        usdnrSelectors[0] = _usdnr.wrapTest.selector;
-        usdnrSelectors[1] = _usdnr.wrapSharesTest.selector;
+        usdnrSelectors[0] = _usdnr.depositTest.selector;
+        usdnrSelectors[1] = _usdnr.depositSharesTest.selector;
         usdnrSelectors[2] = _usdnr.withdrawTest.selector;
         usdnrSelectors[3] = _usdnr.withdrawYieldTest.selector;
         usdnrSelectors[4] = _usdnr.mintUsdn.selector;
