@@ -6,7 +6,7 @@ import { UsdnrTokenFixture } from "./utils/Fixtures.sol";
 import { IUsdnr } from "../../../src/interfaces/Usdn/IUsdnr.sol";
 
 /// @custom:feature The `withdraw` function of the `USDnr` contract
-contract TestUsdnrUnwrap is UsdnrTokenFixture {
+contract TestUsdnrWithdraw is UsdnrTokenFixture {
     function setUp() public override {
         super.setUp();
 
@@ -16,7 +16,7 @@ contract TestUsdnrUnwrap is UsdnrTokenFixture {
     }
 
     /**
-     * @custom:scenario Unwrap USDnr to USDN
+     * @custom:scenario Withdraw USDnr to USDN
      * @custom:when The withdraw function is called with an amount of USDnr
      * @custom:then The user balance of USDnr decreases by the same amount
      * @custom:and The total supply of USDnr decreases by the same amount
@@ -36,7 +36,7 @@ contract TestUsdnrUnwrap is UsdnrTokenFixture {
     }
 
     /**
-     * @custom:scenario Unwrap USDnr to another address
+     * @custom:scenario Withdraw USDnr to another address
      * @custom:when The withdraw function is called with a recipient address
      * @custom:then The user balance of USDnr decreases by the amount
      * @custom:and The total supply of USDnr decreases by the amount

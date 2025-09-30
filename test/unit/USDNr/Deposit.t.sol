@@ -5,8 +5,8 @@ import { UsdnrTokenFixture } from "./utils/Fixtures.sol";
 
 import { IUsdnr } from "../../../src/interfaces/Usdn/IUsdnr.sol";
 
-/// @custom:feature The `wrap` function of the `USDnr` contract
-contract TestUsdnrWrap is UsdnrTokenFixture {
+/// @custom:feature The `deposit` function of the `USDnr` contract
+contract TestUsdnrDeposit is UsdnrTokenFixture {
     function setUp() public override {
         super.setUp();
 
@@ -15,11 +15,11 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
     }
 
     /**
-     * @custom:scenario Wrap USDN to USDnr
-     * @custom:when The wrap function is called with an amount of USDN
+     * @custom:scenario Deposit USDN to USDnr
+     * @custom:when The deposit function is called with an amount of USDN
      * @custom:then The user balance of USDnr increases by the same amount
      * @custom:and The total supply of USDnr increases by the same amount
-     * @custom:and The total wrapped USDN increases by the same amount
+     * @custom:and The total deposited USDN increases by the same amount
      */
     function deposit() public {
         uint256 amount = 10 ether;
@@ -38,14 +38,14 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
     }
 
     /**
-     * @custom:scenario Wrap USDN to another address
-     * @custom:when The wrap function is called with a recipient address
+     * @custom:scenario Deposit USDN to another address
+     * @custom:when The deposit function is called with a recipient address
      * @custom:then The recipient balance of USDnr increases by the amount
      * @custom:and The total supply of USDnr increases by the amount
      * @custom:and The user balance of USDN decreases by the amount
-     * @custom:and The total wrapped USDN increases by the amount
+     * @custom:and The total deposited USDN increases by the amount
      */
-    function test_wrapToAnotherAddress() public {
+    function test_depositToAnotherAddress() public {
         uint256 amount = 10 ether;
         address recipient = address(1);
 
@@ -67,21 +67,21 @@ contract TestUsdnrWrap is UsdnrTokenFixture {
     }
 
     /**
-     * @custom:scenario Revert when the wrap function is called with zero amount
-     * @custom:when The wrap function is called with zero amount
+     * @custom:scenario Revert when the deposit function is called with zero amount
+     * @custom:when The deposit function is called with zero amount
      * @custom:then The transaction should revert with the error {USDnrZeroAmount}
      */
-    function test_revertWhen_wrapZeroAmount() public {
+    function test_revertWhen_depositZeroAmount() public {
         vm.expectRevert(IUsdnr.USDnrZeroAmount.selector);
         usdnr.deposit(0, address(this));
     }
 
     /**
-     * @custom:scenario Revert when the wrap function is called with zero address as recipient
-     * @custom:when The wrap function is called with zero address as recipient
+     * @custom:scenario Revert when the deposit function is called with zero address as recipient
+     * @custom:when The deposit function is called with zero address as recipient
      * @custom:then The transaction should revert with the error {USDnrZeroRecipient}
      */
-    function test_revertWhen_wrapRecipientIsZeroAddress() public {
+    function test_revertWhen_depositRecipientIsZeroAddress() public {
         vm.expectRevert(IUsdnr.USDnrZeroRecipient.selector);
         usdnr.deposit(1, address(0));
     }
