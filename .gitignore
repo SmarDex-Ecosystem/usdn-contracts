@@ -19,6 +19,7 @@ broadcast/global.s.sol
 
 # Cache
 cache/
+.corpus/
 
 # Dependencies
 node_modules/

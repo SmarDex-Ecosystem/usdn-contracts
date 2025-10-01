@@ -43,7 +43,7 @@ contract TestSoladyMath is BaseFixture {
      * @custom:scenario Fuzzing the `lnWad` function
      * @custom:given A value between `MIN_PRICE` and `MAX_PRICE` of `TickMath`
      * @custom:when The `lnWad` function is called with the value
-     * @custom:then The result is equal to the result of the Rust implementation within 0.00000000000031%
+     * @custom:then The result is equal to the result of the Rust implementation within 0.0000000000004%
      * @param value the input to `lnWad`
      */
     function testFuzzFFILnWad(uint256 value) public {
@@ -51,7 +51,7 @@ contract TestSoladyMath is BaseFixture {
         bytes memory result = vmFFIRustCommand("ln-wad", vm.toString(value));
         int256 ref = abi.decode(result, (int256));
         int256 test = int256(FixedPointMathLib.lnWad(int256(value)));
-        assertApproxEqRel(test, ref, 3100); // 0.00000000000031%
+        assertApproxEqRel(test, ref, 4000); // 0.0000000000004%
     }
 
     /**
