@@ -16,6 +16,14 @@ You can use `-t` or `-l` options instead of `-i 1` for trezor or ledger hardware
 
 For fork deployment instructions, please refer to the [fork README](./fork/README.md).
 
+## Deploy peripheral
+
+To deploy the `USDnr` token, run the command:
+
+```bash
+forge script script/DeployUsdnr.s.sol --sig "run(address,address)" $USDN_ADDRESS $OWNER_ADDRESS -f $RPC_UR -i 1 --broadcast
+```
+
 ## Upgrade protocol
 
 Each upgrade logic depends on the implementation, so no boilerplate can be used for every upgrade version. This means you need to checkout to the corresponding tag version to see the exact upgrade script used.
