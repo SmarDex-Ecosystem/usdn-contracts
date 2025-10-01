@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import { DeployUsdnWusdnEth } from "../01_DeployUsdnWusdnEth.s.sol";
+import { DeployUsdnWusdnEth } from "../DeployUsdnWusdnEth.s.sol";
 import { ForkCore } from "./ForkCore.s.sol";
 
 import { LiquidationRewardsManagerWusdn } from "../../src/LiquidationRewardsManager/LiquidationRewardsManagerWusdn.sol";
