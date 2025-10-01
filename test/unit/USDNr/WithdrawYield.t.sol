@@ -31,7 +31,7 @@ contract TestUsdnrWithdrawYield is UsdnrTokenFixture {
         usdn.rebase(usdn.divisor() * 90 / 100);
         uint256 yield = (usdn.sharesOf(address(usdnr)) / usdn.divisor() - initialDeposit).saturatingSub(usdnr.RESERVE());
         address yieldRecipient = usdnr.getYieldRecipient();
-        assertGt(usdn.balanceOf(address(usdnr)), initialDeposit, "there should be yield");
+        assertEq(usdn.balanceOf(address(usdnr)), initialDeposit + usdnr.RESERVE() + yield, "there should be yield");
 
         vm.expectEmit();
         emit IUsdnr.USDnrYieldWithdrawn(address(this), yield);
