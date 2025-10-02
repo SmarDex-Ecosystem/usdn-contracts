@@ -68,7 +68,7 @@ contract TestUsdnrUnwrap is UsdnrTokenFixture {
      * @custom:scenario Last unwrap after wrap with USDN rounding up
      * @custom:when The last user withdraws its USDN
      * @custom:and Multiple wrap have been made where the USDN amount was rounded up
-     * @custom:then The transaction should reverts
+     * @custom:then The transaction should revert
      * @custom:when The USDnr reserve has been reached
      * @custom:then The transaction should succeed
      */
@@ -84,7 +84,7 @@ contract TestUsdnrUnwrap is UsdnrTokenFixture {
         usdnr.wrap(1, user);
 
         uint256 usdnrBalanceOf = usdnr.balanceOf(user);
-        // here the transaction should reverts since the reserve is not yet reached
+        // here the transaction should revert since the reserve is not yet reached
         vm.expectRevert(
             abi.encodeWithSelector(
                 IERC20Errors.ERC20InsufficientBalance.selector, address(usdnr), usdnrBalanceOf - 1, usdnrBalanceOf
