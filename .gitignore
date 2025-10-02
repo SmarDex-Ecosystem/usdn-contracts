@@ -7,9 +7,15 @@ broadcast/*.sol/**/*.json
 !broadcast/*.sol/1/run-*.json
 # Tenderly deployments
 !broadcast/*.sol/98*/run-1*.json
+# Local Fork deployments
+broadcast/*Fork*.s.sol
+broadcast/global.s.sol
 
 # Private files
 .env
+.env.fork
+.env.local
+.env.usdn
 
 # Cache
 cache/
