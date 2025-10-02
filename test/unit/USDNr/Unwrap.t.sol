@@ -69,7 +69,7 @@ contract TestUsdnrUnwrap is UsdnrTokenFixture {
      * @custom:when The last user withdraws its USDN
      * @custom:and Multiple wrap have been made where the USDN amount was rounded up
      * @custom:then The transaction should reverts
-     * @custom:when The USDNR reserve has been reached
+     * @custom:when The USDnr reserve has been reached
      * @custom:then The transaction should succeed
      */
     function test_lastUnwrap() public {
