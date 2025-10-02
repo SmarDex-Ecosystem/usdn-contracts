@@ -35,9 +35,9 @@ interface IUsdnr is IERC20Metadata {
     /**
      * @notice The minimum amount of USDN that must remain in the contract to ensure that all USDnr tokens
      * are fully backed.
-     * @dev Due to rounding to the nearest unit of the USDN token, each time a user wraps their tokens, the
-     * contract may receive up to 0.5 wei less than expected. This reserve ensures that the last user can
-     * withdraw their full balance. The reserve is fixed at 1 gwei.
+     * @dev Due to rounding to the nearest unit of the USDN token, each time a user deposits their tokens, the contract
+     * may receive up to 0.5 wei less than expected. This reserve ensures that the last user can withdraw their full
+     * balance. The reserve is fixed at 1 gwei.
      * @return reserve_ The fixed amount of USDN, used as a reserve.
      */
     function RESERVE() external pure returns (uint256 reserve_);

@@ -93,7 +93,7 @@ contract TestUsdnrInvariants is Test {
             }
         }
 
-        assertEq(_usdnr.totalSupply(), 0, "total supply after full unwrap should be 0");
+        assertEq(_usdnr.totalSupply(), 0, "total supply after full withdraw should be 0");
         assertLt(
             _usdn.sharesOf(address(_usdnr)).saturatingSub(_usdn.convertToShares(_usdnr.RESERVE())), _usdn.divisor()
         );
