@@ -37,7 +37,7 @@ contract UsdnrHandler is Usdnr, Test {
         vm.assume(userUsdnBalanceBefore > 0);
         usdnAmount = bound(usdnAmount, 1, userUsdnBalanceBefore);
 
-        this.withdraw(usdnAmount, _currentActor);
+        this.deposit(usdnAmount, _currentActor);
 
         assertEq(balanceOf(_currentActor), userUsdnrBalanceBefore + usdnAmount, "user USDnr balance");
         assertEq(totalSupply(), totalSupplyBefore + usdnAmount, "total USDnr supply");
