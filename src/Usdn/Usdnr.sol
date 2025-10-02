@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IUsdn } from "../interfaces/Usdn/IUsdn.sol";
 import { IUsdnr } from "../interfaces/Usdn/IUsdnr.sol";
@@ -14,6 +15,11 @@ import { IUsdnr } from "../interfaces/Usdn/IUsdnr.sol";
  * owner.
  */
 contract Usdnr is ERC20, IUsdnr, Ownable2Step {
+    using FixedPointMathLib for uint256;
+
+    /// @inheritdoc IUsdnr
+    uint256 public constant RESERVE = 1 gwei;
+
     /// @inheritdoc IUsdnr
     IUsdn public immutable USDN;
 
@@ -98,8 +104,8 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
         uint256 usdnDivisor = USDN.divisor();
         // we round down the USDN balance to ensure every USDnr is always fully backed by USDN
         uint256 usdnBalanceRoundDown = USDN.sharesOf(address(this)) / usdnDivisor;
-        // the yield is the difference between the USDN balance and the total supply of USDnr
-        uint256 usdnYield = usdnBalanceRoundDown - totalSupply();
+        // the yield is the difference between the USDN balance and the total supply of USDnr, minus the reserve
+        uint256 usdnYield = usdnBalanceRoundDown.saturatingSub(totalSupply()).saturatingSub(RESERVE);
 
         if (usdnYield == 0) {
             revert USDnrNoYield();

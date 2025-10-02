@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+
 import { UsdnrTokenFixture } from "./utils/Fixtures.sol";
 
 import { IUsdnr } from "../../../src/interfaces/Usdn/IUsdnr.sol";
@@ -60,6 +62,55 @@ contract TestUsdnrUnwrap is UsdnrTokenFixture {
 
         assertEq(usdn.balanceOf(recipient), initialUsdnRecipientUsdnBalance + amount, "recipient USDN balance");
         assertEq(usdn.balanceOf(address(usdnr)), initialUsdnContractBalance - amount, "USDN balance in USDnr");
+    }
+
+    /**
+     * @custom:scenario Last unwrap after wrap with USDN rounding up
+     * @custom:when The last user withdraws its USDN
+     * @custom:and Multiple wrap have been made where the USDN amount was rounded up
+     * @custom:then The transaction should revert
+     * @custom:when The USDnr reserve has been reached
+     * @custom:then The transaction should succeed
+     */
+    function test_lastUnwrap() public {
+        address user = address(this);
+        assertEq(usdnr.totalSupply(), usdnr.balanceOf(user), "the user should be the only one");
+
+        // we mint divisor/2 shares, so the USDN amount is rounded up
+        // resulting in 2 weis of USDnr minted for 1 wei of USDN deposited
+        usdn.mintShares(user, usdn.divisor() / 2);
+        usdnr.wrap(1, user);
+        usdn.mintShares(user, usdn.divisor() / 2);
+        usdnr.wrap(1, user);
+
+        uint256 usdnrBalanceOf = usdnr.balanceOf(user);
+        // here the transaction should revert since the reserve is not yet reached
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IERC20Errors.ERC20InsufficientBalance.selector, address(usdnr), usdnrBalanceOf - 1, usdnrBalanceOf
+            )
+        );
+        usdnr.unwrap(usdnrBalanceOf, user);
+
+        // mint more than the reserve, then give the yield to the admin
+        usdn.mint(address(usdnr), usdnr.RESERVE() * 2);
+        usdnr.withdrawYield();
+
+        uint256 usdnBalanceBeforeUnwrap = usdn.balanceOf(user);
+        // the transaction should pass
+        usdnr.unwrap(usdnrBalanceOf, user);
+
+        assertEq(usdnr.totalSupply(), 0, "the supply should be 0");
+        assertEq(
+            usdn.balanceOf(user),
+            usdnBalanceBeforeUnwrap + usdnrBalanceOf,
+            "the user should have received the same amount"
+        );
+        assertEq(
+            usdn.balanceOf(address(usdnr)),
+            usdnr.RESERVE(),
+            "after the withdrawal of the yield + full user withdraw, the balance should be 0"
+        );
     }
 
     /**
