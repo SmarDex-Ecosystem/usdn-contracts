@@ -86,17 +86,17 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
     }
 
     /// @inheritdoc IUsdnr
-    function withdraw(uint256 usdnrAmount, address recipient) external {
-        if (usdnrAmount == 0) {
+    function withdraw(uint256 usdnAmount, address recipient) external {
+        if (usdnAmount == 0) {
             revert USDnrZeroAmount();
         }
         if (recipient == address(0)) {
             revert USDnrZeroRecipient();
         }
 
-        _burn(msg.sender, usdnrAmount);
+        _burn(msg.sender, usdnAmount);
 
-        USDN.transfer(recipient, usdnrAmount);
+        USDN.transfer(recipient, usdnAmount);
     }
 
     /// @inheritdoc IUsdnr
