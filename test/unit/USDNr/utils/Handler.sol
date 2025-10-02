@@ -115,19 +115,13 @@ contract UsdnrHandler is Usdnr, Test {
 
         uint256 totalSupply = totalSupply();
 
-        if (totalSupply >= balanceRoundedDown) {
-            assertApproxEqAbs(
-                balanceRoundedDown, totalSupply, 1, "no yield to withdraw, USDN balance should equal total supply"
-            );
-            return;
+        try this.withdrawYield() {
+            uint256 yield = (balanceRoundedDown - totalSupply).saturatingSub(RESERVE);
+            assertEq(USDN.balanceOf(address(this)), contractUsdnBalanceBefore - yield, "USDN balance in USDnr");
+            assertEq(USDN.balanceOf(owner()), ownerUsdnBalanceBefore + yield, "owner USDN balance");
+        } catch {
+            assertLe(balanceRoundedDown.saturatingSub(totalSupply), RESERVE, "there should be no yield");
         }
-
-        uint256 yield = balanceRoundedDown - totalSupply;
-
-        this.withdrawYield();
-
-        assertEq(USDN.balanceOf(address(this)), contractUsdnBalanceBefore - yield, "USDN balance in USDnr");
-        assertEq(USDN.balanceOf(owner()), ownerUsdnBalanceBefore + yield, "owner USDN balance");
     }
 
     function mintUsdn(uint256 usdnShares, uint256 actorIndexSeed) public {

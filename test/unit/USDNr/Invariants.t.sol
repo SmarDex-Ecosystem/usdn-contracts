@@ -3,6 +3,8 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
 import "../../utils/Constants.sol";
 import { UsdnrHandler } from "./utils/Handler.sol";
 
@@ -10,6 +12,8 @@ import { Usdn } from "../../../src/Usdn/Usdn.sol";
 
 /// @dev Invariant tests for the `USDnr` contract
 contract TestUsdnrInvariants is Test {
+    using FixedPointMathLib for uint256;
+
     Usdn internal _usdn;
     UsdnrHandler internal _usdnr;
     address[] internal _actors = [USER_1, USER_2, USER_3, USER_4];
@@ -72,7 +76,13 @@ contract TestUsdnrInvariants is Test {
     }
 
     function afterInvariant() public {
-        _usdnr.withdrawYieldTest();
+        try _usdnr.withdrawYield() { }
+        catch {
+            uint256 balanceRoundedDown = _usdn.sharesOf(address(_usdnr)) / _usdn.divisor();
+            assertLe(
+                balanceRoundedDown.saturatingSub(_usdnr.totalSupply()), _usdnr.RESERVE(), "there should be no yield"
+            );
+        }
 
         for (uint256 i = 0; i < _actors.length; i++) {
             uint256 balanceOf = _usdnr.balanceOf(_actors[i]);
@@ -83,7 +93,9 @@ contract TestUsdnrInvariants is Test {
             }
         }
 
-        assertEq(_usdnr.totalSupply(), 0, "total supply after full withdraw should be 0");
-        assertLt(_usdn.sharesOf(address(_usdnr)), _usdn.divisor());
+        assertEq(_usdnr.totalSupply(), 0, "total supply after full unwrap should be 0");
+        assertLt(
+            _usdn.sharesOf(address(_usdnr)).saturatingSub(_usdn.convertToShares(_usdnr.RESERVE())), _usdn.divisor()
+        );
     }
 }
