@@ -80,7 +80,7 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
             revert USDnrZeroAmount();
         }
 
-        _mint(recipient, wrappedAmount_);
+        _mint(recipient, mintedAmount_);
 
         USDN.transferSharesFrom(msg.sender, address(this), usdnSharesAmount);
     }
