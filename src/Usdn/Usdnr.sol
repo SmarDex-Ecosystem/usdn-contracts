@@ -59,9 +59,9 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
             revert USDnrZeroRecipient();
         }
 
-        USDN.transferFrom(msg.sender, address(this), usdnAmount);
-
         _mint(recipient, usdnAmount);
+
+        USDN.transferFrom(msg.sender, address(this), usdnAmount);
     }
 
     /// @inheritdoc IUsdnr
@@ -80,9 +80,9 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
             revert USDnrZeroAmount();
         }
 
-        USDN.transferSharesFrom(msg.sender, address(this), usdnSharesAmount);
+        _mint(recipient, wrappedAmount_);
 
-        _mint(recipient, mintedAmount_);
+        USDN.transferSharesFrom(msg.sender, address(this), usdnSharesAmount);
     }
 
     /// @inheritdoc IUsdnr
@@ -114,7 +114,7 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
 
         emit USDnrYieldWithdrawn(recipient, usdnYield);
 
-        // we use transferShares to save on gas
+        // we use `transferShares` to save on gas
         USDN.transferShares(recipient, usdnYield * usdnDivisor);
     }
 }
