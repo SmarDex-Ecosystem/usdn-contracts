@@ -34,7 +34,7 @@ contract TestUsdnrFuzzing is UsdnrTokenFixture {
 
         uint256 usdnAmountToWrap = _bound(seed3, 1, userInitialUsdnBalance);
         usdn.approve(address(usdnr), usdnAmountToWrap);
-        usdnr.wrap(usdnAmountToWrap, address(this));
+        usdnr.deposit(usdnAmountToWrap, address(this));
         uint256 userUsdnrBalance = usdnr.balanceOf(address(this));
         assertEq(
             userUsdnrBalance, usdnAmountToWrap, "The usdnr balance of the user must be equal to the wrapped usdn amount"
@@ -65,7 +65,7 @@ contract TestUsdnrFuzzing is UsdnrTokenFixture {
         uint256 userUsdnBalanceBeforeUnwrap = usdn.balanceOf(address(this));
         vm.expectEmit();
         emit IERC20.Transfer(address(usdnr), address(this), usdnAmountToWrap);
-        usdnr.unwrap(usdnAmountToWrap, address(this));
+        usdnr.withdraw(usdnAmountToWrap, address(this));
         uint256 contractUsdnAmountSent = contractUsdnBalanceBeforeUnwrap - usdn.balanceOf(address(usdnr));
         uint256 userUsdnAmountReceived = usdn.balanceOf(address(this)) - userUsdnBalanceBeforeUnwrap;
 

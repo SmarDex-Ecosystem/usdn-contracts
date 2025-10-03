@@ -10,7 +10,7 @@ import { IUsdnr } from "../interfaces/Usdn/IUsdnr.sol";
 
 /**
  * @title USDnr Token
- * @notice The USDnr token is a wrapper around the USDN token, allowing users to wrap and unwrap USDN at a 1:1 ratio.
+ * @notice The USDnr token is a vault containing USDN token, allowing users to deposit and withdraw USDN at a 1:1 ratio.
  * @dev The generated yield from the underlying USDN tokens is retained within the contract, and withdrawable by the
  * owner.
  */
@@ -51,7 +51,7 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
     }
 
     /// @inheritdoc IUsdnr
-    function wrap(uint256 usdnAmount, address recipient) external {
+    function deposit(uint256 usdnAmount, address recipient) external {
         if (usdnAmount == 0) {
             revert USDnrZeroAmount();
         }
@@ -65,38 +65,38 @@ contract Usdnr is ERC20, IUsdnr, Ownable2Step {
     }
 
     /// @inheritdoc IUsdnr
-    function previewWrapShares(uint256 usdnSharesAmount) external view returns (uint256 wrappedAmount_) {
-        wrappedAmount_ = usdnSharesAmount / USDN.divisor();
+    function previewDepositShares(uint256 usdnSharesAmount) external view returns (uint256 mintedAmount_) {
+        mintedAmount_ = usdnSharesAmount / USDN.divisor();
     }
 
     /// @inheritdoc IUsdnr
-    function wrapShares(uint256 usdnSharesAmount, address recipient) external returns (uint256 wrappedAmount_) {
+    function depositShares(uint256 usdnSharesAmount, address recipient) external returns (uint256 mintedAmount_) {
         if (recipient == address(0)) {
             revert USDnrZeroRecipient();
         }
 
-        wrappedAmount_ = usdnSharesAmount / USDN.divisor();
-        if (wrappedAmount_ == 0) {
+        mintedAmount_ = usdnSharesAmount / USDN.divisor();
+        if (mintedAmount_ == 0) {
             revert USDnrZeroAmount();
         }
 
-        _mint(recipient, wrappedAmount_);
+        _mint(recipient, mintedAmount_);
 
         USDN.transferSharesFrom(msg.sender, address(this), usdnSharesAmount);
     }
 
     /// @inheritdoc IUsdnr
-    function unwrap(uint256 usdnrAmount, address recipient) external {
-        if (usdnrAmount == 0) {
+    function withdraw(uint256 usdnAmount, address recipient) external {
+        if (usdnAmount == 0) {
             revert USDnrZeroAmount();
         }
         if (recipient == address(0)) {
             revert USDnrZeroRecipient();
         }
 
-        _burn(msg.sender, usdnrAmount);
+        _burn(msg.sender, usdnAmount);
 
-        USDN.transfer(recipient, usdnrAmount);
+        USDN.transfer(recipient, usdnAmount);
     }
 
     /// @inheritdoc IUsdnr

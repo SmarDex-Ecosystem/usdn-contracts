@@ -36,9 +36,9 @@ contract TestUsdnrInvariants is Test {
         targetContract(address(_usdnr));
 
         bytes4[] memory usdnrSelectors = new bytes4[](7);
-        usdnrSelectors[0] = _usdnr.wrapTest.selector;
-        usdnrSelectors[1] = _usdnr.wrapSharesTest.selector;
-        usdnrSelectors[2] = _usdnr.unwrapTest.selector;
+        usdnrSelectors[0] = _usdnr.depositTest.selector;
+        usdnrSelectors[1] = _usdnr.depositSharesTest.selector;
+        usdnrSelectors[2] = _usdnr.withdrawTest.selector;
         usdnrSelectors[3] = _usdnr.withdrawYieldTest.selector;
         usdnrSelectors[4] = _usdnr.mintUsdn.selector;
         usdnrSelectors[5] = _usdnr.rebaseTest.selector;
@@ -89,11 +89,11 @@ contract TestUsdnrInvariants is Test {
 
             if (balanceOf != 0) {
                 vm.prank(_actors[i]);
-                _usdnr.unwrap(balanceOf, _actors[i]);
+                _usdnr.withdraw(balanceOf, _actors[i]);
             }
         }
 
-        assertEq(_usdnr.totalSupply(), 0, "total supply after full unwrap should be 0");
+        assertEq(_usdnr.totalSupply(), 0, "total supply after full withdraw should be 0");
         assertLt(
             _usdn.sharesOf(address(_usdnr)).saturatingSub(_usdn.convertToShares(_usdnr.RESERVE())), _usdn.divisor()
         );
