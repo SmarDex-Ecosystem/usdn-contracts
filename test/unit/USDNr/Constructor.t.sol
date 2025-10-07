@@ -18,7 +18,7 @@ contract TestUsdnrConstructor is UsdnrTokenFixture {
     function test_usdnrConstructor() public {
         usdnr = new Usdnr(usdn, address(this), address(1));
 
-        assertEq(usdnr.name(), "USDN Reserve", "name");
+        assertEq(usdnr.name(), "Ultimate Synthetic Dollar - No Rebase", "name");
         assertEq(usdnr.symbol(), "USDnr", "symbol");
         assertEq(address(usdnr.USDN()), address(usdn), "USDN address");
         assertEq(usdnr.owner(), address(this), "owner");
