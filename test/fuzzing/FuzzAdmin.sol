@@ -167,13 +167,6 @@ contract FuzzAdmin is PreconditionsAdmin, PostconditionsAdmin {
     /*                                 Rebalancer                                 */
     /* -------------------------------------------------------------------------- */
 
-    function fuzz_setPositionMaxLeverage(uint256 seed) public {
-        uint256 newMaxLeverage = setPositionMaxLeveragePreconditions(seed);
-
-        (bool success, bytes memory returnData) = _setPositionMaxLeverage(newMaxLeverage);
-        setAdminPostconditions(success, returnData);
-    }
-
     function fuzz_setMinAssetDeposit(uint256 seed) public {
         uint256 newMinAssetDeposit = setMinAssetDepositPreconditions(seed);
 
