@@ -1,3 +1,4 @@
 ^Cargo\.lock$
 ^src/vendored
 ^broadcast
+^test/fuzzing
