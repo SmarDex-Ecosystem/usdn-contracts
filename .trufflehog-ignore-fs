@@ -16,3 +16,4 @@
 ^\.gas-snapshot$
 ^target/
 ^\.trufflehog.yml$
+^test/fuzzing
